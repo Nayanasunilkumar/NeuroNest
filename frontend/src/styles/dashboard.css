@@ -1,0 +1,299 @@
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  overflow-x: hidden;
+  width: 100%;
+}
+/* =========================
+   ROOT VARIABLES
+========================= */
+:root {
+  --light-bg: #f5f7fb;
+  --dark-bg: #0f172a;
+  --card-light: #ffffff;
+  --card-dark: #020617;
+}
+
+/* =========================
+   DASHBOARD BASE
+========================= */
+.dashboard-page {
+  min-height: 100vh;
+  background: var(--light-bg);
+  font-family:
+    "Inter",
+    system-ui,
+    -apple-system,
+    sans-serif;
+}
+
+/* =========================
+   HEADER
+========================= */
+.dashboard-header {
+  width: 100%;
+  background: var(--light-bg);
+  border: none;
+  box-shadow: none;
+}
+
+.dashboard-header-inner {
+  width: 100%;
+  padding: 10px 24px; /* reduced from 16px 32px */
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Left Section */
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Sidebar Toggle */
+.sidebar-toggle {
+  background: none;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  transition: 0.2s ease;
+  color: #1f2937;
+}
+
+.sidebar-toggle:hover {
+  opacity: 0.7;
+}
+
+/* Logo */
+.dashboard-logo {
+  font-size: 17px;
+  font-weight: 600;
+  color: #4f46e5;
+}
+
+.dashboard-role {
+  font-size: 11px;
+  color: #6b7280;
+  text-transform: capitalize;
+}
+
+/* Right Section */
+.dashboard-header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* =========================
+   PREMIUM LIGHT TOGGLE
+========================= */
+
+.theme-toggle-btn {
+  width: 46px;
+  height: 24px;
+  background: #b2b3b5; /* soft gray */
+
+  border-radius: 999px;
+  border: none;
+  cursor: pointer;
+  position: relative;
+  padding: 2px;
+  transition: background 0.3s ease;
+  display: flex;
+  align-items: center;
+}
+
+/* Circular knob */
+.theme-toggle-btn::before {
+  content: "☀";
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  background: #ffffff;
+  border-radius: 50%;
+  left: 2px;
+  top: 2px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  transition:
+    transform 0.3s ease,
+    background 0.3s ease;
+}
+
+/* Dark Mode */
+body.dark .theme-toggle-btn {
+  background: #1e293b;
+}
+
+body.dark .theme-toggle-btn::before {
+  /* 1. Remove the emoji text so you don't get double moons */
+  content: "";
+
+  /* 2. Move the knob */
+  transform: translateX(22px);
+
+  /* 3. Knob Background Color */
+  background-color: #0f172a;
+
+  /* 4. The SVG Icon (Encoded) */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath fill='%23ffffff' d='m21.067 11.857l-.642-.388zm-8.924-8.924l-.388-.642zM21.25 12A9.25 9.25 0 0 1 12 21.25v1.5c5.937 0 10.75-4.813 10.75-10.75zM12 21.25A9.25 9.25 0 0 1 2.75 12h-1.5c0 5.937 4.813 10.75 10.75 10.75zM2.75 12A9.25 9.25 0 0 1 12 2.75v-1.5C6.063 1.25 1.25 6.063 1.25 12zm12.75 2.25A5.75 5.75 0 0 1 9.75 8.5h-1.5a7.25 7.25 0 0 0 7.25 7.25zm4.925-2.781A5.75 5.75 0 0 1 15.5 14.25v1.5a7.25 7.25 0 0 0 6.21-3.505zM9.75 8.5a5.75 5.75 0 0 1 2.781-4.925l-.776-1.284A7.25 7.25 0 0 0 8.25 8.5zM12 2.75a.38.38 0 0 1-.268-.118a.3.3 0 0 1-.082-.155c-.004-.031-.002-.121.105-.186l.776 1.284c.503-.304.665-.861.606-1.299c-.062-.455-.42-1.026-1.137-1.026zm9.71 9.495c-.066.107-.156.109-.187.105a.3.3 0 0 1-.155-.082a.38.38 0 0 1-.118-.268h1.5c0-.717-.571-1.075-1.026-1.137c-.438-.059-.995.103-1.299.606z'/%3E%3C/svg%3E");
+
+  /* 5. Icon positioning and sizing */
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 14px; /* Adjusts the icon size inside the 20px knob */
+}
+/* =========================
+   MINIMAL LOGOUT ICON
+========================= */
+
+.logout-btn {
+  background: transparent;
+  border: none;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #ef4444; /* red icon */
+  transition: 0.2s ease;
+  margin-bottom: 2px;
+}
+
+/* Hover effect */
+.logout-btn:hover {
+  color: #dc2626;
+  transform: scale(1.1);
+}
+
+/* =========================
+   MAIN CONTENT
+========================= */
+.dashboard-main {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 32px 24px;
+}
+
+.dashboard-main.full-screen-chat {
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 70px); /* Adjust based on header height */
+  overflow: hidden; /* Prevent body scroll */
+}
+
+/* =========================
+   WELCOME CARD
+========================= */
+.welcome-card {
+  background: var(--card-light);
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.04);
+  margin-bottom: 24px;
+}
+
+.welcome-card h2 {
+  font-size: 24px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.welcome-card p {
+  color: #6b7280;
+  margin-top: 6px;
+}
+
+/* =========================
+   GRID CARDS
+========================= */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 20px;
+}
+
+.dashboard-card {
+  background: var(--card-light);
+  border-radius: 14px;
+  padding: 20px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.04);
+  transition: 0.2s ease;
+}
+
+.dashboard-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.06);
+}
+
+.dashboard-card h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.dashboard-card p {
+  font-size: 14px;
+  color: #6b7280;
+  margin-top: 8px;
+}
+
+/* =========================
+   DARK MODE
+========================= */
+body.dark {
+  background: var(--dark-bg);
+  color: #e5e7eb;
+}
+
+body.dark .dashboard-page {
+  background: var(--dark-bg);
+}
+
+body.dark .dashboard-header {
+  background: var(--dark-bg);
+}
+
+body.dark .sidebar-toggle {
+  color: #ffffff;
+}
+
+body.dark .welcome-card,
+body.dark .dashboard-card {
+  background: var(--card-dark);
+  box-shadow:
+    0 0 0 1px rgba(99, 102, 241, 0.15),
+    0 10px 30px rgba(0, 0, 0, 0.4);
+}
+
+body.dark .welcome-card h2 {
+  color: #ffffff;
+}
+
+body.dark .dashboard-card h3 {
+  color: #e0e7ff;
+}
+
+body.dark .dashboard-card p,
+body.dark .welcome-card p {
+  color: #a5b4fc;
+}
+
+body.dark .dashboard-logo {
+  color: #ffffff;
+}
+
+body.dark .dashboard-role {
+  color: #c7d2fe;
+}

@@ -1,0 +1,891 @@
+/* ============================================================
+   DOCTOR CHAT NEXUS - PREMIUM VANILLA CSS SYSTEM
+   ============================================================ */
+
+.doctor-chat-nexus {
+    display: flex;
+    height: calc(100vh - 70px);
+    width: 100%;
+    overflow: hidden;
+    background-color: #ffffff;
+    font-family: 'Inter', sans-serif;
+}
+
+.dark .doctor-chat-nexus {
+    background-color: #0f172a;
+}
+
+/* --- COLUMN 1: CLINICAL INBOX --- */
+.nexus-inbox {
+    width: 340px; /* Balanced for stability */
+    flex-shrink: 0;
+    background-color: #ffffff;
+    border-right: 1px solid #e2e8f0;
+    display: flex;
+    flex-direction: column;
+}
+
+.dark .nexus-inbox {
+    background-color: #1c2434;
+    border-color: #334155;
+}
+
+.nexus-inbox-header {
+    padding: 24px;
+}
+
+.nexus-inbox-title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+}
+
+.nexus-inbox-title {
+    font-size: 1.125rem;
+    font-weight: 800; /* Bolder level */
+    color: var(--doc-text-main);
+    letter-spacing: -0.02em;
+}
+
+.dark .nexus-inbox-title {
+    color: #ffffff;
+}
+
+.nexus-search-container {
+    position: relative;
+}
+
+.nexus-search-icon {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #94a3b8;
+}
+
+.nexus-search-input {
+    width: 100%;
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 12px 16px 12px 44px;
+    font-size: 0.875rem;
+    transition: all 0.2s;
+}
+
+.dark .nexus-search-input {
+    background-color: #0f172a;
+    border-color: #334155;
+    color: #ffffff;
+}
+
+.nexus-search-input:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+}
+
+.nexus-conversation-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0 12px 24px 12px;
+}
+
+.nexus-conversation-card {
+    width: 100%;
+    padding: 16px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    border: 1px solid transparent;
+    background-color: transparent;
+    transition: all 0.2s;
+    cursor: pointer;
+    text-align: left;
+    position: relative;
+}
+
+.nexus-conversation-card:hover {
+    background-color: var(--doc-bg);
+    transform: translateY(-2px);
+    box-shadow: var(--doc-shadow-hover);
+}
+
+.dark .nexus-conversation-card:hover {
+    background-color: #1e293b;
+}
+
+.nexus-conversation-card.active {
+    background-color: #f1f5f9;
+    border-color: rgba(37, 99, 235, 0.08);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); /* Stronger active state */
+}
+
+.dark .nexus-conversation-card.active {
+    background-color: #1e293b;
+    border-color: #334155;
+}
+
+.nexus-active-indicator {
+    position: absolute;
+    left: 0;
+    top: 16px;
+    bottom: 16px;
+    width: 4px;
+    background-color: #3b82f6;
+    border-radius: 0 4px 4px 0;
+}
+
+.nexus-avatar-wrapper {
+    position: relative;
+    flex-shrink: 0;
+}
+
+.nexus-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background-color: #f1f5f9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.dark .nexus-avatar {
+    background-color: #334155;
+}
+
+.nexus-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.nexus-initials {
+    font-size: 1.125rem;
+    font-weight: 900;
+    color: #3b82f6;
+}
+
+.nexus-online-dot {
+    position: absolute;
+    bottom: -2px;
+    right: -2px;
+    width: 14px;
+    height: 14px;
+    background-color: #22c55e;
+    border: 3px solid #ffffff;
+    border-radius: 50%;
+}
+
+.dark .nexus-online-dot {
+    border-color: #1c2434;
+}
+
+.nexus-card-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.nexus-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 4px;
+}
+
+.nexus-patient-name {
+    font-size: 0.875rem;
+    font-weight: 900;
+    color: #334155;
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.dark .nexus-patient-name {
+    color: #ffffff;
+}
+
+.unread .nexus-patient-name {
+    color: #1e293b;
+}
+
+.nexus-timestamp {
+    font-size: 0.625rem;
+    font-weight: 900;
+    color: #94a3b8;
+}
+
+.nexus-card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.nexus-last-message {
+    font-size: 0.75rem;
+    color: #94a3b8;
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.unread .nexus-last-message {
+    color: #1e293b;
+    font-weight: 700;
+}
+
+.dark .unread .nexus-last-message {
+    color: #e2e8f0;
+}
+
+.nexus-unread-badge {
+    min-width: 18px;
+    height: 18px;
+    background-color: #3b82f6;
+    border-radius: 9999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 4px;
+    color: #ffffff;
+    font-size: 0.625rem;
+    font-weight: 900;
+    box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.5);
+    animation: animate-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes animate-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: .5; }
+}
+
+/* --- COLUMN 2: HUB --- */
+.nexus-hub {
+    flex: 1;
+    min-width: 0; /* Essential to prevent grid overflow clipping */
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    background-color: #ffffff;
+}
+
+.dark .nexus-hub {
+    background-color: #0f172a;
+}
+
+.nexus-chat-header {
+    padding: 24px;
+    border-bottom: 1px solid #f1f5f9;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background-color: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(12px);
+    position: sticky;
+    top: 0;
+    z-index: 50;
+}
+
+.dark .nexus-chat-header {
+    background-color: rgba(15, 23, 42, 0.8);
+    border-color: #1e293b;
+}
+
+.nexus-header-patient-info {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.nexus-header-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 16px;
+    background-color: #f1f5f9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    border: 2px solid #ffffff;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.dark .nexus-header-avatar {
+    background-color: #334155;
+    border-color: #334155;
+}
+
+.nexus-status-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.nexus-status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: #22c55e;
+}
+
+.nexus-status-text {
+    font-size: 0.625rem;
+    font-weight: 900;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}
+
+.nexus-header-context {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background-color: rgba(59, 130, 246, 0.05);
+    padding: 8px 16px;
+    border-radius: 16px;
+    border: 1px solid rgba(59, 130, 246, 0.1);
+}
+
+.nexus-context-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.nexus-context-label {
+    font-size: 0.5rem;
+    font-weight: 900;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}
+
+.nexus-context-value {
+    font-size: 0.625rem;
+    font-weight: 700;
+    color: #334155;
+}
+
+.dark .nexus-context-value {
+    color: #3b82f6;
+}
+
+.nexus-messages-area {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.nexus-bubble-container {
+    display: flex;
+    margin-bottom: 16px;
+}
+
+.nexus-bubble-container.me {
+    justify-content: flex-end;
+}
+
+.nexus-bubble-container.other {
+    justify-content: flex-start;
+}
+
+.nexus-bubble {
+    max-width: 70%;
+    position: relative;
+}
+
+.nexus-bubble-content {
+    padding: 10px 16px; /* Tightened padding */
+    border-radius: 14px; /* Consistent modern radius */
+    font-size: 0.875rem;
+    line-height: 1.5;
+}
+
+.me .nexus-bubble-content {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); /* Modern vibrant gradient */
+    color: #ffffff;
+    border-bottom-right-radius: 2px;
+}
+
+.other .nexus-bubble-content {
+    background-color: #f3f4f6; /* Modern cool gray */
+    color: var(--doc-text-main);
+    border-bottom-left-radius: 2px;
+}
+
+.dark .other .nexus-bubble-content {
+    background-color: #1e293b;
+    color: #e2e8f0;
+}
+
+.nexus-bubble-meta {
+    margin-top: 6px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.me .nexus-bubble-meta {
+    justify-content: flex-end;
+}
+
+.nexus-bubble-time {
+    font-size: 0.625rem;
+    font-weight: 500;
+    color: #94a3b8; /* Lighter gray for timestamps */
+}
+
+.nexus-read-receipt {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.nexus-read-receipt.read {
+    background-color: #3b82f6;
+}
+
+.nexus-read-receipt.unread {
+    background-color: #e2e8f0;
+}
+
+.nexus-input-panel {
+    padding: 24px;
+    border-top: 1px solid #f1f5f9;
+    background-color: rgba(255, 255, 255, 0.5);
+    backdrop-filter: blur(12px);
+}
+
+.dark .nexus-input-panel {
+    background-color: rgba(15, 23, 42, 0.5);
+    border-color: #1e293b;
+}
+
+.nexus-template-rack {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 12px;
+    margin-bottom: 16px;
+}
+
+.nexus-template-chip {
+    white-space: nowrap;
+    padding: 8px 16px;
+    border-radius: 12px;
+    background-color: rgba(59, 130, 246, 0.05);
+    border: 1px solid rgba(59, 130, 246, 0.1);
+    color: #3b82f6;
+    font-size: 0.625rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.nexus-template-chip:hover {
+    background-color: rgba(59, 130, 246, 0.1);
+}
+
+.nexus-input-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.nexus-input-action-btn {
+    width: 48px;
+    height: 48px;
+    border-radius: 16px;
+    background-color: #f1f5f9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #94a3b8;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.dark .nexus-input-action-btn {
+    background-color: #1e293b;
+}
+
+.nexus-input-action-btn:hover {
+    color: #3b82f6;
+}
+
+.nexus-input-wrapper {
+    flex: 1;
+    position: relative;
+}
+
+.nexus-input {
+    width: 100%;
+    background-color: #f1f5f9;
+    border: none;
+    border-radius: 16px;
+    padding: 14px 56px 14px 20px;
+    font-size: 0.875rem;
+    color: #334155;
+    box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.05);
+}
+
+.dark .nexus-input {
+    background-color: #1e293b;
+    color: #ffffff;
+}
+
+.nexus-send-btn {
+    position: absolute;
+    right: 6px;
+    top: 6px;
+    bottom: 6px;
+    width: 36px;
+    height: 36px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.nexus-send-btn.active {
+    background-color: #3b82f6;
+    color: #ffffff;
+    box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.4);
+}
+
+.nexus-send-btn.disabled {
+    background-color: #e2e8f0;
+    color: #94a3b8;
+    cursor: not-allowed;
+}
+
+/* --- COLUMN 3: CLINICAL PANEL --- */
+.nexus-clinical-panel {
+    width: 340px; /* Synchronized width */
+    flex-shrink: 0;
+    background-color: #f8fafc; /* Subtle contrast from chat hub */
+    border-left: 1px solid #e2e8f0;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.dark .nexus-clinical-panel {
+    background-color: #0f172a;
+    border-color: #1e293b;
+}
+
+.nexus-panel-identity {
+    padding: 32px 24px;
+    text-align: center;
+    border-bottom: 1px solid #e2e8f0;
+    background-color: #ffffff;
+}
+
+.dark .nexus-panel-identity {
+    background-color: #1e293b;
+    border-color: #334155;
+}
+
+.nexus-panel-avatar {
+    width: 96px;
+    height: 96px;
+    border-radius: 24px;
+    background-color: rgba(59, 130, 246, 0.1);
+    margin: 0 auto 24px auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    font-weight: 900;
+    color: #3b82f6;
+    overflow: hidden;
+    border: 2px solid #ffffff;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.dark .nexus-panel-avatar {
+    border-color: #334155;
+}
+
+.nexus-panel-name {
+    font-size: 1.25rem;
+    font-weight: 900;
+    color: #1e293b;
+    margin-bottom: 8px;
+}
+
+.nexus-badge-row {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+}
+
+.nexus-mini-badge {
+    padding: 3px 10px;
+    border-radius: 9999px; /* Pill shape */
+    font-size: 0.625rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    display: inline-flex;
+    align-items: center;
+}
+
+.nexus-mini-badge.slate { background-color: #f3f4f6; color: #4b5563; }
+.nexus-mini-badge.blue { background-color: #eff6ff; color: #3b82f6; }
+.nexus-mini-badge.amber { background-color: #fffbeb; color: #d97706; }
+.nexus-mini-badge.red { background-color: #fef2f2; color: #ef4444; }
+.nexus-mini-badge.green { background-color: #f0fdf4; color: #16a34a; }
+
+.nexus-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    border-bottom: 1px solid #e2e8f0;
+    background-color: #ffffff;
+}
+
+.dark .nexus-stats-grid {
+    background-color: #1e293b;
+    border-color: #334155;
+}
+
+.nexus-stat-box {
+    padding: 16px 8px;
+    text-align: center;
+    border-right: 1px solid #f1f5f9;
+}
+
+.dark .nexus-stat-box {
+    border-color: #334155;
+}
+
+.nexus-stat-label {
+    font-size: 0.5rem;
+    font-weight: 900;
+    color: #94a3b8;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    letter-spacing: 0.05em;
+}
+
+.nexus-stat-value {
+    font-size: 0.875rem;
+    font-weight: 800;
+    color: #1e293b;
+}
+
+.dark .nexus-stat-value {
+    color: #ffffff;
+}
+
+.nexus-panel-clinical-section {
+    padding: 24px;
+}
+
+.nexus-section-header {
+    font-size: 0.625rem;
+    font-weight: 900;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.nexus-clinical-card {
+    padding: 14px;
+    border-radius: var(--doc-radius);
+    border: 1px solid #f3f4f6;
+    background-color: #ffffff;
+    box-shadow: var(--doc-shadow-soft);
+    transition: all 0.2s ease;
+}
+
+.nexus-clinical-card:hover {
+    box-shadow: var(--doc-shadow-hover);
+    transform: translateY(-1px);
+}
+
+.dark .nexus-clinical-card {
+    background-color: rgba(30, 41, 59, 0.5);
+    border-color: #1e293b;
+}
+
+.nexus-clinical-card.hazard-red {
+    background-color: rgba(239, 68, 68, 0.05);
+    border-color: rgba(239, 68, 68, 0.1);
+}
+
+.nexus-clinical-card.hazard-amber {
+    background-color: rgba(245, 158, 11, 0.05);
+    border-color: rgba(245, 158, 11, 0.1);
+}
+
+.nexus-card-note {
+    font-size: 0.75rem;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(0, 0, 0, 0.05);
+    font-style: italic;
+    color: #64748b;
+}
+
+.dark .nexus-card-note {
+    border-color: rgba(255, 255, 255, 0.05);
+    color: #94a3b8;
+}
+
+/* --- SCROLLBARS --- */
+.custom-scrollbar::-webkit-scrollbar { width: 6px; }
+.custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, 0.05); border-radius: 99px; }
+.custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(0, 0, 0, 0.1); }
+
+.doctor-content.no-padding {
+    padding: 0 !important;
+    overflow: initial !important; /* Changed from hidden to prevent right-panel clipping */
+}
+
+/* ================= SHARED NEXUS COMPONENTS ================= */
+.nexus-card {
+    background-color: #ffffff;
+    border-radius: 16px;
+    border: 1px solid #f1f5f9;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+}
+.dark .nexus-card {
+    background-color: #1e293b;
+    border-color: #334155;
+}
+
+.nexus-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 20px;
+    border-radius: 12px;
+    font-weight: 600;
+    transition: all 0.2s;
+    border: none;
+    cursor: pointer;
+}
+.nexus-btn.primary {
+    background-color: #3b82f6; 
+    color: white;
+}
+.nexus-btn.primary:hover {
+    background-color: #2563eb;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+}
+.nexus-btn.secondary {
+    background-color: rgba(59, 130, 246, 0.1);
+    color: #3b82f6;
+}
+.nexus-btn.secondary:hover {
+    background-color: rgba(59, 130, 246, 0.15);
+}
+.nexus-btn.danger {
+    background-color: #fee2e2;
+    color: #ef4444;
+}
+.nexus-btn-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.nexus-btn-icon.danger {
+    background-color: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+}
+.nexus-btn-icon.danger:hover {
+    background-color: rgba(239, 68, 68, 0.2);
+}
+
+.nexus-label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+.dark .nexus-label {
+    color: #94a3b8;
+}
+
+.nexus-input {
+    width: 100%;
+    background-color: #f1f5f9;
+    border: 1px solid transparent;
+    border-radius: 12px;
+    padding: 12px 16px;
+    font-size: 0.875rem;
+    color: #334155;
+    transition: all 0.2s;
+}
+.nexus-input:focus {
+    background-color: #ffffff;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+    outline: none;
+}
+.dark .nexus-input {
+    background-color: #1e293b;
+    color: #ffffff;
+    border-color: #334155;
+}
+.dark .nexus-input:focus {
+    background-color: #0f172a;
+    border-color: #3b82f6;
+}
+
+
+/* Animation for messages */
+.animate-message-pop {
+    animation: message-pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes message-pop {
+    from {
+        opacity: 0;
+        transform: scale(0.9) translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}

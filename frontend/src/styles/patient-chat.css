@@ -1,0 +1,898 @@
+/* 
+ * NEURONEST PATIENT CHAT - PREMIUM HEALTHCARE GRADE
+ * Design System: Clinical Nexus
+ */
+
+:root {
+  --nexus-bg: #f8fafc;
+  --nexus-card-bg: #ffffff;
+  --nexus-primary: #3b82f6;
+  --nexus-primary-light: #eff6ff;
+  --nexus-text-main: #1e293b;
+  --nexus-text-muted: #64748b;
+  --nexus-border: #e2e8f0;
+  --nexus-success: #10b981;
+  --nexus-danger: #ef4444;
+  --nexus-warning: #f59e0b;
+}
+
+/* MAIN CONTAINER layout */
+.patient-chat-nexus {
+  display: grid;
+  grid-template-columns: 320px minmax(0, 1fr);
+  height: calc(100vh - 104px);
+  min-height: 520px;
+  background: var(--nexus-bg);
+  border-radius: 18px;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.08);
+  overflow: hidden;
+  margin: 12px 20px;
+  border: 1px solid var(--nexus-border);
+}
+
+/* ================= LEFT PANEL: INBOX ================= */
+.nexus-inbox {
+  width: 320px;
+  background: white;
+  border-right: 1px solid var(--nexus-border);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-width: 0;
+  overflow: hidden;
+  box-shadow: inset -1px 0 0 rgba(15, 23, 42, 0.04);
+}
+
+.nexus-inbox-header {
+  padding: 24px;
+  border-bottom: 1px solid var(--nexus-border);
+}
+
+.nexus-inbox-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.nexus-inbox-title {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--nexus-text-main);
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+.nexus-search-container {
+  position: relative;
+}
+
+.nexus-search-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--nexus-text-muted);
+}
+
+.nexus-search-input {
+  width: 100%;
+  padding: 12px 16px 12px 42px;
+  border-radius: 12px;
+  border: 1px solid var(--nexus-border);
+  background: var(--nexus-bg);
+  font-size: 14px;
+  transition: all 0.2s;
+  outline: none;
+  color: var(--nexus-text-main);
+}
+
+.nexus-search-input:focus {
+  border-color: var(--nexus-primary);
+  background: white;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.nexus-conversation-list {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+  padding: 10px 12px 14px;
+}
+
+/* Section grouping headers e.g. "Recent" */
+.nexus-list-section {
+  padding: 16px 12px 10px;
+  margin-bottom: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--nexus-text-muted);
+  letter-spacing: 0.14em;
+  border-bottom: 1px solid rgba(100, 116, 139, 0.22);
+}
+
+.nexus-conversation-card {
+  display: flex;
+  gap: 14px;
+  padding: 14px;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+  border: 1px solid rgba(226, 232, 240, 0.55);
+  margin-bottom: 8px;
+}
+
+.nexus-conversation-card:hover {
+  background: var(--nexus-bg);
+}
+
+.nexus-conversation-card.active {
+  background: var(--nexus-primary-light);
+  border-color: #dbeafe;
+}
+
+.nexus-conversation-card.unread {
+  background: rgba(59, 130, 246, 0.08);
+  border-color: rgba(59, 130, 246, 0.38);
+}
+
+.nexus-avatar-wrapper {
+  position: relative;
+}
+
+.nexus-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  object-fit: cover;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.nexus-online-dot {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 12px;
+  height: 12px;
+  background: var(--nexus-success);
+  border: 2px solid white;
+  border-radius: 50%;
+}
+
+.nexus-card-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.nexus-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 4px;
+}
+
+.nexus-patient-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--nexus-text-main);
+}
+
+.nexus-timestamp {
+  font-size: 11px;
+  color: var(--nexus-text-muted);
+  font-weight: 500;
+  white-space: nowrap;
+  padding-top: 1px;
+}
+
+.nexus-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.nexus-last-message {
+  font-size: 13px;
+  color: var(--nexus-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  flex: 1;
+}
+
+.nexus-conversation-card.unread .nexus-patient-name {
+  font-weight: 800;
+}
+
+.nexus-conversation-card.unread .nexus-last-message {
+  color: var(--nexus-text-main);
+  font-weight: 600;
+}
+
+.nexus-unread-badge {
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  background: var(--nexus-primary);
+  color: white;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 99px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 8px;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.18);
+}
+
+/* ================= RIGHT PANEL: CHAT AREA ================= */
+.nexus-chat-pane {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: white;
+  position: relative;
+  height: 100%;
+  min-width: 0;
+  overflow: hidden;
+  box-shadow: inset 1px 0 0 rgba(15, 23, 42, 0.06);
+}
+
+.nexus-chat-window {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* HEADER */
+.nexus-chat-header {
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--nexus-border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+  z-index: 10;
+  flex-shrink: 0;
+}
+
+.nexus-header-doctor-info {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.nexus-header-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+}
+
+.nexus-doctor-details h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--nexus-text-main);
+}
+
+.nexus-status-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  margin-top: 3px;
+}
+
+.nexus-status-dot {
+  width: 8px;
+  height: 8px;
+  background: var(--nexus-success);
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+}
+
+.nexus-status-text {
+  color: var(--nexus-text-muted);
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 6px rgba(16, 185, 129, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+  }
+}
+
+.nexus-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nexus-input-action-btn {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: var(--nexus-bg);
+  color: var(--nexus-text-muted);
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 1px solid transparent;
+}
+
+.nexus-input-action-btn:hover {
+  background: var(--nexus-primary-light);
+  color: var(--nexus-primary);
+}
+
+.nexus-input-action-btn.active {
+  background: var(--nexus-primary-light);
+  color: var(--nexus-primary);
+  border-color: #bfdbfe;
+}
+
+.nexus-header-divider {
+  width: 1px;
+  height: 24px;
+  background: var(--nexus-border);
+  margin: 0 4px;
+}
+
+/* MESSAGES LIST */
+.nexus-messages-area {
+  flex: 1;
+  min-height: 0;
+  padding: 24px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 14px;
+  box-sizing: border-box;
+  background-image:
+    radial-gradient(rgba(148, 163, 184, 0.14) 1px, transparent 1px),
+    linear-gradient(to bottom, transparent 0%, rgba(255, 255, 255, 1) 100%);
+  background-size:
+    24px 24px,
+    100% 100%;
+}
+
+.nexus-chat-feedback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  color: #94a3b8;
+  gap: 12px;
+  margin: auto;
+}
+
+/* Message Bubbles */
+.nexus-msg-row {
+  display: flex;
+  flex-direction: column;
+  max-width: 65%;
+  width: auto;
+  box-sizing: border-box;
+  position: relative;
+  animation: slideUp 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.nexus-msg-row.sent {
+  align-self: flex-end;
+  align-items: flex-end;
+}
+
+.nexus-msg-row.received {
+  align-self: flex-start;
+  align-items: flex-start;
+}
+
+.nexus-bubble {
+  max-width: 100%;
+  min-width: 56px;
+  padding: 14px 18px;
+  border-radius: 18px;
+  font-size: 15px;
+  line-height: 1.5;
+  position: relative;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+  word-break: break-word;
+  overflow-wrap: break-word;
+  white-space: pre-wrap;
+  box-sizing: border-box;
+}
+
+.nexus-bubble-text {
+  display: block;
+  max-width: 100%;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  white-space: pre-wrap;
+}
+
+.sent .nexus-bubble {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+  border-bottom-right-radius: 4px;
+}
+
+.received .nexus-bubble {
+  background: white;
+  color: var(--nexus-text-main);
+  border: 1px solid var(--nexus-border);
+  border-bottom-left-radius: 4px;
+}
+
+.nexus-msg-meta {
+  display: flex;
+  width: 100%;
+  justify-content: flex-end;
+  align-items: center;
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--nexus-text-muted);
+  font-weight: 500;
+  gap: 4px;
+  opacity: 0.8;
+  text-align: right;
+  box-sizing: border-box;
+}
+
+.nexus-msg-time {
+  display: block;
+}
+
+.nexus-read-ticks {
+  display: flex;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+/* Structured Messages (e.g. Prescription) */
+.nexus-card-msg {
+  background: white;
+  border: 1px solid var(--nexus-border);
+  border-radius: 12px;
+  padding: 16px;
+  min-width: 260px;
+  margin-top: 8px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.card-msg-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--nexus-border);
+  font-weight: 700;
+  color: var(--nexus-text-main);
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.card-msg-body {
+  font-size: 14px;
+  color: var(--nexus-text-muted);
+  line-height: 1.5;
+  margin-bottom: 12px;
+}
+
+.card-msg-action {
+  display: block;
+  text-align: center;
+  padding: 8px;
+  background: var(--nexus-bg);
+  color: var(--nexus-primary);
+  font-weight: 700;
+  font-size: 12px;
+  border-radius: 8px;
+  text-decoration: none;
+  transition: background 0.2s;
+}
+
+.card-msg-action:hover {
+  background: var(--nexus-primary-light);
+}
+
+.nexus-file-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: min(100%, 420px);
+}
+
+.nexus-file-topline {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  opacity: 0.94;
+}
+
+.nexus-file-title {
+  letter-spacing: 0.02em;
+}
+
+.nexus-file-name {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  font-weight: 600;
+  opacity: 0.95;
+}
+
+.nexus-file-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  color: inherit;
+}
+
+.received .nexus-file-link {
+  border-color: var(--nexus-border);
+}
+
+/* INPUT AREA */
+.nexus-input-area {
+  position: sticky;
+  bottom: 0;
+  z-index: 8;
+  padding: 10px 20px 12px;
+  background: white;
+  border-top: 1px solid var(--nexus-border);
+  flex-shrink: 0;
+}
+
+.nexus-quick-actions-shell {
+  margin-bottom: 10px;
+  padding-bottom: 2px;
+}
+
+/* Quick Action Pills */
+.nexus-quick-actions,
+.nexus-template-group {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 0;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+.action-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: var(--nexus-bg);
+  border: 1px solid var(--nexus-border);
+  border-radius: 99px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--nexus-text-muted);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+
+.action-pill:hover {
+  background: var(--nexus-primary-light);
+  color: var(--nexus-primary);
+}
+
+.nexus-input-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--nexus-bg);
+  padding: 6px 8px;
+  border-radius: 14px;
+  border: 1px solid var(--nexus-border);
+  transition: border 0.2s;
+}
+
+.nexus-input-wrapper:focus-within {
+  border-color: var(--nexus-primary);
+  background: white;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.attach-btn {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  color: var(--nexus-text-muted);
+  cursor: pointer;
+  background: transparent;
+  border: none;
+}
+
+.attach-btn:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--nexus-text-main);
+}
+
+.nexus-text-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  resize: none;
+  max-height: 84px;
+  min-height: 22px;
+  padding: 8px 4px;
+  font-size: 15px;
+  color: var(--nexus-text-main);
+  line-height: 1.5;
+}
+
+.nexus-text-input:focus {
+  outline: none;
+}
+
+.send-btn-round {
+  width: 38px;
+  height: 38px;
+  background: var(--nexus-primary);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.2s;
+  flex-shrink: 0;
+}
+
+.send-btn-round:hover {
+  background: #2563eb;
+  transform: scale(1.05);
+}
+
+.send-btn-round:disabled {
+  background: var(--nexus-border);
+  cursor: not-allowed;
+  transform: none;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 1100px) {
+  .patient-chat-nexus {
+    grid-template-columns: 300px minmax(0, 1fr);
+    margin: 10px 14px;
+  }
+}
+
+@media (max-width: 860px) {
+  .patient-chat-nexus {
+    grid-template-columns: 1fr;
+    height: calc(100vh - 96px);
+  }
+
+  .nexus-inbox {
+    width: 100%;
+    max-height: 42vh;
+    border-right: none;
+    border-bottom: 1px solid var(--nexus-border);
+    box-shadow: none;
+  }
+
+  .nexus-chat-pane {
+    min-height: 58vh;
+  }
+
+  .nexus-msg-row {
+    max-width: 85%;
+  }
+}
+
+/* =================================================================
+   DARK MODE OVERRIDES
+   ================================================================= */
+body.dark .patient-chat-nexus {
+  background: #1e293b;
+  border-color: #334155;
+}
+
+body.dark .nexus-inbox {
+  background: #0f172a;
+  border-color: #334155;
+}
+
+body.dark .nexus-inbox-header,
+body.dark .nexus-inbox-title-row {
+  border-color: #334155;
+}
+
+body.dark .nexus-inbox-title,
+body.dark .nexus-patient-name {
+  color: #f8fafc;
+}
+
+body.dark .nexus-search-input {
+  background: #1e293b;
+  border-color: #334155;
+  color: #f8fafc;
+}
+
+body.dark .nexus-list-section {
+  color: #94a3b8;
+}
+
+body.dark .nexus-conversation-card:hover {
+  background: #1e293b;
+}
+
+body.dark .nexus-conversation-card.active {
+  background: rgba(59, 130, 246, 0.15);
+  border-color: #3b82f6;
+}
+
+body.dark .nexus-last-message,
+body.dark .nexus-timestamp {
+  color: #94a3b8;
+}
+
+body.dark .nexus-unread-badge {
+  box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+}
+
+body.dark .nexus-chat-pane {
+  background: #1e293b;
+}
+
+body.dark .nexus-chat-header {
+  background: rgba(30, 41, 59, 0.9);
+  border-color: #334155;
+}
+
+body.dark .nexus-doctor-details h3 {
+  color: #f8fafc;
+}
+
+body.dark .nexus-input-action-btn {
+  background: #1e293b;
+  color: #94a3b8;
+}
+
+body.dark .nexus-input-action-btn:hover,
+body.dark .nexus-input-action-btn.active {
+  background: rgba(59, 130, 246, 0.2);
+  color: #60a5fa;
+  border-color: rgba(59, 130, 246, 0.5);
+}
+
+body.dark .nexus-messages-area {
+  background-image:
+    radial-gradient(rgba(148, 163, 184, 0.08) 1px, transparent 1px),
+    linear-gradient(to bottom, transparent 0%, #0f172a 100%);
+}
+
+body.dark .received .nexus-bubble {
+  background: #1e293b;
+  border-color: #334155;
+  color: #e2e8f0;
+}
+
+body.dark .nexus-msg-meta {
+  color: #94a3b8;
+}
+
+body.dark .nexus-input-area {
+  background: #0f172a;
+  border-color: #334155;
+}
+
+body.dark .action-pill {
+  background: #1e293b;
+  border-color: #334155;
+  color: #94a3b8;
+}
+
+body.dark .action-pill:hover {
+  background: rgba(59, 130, 246, 0.15);
+  color: #60a5fa;
+  border-color: #3b82f6;
+}
+
+body.dark .nexus-input-wrapper {
+  background: #1e293b;
+  border-color: #334155;
+}
+
+body.dark .nexus-input-wrapper:focus-within {
+  background: #0f172a;
+  border-color: #3b82f6;
+}
+
+body.dark .nexus-header-divider {
+  background: #334155;
+}
+
+body.dark .nexus-status-text {
+  color: #94a3b8;
+}
+
+body.dark .nexus-conversation-card.unread {
+  background: rgba(59, 130, 246, 0.14);
+  border-color: rgba(96, 165, 250, 0.55);
+}
+
+body.dark .nexus-conversation-card {
+  border-color: rgba(51, 65, 85, 0.75);
+}
+
+body.dark .nexus-conversation-card.unread .nexus-last-message {
+  color: #e2e8f0;
+}
+
+body.dark .nexus-text-input {
+  color: #f8fafc;
+}
+
+body.dark .attach-btn {
+  color: #94a3b8;
+}
+
+body.dark .attach-btn:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: #f8fafc;
+}
+
+body.dark .empty-chat-state h2 {
+  color: #f8fafc;
+}
+
+body.dark .empty-chat-state p {
+  color: #94a3b8;
+}
+
+body.dark .empty-chat-state .text-6xl {
+  opacity: 0.2;
+  color: #94a3b8;
+}

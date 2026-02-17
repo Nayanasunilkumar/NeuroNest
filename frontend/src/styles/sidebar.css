@@ -1,0 +1,217 @@
+/* =========================
+   SIDEBAR BASE
+========================= */
+
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: -260px;
+  width: 260px;
+  height: 100vh;
+  transition: left 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  backdrop-filter: blur(12px);
+}
+
+/* When Open */
+.sidebar.open {
+  left: 0;
+}
+
+/* =========================
+   OVERLAY
+========================= */
+
+.sidebar-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  transition: opacity 0.3s ease;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.sidebar-overlay.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* =========================
+   LIGHT THEME
+========================= */
+
+body:not(.dark) .sidebar {
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 8px 0 40px rgba(0, 0, 0, 0.08);
+  border-right: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+body:not(.dark) .sidebar-overlay {
+  background: rgba(0, 0, 0, 0.35);
+}
+
+/* =========================
+   DARK THEME
+========================= */
+
+body.dark .sidebar {
+  background: rgba(15, 23, 42, 0.95);
+  box-shadow: 8px 0 50px rgba(0, 0, 0, 0.6);
+  border-right: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+body.dark .sidebar-overlay {
+  background: rgba(0, 0, 0, 0.6);
+}
+
+/* =========================
+   HEADER
+========================= */
+
+.sidebar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  font-weight: 600;
+  font-size: 15px;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+body:not(.dark) .sidebar-header {
+  color: #111827;
+}
+
+body.dark .sidebar-header {
+  color: #ffffff;
+}
+
+.sidebar-close-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  transition: 0.2s ease;
+}
+
+.sidebar-close-btn:hover {
+  opacity: 0.7;
+}
+/* =========================
+   SIDEBAR CLOSE ICON THEME
+========================= */
+
+/* Light mode */
+body:not(.dark) .sidebar-close-btn svg {
+  stroke: #111827; /* dark gray */
+}
+
+/* Dark mode */
+body.dark .sidebar-close-btn svg {
+  stroke: #ffffff; /* white */
+}
+
+/* Hover effect */
+.sidebar-close-btn:hover svg {
+  opacity: 0.7;
+  transition: 0.2s ease;
+}
+/* =========================
+   LINKS
+========================= */
+
+.sidebar-links {
+  list-style: none;
+  padding: 14px;
+  margin: 0;
+  flex: 1;
+}
+
+/* Link item */
+.sidebar-link {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 16px;
+  margin-bottom: 6px;
+  text-decoration: none;
+  font-size: 14px;
+  border-radius: 10px;
+  transition: all 0.25s ease;
+  font-weight: 500;
+}
+
+/* Light theme link */
+body:not(.dark) .sidebar-link {
+  color: #374151;
+}
+
+/* Dark theme link */
+body.dark .sidebar-link {
+  color: #cbd5f5;
+}
+
+/* Hover */
+.sidebar-link:hover {
+  transform: translateX(4px);
+}
+
+/* Light hover */
+body:not(.dark) .sidebar-link:hover {
+  background: rgba(79, 70, 229, 0.08);
+}
+
+/* Dark hover */
+body.dark .sidebar-link:hover {
+  background: rgba(99, 102, 241, 0.18);
+}
+
+/* Active state */
+.sidebar-link.active {
+  background: linear-gradient(
+    90deg,
+    rgba(79, 70, 229, 0.18),
+    rgba(79, 70, 229, 0.05)
+  );
+  color: #4f46e5;
+  font-weight: 600;
+}
+
+/* Dark active */
+body.dark .sidebar-link.active {
+  background: linear-gradient(
+    90deg,
+    rgba(99, 102, 241, 0.35),
+    rgba(99, 102, 241, 0.08)
+  );
+  color: #ffffff;
+}
+
+/* Left premium indicator */
+.sidebar-link.active::before {
+  content: "";
+  position: absolute;
+  left: -14px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 4px;
+  height: 60%;
+  border-radius: 4px;
+  background: linear-gradient(180deg, #4f46e5, #6366f1);
+}
+
+/* Icons */
+.sidebar-icon {
+  font-size: 16px;
+  transition: transform 0.2s ease;
+}
+
+.sidebar-link:hover .sidebar-icon {
+  transform: scale(1.1);
+}

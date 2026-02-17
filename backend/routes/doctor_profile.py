@@ -1,0 +1,249 @@
+from flask import Blueprint, request, jsonify, current_app, send_from_directory
+from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
+from database.models import db, DoctorProfile, User, DoctorAvailability, DoctorExpertiseTag
+from datetime import datetime
+import os
+from werkzeug.utils import secure_filename
+
+doctor_profile_bp = Blueprint("doctor_profile", __name__, url_prefix="/api/doctor/profile")
+
+# ============================
+# GET DOCTOR PROFILE
+# ============================
+@doctor_profile_bp.route("/me", methods=["GET"])
+@jwt_required()
+def get_my_doctor_profile():
+    claims = get_jwt()
+    if claims.get("role") != "doctor":
+        return jsonify({"message": "Doctor access required"}), 403
+
+    user_id = int(get_jwt_identity())
+    profile = DoctorProfile.query.filter_by(user_id=user_id).first()
+
+    if not profile:
+        # Auto-create profile if missing (fallback)
+        user = User.query.get(user_id)
+        if not user:
+            return jsonify({"message": "User not found"}), 404
+            
+        profile = DoctorProfile(user_id=user_id)
+        db.session.add(profile)
+        db.session.commit()
+
+    return jsonify(profile.to_dict()), 200
+
+
+# ============================
+# UPDATE DOCTOR PROFILE
+# ============================
+@doctor_profile_bp.route("/me", methods=["PUT"])
+@jwt_required()
+def update_my_doctor_profile():
+    claims = get_jwt()
+    if claims.get("role") != "doctor":
+        return jsonify({"message": "Doctor access required"}), 403
+
+    user_id = int(get_jwt_identity())
+    profile = DoctorProfile.query.filter_by(user_id=user_id).first()
+
+    if not profile:
+        return jsonify({"message": "Profile not found"}), 404
+
+    data = request.json
+    
+    # Update Basic Info
+    if "phone" in data: profile.phone = data["phone"]
+    if "gender" in data: profile.gender = data["gender"]
+    if "dob" in data and data["dob"]: 
+        try:
+            profile.dob = datetime.strptime(data["dob"], "%Y-%m-%d").date()
+        except:
+            pass 
+            
+    if "bio" in data: profile.bio = data["bio"]
+    if "hospital_name" in data: profile.hospital_name = data["hospital_name"]
+
+    # Update Professional Info
+    if "specialization" in data: profile.specialization = data["specialization"]
+    if "license_number" in data: profile.license_number = data["license_number"]
+    if "qualification" in data: profile.qualification = data["qualification"]
+    if "experience_years" in data: profile.experience_years = data["experience_years"]
+    if "department" in data: profile.department = data["department"]
+    if "consultation_fee" in data: profile.consultation_fee = data["consultation_fee"]
+    if "consultation_mode" in data: profile.consultation_mode = data["consultation_mode"]
+    
+    # Update Expertise Tags
+    if "expertise_tags" in data:
+        # Clear existing tags first
+        DoctorExpertiseTag.query.filter_by(doctor_id=profile.id).delete()
+        
+        # Add new tags
+        new_tags = data["expertise_tags"]
+        for tag_input in new_tags:
+            # Handle list of strings ["Tag1", "Tag2"] OR list of objects [{"tag_name": "Tag1"}]
+            tag_name = None
+            if isinstance(tag_input, dict):
+                tag_name = tag_input.get("tag_name")
+            else:
+                tag_name = tag_input
+                
+            if tag_name:
+                new_tag = DoctorExpertiseTag(doctor_id=profile.id, tag_name=tag_name)
+                db.session.add(new_tag)
+
+    db.session.commit()
+    return jsonify(profile.to_dict()), 200
+
+
+# ============================
+# UPLOAD PROFILE IMAGE
+# ============================
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+@doctor_profile_bp.route("/image", methods=["POST"])
+@jwt_required()
+def upload_profile_image():
+    claims = get_jwt()
+    if claims.get("role") != "doctor":
+        return jsonify({"message": "Doctor access required"}), 403
+
+    user_id = int(get_jwt_identity())
+    profile = DoctorProfile.query.filter_by(user_id=user_id).first()
+    
+    if not profile:
+        return jsonify({"message": "Profile not found"}), 404
+
+    if 'file' not in request.files:
+        return jsonify({"message": "No file part"}), 400
+        
+    file = request.files['file']
+    
+    if file.filename == '':
+        return jsonify({"message": "No selected file"}), 400
+        
+    if file and allowed_file(file.filename):
+        filename = secure_filename(file.filename)
+        unique_filename = f"doctor_{user_id}_{int(datetime.now().timestamp())}_{filename}"
+        
+        # Ensure upload folder exists
+        upload_folder = os.path.join(current_app.root_path, 'uploads', 'profiles')
+        os.makedirs(upload_folder, exist_ok=True)
+        
+        file_path = os.path.join(upload_folder, unique_filename)
+        file.save(file_path)
+        
+        # Store relative URL so frontend can resolve per environment.
+        image_url = f"/api/doctor/profile/uploads/{unique_filename}"
+        
+        profile.profile_image = image_url
+        db.session.commit()
+        
+        return jsonify({"message": "Image uploaded successfully", "image_url": image_url}), 200
+    
+    return jsonify({"message": "Invalid file type"}), 400
+
+# Route to serve uploaded images directly
+@doctor_profile_bp.route("/uploads/<filename>")
+def serve_profile_image(filename):
+    upload_folder = os.path.join(current_app.root_path, 'uploads', 'profiles')
+    return send_from_directory(upload_folder, filename)
+
+
+# ============================
+# AVAILABILITY CRUD
+# ============================
+@doctor_profile_bp.route("/availability", methods=["POST"])
+@jwt_required()
+def add_availability():
+    claims = get_jwt()
+    if claims.get("role") != "doctor":
+        return jsonify({"message": "Doctor access required"}), 403
+
+    user_id = int(get_jwt_identity())
+    profile = DoctorProfile.query.filter_by(user_id=user_id).first()
+    
+    if not profile:
+        return jsonify({"message": "Doctor profile not found"}), 404
+        
+    data = request.json
+    day = data.get("day_of_week")
+    start = data.get("start_time")
+    end = data.get("end_time")
+    
+    if not day or not start or not end:
+        return jsonify({"message": "Missing required fields"}), 400
+        
+    try:
+        # Robust time parsing (HH:MM or HH:MM:SS)
+        def parse_time(t_str):
+            if len(t_str) == 5: return datetime.strptime(t_str, "%H:%M").time()
+            if len(t_str) == 8: return datetime.strptime(t_str, "%H:%M:%S").time()
+            # fallback try both
+            try:
+                return datetime.strptime(t_str, "%H:%M").time()
+            except ValueError:
+                return datetime.strptime(t_str, "%H:%M:%S").time()
+
+        start_time_obj = parse_time(start)
+        end_time_obj = parse_time(end)
+
+        if start_time_obj >= end_time_obj:
+            return jsonify({"message": "Start time must be before end time"}), 400
+
+        # Check for overlaps
+        # (StartA < EndB) and (EndA > StartB)
+        overlaps = DoctorAvailability.query.filter(
+            DoctorAvailability.doctor_id == profile.id,
+            DoctorAvailability.day_of_week == day,
+            DoctorAvailability.start_time < end_time_obj,
+            DoctorAvailability.end_time > start_time_obj
+        ).first()
+
+        if overlaps:
+            return jsonify({
+                "message": f"Overlap detected with existing slot: {overlaps.start_time.strftime('%H:%M')} - {overlaps.end_time.strftime('%H:%M')}"
+            }), 400
+        
+        new_slot = DoctorAvailability(
+            doctor_id=profile.id,
+            day_of_week=day,
+            start_time=start_time_obj,
+            end_time=end_time_obj
+        )
+        
+        db.session.add(new_slot)
+        db.session.commit()
+        
+        return jsonify(profile.to_dict()), 201
+
+    except ValueError:
+        return jsonify({"message": f"Invalid time format. Received: {start}, {end}"}), 400
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"message": f"Server Error: {str(e)}"}), 500
+
+@doctor_profile_bp.route("/availability/<int:slot_id>", methods=["DELETE"])
+@jwt_required()
+def delete_availability(slot_id):
+    claims = get_jwt()
+    if claims.get("role") != "doctor":
+        return jsonify({"message": "Doctor access required"}), 403
+
+    user_id = int(get_jwt_identity())
+    profile = DoctorProfile.query.filter_by(user_id=user_id).first()
+    
+    slot = DoctorAvailability.query.get(slot_id)
+    
+    if not slot:
+        return jsonify({"message": "Slot not found"}), 404
+        
+    if slot.doctor_id != profile.id:
+        return jsonify({"message": "Unauthorized"}), 403
+        
+    db.session.delete(slot)
+    db.session.commit()
+    
+    return jsonify(profile.to_dict()), 200

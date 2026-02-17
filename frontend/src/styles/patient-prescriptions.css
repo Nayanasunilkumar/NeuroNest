@@ -1,0 +1,417 @@
+/* ============================================== */
+/* 🏥 PATIENT PRESCRIPTIONS - HOSPITAL GRADE      */
+/* Enterprise Medical Document Styling            */
+/* ============================================== */
+
+:root {
+    --pat-primary: #3B82F6;
+    --pat-primary-dark: #1E40AF;
+    --pat-text-main: #0F172A;
+    --pat-text-muted: #64748B;
+    --rx-paper-bg: #FFFFFF;
+    --rx-header-bg: #F8FAFC;
+    --rx-border: #E2E8F0;
+    --rx-accent: #0F172A; /* Medical Black/Navy */
+}
+
+/* 1. GRID LIST VIEW ---------------------------- */
+.prescriptions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 24px;
+    padding: 24px 0;
+}
+
+.rx-card {
+    background: #FFFFFF;
+    border: 1px solid #E2E8F0;
+    border-radius: 16px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.rx-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    border-color: var(--pat-primary);
+}
+
+.rx-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.rx-date-badge {
+    background: #F1F5F9;
+    padding: 6px 12px;
+    border-radius: 99px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #475569;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.rx-status-badge {
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.rx-status-active { background: #DCFCE7; color: #166534; }
+.rx-status-expired { background: #F1F5F9; color: #64748B; }
+
+.rx-doctor-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.rx-doctor-avatar {
+    width: 44px;
+    height: 44px;
+    background: #EFF6FF;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--pat-primary);
+}
+
+.rx-diagnosis-tag {
+    background: #FFF7ED;
+    border: 1px solid #FFEDD5;
+    color: #C2410C;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    display: inline-block;
+    margin-top: 4px;
+}
+
+.btn-view-rx {
+    background: var(--pat-primary);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.2s;
+    width: 100%;
+}
+
+.btn-view-rx:hover {
+    background: var(--pat-primary-dark);
+}
+
+/* 2. ENTERPRISE PRESCRIPTION MODAL ------------- */
+.pro-modal-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(15, 23, 42, 0.75); /* Darker backdrop */
+    backdrop-filter: blur(8px);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    animation: fadeIn 0.2s ease-out;
+}
+
+.rx-modal-container {
+    width: 100%;
+    max-width: 850px;
+    max-height: 95vh;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    /* No background here, background is on paper */
+}
+
+/* Sticky Action Header above paper */
+.rx-actions-header {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    padding-bottom: 16px;
+}
+
+/* The Paper Sheet */
+.rx-paper {
+    background: #FFFFFF;
+    width: 100%;
+    min-height: 80vh;
+    padding: 48px 56px; /* Generous margins */
+    box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+    font-family: 'Inter', sans-serif;
+    color: #0F172A;
+    overflow-y: auto;
+    position: relative;
+    border-radius: 2px;
+}
+
+/* HEADER SECTION */
+.rx-header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding-bottom: 24px;
+    border-bottom: 2px solid #0F172A;
+}
+
+.hospital-brand h1 {
+    font-size: 2rem;
+    font-weight: 800;
+    color: #0F172A;
+    letter-spacing: -0.02em;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.hospital-brand p {
+    font-size: 0.9rem;
+    color: #475569;
+    margin: 4px 0 0 0;
+    font-weight: 500;
+}
+
+.hospital-contact {
+    text-align: right;
+    font-size: 0.8rem;
+    color: #64748B;
+    line-height: 1.5;
+}
+
+/* Doctor Strip */
+.rx-doctor-strip {
+    background: #F8FAFC;
+    padding: 16px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #E2E8F0;
+    margin: 0 -56px 32px -56px; /* Bleed to edges */
+    padding-left: 56px;
+    padding-right: 56px;
+}
+
+.doc-name {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #0F172A;
+}
+
+.doc-qual {
+    font-size: 0.9rem;
+    color: #475569;
+}
+
+/* Patient Box */
+.rx-patient-box {
+    border: 1px solid #E2E8F0;
+    background: #FFFFFF;
+    border-radius: 8px;
+    padding: 20px 24px;
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1.5fr;
+    gap: 24px;
+    margin-bottom: 40px;
+}
+
+.pat-group label {
+    display: block;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #94A3B8;
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.pat-group p {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #0F172A;
+    margin: 0;
+}
+
+/* Watermark */
+.rx-watermark-logo {
+    position: absolute;
+    top: 55%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    opacity: 0.04; /* Very subtle */
+    pointer-events: none;
+    z-index: 0;
+    filter: grayscale(100%);
+}
+
+/* Medicines Table */
+.rx-symbol-large {
+    font-family: serif;
+    font-size: 3.5rem;
+    font-weight: 700;
+    color: #0F172A;
+    margin-bottom: 16px;
+    line-height: 1;
+}
+
+.rx-table-wrapper {
+    position: relative;
+    z-index: 1;
+    margin-bottom: 48px;
+}
+
+.rx-meds-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.rx-meds-table th {
+    text-align: left;
+    background: #F8FAFC;
+    padding: 12px 16px;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: #475569;
+    border-bottom: 1px solid #E2E8F0;
+    border-top: 1px solid #E2E8F0;
+}
+
+.rx-meds-table td {
+    padding: 16px;
+    border-bottom: 1px solid #F1F5F9;
+    vertical-align: top;
+    color: #1E293B;
+}
+
+.med-name-primary {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #0F172A;
+}
+
+.med-instructions {
+    font-size: 0.85rem;
+    color: #64748B;
+    margin-top: 4px;
+    font-style: italic;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* Footer & Legal */
+.rx-footer-grid {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-top: 60px;
+    position: relative;
+    z-index: 1;
+}
+
+.rx-legal-block {
+    max-width: 400px;
+}
+
+.rx-validity-box {
+    display: inline-block;
+    border: 1px solid #CBD5E1;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #334155;
+    background: #F8FAFC;
+    margin-bottom: 16px;
+}
+
+.rx-signature-area {
+    text-align: center;
+    width: 240px;
+}
+
+.rx-sign-image {
+    font-family: 'Great Vibes', cursive; /* Fallback to cursive */
+    font-size: 1.8rem;
+    color: #1E40AF;
+    margin-bottom: -10px;
+    display: block;
+}
+
+.rx-sign-line-heavy {
+    border-top: 2px solid #0F172A;
+    margin: 8px 0;
+}
+
+.rx-stamp-seal {
+    position: absolute;
+    right: -20px;
+    top: -40px;
+    width: 100px;
+    height: 100px;
+    border: 3px double #1E40AF;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #1E40AF;
+    font-weight: 700;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    text-align: center;
+    transform: rotate(-15deg);
+    opacity: 0.15;
+    pointer-events: none;
+}
+
+.rx-legal-footer {
+    text-align: center;
+    margin-top: 48px;
+    padding-top: 24px;
+    border-top: 1px solid #E2E8F0;
+    font-size: 0.7rem;
+    color: #94A3B8;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* PRINT OPTIMIZATION */
+@media print {
+    @page { size: A4; margin: 0; }
+    body { background: white; margin: 0; }
+    .pro-modal-overlay { 
+        position: static; padding: 0; background: white; 
+        display: block; width: 100%; height: 100%; 
+    }
+    .rx-paper {
+        box-shadow: none; padding: 20mm; margin: 0;
+        width: 100%; max-width: none; min-height: 100vh;
+        border: none;
+    }
+    .rx-actions-header, .prescriptions-grid, .prescriptions-header, 
+    .prescriptions-container > *:not(.pro-modal-overlay) { display: none !important; }
+    
+    .rx-doctor-strip { margin-left: -20mm; margin-right: -20mm; padding-left: 20mm; padding-right: 20mm; }
+}

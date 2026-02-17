@@ -1,0 +1,112 @@
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+import ProtectedRoute from "./routes/ProtectedRoute";
+import ModuleRouteGuard from "./routes/ModuleRouteGuard";
+import { ModuleConfigProvider } from "./context/ModuleConfigContext";
+
+import PatientLayout from "./layouts/PatientLayout";
+import AdminLayout from "./layouts/AdminLayout";
+import SuperAdminDashboard from "./pages/admin/SuperAdminDashboard";
+import DoctorLayout from "./layouts/doctor/DoctorLayout";
+import Forbidden from "./pages/Forbidden";
+import NotFound from "./pages/NotFound";
+import {
+  getModuleChildRouteForRole,
+  getModuleComponentForRole,
+  moduleRegistry,
+} from "./modules/moduleRegistry";
+
+const renderRoleRoutes = (role) => {
+  const modules = moduleRegistry.filter((moduleConfig) =>
+    moduleConfig.rolesAllowed.includes(role),
+  );
+
+  return modules
+    .map((moduleConfig) => {
+      const ModuleComponent = getModuleComponentForRole(moduleConfig, role);
+      if (!ModuleComponent) return null;
+
+      return (
+        <Route
+          key={`${role}-${moduleConfig.key}`}
+          path={getModuleChildRouteForRole(moduleConfig, role)}
+          element={
+            <ModuleRouteGuard moduleConfig={moduleConfig} role={role}>
+              <ModuleComponent />
+            </ModuleRouteGuard>
+          }
+        />
+      );
+    })
+    .filter(Boolean);
+};
+
+export default function App() {
+  return (
+    <ModuleConfigProvider>
+      <BrowserRouter>
+        <Routes>
+          {/* Default */}
+          <Route path="/" element={<Navigate to="/login" />} />
+
+          {/* Public */}
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/403" element={<Forbidden />} />
+
+          {/* ================= PATIENT ================= */}
+          <Route
+            path="/patient"
+            element={
+              <ProtectedRoute allowedRoles={["patient"]}>
+                <PatientLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route index element={<Navigate to="dashboard" replace />} />
+            {renderRoleRoutes("patient")}
+          </Route>
+
+          {/* ================= DOCTOR ================= */}
+          <Route
+            path="/doctor"
+            element={
+              <ProtectedRoute allowedRoles={["doctor"]}>
+                <DoctorLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route index element={<Navigate to="dashboard" replace />} />
+            {renderRoleRoutes("doctor")}
+          </Route>
+
+          {/* ================= ADMIN ================= */}
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <AdminLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route index element={<Navigate to="dashboard" replace />} />
+            {renderRoleRoutes("admin")}
+          </Route>
+
+          {/* ================= SUPER ADMIN ================= */}
+          <Route
+            path="/super-admin/dashboard"
+            element={
+              <ProtectedRoute allowedRoles={["super_admin"]}>
+                <SuperAdminDashboard />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </BrowserRouter>
+    </ModuleConfigProvider>
+  );
+}

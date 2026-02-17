@@ -1,0 +1,77 @@
+import axios from "./axios";
+
+export const getAppointmentRequests = async () => {
+  const response = await axios.get("/doctor/appointment-requests");
+  return response.data;
+};
+
+export const approveAppointment = async (id) => {
+  const response = await axios.patch(`/doctor/appointments/${id}/approve`);
+  return response.data;
+};
+
+export const rejectAppointment = async (id) => {
+  const response = await axios.patch(`/doctor/appointments/${id}/reject`);
+  return response.data;
+};
+
+export const getSchedule = async (date = null, status = 'all') => {
+  let url = "/doctor/schedule";
+  const params = new URLSearchParams();
+  if (date) params.append("date", date);
+  if (status) params.append("status", status);
+  if (params.toString()) url += `?${params.toString()}`;
+  
+  const response = await axios.get(url);
+  return response.data;
+};
+
+export const completeAppointment = async (id) => {
+  const response = await axios.patch(`/doctor/appointments/${id}/complete`);
+  return response.data;
+};
+
+export const cancelAppointment = async (id) => {
+  const response = await axios.patch(`/doctor/appointments/${id}/cancel`);
+  return response.data;
+};
+
+export const markNoShow = async (id) => {
+  const response = await axios.patch(`/doctor/appointments/${id}/no-show`);
+  return response.data;
+};
+
+export const getAppointmentHistory = async () => {
+  const response = await axios.get("/doctor/appointments/history");
+  return response.data;
+};
+
+export const getDoctorStats = async () => {
+  const response = await axios.get("/doctor/stats");
+  return response.data;
+};
+
+export const getPatients = async () => {
+  const response = await axios.get("/doctor/patients");
+  return response.data;
+};
+
+export const getPatientRecords = async (patientId) => {
+  const response = await axios.get(`/doctor/patients/${patientId}/records`);
+  return response.data;
+};
+
+export const getPatientDossier = async (patientId) => {
+  const response = await axios.get(`/doctor/patients/${patientId}/dossier`);
+  return response.data;
+};
+
+export const saveClinicalRemark = async (patientId, content) => {
+  const response = await axios.post(`/doctor/patients/${patientId}/remarks`, { content });
+  return response.data;
+};
+
+export const getClinicalRemarks = async (patientId) => {
+  const response = await axios.get(`/doctor/patients/${patientId}/remarks`);
+  return response.data;
+};
