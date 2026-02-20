@@ -12,13 +12,12 @@ const performanceAnalyticsModule = {
   label: 'Performance Analytics',
   icon: BarChart3,
   route: '/performance-analytics',
-  rolesAllowed: ['doctor', 'admin'],
-  enabledByDefault: false,
+  rolesAllowed: ['doctor'],
+  enabledByDefault: true,
   componentsByRole: {
     doctor: PerformanceAnalyticsPage,
-    admin: PerformanceAnalyticsPage,
   },
-  orderByRole: { doctor: 80, admin: 90 },
+  orderByRole: { doctor: 80 },
 };
 
 export default performanceAnalyticsModule;

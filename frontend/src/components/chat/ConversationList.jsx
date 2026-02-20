@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Search } from 'lucide-react';
 import Avatar from '../shared/Avatar';
+import { formatTimeIST, parseServerDate } from '../../utils/time';
 import '../../styles/patient-chat.css';
 
 const ConversationList = ({ conversations, selectedId, onSelect, currentUserId }) => {
@@ -16,7 +17,7 @@ const ConversationList = ({ conversations, selectedId, onSelect, currentUserId }
     const now = new Date();
 
     filtered.forEach(conv => {
-        const lastMsgDate = conv.last_message ? new Date(conv.last_message.created_at) : new Date(0);
+        const lastMsgDate = conv.last_message ? parseServerDate(conv.last_message.created_at) : new Date(0);
         const diffHours = (now - lastMsgDate) / (1000 * 60 * 60);
         // Recent if unread or within 24 hours
         if (conv.unread_count > 0 || diffHours < 24) {
@@ -51,7 +52,7 @@ const ConversationList = ({ conversations, selectedId, onSelect, currentUserId }
                     <div className="nexus-card-header">
                         <h3 className="nexus-patient-name">{otherUser?.name}</h3>
                         <span className="nexus-timestamp">
-                            {lastMessage ? new Date(lastMessage.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : ''}
+                            {lastMessage ? formatTimeIST(lastMessage.created_at) : ''}
                         </span>
                     </div>
                     

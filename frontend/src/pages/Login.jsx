@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { loginUser } from "../api/auth";
+import { saveAuth } from "../utils/auth";
 import "../styles/auth.css";
 
 const Login = () => {
@@ -26,9 +27,7 @@ const Login = () => {
 
       const { token, user } = response.data;
 
-      // ✅ FIXED: Store using SAME key as axios interceptor
-      localStorage.setItem("neuronest_token", token);
-      localStorage.setItem("neuronest_user", JSON.stringify(user));
+      saveAuth(token, user);
 
       // ✅ Redirect by role
       if (user.role === "patient") {

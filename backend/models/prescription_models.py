@@ -32,7 +32,7 @@ class Prescription(db.Model):
     
     status = db.Column(
         db.String(50), 
-        default="Active"  # Active / Completed / Cancelled / Expired
+        default="active"  # active / expired / cancelled / draft
     )
     
     valid_until = db.Column(db.Date)

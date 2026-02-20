@@ -1,5 +1,13 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from database.models import db
+
+
+def to_utc_iso(value):
+    if not value:
+        return None
+    if value.tzinfo is None:
+        return value.replace(tzinfo=timezone.utc).isoformat().replace("+00:00", "Z")
+    return value.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
 
 # =========================================
 # CONVERSATION MODEL
@@ -32,8 +40,8 @@ class Conversation(db.Model):
         return {
             "id": self.id,
             "type": self.type,
-            "created_at": str(self.created_at),
-            "updated_at": str(self.updated_at),
+            "created_at": to_utc_iso(self.created_at),
+            "updated_at": to_utc_iso(self.updated_at),
             "participants": [p.to_dict() for p in self.participants]
         }
 
@@ -58,7 +66,7 @@ class Participant(db.Model):
             "conversation_id": self.conversation_id,
             "user_id": self.user_id,
             "user_name": self.user.full_name if self.user else "Unknown",
-            "joined_at": str(self.joined_at)
+            "joined_at": to_utc_iso(self.joined_at)
         }
 
 # =========================================
@@ -94,6 +102,6 @@ class Message(db.Model):
             "type": self.type,
             "is_read": self.is_read,
             "is_deleted": self.is_deleted,
-            "created_at": str(self.created_at),
-            "updated_at": str(self.updated_at)
+            "created_at": to_utc_iso(self.created_at),
+            "updated_at": to_utc_iso(self.updated_at)
         }

@@ -2,6 +2,7 @@
 
 const TOKEN_KEY = "neuronest_token";
 const USER_KEY = "neuronest_user";
+const ACTIVITY_KEY = "neuronest_last_activity";
 
 /**
  * Save token and user after login
@@ -9,6 +10,7 @@ const USER_KEY = "neuronest_user";
 export const saveAuth = (token, user) => {
   localStorage.setItem(TOKEN_KEY, token);
   localStorage.setItem(USER_KEY, JSON.stringify(user));
+  localStorage.setItem(ACTIVITY_KEY, String(Date.now()));
 };
 
 /**
@@ -39,5 +41,6 @@ export const isAuthenticated = () => {
 export const logout = () => {
   localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(USER_KEY);
+  localStorage.removeItem(ACTIVITY_KEY);
   window.location.href = "/login";
 };

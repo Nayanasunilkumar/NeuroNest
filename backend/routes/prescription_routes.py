@@ -37,9 +37,9 @@ def create_prescription():
         if not items or len(items) == 0:
             return jsonify({"message": "At least one medicine is required"}), 400
 
-        initial_status = data.get("status", "Active")
-        if initial_status not in ["Active", "Draft"]:
-            initial_status = "Active"
+        initial_status = data.get("status", "active")
+        if initial_status not in ["active", "draft"]:
+            initial_status = "active"
 
         # Create Prescription
         new_prescription = Prescription(
@@ -146,10 +146,10 @@ def get_patient_prescriptions():
     if claims.get("role") != "patient":
         return jsonify({"message": "Access denied"}), 403
 
-    # Filter out Drafts (Patients should not see drafts)
+    # Filter out drafts — patients should not see draft prescriptions
     prescriptions = Prescription.query.filter(
         Prescription.patient_id == current_user_id,
-        Prescription.status != 'Draft'
+        Prescription.status != 'draft'
     ).order_by(Prescription.created_at.desc()).all()
     
     # Enrich with doctor name
@@ -208,7 +208,7 @@ def update_status(id):
     data = request.get_json()
     new_status = data.get("status")
 
-    if new_status not in ["Active", "Completed", "Cancelled"]:
+    if new_status not in ["active", "expired", "cancelled"]:
         return jsonify({"message": "Invalid status"}), 400
 
     prescription.status = new_status

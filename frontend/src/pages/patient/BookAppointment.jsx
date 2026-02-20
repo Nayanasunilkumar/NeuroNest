@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AppointmentForm from "../../components/appointments/AppointmentForm";
-import { bookAppointment } from "../../api/appointments";
+import { bookAppointment, bookAppointmentBySlot } from "../../api/appointments";
 import "../../styles/appointments.css";
 import "../../styles/profile.css";
 
@@ -14,7 +14,16 @@ const BookAppointment = () => {
     setError("");
     setLoading(true);
     try {
-      await bookAppointment(formData);
+      if (formData.slot_id) {
+        await bookAppointmentBySlot({
+          doctor_id: formData.doctor_id,
+          slot_id: formData.slot_id,
+          reason: formData.reason,
+          notes: formData.notes,
+        });
+      } else {
+        await bookAppointment(formData);
+      }
       alert("Appointment booked successfully!");
       navigate("/patient/appointments");
     } catch (err) {

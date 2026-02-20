@@ -286,6 +286,8 @@
     border-bottom: 1px solid #F1F5F9;
     background: #FFFFFF;
     gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
 }
 
 .filter-tab {
@@ -303,6 +305,94 @@
 .filter-tab.active {
     background: #EFF6FF;
     color: #2563EB;
+}
+
+.history-patient-picker-wrap {
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.history-patient-picker-wrap label {
+    font-size: 0.76rem;
+    font-weight: 700;
+    color: #64748B;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.history-patient-picker {
+    height: 34px;
+    min-width: 190px;
+    padding: 0 10px;
+    border: 1px solid #E2E8F0;
+    border-radius: 8px;
+    background: #F8FAFC;
+    color: #334155;
+    font-size: 0.82rem;
+    font-weight: 600;
+    outline: none;
+    cursor: pointer;
+}
+
+.history-patient-picker:focus {
+    border-color: #93C5FD;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+}
+
+.dark .history-patient-picker-wrap label {
+    color: #94A3B8;
+}
+
+.dark .history-patient-picker {
+    background: #0F172A;
+    border-color: #334155;
+    color: #CBD5E1;
+}
+
+@media (max-width: 860px) {
+    .history-patient-picker-wrap {
+        width: 100%;
+        margin-left: 0;
+    }
+
+    .history-patient-picker {
+        width: 100%;
+    }
+}
+
+.history-patient-group {
+    margin-bottom: 18px;
+}
+
+.history-patient-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    padding: 6px 2px;
+}
+
+.history-patient-title {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    color: #334155;
+    text-transform: uppercase;
+}
+
+.history-patient-count {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #64748B;
+    background: #F8FAFC;
+    border: 1px solid #E2E8F0;
+    border-radius: 999px;
+    padding: 3px 10px;
 }
 
 .sticky-footer-bar {

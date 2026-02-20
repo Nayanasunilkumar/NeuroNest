@@ -4,10 +4,10 @@ import Register from "./pages/Register";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import ModuleRouteGuard from "./routes/ModuleRouteGuard";
 import { ModuleConfigProvider } from "./context/ModuleConfigContext";
+import SessionManager from "./components/SessionManager";
 
 import PatientLayout from "./layouts/PatientLayout";
 import AdminLayout from "./layouts/AdminLayout";
-import SuperAdminDashboard from "./pages/admin/SuperAdminDashboard";
 import DoctorLayout from "./layouts/doctor/DoctorLayout";
 import Forbidden from "./pages/Forbidden";
 import NotFound from "./pages/NotFound";
@@ -46,6 +46,7 @@ export default function App() {
   return (
     <ModuleConfigProvider>
       <BrowserRouter>
+        <SessionManager />
         <Routes>
           {/* Default */}
           <Route path="/" element={<Navigate to="/login" />} />
@@ -94,15 +95,6 @@ export default function App() {
             {renderRoleRoutes("admin")}
           </Route>
 
-          {/* ================= SUPER ADMIN ================= */}
-          <Route
-            path="/super-admin/dashboard"
-            element={
-              <ProtectedRoute allowedRoles={["super_admin"]}>
-                <SuperAdminDashboard />
-              </ProtectedRoute>
-            }
-          />
 
           <Route path="*" element={<NotFound />} />
         </Routes>

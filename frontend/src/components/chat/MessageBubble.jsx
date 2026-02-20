@@ -1,6 +1,7 @@
 import React from 'react';
 import { Check, CheckCheck, Download, Paperclip } from 'lucide-react';
 import { resolveApiUrl } from '../../config/env';
+import { formatTimeIST } from '../../utils/time';
 import '../../styles/patient-chat.css';
 
 const URL_PATTERN = /(https?:\/\/[^\s]+|\/api\/chat\/uploads\/[^\s]+|\/uploads\/[^\s]+)/i;
@@ -57,7 +58,7 @@ const MessageBubble = ({ message, isMe }) => {
 
             <span className="nexus-msg-meta">
                 <span className="nexus-msg-time">
-                    {new Date(message.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    {formatTimeIST(message.created_at)}
                 </span>
                 {isMe && (
                     <span className="nexus-read-ticks">

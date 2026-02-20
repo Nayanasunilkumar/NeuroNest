@@ -2,8 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Send, Zap, Paperclip } from 'lucide-react';
 import MessageBubble from './MessageBubble';
 import chatAPI from '../../services/chatAPI';
+import { getISTDayKey, getRelativeDayLabelIST } from '../../utils/time';
 
-const ChatWindow = ({ messages, currentUserId, onSendMessage, loadingMessages, isDoctor, templates = [], otherUser }) => {
+const ChatWindow = ({ messages, currentUserId, onSendMessage, loadingMessages, messagesLoadError, isDoctor, templates = [], otherUser }) => {
     const [newMessage, setNewMessage] = useState('');
     const [showTemplates, setShowTemplates] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
@@ -63,6 +64,33 @@ const ChatWindow = ({ messages, currentUserId, onSendMessage, loadingMessages, i
         }
     };
 
+    const renderMessageStream = () => {
+        let lastDayKey = '';
+        const blocks = [];
+
+        messages.forEach((msg, index) => {
+            const dayKey = getISTDayKey(msg.created_at);
+            if (dayKey && dayKey !== lastDayKey) {
+                blocks.push(
+                    <div className="nexus-day-separator" key={`day-${dayKey}-${index}`}>
+                        <span className="nexus-day-pill">{getRelativeDayLabelIST(msg.created_at)}</span>
+                    </div>
+                );
+                lastDayKey = dayKey;
+            }
+
+            blocks.push(
+                <MessageBubble 
+                    key={msg.id || index} 
+                    message={msg} 
+                    isMe={msg.sender_id === currentUserId}
+                />
+            );
+        });
+
+        return blocks;
+    };
+
     return (
         <div className="nexus-chat-window">
             {/* MESSAGES AREA */}
@@ -72,22 +100,26 @@ const ChatWindow = ({ messages, currentUserId, onSendMessage, loadingMessages, i
                          <div style={{ width: 32, height: 32, border: '3px solid #e2e8f0', borderTopColor: '#3b82f6', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
                         <p style={{ fontSize: '13px', fontWeight: 600 }}>Synchronizing secure channel...</p>
                     </div>
-                ) : messages.length === 0 ? (
+                ) : messagesLoadError ? (
                     <div className="nexus-chat-feedback">
-                        <div style={{ fontSize: '3rem', marginBottom: '1rem', opacity: 0.2 }}>💬</div>
-                        <h3 style={{ fontSize: '15px', fontWeight: 700, color: '#64748b', marginBottom: '8px' }}>Start a Conversation</h3>
-                        <p style={{ fontSize: '13px', maxWidth: '280px', textAlign: 'center', lineHeight: 1.5 }}>
+                        <h3 className="nexus-empty-chat-title">Message Sync Issue</h3>
+                        <p className="nexus-empty-chat-subtitle">{messagesLoadError}</p>
+                    </div>
+                ) : messages.length === 0 ? (
+                    <div className="nexus-chat-feedback nexus-chat-feedback-empty">
+                        <div className="nexus-empty-chat-emoji">💬</div>
+                        <h3 className="nexus-empty-chat-title">Start a Conversation</h3>
+                        <p className="nexus-empty-chat-subtitle">
                             Connecting with {otherUser?.name || 'your healthcare provider'} is secure and private.
                         </p>
+                        <div className="nexus-empty-chat-pills">
+                            <span className="nexus-empty-chat-pill">Private</span>
+                            <span className="nexus-empty-chat-pill">Encrypted</span>
+                            <span className="nexus-empty-chat-pill">Realtime</span>
+                        </div>
                     </div>
                 ) : (
-                    messages.map((msg, index) => (
-                        <MessageBubble 
-                            key={msg.id || index} 
-                            message={msg} 
-                            isMe={msg.sender_id === currentUserId}
-                        />
-                    ))
+                    renderMessageStream()
                 )}
                 <div ref={messagesEndRef} />
             </div>

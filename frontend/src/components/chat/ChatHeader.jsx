@@ -1,6 +1,16 @@
 import React from 'react';
 import { Calendar, Phone, Video, Info } from 'lucide-react';
 import Avatar from '../shared/Avatar';
+import { formatDateIST } from '../../utils/time';
+
+const formatAppointmentIST = (appointment) => {
+    if (!appointment?.date) return 'No upcoming visit';
+    const dateLabel = formatDateIST(appointment.date) || appointment.date;
+    const timeLabel = appointment.time
+        ? String(appointment.time).slice(0, 5)
+        : '';
+    return timeLabel ? `${dateLabel} @ ${timeLabel}` : dateLabel;
+};
 
 const ChatHeader = ({ otherUser, context, isDoctor, onToggleSidebar, showSidebar }) => {
     const statusText = otherUser?.is_online ? 'Online' : 'Last seen recently';
@@ -33,7 +43,7 @@ const ChatHeader = ({ otherUser, context, isDoctor, onToggleSidebar, showSidebar
                         <div>
                             <p className="nexus-context-label">Next Appointment</p>
                             <p className="nexus-context-value">
-                                {context.next_appointment ? `${context.next_appointment.date} @ ${context.next_appointment.time}` : 'No upcoming visit'}
+                                {formatAppointmentIST(context.next_appointment)}
                             </p>
                         </div>
                     </div>

@@ -42,16 +42,16 @@ const Prescriptions = () => {
     };
 
     return (
-        <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '40px 24px' }}>
+        <div className="prescriptions-page-shell">
             {/* Header */}
-            <div style={{ marginBottom: '40px' }}>
-                <h1 style={{ fontSize: '2rem', fontWeight: 800, color: '#1E293B', display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <div style={{ width: 48, height: 48, background: '#EFF6FF', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#2563EB' }}>
+            <div className="prescriptions-page-header">
+                <h1 className="prescriptions-title-row">
+                    <div className="prescriptions-title-icon">
                         <Pill size={28} />
                     </div>
-                    My Prescriptions
+                    <span className="prescriptions-title">My Prescriptions</span>
                 </h1>
-                <p style={{ color: '#64748B', marginTop: '8px', fontSize: '1.1rem' }}>
+                <p className="prescriptions-subtitle">
                     Access and manage your medical prescriptions securely.
                 </p>
             </div>
@@ -79,12 +79,12 @@ const Prescriptions = () => {
                     ))}
                 </div>
             ) : prescriptions.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '80px 0', background: '#F8FAFC', borderRadius: '24px', border: '1px dashed #E2E8F0' }}>
-                    <div style={{ width: 80, height: 80, background: '#FFFFFF', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
+                <div className="prescriptions-empty">
+                    <div className="prescriptions-empty-icon">
                         <FileText size={40} className="text-gray-300" />
                     </div>
-                    <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#1E293B', marginBottom: '8px' }}>No Prescriptions Yet</h3>
-                    <p style={{ color: '#64748B' }}>Your received prescriptions will appear here.</p>
+                    <h3 className="prescriptions-empty-title">No Prescriptions Yet</h3>
+                    <p className="prescriptions-empty-subtitle">Your received prescriptions will appear here.</p>
                 </div>
             ) : (
                 <div className="prescriptions-grid">
@@ -95,7 +95,7 @@ const Prescriptions = () => {
                                     <Calendar size={14} />
                                     {formatDate(p.created_at)}
                                 </div>
-                                <span className={`rx-status-badge ${p.status === 'Active' ? 'rx-status-active' : 'rx-status-expired'}`}>
+                                <span className={`rx-status-badge ${String(p.status).toLowerCase() === 'active' ? 'rx-status-active' : 'rx-status-expired'}`}>
                                     {p.status}
                                 </span>
                             </div>
@@ -111,7 +111,7 @@ const Prescriptions = () => {
                             </div>
 
                             <div style={{ marginTop: 'auto' }}>
-                                <label style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: '#94A3B8', fontWeight: 700, letterSpacing: '0.05em' }}>Diagnosis</label>
+                                <label className="rx-diagnosis-label">Diagnosis</label>
                                 <div className="rx-diagnosis-tag">
                                     {p.diagnosis || "No Diagnosis"}
                                 </div>

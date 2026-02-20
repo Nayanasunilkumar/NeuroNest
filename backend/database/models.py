@@ -1,5 +1,6 @@
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
+from sqlalchemy import UniqueConstraint, CheckConstraint, Index, Enum as SAEnum
 
 db = SQLAlchemy()
 
@@ -15,6 +16,22 @@ class User(db.Model):
     password_hash = db.Column(db.String(255), nullable=False)
     role = db.Column(db.String(50), default="patient")
     full_name = db.Column(db.String(100))
+
+    # Account Control Fields
+    account_status = db.Column(db.String(20), default="active") # active, suspended, deleted
+    is_email_verified = db.Column(db.Boolean, default=False)
+    is_phone_verified = db.Column(db.Boolean, default=False)
+    is_verified = db.Column(db.Boolean, default=False) # Clinical/Medical verification
+
+    # Sync with DB reality
+    email_verified = db.Column(db.Boolean, default=False)
+    phone_verified = db.Column(db.Boolean, default=False)
+    is_deleted = db.Column(db.Boolean, default=False)
+    preferred_language = db.Column(db.String(20), default="en")
+    is_two_factor_enabled = db.Column(db.Boolean, default=False)
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
 # =========================================
@@ -158,6 +175,12 @@ class Appointment(db.Model):
 
     appointment_date = db.Column(db.Date, nullable=False)
     appointment_time = db.Column(db.Time, nullable=False)
+    slot_id = db.Column(
+        db.Integer,
+        db.ForeignKey("appointment_slots.id"),
+        nullable=True,
+        index=True
+    )
 
     reason = db.Column(db.String(255))
     notes = db.Column(db.Text)
@@ -165,6 +188,17 @@ class Appointment(db.Model):
     status = db.Column(
         db.String(50),
         default="Pending"  # Pending / Approved / Rejected / Cancelled / Completed
+    )
+    booking_mode = db.Column(
+        SAEnum("auto_confirm", "doctor_approval", name="booking_mode_enum"),
+        nullable=False,
+        default="auto_confirm"
+    )
+    delay_reason = db.Column(db.Text, nullable=True)
+    extended_from_appointment_id = db.Column(
+        db.Integer,
+        db.ForeignKey("appointments.id"),
+        nullable=True
     )
 
     created_at = db.Column(
@@ -178,10 +212,13 @@ class Appointment(db.Model):
         onupdate=datetime.utcnow
     )
 
+    feedback_given = db.Column(db.Boolean, default=False)
+
 
     # Relationships
     patient = db.relationship("User", foreign_keys=[patient_id], backref="patient_appointments")
     doctor = db.relationship("User", foreign_keys=[doctor_id], backref="doctor_appointments")
+    slot = db.relationship("AppointmentSlot", foreign_keys=[slot_id], backref="appointment", uselist=False)
 
     # =========================================
     # RETURN JSON DATA
@@ -196,13 +233,132 @@ class Appointment(db.Model):
             "doctor_name": self.doctor.full_name if self.doctor else None,
             "appointment_date": str(self.appointment_date),
             "appointment_time": str(self.appointment_time),
+            "slot_id": self.slot_id,
             "reason": self.reason,
             "notes": self.notes,
             "status": self.status,
+            "booking_mode": self.booking_mode,
+            "delay_reason": self.delay_reason,
+            "extended_from_appointment_id": self.extended_from_appointment_id,
+            "feedback_given": self.feedback_given,
             "created_at": str(self.created_at),
             "updated_at": str(self.updated_at),
         }
-    
+
+
+# =========================================
+# APPOINTMENT SLOTS TABLE
+# =========================================
+class AppointmentSlot(db.Model):
+    __tablename__ = "appointment_slots"
+    __table_args__ = (
+        UniqueConstraint("doctor_user_id", "slot_start_utc", name="uq_doctor_slot_start"),
+        CheckConstraint("slot_end_utc > slot_start_utc", name="ck_slot_end_after_start"),
+        Index("idx_slot_doctor_date_status", "doctor_user_id", "slot_date_local", "status"),
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+    doctor_user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False, index=True)
+    slot_start_utc = db.Column(db.DateTime(timezone=True), nullable=False, index=True)
+    slot_end_utc = db.Column(db.DateTime(timezone=True), nullable=False)
+    slot_date_local = db.Column(db.Date, nullable=False, index=True)
+    status = db.Column(
+        SAEnum("available", "held", "booked", "blocked", "cancelled", name="slot_status_enum"),
+        nullable=False,
+        default="available",
+        index=True
+    )
+    held_by_patient_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=True)
+    held_until_utc = db.Column(db.DateTime(timezone=True), nullable=True)
+    booked_appointment_id = db.Column(db.Integer, nullable=True, index=True)
+    source = db.Column(
+        SAEnum("generated", "manual_override", "emergency_block", name="slot_source_enum"),
+        nullable=False,
+        default="generated"
+    )
+    created_at = db.Column(db.DateTime(timezone=True), default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime(timezone=True), default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    doctor_user = db.relationship("User", foreign_keys=[doctor_user_id], backref="appointment_slots")
+    held_by_patient = db.relationship("User", foreign_keys=[held_by_patient_id], backref="held_slots")
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "doctor_user_id": self.doctor_user_id,
+            "slot_start_utc": self.slot_start_utc.isoformat() if self.slot_start_utc else None,
+            "slot_end_utc": self.slot_end_utc.isoformat() if self.slot_end_utc else None,
+            "slot_date_local": str(self.slot_date_local),
+            "status": self.status,
+            "held_by_patient_id": self.held_by_patient_id,
+            "held_until_utc": self.held_until_utc.isoformat() if self.held_until_utc else None,
+            "booked_appointment_id": self.booked_appointment_id,
+            "source": self.source,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+
+# =========================================
+# DOCTOR SCHEDULE SETTINGS
+# =========================================
+class DoctorScheduleSetting(db.Model):
+    __tablename__ = "doctor_schedule_settings"
+
+    id = db.Column(db.Integer, primary_key=True)
+    doctor_user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False, unique=True, index=True)
+    slot_duration_minutes = db.Column(db.Integer, nullable=False, default=30)
+    buffer_minutes = db.Column(db.Integer, nullable=False, default=10)
+    approval_mode = db.Column(
+        SAEnum("auto_confirm", "doctor_approval", name="approval_mode_enum"),
+        nullable=False,
+        default="auto_confirm"
+    )
+    timezone = db.Column(db.String(64), nullable=False, default="Asia/Kolkata")
+    created_at = db.Column(db.DateTime(timezone=True), default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime(timezone=True), default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    doctor_user = db.relationship("User", backref=db.backref("schedule_setting", uselist=False))
+
+    def to_dict(self):
+        return {
+            "doctor_user_id": self.doctor_user_id,
+            "slot_duration_minutes": self.slot_duration_minutes,
+            "buffer_minutes": self.buffer_minutes,
+            "approval_mode": self.approval_mode,
+            "timezone": self.timezone,
+        }
+
+
+# =========================================
+# IN-APP NOTIFICATIONS
+# =========================================
+class InAppNotification(db.Model):
+    __tablename__ = "in_app_notifications"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False, index=True)
+    type = db.Column(db.String(50), nullable=False, default="info")
+    title = db.Column(db.String(200), nullable=False)
+    message = db.Column(db.Text, nullable=False)
+    payload = db.Column(db.JSON, nullable=True)
+    is_read = db.Column(db.Boolean, nullable=False, default=False)
+    created_at = db.Column(db.DateTime(timezone=True), default=datetime.utcnow, nullable=False)
+
+    user = db.relationship("User", backref="notifications")
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "type": self.type,
+            "title": self.title,
+            "message": self.message,
+            "metadata": self.payload or {},
+            "is_read": self.is_read,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+        }
+
 
 
 
@@ -268,6 +424,31 @@ class MedicalRecord(db.Model):
 
 
 # =========================================
+# CLINICAL STRUCTURE TABLE (Hierarchy)
+# =========================================
+class ClinicalStructure(db.Model):
+    __tablename__ = "clinical_structures"
+
+    id = db.Column(db.Integer, primary_key=True)
+    sector = db.Column(db.String(100), nullable=False)
+    specialty = db.Column(db.String(100), nullable=False)
+    is_active = db.Column(db.Boolean, default=True)
+    
+    created_at = db.Column(
+        db.DateTime,
+        default=datetime.utcnow
+    )
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "sector": self.sector,
+            "specialty": self.specialty,
+            "is_active": self.is_active
+        }
+
+
+# =========================================
 # DOCTOR PROFILE TABLE
 # =========================================
 class DoctorProfile(db.Model):
@@ -287,6 +468,7 @@ class DoctorProfile(db.Model):
     qualification = db.Column(db.String(100))
     experience_years = db.Column(db.Integer)
     department = db.Column(db.String(100))
+    sector = db.Column(db.String(50), default="North Sector") # North, South, East, West
     
     phone = db.Column(db.String(20))
     gender = db.Column(db.String(20))
@@ -326,6 +508,7 @@ class DoctorProfile(db.Model):
             "qualification": self.qualification,
             "experience_years": self.experience_years,
             "department": self.department,
+            "sector": self.sector,
             "phone": self.phone,
             "gender": self.gender,
             "dob": str(self.dob) if self.dob else None,
@@ -478,3 +661,83 @@ class ModuleConfig(db.Model):
             "created_at": str(self.created_at),
             "updated_at": str(self.updated_at),
         }
+
+# =========================================
+# CLINICAL QUALITY & REVIEWS TABLE
+# =========================================
+class Review(db.Model):
+    __tablename__ = "reviews"
+
+    id = db.Column(db.Integer, primary_key=True)
+    appointment_id = db.Column(db.Integer, db.ForeignKey("appointments.id"), nullable=False, unique=True)
+    patient_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    doctor_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    
+    rating = db.Column(db.Integer, CheckConstraint('rating >= 1 AND rating <= 5'), nullable=False)
+    review_text = db.Column(db.Text)
+    sentiment = db.Column(db.String(20)) # positive, neutral, negative
+    
+    is_hidden = db.Column(db.Boolean, default=False)
+    is_flagged = db.Column(db.Boolean, default=False)
+    
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    appointment = db.relationship("Appointment", backref=db.backref("review", uselist=False))
+    patient = db.relationship("User", foreign_keys=[patient_id], backref="reviews_given")
+    doctor = db.relationship("User", foreign_keys=[doctor_id], backref="reviews_received")
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "appointment_id": self.appointment_id,
+            "patient_id": self.patient_id,
+            "patient_name": self.patient.full_name if self.patient else "Anonymous",
+            "doctor_id": self.doctor_id,
+            "doctor_name": self.doctor.full_name if self.doctor else "N/A",
+            "rating": self.rating,
+            "review_text": self.review_text,
+            "sentiment": self.sentiment,
+            "is_hidden": self.is_hidden,
+            "is_flagged": self.is_flagged,
+            "created_at": str(self.created_at)
+        }
+
+# =========================================
+# REVIEW MODERATION LOGS
+# =========================================
+class ReviewModerationLog(db.Model):
+    __tablename__ = "review_moderation_logs"
+
+    id = db.Column(db.Integer, primary_key=True)
+    review_id = db.Column(db.Integer, db.ForeignKey("reviews.id"), nullable=False)
+    action = db.Column(db.String(50), nullable=False) # hidden, escalated, approved, removed
+    performed_by = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    note = db.Column(db.Text)
+    
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+# =========================================
+# REVIEW TAGS (Institutional Triage)
+# =========================================
+class ReviewTag(db.Model):
+    __tablename__ = "review_tags"
+
+    id = db.Column(db.Integer, primary_key=True)
+    review_id = db.Column(db.Integer, db.ForeignKey("reviews.id"), nullable=False)
+    tag = db.Column(db.String(50), nullable=False) # Rude, Late, Misdiagnosis etc.
+
+# =========================================
+# REVIEW ESCALATIONS (Governance Control)
+# =========================================
+class ReviewEscalation(db.Model):
+    __tablename__ = "review_escalations"
+
+    id = db.Column(db.Integer, primary_key=True)
+    review_id = db.Column(db.Integer, db.ForeignKey("reviews.id"), nullable=False)
+    escalated_by = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    reason = db.Column(db.Text)
+    status = db.Column(db.String(20), default="open") # open, investigating, resolved, closed
+    
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)

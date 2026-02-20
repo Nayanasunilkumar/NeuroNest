@@ -14,6 +14,73 @@
     --rx-accent: #0F172A; /* Medical Black/Navy */
 }
 
+.prescriptions-page-shell {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 40px 24px;
+}
+
+.prescriptions-page-header {
+    margin-bottom: 40px;
+}
+
+.prescriptions-title-row {
+    font-size: 2rem;
+    font-weight: 800;
+    color: #1E293B;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.prescriptions-title-icon {
+    width: 48px;
+    height: 48px;
+    background: #EFF6FF;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #2563EB;
+}
+
+.prescriptions-subtitle {
+    color: #64748B;
+    margin-top: 8px;
+    font-size: 1.1rem;
+}
+
+.prescriptions-empty {
+    text-align: center;
+    padding: 80px 0;
+    background: #F8FAFC;
+    border-radius: 24px;
+    border: 1px dashed #E2E8F0;
+}
+
+.prescriptions-empty-icon {
+    width: 80px;
+    height: 80px;
+    background: #FFFFFF;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 24px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.prescriptions-empty-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #1E293B;
+    margin-bottom: 8px;
+}
+
+.prescriptions-empty-subtitle {
+    color: #64748B;
+}
+
 /* 1. GRID LIST VIEW ---------------------------- */
 .prescriptions-grid {
     display: grid;
@@ -85,6 +152,25 @@
     align-items: center;
     justify-content: center;
     color: var(--pat-primary);
+}
+
+.rx-doctor-details h4 {
+    color: #1E293B;
+    font-weight: 700;
+    margin: 0;
+}
+
+.rx-doctor-details p {
+    color: #64748B;
+    margin: 2px 0 0;
+}
+
+.rx-diagnosis-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    color: #94A3B8;
+    font-weight: 700;
+    letter-spacing: 0.05em;
 }
 
 .rx-diagnosis-tag {
@@ -414,4 +500,74 @@
     .prescriptions-container > *:not(.pro-modal-overlay) { display: none !important; }
     
     .rx-doctor-strip { margin-left: -20mm; margin-right: -20mm; padding-left: 20mm; padding-right: 20mm; }
+}
+
+/* 3. DARK MODE --------------------------------- */
+body.dark .prescriptions-title-row,
+body.dark .prescriptions-empty-title {
+    color: #E2E8F0;
+}
+
+body.dark .prescriptions-subtitle,
+body.dark .prescriptions-empty-subtitle {
+    color: #94A3B8;
+}
+
+body.dark .prescriptions-title-icon {
+    background: rgba(59, 130, 246, 0.16);
+    color: #60A5FA;
+}
+
+body.dark .prescriptions-empty {
+    background: #0F172A;
+    border-color: #334155;
+}
+
+body.dark .prescriptions-empty-icon {
+    background: #1E293B;
+    box-shadow: none;
+}
+
+body.dark .rx-card {
+    background: #1E293B;
+    border-color: #334155;
+    box-shadow: 0 8px 24px rgba(2, 8, 23, 0.45);
+}
+
+body.dark .rx-card:hover {
+    border-color: #60A5FA;
+    box-shadow: 0 14px 30px rgba(2, 8, 23, 0.55);
+}
+
+body.dark .rx-date-badge {
+    background: #0F172A;
+    color: #CBD5E1;
+}
+
+body.dark .rx-status-expired {
+    background: #334155;
+    color: #CBD5E1;
+}
+
+body.dark .rx-doctor-avatar {
+    background: #0F172A;
+    color: #60A5FA;
+}
+
+body.dark .rx-doctor-details h4 {
+    color: #E2E8F0;
+}
+
+body.dark .rx-doctor-details p {
+    color: #94A3B8;
+}
+
+body.dark .rx-diagnosis-label {
+    color: #94A3B8;
+}
+
+body.dark .rx-diagnosis-tag {
+    background: rgba(194, 65, 12, 0.16);
+    border-color: rgba(249, 115, 22, 0.35);
+    color: #FDBA74;
 }

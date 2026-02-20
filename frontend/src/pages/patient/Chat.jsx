@@ -5,6 +5,7 @@ import ConversationList from '../../components/chat/ConversationList';
 import ChatWindow from '../../components/chat/ChatWindow';
 import ChatHeader from '../../components/chat/ChatHeader';
 import { getUser } from '../../utils/auth';
+import { formatDateTimeIST, toEpochMs } from '../../utils/time';
 import '../../styles/patient-chat.css';
 
 const Chat = () => {
@@ -13,6 +14,8 @@ const Chat = () => {
     const [messages, setMessages] = useState([]);
     const [currentUser, setCurrentUser] = useState(null);
     const [loadingMessages, setLoadingMessages] = useState(false);
+    const [messagesLoadError, setMessagesLoadError] = useState('');
+    const [showInfoPanel, setShowInfoPanel] = useState(false);
 
     const fetchConversations = useCallback(async () => {
         try {
@@ -27,8 +30,10 @@ const Chat = () => {
         if (selectedConv?.id === conv.id) return;
         
         setSelectedConv(conv);
+        setShowInfoPanel(false);
         setMessages([]);
         setLoadingMessages(true);
+        setMessagesLoadError('');
 
         // Mark as read immediately if unread
         if (conv.unread_count > 0) {
@@ -45,7 +50,23 @@ const Chat = () => {
         // Fetch Messages
         try {
             const data = await chatAPI.getMessages(conv.id);
-            setMessages(data);
+            const normalized = Array.isArray(data) ? data : [];
+
+            if (normalized.length === 0 && conv.last_message?.content) {
+                // Fallback: keep the visible conversation preview as minimal history
+                // when server returns empty list for an existing thread.
+                setMessages([{
+                    id: `fallback-${conv.id}`,
+                    conversation_id: conv.id,
+                    sender_id: conv.last_message.sender_id,
+                    content: conv.last_message.content,
+                    type: conv.last_message.type || 'text',
+                    is_read: conv.last_message.is_read ?? true,
+                    created_at: conv.last_message.created_at || new Date().toISOString(),
+                }]);
+            } else {
+                setMessages(normalized);
+            }
             
             // Join Room
             const socket = getSocket();
@@ -54,6 +75,7 @@ const Chat = () => {
             }
         } catch (err) {
             console.error("Failed to load messages", err);
+            setMessagesLoadError('Unable to load full message history right now.');
         } finally {
             setLoadingMessages(false);
         }
@@ -93,7 +115,7 @@ const Chat = () => {
                     }
                     return c;
                 })
-                .sort((a, b) => new Date(b.last_message?.created_at) - new Date(a.last_message?.created_at))
+                .sort((a, b) => toEpochMs(b.last_message?.created_at) - toEpochMs(a.last_message?.created_at))
         ));
     }, [currentUser?.id, selectedConv?.id]);
 
@@ -162,24 +184,71 @@ const Chat = () => {
                     <ChatHeader 
                         otherUser={selectedConv.other_user}
                         isDoctor={false} // This is patient view
-                        showSidebar={false}
-                        onToggleSidebar={() => {}} // No sidebar for now
+                        showSidebar={showInfoPanel}
+                        onToggleSidebar={() => setShowInfoPanel((prev) => !prev)}
                     />
                     <ChatWindow 
                         messages={messages}
                         currentUserId={currentUser?.id}
                         onSendMessage={handleSendMessage}
                         loadingMessages={loadingMessages}
+                        messagesLoadError={messagesLoadError}
                         isDoctor={false}
                         otherUser={selectedConv.other_user}
                     />
+                    {showInfoPanel && (
+                        <>
+                            <div
+                                className="nexus-info-popover-backdrop"
+                                onClick={() => setShowInfoPanel(false)}
+                                aria-hidden="true"
+                            />
+                            <aside className="nexus-info-popover custom-scrollbar" role="dialog" aria-label="Conversation details">
+                                <div className="nexus-conversation-info-header">
+                                    <h4>Doctor Details</h4>
+                                    <p>Care provider profile</p>
+                                </div>
+                                <div className="nexus-conversation-info-grid">
+                                    <div className="nexus-info-row">
+                                        <span>Doctor Name</span>
+                                        <strong>{selectedConv.other_user?.name || 'Unknown'}</strong>
+                                    </div>
+                                    <div className="nexus-info-row">
+                                        <span>Email</span>
+                                        <strong>{selectedConv.other_user?.email || 'N/A'}</strong>
+                                    </div>
+                                    <div className="nexus-info-row">
+                                        <span>Role</span>
+                                        <strong>{selectedConv.other_user?.role || 'doctor'}</strong>
+                                    </div>
+                                    <div className="nexus-info-row">
+                                        <span>Status</span>
+                                        <strong>{selectedConv.other_user?.is_online ? 'Online' : 'Last seen recently'}</strong>
+                                    </div>
+                                    <div className="nexus-info-row">
+                                        <span>Last Interaction</span>
+                                        <strong>
+                                            {selectedConv.last_message?.created_at
+                                                ? formatDateTimeIST(selectedConv.last_message.created_at)
+                                                : 'N/A'}
+                                        </strong>
+                                    </div>
+                                </div>
+                            </aside>
+                        </>
+                    )}
                 </div>
             ) : (
                 <div className="nexus-chat-pane empty-chat-state">
-                    <div className="text-center p-8">
-                        <div className="mb-4 text-6xl opacity-50">💬</div>
-                        <h2 className="text-2xl font-bold text-gray-700">Clinical Support Portal</h2>
-                        <p className="text-gray-500 mt-2">Connecting you with your care team.</p>
+                    <div className="nexus-empty-pane">
+                        <div className="nexus-empty-icon">💬</div>
+                        <h2 className="nexus-empty-title">Clinical Support Portal</h2>
+                        <p className="nexus-empty-subtitle">Connecting you with your care team.</p>
+                        <div className="nexus-empty-hints">
+                            <span className="nexus-empty-hint">Secure Messaging</span>
+                            <span className="nexus-empty-hint">File Sharing</span>
+                            <span className="nexus-empty-hint">Care Coordination</span>
+                        </div>
                     </div>
                 </div>
             )}

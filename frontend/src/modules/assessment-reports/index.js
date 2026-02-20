@@ -12,13 +12,12 @@ const assessmentReportsModule = {
   label: 'Assessment Reports',
   icon: Brain,
   route: '/assessment-reports',
-  rolesAllowed: ['doctor', 'admin'],
+  rolesAllowed: ['doctor'],
   enabledByDefault: true,
   componentsByRole: {
     doctor: AssessmentReportsPage,
-    admin: AssessmentReportsPage,
   },
-  orderByRole: { doctor: 70, admin: 80 },
+  orderByRole: { doctor: 70 },
 };
 
 export default assessmentReportsModule;

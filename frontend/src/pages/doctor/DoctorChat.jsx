@@ -7,6 +7,7 @@ import ChatWindow from '../../components/chat/ChatWindow';
 import ChatHeader from '../../components/chat/ChatHeader';
 import PatientInfoPanel from '../../components/chat/PatientInfoPanel';
 import { getUser } from '../../utils/auth';
+import { toEpochMs } from '../../utils/time';
 import '../../styles/doctor-chat.css';
 
 const DOCTOR_TEMPLATES = [
@@ -111,8 +112,8 @@ const DoctorChat = () => {
             });
             // Re-sort by latest message
             return [...updated].sort((a,b) => {
-                const dateA = a.last_message ? new Date(a.last_message.created_at) : 0;
-                const dateB = b.last_message ? new Date(b.last_message.created_at) : 0;
+                const dateA = toEpochMs(a.last_message?.created_at);
+                const dateB = toEpochMs(b.last_message?.created_at);
                 return dateB - dateA;
             });
         });

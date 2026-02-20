@@ -23,6 +23,8 @@ const MyAppointments = () => {
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState(null);
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [selectedDetailsAppointment, setSelectedDetailsAppointment] = useState(null);
 
   const fetchAppointments = async () => {
     setLoading(true);
@@ -71,6 +73,11 @@ const MyAppointments = () => {
     }
   };
 
+  const openDetailsModal = (appointment) => {
+    setSelectedDetailsAppointment(appointment);
+    setIsDetailsModalOpen(true);
+  };
+
   // Filter Logic
   const filteredAppointments = appointments.filter((appt) => {
     const matchesSearch = appt.doctor_name
@@ -78,15 +85,16 @@ const MyAppointments = () => {
       .includes(searchTerm.toLowerCase());
     const matchesDate = filterDate ? appt.appointment_date === filterDate : true;
     const matchesStatus =
-      filterStatus === "All" || appt.status === filterStatus;
+      filterStatus === "All" || String(appt.status).toLowerCase() === filterStatus.toLowerCase();
 
     return matchesSearch && matchesDate && matchesStatus;
   });
 
-  // Calculate quick stats
-  const upcomingCount = appointments.filter(a => ['Pending', 'Approved'].includes(a.status)).length;
-  const completedCount = appointments.filter(a => a.status === 'Completed').length;
-  const cancelledCount = appointments.filter(a => a.status === 'Cancelled').length;
+  // Calculate quick stats — use case-insensitive match since backend returns lowercase enums
+  const upcomingCount  = appointments.filter(a => ['pending', 'approved'].includes(String(a.status).toLowerCase())).length;
+  const completedCount = appointments.filter(a => String(a.status).toLowerCase() === 'completed').length;
+  const cancelledCount = appointments.filter(a => String(a.status).toLowerCase() === 'cancelled').length;
+  const pendingFeedback = appointments.filter(a => String(a.status).toLowerCase() === 'completed' && !a.feedback_given).length;
 
   const formatDate = (dateStr) => {
     return new Date(dateStr).toLocaleDateString("en-US", {
@@ -131,6 +139,12 @@ const MyAppointments = () => {
             <span className="stat-label">Cancelled</span>
             <span className="stat-value text-red">{cancelledCount}</span>
         </div>
+        {pendingFeedback > 0 && (
+          <div className="mini-stat-card" style={{ borderTop: '3px solid #f59e0b', cursor: 'pointer' }} onClick={() => navigate('/patient/feedback-reviews')}>
+            <span className="stat-label">⭐ Awaiting Review</span>
+            <span className="stat-value" style={{ color: '#f59e0b' }}>{pendingFeedback}</span>
+          </div>
+        )}
       </div>
 
       <div className="appointments-content-wrapper">
@@ -226,7 +240,9 @@ const MyAppointments = () => {
                         </td>
                         <td>
                              <div className="action-row">
-                                {(appt.status === 'Pending' || appt.status === 'Approved') && (
+                                {(appt.status === 'Pending' || appt.status === 'Approved' ||
+                                  String(appt.status).toLowerCase() === 'pending' ||
+                                  String(appt.status).toLowerCase() === 'approved') && (
                                     <>
                                         <button 
                                             className="icon-action-btn reschedule-btn"
@@ -244,10 +260,42 @@ const MyAppointments = () => {
                                         </button>
                                     </>
                                 )}
-                                {appt.status === "Completed" && (
-                                     <button className="icon-action-btn view-btn" title="View Details">
+                                {(appt.status === 'Completed' || String(appt.status).toLowerCase() === 'completed') && (
+                                  <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+                                     <button
+                                        className="icon-action-btn view-btn"
+                                        title="View Details"
+                                        onClick={() => openDetailsModal(appt)}
+                                     >
                                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                                      </button>
+                                     {!appt.feedback_given && (
+                                       <button
+                                         title="Leave Feedback"
+                                         onClick={() => navigate('/patient/feedback-reviews')}
+                                         style={{
+                                           display: 'inline-flex', alignItems: 'center', gap: '0.3rem',
+                                           padding: '0.35rem 0.7rem', borderRadius: '8px', border: 'none',
+                                           background: 'linear-gradient(135deg, #f59e0b, #f97316)',
+                                           color: 'white', fontSize: '0.72rem', fontWeight: 800,
+                                           cursor: 'pointer', whiteSpace: 'nowrap',
+                                           boxShadow: '0 2px 8px rgba(245,158,11,0.3)',
+                                           transition: 'transform 0.15s, box-shadow 0.15s',
+                                         }}
+                                         onMouseEnter={e => { e.currentTarget.style.transform='translateY(-1px)'; e.currentTarget.style.boxShadow='0 4px 12px rgba(245,158,11,0.4)'; }}
+                                         onMouseLeave={e => { e.currentTarget.style.transform='translateY(0)'; e.currentTarget.style.boxShadow='0 2px 8px rgba(245,158,11,0.3)'; }}
+                                       >
+                                         ⭐ Review
+                                       </button>
+                                     )}
+                                     {appt.feedback_given && (
+                                       <span style={{
+                                         padding: '0.3rem 0.55rem', borderRadius: '6px',
+                                         background: 'rgba(16,185,129,0.1)', color: '#10b981',
+                                         fontSize: '0.65rem', fontWeight: 800,
+                                       }}>✓ Reviewed</span>
+                                     )}
+                                  </div>
                                 )}
                              </div>
                         </td>
@@ -281,6 +329,63 @@ const MyAppointments = () => {
           onClose={() => setIsModalOpen(false)}
           onSave={handleReschedule}
         />
+      )}
+
+      {isDetailsModalOpen && selectedDetailsAppointment && (
+        <div className="modal-overlay-backdrop" onClick={() => setIsDetailsModalOpen(false)}>
+          <div
+            className="premium-modal-card appointment-details-modal"
+            onClick={(e) => e.stopPropagation()}
+            style={{ maxWidth: 560, width: "92%", padding: "28px" }}
+          >
+            <div className="pm-header">
+              <div className="pm-title-stack">
+                <h3>Appointment Details</h3>
+                <span className="pm-subtitle">Completed consultation summary</span>
+              </div>
+              <button className="pm-close-btn" onClick={() => setIsDetailsModalOpen(false)} aria-label="Close">
+                ×
+              </button>
+            </div>
+
+            <div className="pm-divider"></div>
+
+            <div className="appointment-details-grid">
+              <div className="appointment-details-row">
+                <span className="label">Doctor</span>
+                <span className="value">{selectedDetailsAppointment.doctor_name}</span>
+              </div>
+              <div className="appointment-details-row">
+                <span className="label">Date</span>
+                <span className="value">{formatDate(selectedDetailsAppointment.appointment_date)}</span>
+              </div>
+              <div className="appointment-details-row">
+                <span className="label">Time</span>
+                <span className="value">{formatTime(selectedDetailsAppointment.appointment_time)}</span>
+              </div>
+              <div className="appointment-details-row">
+                <span className="label">Status</span>
+                <span className="value">
+                  <StatusBadge status={selectedDetailsAppointment.status} />
+                </span>
+              </div>
+              <div className="appointment-details-row">
+                <span className="label">Reason</span>
+                <span className="value">{selectedDetailsAppointment.reason || "Not provided"}</span>
+              </div>
+              <div className="appointment-details-row">
+                <span className="label">Notes</span>
+                <span className="value">{selectedDetailsAppointment.notes || "No notes added"}</span>
+              </div>
+            </div>
+
+            <div className="pm-actions appointment-details-actions">
+              <button className="pm-btn-secondary" onClick={() => setIsDetailsModalOpen(false)}>
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

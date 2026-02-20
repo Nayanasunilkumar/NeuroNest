@@ -22,17 +22,10 @@ api.interceptors.request.use(
   (error) => Promise.reject(error),
 );
 
-// ✅ Optional: Handle 401 globally (auto logout if token expired)
+// Keep session until explicit logout or inactivity manager decides.
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem("neuronest_token");
-      localStorage.removeItem("neuronest_user");
-      window.location.href = "/login";
-    }
-    return Promise.reject(error);
-  },
+  (error) => Promise.reject(error),
 );
 
 export default api;

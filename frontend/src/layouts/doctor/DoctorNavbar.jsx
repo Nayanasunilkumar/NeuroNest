@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BellRing, Moon, Sun, ChevronDown, Search, Calendar } from 'lucide-react';
+import { BellRing, Moon, Sun, ChevronDown, Calendar } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 import { getDoctorProfile } from '../../services/doctorProfileService';
 import { getModuleByPathname } from '../../modules/moduleRegistry';
@@ -50,7 +50,6 @@ const DoctorNavbar = ({ darkMode, setDarkMode }) => {
         {/* Center: Global Search (Optional visual enhancement) */}
         <div className="doc-nav-center hidden md:flex">
             <div className="doc-global-search">
-                <Search size={18} className="search-icon" />
                 <input type="text" placeholder="Search patients, appointments..." className="search-input" />
                 <span className="search-shortcut">⌘K</span>
             </div>

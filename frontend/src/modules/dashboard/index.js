@@ -9,6 +9,7 @@ const dashboardModule = {
   icon: LayoutDashboard,
   route: '/dashboard',
   rolesAllowed: ['patient', 'doctor', 'admin'],
+  group: 'Clinical',
   enabledByDefault: true,
   componentsByRole: {
     patient: DashboardHome,

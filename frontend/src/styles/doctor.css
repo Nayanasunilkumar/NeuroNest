@@ -361,3 +361,381 @@
 .dark .doc-profile-name {
     color: #F1F5F9;
 }
+
+/* Appointment Requests Page */
+.fade-in {
+    animation: docFadeIn 0.28s ease-out;
+}
+
+@keyframes docFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.appointment-requests-page {
+    max-width: 1180px;
+    margin: 0 auto;
+}
+
+.doc-page-header {
+    margin-bottom: 26px;
+}
+
+.doc-page-header h1 {
+    margin: 0;
+    font-size: clamp(1.85rem, 2.3vw, 2.6rem);
+    line-height: 1.1;
+    letter-spacing: -0.03em;
+    color: var(--doc-secondary);
+    font-weight: 800;
+}
+
+.doc-page-header p {
+    margin: 12px 0 0;
+    color: var(--doc-text-muted);
+    font-size: 1rem;
+    max-width: 66ch;
+}
+
+.requests-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 20px;
+}
+
+.request-card {
+    background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
+    border: 1px solid #e7eef7;
+    border-radius: 18px;
+    box-shadow: 0 14px 30px -20px rgba(15, 23, 42, 0.35);
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    min-height: 290px;
+    transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+}
+
+.request-card:hover {
+    transform: translateY(-4px);
+    border-color: #bfdbfe;
+    box-shadow: 0 18px 34px -20px rgba(37, 99, 235, 0.35);
+}
+
+.card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 14px;
+    margin-bottom: 14px;
+}
+
+.patient-info-mini {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+}
+
+.patient-avatar-mini {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    background: linear-gradient(145deg, #dbeafe 0%, #bfdbfe 100%);
+    color: #1d4ed8;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+
+.patient-name-stack {
+    min-width: 0;
+}
+
+.patient-name-stack h4 {
+    margin: 0;
+    color: var(--doc-text-main);
+    font-weight: 700;
+    font-size: 1rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.patient-name-stack span {
+    margin-top: 3px;
+    display: inline-block;
+    color: var(--doc-text-muted);
+    font-size: 0.8rem;
+}
+
+.doc-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    padding: 6px 11px;
+    font-size: 0.74rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.doc-badge-amber {
+    color: #92400e;
+    background: #fef3c7;
+    border: 1px solid #fcd34d;
+}
+
+.appointment-details-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: 2px 0 18px;
+}
+
+.detail-item {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    color: var(--doc-text-main);
+}
+
+.detail-item svg {
+    color: #64748b;
+    flex-shrink: 0;
+}
+
+.detail-item span {
+    font-size: 0.92rem;
+}
+
+.reason-container {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 10px 12px;
+    width: 100%;
+}
+
+.reason-container p {
+    margin: 0;
+    color: #334155;
+    font-size: 0.9rem;
+    line-height: 1.45;
+    word-break: break-word;
+}
+
+.request-notes {
+    align-items: flex-start;
+}
+
+.notes-text {
+    margin-left: 26px;
+    color: #64748b;
+    font-size: 0.8rem;
+    font-style: italic;
+    line-height: 1.4;
+    word-break: break-word;
+}
+
+.card-actions {
+    margin-top: auto;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.btn-approve,
+.btn-reject {
+    border: 1px solid transparent;
+    border-radius: 10px;
+    min-height: 42px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.btn-approve {
+    flex: 1;
+    color: #ffffff;
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    box-shadow: 0 8px 16px -12px rgba(37, 99, 235, 0.8);
+}
+
+.btn-approve:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 20px -12px rgba(37, 99, 235, 0.9);
+}
+
+.btn-approve:disabled {
+    opacity: 0.72;
+    cursor: not-allowed;
+}
+
+.btn-reject {
+    width: 44px;
+    color: #991b1b;
+    background: #fef2f2;
+    border-color: #fecaca;
+}
+
+.btn-reject:hover:not(:disabled) {
+    background: #fee2e2;
+    border-color: #fca5a5;
+}
+
+.doc-loader-container,
+.empty-state-card {
+    border-radius: 20px;
+    border: 1px dashed #cbd5e1;
+    background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+    min-height: 250px;
+    padding: 42px 26px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+.empty-state-card h3 {
+    margin: 0;
+    color: #0f172a;
+    font-size: 1.25rem;
+    font-weight: 800;
+}
+
+.empty-state-card p {
+    margin: 10px 0 0;
+    color: #64748b;
+    max-width: 52ch;
+}
+
+.doc-loader-container p {
+    margin-top: 12px;
+    color: #64748b;
+}
+
+.doc-spinner {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    border: 3px solid #dbeafe;
+    border-top-color: #2563eb;
+    animation: docSpin 0.8s linear infinite;
+}
+
+.spinner-sm {
+    width: 16px;
+    height: 16px;
+    border-width: 2px;
+}
+
+@keyframes docSpin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.dark .doc-page-header h1,
+.dark .empty-state-card h3 {
+    color: #f8fafc;
+}
+
+.dark .doc-page-header p,
+.dark .patient-name-stack span,
+.dark .notes-text,
+.dark .empty-state-card p,
+.dark .doc-loader-container p {
+    color: #94a3b8;
+}
+
+.dark .request-card {
+    background: linear-gradient(180deg, #0f172a 0%, #111c31 100%);
+    border-color: #263248;
+    box-shadow: 0 16px 28px -20px rgba(2, 6, 23, 0.9);
+}
+
+.dark .request-card:hover {
+    border-color: #36517a;
+}
+
+.dark .patient-avatar-mini {
+    background: linear-gradient(145deg, #1e3a8a 0%, #1d4ed8 100%);
+    color: #dbeafe;
+}
+
+.dark .patient-name-stack h4,
+.dark .detail-item,
+.dark .reason-container p {
+    color: #e2e8f0;
+}
+
+.dark .detail-item svg {
+    color: #93c5fd;
+}
+
+.dark .doc-badge-amber {
+    background: rgba(251, 191, 36, 0.15);
+    border-color: rgba(251, 191, 36, 0.45);
+    color: #fcd34d;
+}
+
+.dark .reason-container {
+    background: #101b31;
+    border-color: #263248;
+}
+
+.dark .btn-reject {
+    background: rgba(127, 29, 29, 0.32);
+    border-color: rgba(252, 165, 165, 0.28);
+    color: #fca5a5;
+}
+
+.dark .btn-reject:hover:not(:disabled) {
+    background: rgba(127, 29, 29, 0.48);
+}
+
+.dark .doc-loader-container,
+.dark .empty-state-card {
+    background: linear-gradient(180deg, #0f172a 0%, #111827 100%);
+    border-color: #334155;
+}
+
+@media (max-width: 860px) {
+    .doctor-content {
+        padding: 20px;
+    }
+
+    .requests-grid {
+        grid-template-columns: 1fr;
+        gap: 14px;
+    }
+
+    .request-card {
+        border-radius: 14px;
+        padding: 15px;
+    }
+
+    .doc-page-header {
+        margin-bottom: 18px;
+    }
+
+    .doc-page-header h1 {
+        font-size: 1.6rem;
+    }
+}

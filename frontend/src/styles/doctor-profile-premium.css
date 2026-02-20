@@ -479,8 +479,7 @@
     bottom: 24px; /* Floating slightly */
     left: 50%;
     transform: translateX(-50%);
-    width: 90%;
-    max-width: 800px;
+    width: min(860px, calc(100vw - 48px));
     background: var(--card-bg); 
     border: 1px solid var(--border-color);
     box-shadow: var(--shadow-md);
@@ -490,6 +489,7 @@
     justify-content: space-between;
     align-items: center;
     border-radius: 100px; /* Pill shape */
+    box-sizing: border-box;
 }
 
 /* 
@@ -685,12 +685,20 @@
 
 /* Animations */
 @keyframes slideUp {
-    from { transform: translate(-50%, 100%); opacity: 0; }
-    to { transform: translate(-50%, 0); opacity: 1; }
+    from { opacity: 0; margin-bottom: -14px; }
+    to { opacity: 1; margin-bottom: 0; }
 }
 
 .slide-in-from-bottom-4 {
     animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@media (max-width: 720px) {
+    .bottom-action-bar {
+        padding: 12px 14px;
+        border-radius: 16px;
+        gap: 8px;
+    }
 }
 
 /* Fix for dark mode scrollbars if needed */

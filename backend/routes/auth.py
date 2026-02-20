@@ -1,9 +1,48 @@
+import os
 from flask import Blueprint, request, jsonify
-from database.models import db, User, PatientProfile
+from database.models import db, User, PatientProfile, DoctorProfile
 from utils.security import hash_password, verify_password
 from flask_jwt_extended import create_access_token
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
+
+
+def _maybe_bootstrap_doctor_for_dev(email: str):
+    """
+    Dev-only fallback:
+    If enabled, auto-creates the default doctor account when missing.
+    """
+    allow_bootstrap = os.getenv("ALLOW_DEV_DOCTOR_BOOTSTRAP", "false").lower() == "true"
+    default_email = os.getenv("DEFAULT_DOCTOR_EMAIL", "doctor@neuronest.com").strip().lower()
+    default_password = os.getenv("DEFAULT_DOCTOR_PASSWORD", "123456")
+
+    if not allow_bootstrap:
+        return None
+    if email.strip().lower() != default_email:
+        return None
+
+    existing = User.query.filter_by(email=default_email).first()
+    if existing:
+        return existing
+
+    doctor_user = User(
+        email=default_email,
+        password_hash=hash_password(default_password),
+        role="doctor",
+        full_name="Dr. Nayana",
+    )
+    db.session.add(doctor_user)
+    db.session.flush()
+
+    profile = DoctorProfile(
+        user_id=doctor_user.id,
+        specialization="Neurologist",
+        qualification="MBBS, MD (Neurology)",
+        experience_years=10,
+    )
+    db.session.add(profile)
+    db.session.commit()
+    return doctor_user
 
 
 # --------------------------------------------------
@@ -62,15 +101,17 @@ def register():
 # --------------------------------------------------
 @auth_bp.route("/login", methods=["POST"])
 def login():
-    data = request.get_json()
+    data = request.get_json() or {}
 
-    email = data.get("email")
-    password = data.get("password")
+    email = (data.get("email") or "").strip().lower()
+    password = data.get("password") or ""
 
     if not email or not password:
         return jsonify({"message": "Email and password required"}), 400
 
     user = User.query.filter_by(email=email).first()
+    if not user:
+        user = _maybe_bootstrap_doctor_for_dev(email)
 
     if not user:
         return jsonify({"message": "Invalid email or password"}), 401

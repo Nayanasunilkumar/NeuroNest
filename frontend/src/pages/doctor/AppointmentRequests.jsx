@@ -41,6 +41,16 @@ const AppointmentRequests = () => {
         }
     };
 
+    const formatTime = (timeString) => {
+        if (!timeString) return "Time not set";
+        const [hour, minute] = timeString.split(":");
+        const hourNum = Number(hour);
+        if (Number.isNaN(hourNum)) return timeString.substring(0, 5);
+        const period = hourNum >= 12 ? "PM" : "AM";
+        const convertedHour = hourNum % 12 || 12;
+        return `${convertedHour}:${minute} ${period}`;
+    };
+
     if (loading) {
         return (
             <div className="doc-loader-container">
@@ -51,7 +61,7 @@ const AppointmentRequests = () => {
     }
 
     return (
-        <div className="fade-in">
+        <div className="fade-in appointment-requests-page">
             <div className="doc-page-header">
                 <h1>Appointment Requests</h1>
                 <p>Review and manage incoming patient booking requests</p>
@@ -89,7 +99,7 @@ const AppointmentRequests = () => {
                                 </div>
                                 <div className="detail-item">
                                     <Clock size={16} />
-                                    <span>{request.appointment_time.substring(0, 5)}</span>
+                                    <span>{formatTime(request.appointment_time)}</span>
                                 </div>
                                 <div className="detail-item">
                                     <MessageSquare size={16} />
@@ -98,8 +108,8 @@ const AppointmentRequests = () => {
                                     </div>
                                 </div>
                                 {request.notes && (
-                                    <div className="detail-item" style={{ alignItems: 'flex-start' }}>
-                                        <div style={{ paddingLeft: '26px', fontSize: '0.8rem', color: '#64748B', fontStyle: 'italic' }}>
+                                    <div className="detail-item request-notes">
+                                        <div className="notes-text">
                                             "{request.notes}"
                                         </div>
                                     </div>
@@ -113,7 +123,7 @@ const AppointmentRequests = () => {
                                     className="btn-approve"
                                 >
                                     {actionLoading === request.id ? (
-                                        <div className="doc-spinner" style={{ width: '16px', height: '16px', borderWeight: '2px' }}></div>
+                                        <div className="doc-spinner spinner-sm"></div>
                                     ) : (
                                         <>
                                             <Check size={18} />

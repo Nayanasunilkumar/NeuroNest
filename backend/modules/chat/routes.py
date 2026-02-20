@@ -3,7 +3,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from werkzeug.utils import secure_filename
 import os
 from database.models import db, User, Appointment, PatientProfile
-from models.chat_models import Conversation, Participant, Message
+from models.chat_models import Conversation, Participant, Message, to_utc_iso
 from sqlalchemy import and_, or_, desc
 from flask_jwt_extended import get_jwt
 
@@ -87,7 +87,7 @@ def get_conversations():
             },
             "last_message": {
                 "content": last_message.content,
-                "created_at": str(last_message.created_at),
+                "created_at": to_utc_iso(last_message.created_at),
                 "is_read": last_message.is_read,
                 "sender_id": last_message.sender_id,
                 "type": getattr(last_message, 'type', 'text')

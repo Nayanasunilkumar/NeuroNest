@@ -4,6 +4,18 @@ import bookAppointmentModule from './book-appointment';
 import myAppointmentsModule from './my-appointments';
 import medicalRecordsModule from './medical-records';
 import prescriptionsModule from './prescriptions';
+import assessmentModule from './assessment';
+import progressTrackerModule from './progress-tracker';
+import feedbackReviewsModule from './feedback-reviews';
+import adminManagePatientsModule from './admin-manage-patients';
+import adminManageDoctorsModule from './admin-manage-doctors';
+import adminAppointmentManagementModule from './admin-appointment-management';
+import adminAssessmentManagementModule from './admin-assessment-management';
+import adminReportsAnalyticsModule from './admin-reports-analytics';
+import adminPaymentManagementModule from './admin-payment-management';
+import adminReviewManagementModule from './admin-review-management';
+import adminNotificationsModule from './admin-notifications';
+import adminAnnouncementsModule from './admin-announcements';
 import appointmentRequestsModule from './appointment-requests';
 import todayScheduleModule from './today-schedule';
 import myPatientsModule from './my-patients';
@@ -29,6 +41,18 @@ export const moduleRegistry = [
   myAppointmentsModule,
   medicalRecordsModule,
   prescriptionsModule,
+  assessmentModule,
+  progressTrackerModule,
+  feedbackReviewsModule,
+  adminManagePatientsModule,
+  adminManageDoctorsModule,
+  adminAppointmentManagementModule,
+  adminAssessmentManagementModule,
+  adminReportsAnalyticsModule,
+  adminPaymentManagementModule,
+  adminReviewManagementModule,
+  adminNotificationsModule,
+  adminAnnouncementsModule,
   appointmentRequestsModule,
   todayScheduleModule,
   myPatientsModule,

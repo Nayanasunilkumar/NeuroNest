@@ -12,14 +12,13 @@ const alertsModule = {
   label: 'Alerts',
   icon: Bell,
   route: '/alerts',
-  rolesAllowed: ['doctor', 'patient', 'admin'],
+  rolesAllowed: ['doctor', 'patient'],
   enabledByDefault: true,
   componentsByRole: {
     doctor: AlertsPage,
     patient: AlertsPage,
-    admin: AlertsPage,
   },
-  orderByRole: { doctor: 90, patient: 80, admin: 100 },
+  orderByRole: { doctor: 90, patient: 80 },
 };
 
 export default alertsModule;

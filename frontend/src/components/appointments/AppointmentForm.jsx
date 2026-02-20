@@ -1,25 +1,94 @@
 import { useState, useEffect } from "react";
-import { getDoctors } from "../../api/appointments";
+import { getDoctors, getAvailableSlots } from "../../api/appointments";
 import "../../styles/appointments.css";
 
 const AppointmentForm = ({ onSubmit, loading }) => {
+  const today = new Date().toISOString().split('T')[0];
   const [formData, setFormData] = useState({
     doctor_id: "",
     doctor_name: "", // To show name in summary
-    date: "",
+    date: today,
     time: "",
+    slot_id: "",
     reason: "",
     notes: "",
   });
 
   const [doctorsList, setDoctorsList] = useState([]);
   const [loadingDoctors, setLoadingDoctors] = useState(true);
+  const [availableSlots, setAvailableSlots] = useState([]);
+  const [loadingSlots, setLoadingSlots] = useState(false);
+  const [slotHint, setSlotHint] = useState("");
+
+  const toYMD = (d) => {
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
+
+  const fetchAvailableSlots = async (doctorId, date, autoFindNext = true) => {
+    if (!doctorId || !date) {
+      setAvailableSlots([]);
+      setSlotHint("");
+      return;
+    }
+    setLoadingSlots(true);
+    try {
+      const slots = await getAvailableSlots(doctorId, date);
+      const normalized = Array.isArray(slots) ? slots : [];
+      if (normalized.length > 0) {
+        setAvailableSlots(normalized);
+        setSlotHint("");
+        return;
+      }
+
+      if (!autoFindNext) {
+        setAvailableSlots([]);
+        setSlotHint("No available slots on selected date.");
+        return;
+      }
+
+      const start = new Date(`${date}T00:00:00`);
+      for (let i = 1; i <= 30; i += 1) {
+        const probe = new Date(start);
+        probe.setDate(start.getDate() + i);
+        const probeDate = toYMD(probe);
+        const nextSlots = await getAvailableSlots(doctorId, probeDate);
+        const nextNormalized = Array.isArray(nextSlots) ? nextSlots : [];
+        if (nextNormalized.length > 0) {
+          setFormData((prev) => ({ ...prev, date: probeDate, slot_id: "", time: "" }));
+          setAvailableSlots(nextNormalized);
+          setSlotHint(`No slots on selected date. Showing next available: ${new Date(`${probeDate}T00:00:00`).toLocaleDateString("en-IN")}`);
+          return;
+        }
+      }
+
+      setAvailableSlots([]);
+      setSlotHint("No available slots in the next 30 days.");
+    } catch (err) {
+      console.error("Failed to fetch slots:", err);
+      setAvailableSlots([]);
+      setSlotHint("Unable to load slots right now.");
+    } finally {
+      setLoadingSlots(false);
+    }
+  };
 
   useEffect(() => {
     const fetchDoctors = async () => {
       try {
         const data = await getDoctors();
         setDoctorsList(data);
+        if (Array.isArray(data) && data.length === 1) {
+          const onlyDoctor = data[0];
+          setFormData((prev) => ({
+            ...prev,
+            doctor_id: String(onlyDoctor.id),
+            doctor_name: onlyDoctor.full_name || "",
+          }));
+          fetchAvailableSlots(String(onlyDoctor.id), today, true);
+        }
       } catch (err) {
         console.error("Failed to fetch doctors:", err);
       } finally {
@@ -38,18 +107,38 @@ const AppointmentForm = ({ onSubmit, loading }) => {
       setFormData({ 
         ...formData, 
         doctor_id: value, 
-        doctor_name: selectedDoc ? selectedDoc.full_name : "" 
+        doctor_name: selectedDoc ? selectedDoc.full_name : "",
+        slot_id: "",
+        time: "",
       });
+      if (formData.date) fetchAvailableSlots(value, formData.date, true);
+    } else if (name === "date") {
+      setFormData({ ...formData, [name]: value, slot_id: "", time: "" });
+      if (formData.doctor_id) fetchAvailableSlots(formData.doctor_id, value, true);
     } else {
       setFormData({ ...formData, [name]: value });
     }
+  };
+
+  const handleSlotSelect = (slot) => {
+    const time = new Date(slot.slot_start_utc).toLocaleTimeString("en-IN", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+      timeZone: "Asia/Kolkata",
+    });
+    setFormData((prev) => ({
+      ...prev,
+      slot_id: String(slot.id),
+      time,
+    }));
   };
 
   const handleInitialSubmit = (e) => {
     e.preventDefault();
     console.log("Manual Submit Triggered test", formData); // Debug
     // Manual validation
-    if (!formData.doctor_id || !formData.date || !formData.time || !formData.reason) {
+    if (!formData.doctor_id || !formData.date || !formData.slot_id || !formData.reason) {
         alert("Please fill in all required fields.");
         return;
     }
@@ -61,7 +150,13 @@ const AppointmentForm = ({ onSubmit, loading }) => {
     setShowConfirm(false);
   };
 
-  const today = new Date().toISOString().split('T')[0];
+  useEffect(() => {
+    if (!formData.doctor_id || !formData.date) return;
+    const timer = setInterval(() => {
+      fetchAvailableSlots(formData.doctor_id, formData.date, false);
+    }, 30000);
+    return () => clearInterval(timer);
+  }, [formData.doctor_id, formData.date]);
 
   return (
     <>
@@ -113,14 +208,47 @@ const AppointmentForm = ({ onSubmit, loading }) => {
                   </div>
 
                   <div className="form-group">
-                    <label>Time</label>
-                    <input
-                      type="time"
-                      name="time"
-                      value={formData.time}
-                      onChange={handleChange}
-                      required
-                    />
+                    <label>Select Slot</label>
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(120px,1fr))", gap: "8px" }}>
+                      {loadingSlots ? (
+                        <span style={{ fontSize: "12px", color: "#64748b" }}>Loading slots...</span>
+                      ) : !formData.doctor_id ? (
+                        <span style={{ fontSize: "12px", color: "#64748b" }}>Select doctor first</span>
+                      ) : !formData.date ? (
+                        <span style={{ fontSize: "12px", color: "#64748b" }}>Select date first</span>
+                      ) : availableSlots.length === 0 ? (
+                        <span style={{ fontSize: "12px", color: "#64748b" }}>No available slots</span>
+                      ) : (
+                        availableSlots.map((slot) => {
+                          const slotLabel = new Date(slot.slot_start_utc).toLocaleTimeString("en-IN", {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                            hour12: true,
+                            timeZone: "Asia/Kolkata",
+                          });
+                          const selected = String(slot.id) === String(formData.slot_id);
+                          return (
+                            <button
+                              key={slot.id}
+                              type="button"
+                              onClick={() => handleSlotSelect(slot)}
+                              style={{
+                                border: selected ? "1px solid #2563eb" : "1px solid #cbd5e1",
+                                borderRadius: "10px",
+                                padding: "8px 10px",
+                                background: selected ? "#eff6ff" : "#fff",
+                                fontWeight: 700,
+                                fontSize: "12px",
+                                cursor: "pointer",
+                              }}
+                            >
+                              {slotLabel}
+                            </button>
+                          );
+                        })
+                      )}
+                    </div>
+                    {slotHint && <span style={{ fontSize: "12px", color: "#64748b", marginTop: "8px", display: "inline-block" }}>{slotHint}</span>}
                   </div>
                 </div>
 
@@ -174,8 +302,16 @@ const AppointmentForm = ({ onSubmit, loading }) => {
                   <span className="value">{formData.date ? new Date(formData.date).toLocaleDateString() : "—"}</span>
                 </div>
                 <div className="summary-row">
-                  <span className="label">Time</span>
-                  <span className="value">{formData.time || "—"}</span>
+                  <span className="label">Slot</span>
+                  <span className="value">
+                    {formData.time
+                      ? new Date(`1970-01-01T${formData.time}:00`).toLocaleTimeString("en-IN", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                          hour12: true,
+                        })
+                      : "—"}
+                  </span>
                 </div>
                 <div className="summary-row">
                   <span className="label">Reason</span>
@@ -229,8 +365,16 @@ const AppointmentForm = ({ onSubmit, loading }) => {
                     <span className="pm-date">{formData.date ? new Date(formData.date).toLocaleDateString() : "--"}</span>
                  </div>
                  <div className="pm-slot-box" style={{ alignItems: 'center', textAlign: 'center' }}>
-                    <span className="pm-slot-label">Time</span>
-                    <span className="pm-date">{formData.time || "--"}</span>
+                    <span className="pm-slot-label">Slot</span>
+                    <span className="pm-date">
+                      {formData.time
+                        ? new Date(`1970-01-01T${formData.time}:00`).toLocaleTimeString("en-IN", {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                            hour12: true,
+                          })
+                        : "--"}
+                    </span>
                  </div>
               </div>
 

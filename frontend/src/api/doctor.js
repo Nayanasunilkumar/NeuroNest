@@ -26,6 +26,41 @@ export const getSchedule = async (date = null, status = 'all') => {
   return response.data;
 };
 
+export const getScheduleSlots = async (date) => {
+  const response = await axios.get(`/doctor/schedule/slots?date=${date}`);
+  return response.data;
+};
+
+export const generateScheduleSlots = async (horizonDays = 60) => {
+  const response = await axios.post("/doctor/schedule/generate", { horizon_days: horizonDays });
+  return response.data;
+};
+
+export const getScheduleSettings = async () => {
+  const response = await axios.get("/doctor/schedule/settings");
+  return response.data;
+};
+
+export const updateScheduleSettings = async (payload) => {
+  const response = await axios.put("/doctor/schedule/settings", payload);
+  return response.data;
+};
+
+export const blockSlot = async (slotId) => {
+  const response = await axios.patch(`/doctor/slots/${slotId}/block`);
+  return response.data;
+};
+
+export const unblockSlot = async (slotId) => {
+  const response = await axios.patch(`/doctor/slots/${slotId}/unblock`);
+  return response.data;
+};
+
+export const extendAppointment = async (appointmentId, minutes) => {
+  const response = await axios.post(`/doctor/appointments/${appointmentId}/extend`, { minutes });
+  return response.data;
+};
+
 export const completeAppointment = async (id) => {
   const response = await axios.patch(`/doctor/appointments/${id}/complete`);
   return response.data;

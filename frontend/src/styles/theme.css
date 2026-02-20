@@ -1,0 +1,93 @@
+/* Global Admin Theme System - Clinical Governance Standard */
+
+:root {
+  /* =========================================
+     LIGHT THEME (INSTITUTIONAL WHITE)
+     ========================================= */
+  --admin-bg: #f5f7fb;
+  --admin-panel-bg: #ffffff;
+  --admin-card-bg: #ffffff;
+  --admin-header-bg: #ffffff;
+  --admin-text-main: #0f172a;
+  --admin-text-muted: #64748b;
+  --admin-border: #e2e8f0;
+  --admin-border-strong: #cbd5e1;
+  
+  /* Primary Axis */
+  --admin-accent: #4f46e5;
+  --admin-accent-gradient: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+  --admin-accent-soft: rgba(79, 70, 229, 0.06);
+  --admin-accent-glow: rgba(79, 70, 229, 0.15);
+  
+  /* Semantic Triage */
+  --admin-success: #10b981;
+  --admin-warning: #f59e0b;
+  --admin-danger: #ef4444;
+  
+  /* Oversight Components */
+  --admin-modal-bg: #ffffff;
+  --admin-modal-overlay: rgba(15, 23, 42, 0.45);
+  --admin-modal-border: rgba(0, 0, 0, 0.05);
+  --admin-input-bg: #f8fafc;
+  --admin-terminal-bg: #0f172a;
+  --admin-timeline-line: #e2e8f0;
+  
+  /* Optical Effects */
+  --admin-glass: none;
+  --admin-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.02);
+  --admin-shadow-strong: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+body.dark {
+  /* =========================================
+     DARK THEME (VANGUARD NAVY)
+     ========================================= */
+  --admin-bg: #0b0e14;
+  --admin-panel-bg: #11141d;
+  --admin-card-bg: #11141d;
+  --admin-header-bg: #0b0e14;
+  --admin-text-main: #f8fafc;
+  --admin-text-muted: #94a3b8;
+  --admin-border: rgba(255, 255, 255, 0.06);
+  --admin-border-strong: rgba(255, 255, 255, 0.12);
+  
+  /* Primary Axis */
+  --admin-accent: #6366f1;
+  --admin-accent-gradient: linear-gradient(135deg, #6366f1 0%, #818cf8 100%);
+  --admin-accent-soft: rgba(99, 102, 241, 0.08);
+  --admin-accent-glow: rgba(99, 102, 241, 0.3);
+  
+  /* Oversight Components */
+  --admin-modal-bg: #111827;
+  --admin-modal-overlay: rgba(0, 0, 0, 0.85);
+  --admin-modal-border: rgba(255, 255, 255, 0.08);
+  --admin-input-bg: #000000;
+  --admin-terminal-bg: #000000;
+  --admin-timeline-line: rgba(255, 255, 255, 0.05);
+  
+  /* Optical Effects */
+  --admin-glass: blur(12px) saturate(180%);
+  --admin-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  --admin-shadow-strong: 0 40px 100px -20px rgba(0, 0, 0, 0.8);
+}
+
+/* Global Transition Axis */
+* {
+  transition: background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
+              border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
+              color 0.15s ease;
+}
+
+/* Base Institutional Layout */
+.admin-portal {
+  background-color: var(--admin-bg);
+  min-height: 100vh;
+  color: var(--admin-text-main);
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+.dashboard-header {
+  background-color: var(--admin-header-bg) !important;
+  border-bottom: 1px solid var(--admin-border) !important;
+  backdrop-filter: var(--admin-glass);
+}
