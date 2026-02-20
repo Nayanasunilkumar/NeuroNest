@@ -178,14 +178,6 @@ export default function SecuritySection({ data, saving, onChangePassword }) {
           </div>
         </div>
         
-        <button style={{ 
-          marginTop: '1.5rem', background: 'none', border: 'none', color: '#ef4444', 
-          fontSize: '0.85rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem',
-          cursor: 'pointer', padding: '0.5rem 0'
-        }}>
-          <LogOut size={14} />
-          Log out from all other sessions
-        </button>
       </section>
 
       {/* ⚪️ LOGIN HISTORY */}
