@@ -159,23 +159,47 @@ export default function SecuritySection({ data, saving, onChangePassword }) {
         </div>
         
         <div className="pset-notif-table">
-          <div className="pset-notif-row" style={{ background: '#fff' }}>
-            <div style={{ flex: 1, display: 'flex', gap: '1rem', alignItems: 'center' }}>
-              <div style={{ width: 40, height: 40, borderRadius: '10px', background: '#ecfdf5', display: 'flex', alignItems: 'center', justifyCenter: 'center', color: '#059669' }}>
-                <Monitor size={20} style={{ margin: 'auto' }} />
+          {data?.security?.sessions && data.security.sessions.length > 0 ? (
+            data.security.sessions.map((session, i) => (
+              <div key={i} className="pset-notif-row" style={{ background: '#fff' }}>
+                <div style={{ flex: 1, display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                  <div style={{ width: 40, height: 40, borderRadius: '10px', background: session.current ? '#ecfdf5' : '#f1f5f9', display: 'flex', alignItems: 'center', justifyCenter: 'center', color: session.current ? '#059669' : '#64748b' }}>
+                    <Monitor size={20} style={{ margin: 'auto' }} />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '0.9rem', fontWeight: 800, color: '#0f172a' }}>
+                      {session.device} 
+                      {session.current && <span style={{ padding: '2px 6px', background: '#dcfce7', color: '#166534', fontSize: '0.6rem', borderRadius: '4px', marginLeft: '6px' }}>Current</span>}
+                    </div>
+                    <div style={{ fontSize: '0.75rem', color: '#64748b', display: 'flex', gap: '0.75rem', marginTop: '2px' }}>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><MapPin size={10}/> {session.location}</span>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><Clock size={10}/> {session.last_active}</span>
+                    </div>
+                  </div>
+                </div>
+                {!session.current && (
+                  <button style={{ background: 'none', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '6px 12px', fontSize: '0.75rem', fontWeight: 700, color: '#64748b', cursor: 'not-allowed' }} disabled>
+                    Revoke
+                  </button>
+                )}
               </div>
-              <div>
-                <div style={{ fontSize: '0.9rem', fontWeight: 800, color: '#0f172a' }}>Chrome on MacOS <span style={{ padding: '2px 6px', background: '#dcfce7', color: '#166534', fontSize: '0.6rem', borderRadius: '4px', marginLeft: '6px' }}>Current</span></div>
-                <div style={{ fontSize: '0.75rem', color: '#64748b', display: 'flex', gap: '0.75rem', marginTop: '2px' }}>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><MapPin size={10}/> Bangalore, India</span>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><Clock size={10}/> Active now</span>
+            ))
+          ) : (
+            <div className="pset-notif-row" style={{ background: '#fff' }}>
+              <div style={{ flex: 1, display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                <div style={{ width: 40, height: 40, borderRadius: '10px', background: '#ecfdf5', display: 'flex', alignItems: 'center', justifyCenter: 'center', color: '#059669' }}>
+                  <Monitor size={20} style={{ margin: 'auto' }} />
+                </div>
+                <div>
+                  <div style={{ fontSize: '0.9rem', fontWeight: 800, color: '#0f172a' }}>Current Session <span style={{ padding: '2px 6px', background: '#dcfce7', color: '#166534', fontSize: '0.6rem', borderRadius: '4px', marginLeft: '6px' }}>Current</span></div>
+                  <div style={{ fontSize: '0.75rem', color: '#64748b', display: 'flex', gap: '0.75rem', marginTop: '2px' }}>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><MapPin size={10}/> Unknown Location</span>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><Clock size={10}/> Active now</span>
+                  </div>
                 </div>
               </div>
             </div>
-            <button style={{ background: 'none', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '6px 12px', fontSize: '0.75rem', fontWeight: 700, color: '#64748b', cursor: 'not-allowed' }} disabled>
-              Revoke
-            </button>
-          </div>
+          )}
         </div>
         
       </section>
@@ -187,19 +211,21 @@ export default function SecuritySection({ data, saving, onChangePassword }) {
           Recent Security Activity
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-          {[
-            { action: 'Password changed successfully', time: '2 days ago', status: 'success' },
-            { action: 'New login from Chrome / MacOS', time: '5 days ago', status: 'success' },
-            { action: 'Failed login attempt detected', time: '1 week ago', status: 'warning' },
-          ].map((item, i) => (
-            <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 1rem', background: '#f8fafc', borderRadius: '12px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <div style={{ width: 8, height: 8, borderRadius: '50%', background: item.status === 'success' ? '#10b981' : '#f59e0b' }} />
-                <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#334155' }}>{item.action}</span>
+          {data?.security?.activity && data.security.activity.length > 0 ? (
+            data.security.activity.map((item, i) => (
+              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 1rem', background: '#f8fafc', borderRadius: '12px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <div style={{ width: 8, height: 8, borderRadius: '50%', background: item.status === 'success' ? '#10b981' : item.status === 'warning' ? '#f59e0b' : '#ef4444' }} />
+                  <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#334155' }}>{item.action}</span>
+                </div>
+                <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{item.time}</span>
               </div>
-              <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{item.time}</span>
+            ))
+          ) : (
+            <div style={{ padding: '2rem', textAlign: 'center', background: '#f8fafc', borderRadius: '16px', border: '1px dashed #e2e8f0', color: '#94a3b8', fontSize: '0.85rem' }}>
+              No recent security activity to display
             </div>
-          ))}
+          )}
         </div>
       </section>
     </div>

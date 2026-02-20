@@ -741,3 +741,32 @@ class ReviewEscalation(db.Model):
     status = db.Column(db.String(20), default="open") # open, investigating, resolved, closed
     
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+# =========================================
+# PATIENT AUDIT LOGS
+# =========================================
+class PatientAuditLog(db.Model):
+    __tablename__ = "patient_audit_logs"
+
+    id = db.Column(db.Integer, primary_key=True)
+    patient_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    actor_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    action_type = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.Text)
+    action_metadata = db.Column(db.JSON)
+    ip_address = db.Column(db.String(45))
+    user_agent = db.Column(db.String(255))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    patient = db.relationship("User", foreign_keys=[patient_id], backref="patient_logs")
+    actor = db.relationship("User", foreign_keys=[actor_id], backref="actor_logs")
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "patient_id": self.patient_id,
+            "action": self.description,
+            "type": self.action_type,
+            "time": self.created_at.isoformat(),
+            "status": "success" # Default to success for now
+        }
