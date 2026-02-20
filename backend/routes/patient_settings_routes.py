@@ -245,14 +245,17 @@ def change_password():
 
     user.password_hash = hash_password(new_pw)
     
+    logout_others = data.get("logout_others", False)
+    
     # Log the security event
     log = PatientAuditLog(
         patient_id=uid,
         actor_id=uid,
         action_type="security_password_change",
-        description="Password changed successfully",
+        description=f"Password changed successfully{' (All sessions revoked)' if logout_others else ''}",
         ip_address=request.remote_addr,
-        user_agent=request.headers.get("User-Agent")
+        user_agent=request.headers.get("User-Agent"),
+        action_metadata={"logout_others": logout_others}
     )
     db.session.add(log)
     
