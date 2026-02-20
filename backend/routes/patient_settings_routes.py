@@ -209,6 +209,10 @@ def change_password():
         return jsonify({"error": "Current password is incorrect"}), 400
 
     user.password_hash = hash_password(new_pw)
+    
+    # Placeholder: If data.get("logout_others"):
+    # Revoke all other active refresh tokens/sessions for this user.
+    
     db.session.commit()
     return jsonify({"message": "Password changed successfully"}), 200
 

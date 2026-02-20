@@ -156,13 +156,14 @@ export default function PatientSettingsPage() {
         /* Forms & Fields (Restored) */
         .pset-grid1 { display:flex; flex-direction:column; gap:1.5rem; }
         .pset-field { display:flex; flex-direction:column; gap:0.5rem; }
-        .pset-field label { font-size:0.875rem; font-weight:700; color:#334155; }
+        .pset-field label { font-size:0.875rem; font-weight:800; color:#475569; }
         .pset-field input, .pset-field select {
-          height:48px; padding:0 1.25rem; border:1.5px solid #e2e8f0; border-radius:14px;
+          height:52px; padding:0 1.25rem; border:1.5px solid #e2e8f0; border-radius:14px;
           font-size:0.95rem; background:#f8fafc; color:#0f172a; transition:all 0.2s;
           outline:none; width:100%; box-sizing:border-box;
         }
         .pset-field input:focus { border-color:#4f46e5; box-shadow:0 0 0 4px rgba(79, 70, 229, 0.1); background: white; }
+        .pset-field input.pset-error-border { border-color: #ef4444; }
         .pset-icon-input { position:relative; display:flex; align-items:center; }
         .pset-icon-input svg:first-child { position:absolute; left:1rem; color:#94a3b8; }
         .pset-icon-input input { padding-left:2.75rem; }
@@ -188,7 +189,17 @@ export default function PatientSettingsPage() {
 
         /* Subsection (Restored) */
         .pset-subsection { margin-top:3rem; border-top:1px solid #f1f5f9; padding-top:2.5rem; }
-        .pset-subsection-title { font-size:0.85rem; font-weight:900; color:#64748b; text-transform:uppercase; letter-spacing:0.12em; margin-bottom:1.5rem; display:flex; align-items:center; gap:0.6rem; }
+        .pset-subsection-title { 
+          font-size:0.85rem; 
+          font-weight:900; 
+          color:#64748b; 
+          text-transform:uppercase; 
+          letter-spacing:0.12em; 
+          margin-bottom:1.5rem; 
+          display:flex; 
+          align-items:center; 
+          gap:0.6rem; 
+        }
 
         /* Utilities */
         .pset-flash { display:flex; align-items:center; gap:1rem; padding:1.25rem; border-radius:18px; margin-bottom:2.5rem; font-size:1rem; font-weight:700; border: 1px solid transparent; }
