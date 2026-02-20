@@ -14,8 +14,8 @@ const SecurityInput = ({ field, value, onChange, show, onToggleShow, label, plac
       <label>{label}</label>
       {error && <span style={{ fontSize: '0.7rem', color: '#ef4444', fontWeight: 600 }}>{error}</span>}
     </div>
-    <div className="pset-icon-input" style={{ position: 'relative', width: '100%' }}>
-      <Lock size={14} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8', zIndex: 10 }} />
+    <div className="pset-icon-input" style={{ position: 'relative', display: 'block', width: '100%' }}>
+      <Lock size={14} style={{ position: 'absolute', left: '1.25rem', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8', zIndex: 10 }} />
       <input
         type={show ? 'text' : 'password'}
         value={value}
@@ -23,8 +23,9 @@ const SecurityInput = ({ field, value, onChange, show, onToggleShow, label, plac
         placeholder={placeholder}
         style={{ 
           paddingRight: '3.5rem', 
-          paddingLeft: '2.75rem',
+          paddingLeft: '3rem',
           width: '100%',
+          boxSizing: 'border-box',
           borderColor: error ? '#ef4444' : '' 
         }}
         className={error ? 'pset-error-border' : ''}
@@ -35,8 +36,8 @@ const SecurityInput = ({ field, value, onChange, show, onToggleShow, label, plac
         aria-label={show ? "Hide password" : "Show password"}
         style={{ 
           position:'absolute', right:'0.75rem', top:'50%', transform:'translateY(-50%)', 
-          background:'rgba(241, 245, 249, 0.8)', border:'none', borderRadius: '8px',
-          padding: '6px', cursor:'pointer', color:'#64748b', display: 'flex', transition: 'all 0.2s',
+          background:'rgba(241, 245, 249, 0.8)', border:'none', borderRadius: '10px',
+          padding: '8px', cursor:'pointer', color:'#64748b', display: 'flex', transition: 'all 0.2s',
           zIndex: 10
         }}
         onMouseOver={e => e.currentTarget.style.background = '#e2e8f0'}
@@ -135,9 +136,9 @@ export default function SecuritySection({ data, activity = [], saving, onChangeP
               )}
             </div>
 
-            <div style={{ width: '300px', background: '#f8fafc', padding: '1.25rem', borderRadius: '20px', border: '1px solid #f1f5f9' }}>
-              <div style={{ fontSize: '0.7rem', fontWeight: 950, color: '#94a3b8', textTransform: 'uppercase', marginBottom: '1rem', letterSpacing: '0.05em' }}>Required Standards</div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem 0.5rem' }}>
+            <div style={{ width: '280px', background: '#f8fafc', padding: '1.5rem', borderRadius: '24px', border: '1px solid #f1f5f9' }}>
+              <div style={{ fontSize: '0.7rem', fontWeight: 950, color: '#94a3b8', textTransform: 'uppercase', marginBottom: '1.25rem', letterSpacing: '0.05em' }}>Security Checklist</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                 {requirements.map((req, idx) => <PasswordRequirement key={idx} {...req} />)}
               </div>
             </div>
