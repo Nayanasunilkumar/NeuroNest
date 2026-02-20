@@ -164,9 +164,17 @@ export default function PatientSettingsPage() {
         }
         .pset-field input:focus { border-color:#4f46e5; box-shadow:0 0 0 4px rgba(79, 70, 229, 0.1); background: white; }
         .pset-field input.pset-error-border { border-color: #ef4444; }
-        .pset-icon-input { position:relative; display:flex; align-items:center; }
-        .pset-icon-input svg:first-child { position:absolute; left:1rem; color:#94a3b8; }
-        .pset-icon-input input { padding-left:2.75rem; }
+        .pset-icon-input { position:relative; width:100%; }
+        .pset-icon-input svg:first-child { 
+          position:absolute; 
+          left:1rem; 
+          top:50%; 
+          transform:translateY(-50%); 
+          color:#94a3b8; 
+          pointer-events:none;
+          z-index: 10;
+        }
+        .pset-icon-input input { padding-left:2.75rem !important; }
 
         /* Toggles (Restored) */
         .pset-toggle { width:46px; height:26px; border-radius:99px; position:relative; transition:all 0.3s cubic-bezier(0.4, 0, 0.2, 1); flex-shrink:0; }
