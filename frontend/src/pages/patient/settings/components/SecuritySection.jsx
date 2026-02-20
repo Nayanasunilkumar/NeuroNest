@@ -9,19 +9,24 @@ const PasswordRequirement = ({ met, text }) => (
 );
 
 const SecurityInput = ({ field, value, onChange, show, onToggleShow, label, placeholder, error }) => (
-  <div className="pset-field">
+  <div className="pset-field" style={{ width: '100%' }}>
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
       <label>{label}</label>
       {error && <span style={{ fontSize: '0.7rem', color: '#ef4444', fontWeight: 600 }}>{error}</span>}
     </div>
-    <div className="pset-icon-input" style={{ position: 'relative' }}>
-      <Lock size={14} />
+    <div className="pset-icon-input" style={{ position: 'relative', width: '100%' }}>
+      <Lock size={14} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8', zIndex: 10 }} />
       <input
         type={show ? 'text' : 'password'}
         value={value}
         onChange={e => onChange(e.target.value)}
         placeholder={placeholder}
-        style={{ paddingRight: '3rem', borderColor: error ? '#ef4444' : '' }}
+        style={{ 
+          paddingRight: '3.5rem', 
+          paddingLeft: '2.75rem',
+          width: '100%',
+          borderColor: error ? '#ef4444' : '' 
+        }}
         className={error ? 'pset-error-border' : ''}
       />
       <button 
@@ -29,9 +34,10 @@ const SecurityInput = ({ field, value, onChange, show, onToggleShow, label, plac
         onClick={onToggleShow}
         aria-label={show ? "Hide password" : "Show password"}
         style={{ 
-          position:'absolute', right:'0.5rem', top:'50%', transform:'translateY(-50%)', 
+          position:'absolute', right:'0.75rem', top:'50%', transform:'translateY(-50%)', 
           background:'rgba(241, 245, 249, 0.8)', border:'none', borderRadius: '8px',
-          padding: '6px', cursor:'pointer', color:'#64748b', display: 'flex', transition: 'all 0.2s'
+          padding: '6px', cursor:'pointer', color:'#64748b', display: 'flex', transition: 'all 0.2s',
+          zIndex: 10
         }}
         onMouseOver={e => e.currentTarget.style.background = '#e2e8f0'}
         onMouseOut={e => e.currentTarget.style.background = 'rgba(241, 245, 249, 0.8)'}
@@ -90,8 +96,8 @@ export default function SecuritySection({ data, saving, onChangePassword }) {
             onChange={v => setForm(p => ({ ...p, current_password: v }))}
           />
 
-          <div style={{ display: 'flex', gap: '2rem' }}>
-            <div style={{ flex: 1 }}>
+          <div style={{ display: 'flex', gap: '2rem', alignItems: 'flex-start' }}>
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <SecurityInput 
                 label="New Password" 
                 placeholder="Minimum 8 characters"
@@ -102,7 +108,7 @@ export default function SecuritySection({ data, saving, onChangePassword }) {
                 error={pwError && form.new_password !== form.confirm_password ? 'Mismatch' : ''}
               />
               {form.new_password && (
-                <div style={{ marginTop: '0.75rem' }}>
+                <div>
                   <div style={{ display:'flex', gap:'4px', marginBottom:'6px' }}>
                     {[1,2,3,4].map(i => (
                       <div key={i} style={{ height:'6px', flex:1, borderRadius:'3px', background: i <= strength ? strengthColor[strength] : '#f1f5f9', transition:'background 0.3s' }} />
@@ -116,9 +122,9 @@ export default function SecuritySection({ data, saving, onChangePassword }) {
               )}
             </div>
 
-            <div style={{ width: '220px', background: '#f8fafc', padding: '1rem', borderRadius: '16px', border: '1px solid #f1f5f9' }}>
-              <div style={{ fontSize: '0.7rem', fontWeight: 900, color: '#94a3b8', textTransform: 'uppercase', marginBottom: '0.75rem' }}>Requirements</div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            <div style={{ width: '300px', background: '#f8fafc', padding: '1.25rem', borderRadius: '20px', border: '1px solid #f1f5f9' }}>
+              <div style={{ fontSize: '0.7rem', fontWeight: 950, color: '#94a3b8', textTransform: 'uppercase', marginBottom: '1rem', letterSpacing: '0.05em' }}>Required Standards</div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem 0.5rem' }}>
                 {requirements.map((req, idx) => <PasswordRequirement key={idx} {...req} />)}
               </div>
             </div>
