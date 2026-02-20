@@ -158,27 +158,6 @@ export default function SecuritySection({ data, saving, onChangePassword }) {
 
       <div style={{ height: '1px', background: '#f1f5f9' }} />
 
-      {/* 🔵 2FA SECTION */}
-      <section className="pset-security-group">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-          <div className="pset-subsection-title" style={{ marginBottom: 0 }}>
-            <Shield size={16} />
-            Two-Factor Authentication (2FA)
-          </div>
-          <span style={{ padding: '4px 10px', background: '#f1f5f9', color: '#64748b', fontSize: '0.65rem', fontWeight: 800, borderRadius: '6px', textTransform: 'uppercase' }}>Coming Soon</span>
-        </div>
-        
-        <div style={{ background: '#f8fafc', border: '1px dashed #cbd5e1', borderRadius: '20px', padding: '2rem', textAlign: 'center', opacity: 0.7 }}>
-          <Shield size={32} color="#94a3b8" style={{ marginBottom: '1rem' }} />
-          <h4 style={{ margin: '0 0 0.5rem 0', color: '#475569' }}>Enhance your account security</h4>
-          <p style={{ margin: 0, fontSize: '0.85rem', color: '#64748b', maxWidth: '400px', marginLeft: 'auto', marginRight: 'auto' }}>
-            We're working on bringing multi-factor authentication to NeuroNest. Soon you'll be able to protect your health records with SMS or Authenticator apps.
-          </p>
-        </div>
-      </section>
-
-      <div style={{ height: '1px', background: '#f1f5f9' }} />
-
       {/* 🟠 ACTIVE SESSIONS */}
       <section className="pset-security-group">
         <div className="pset-subsection-title">
