@@ -741,32 +741,30 @@ class ReviewEscalation(db.Model):
     status = db.Column(db.String(20), default="open") # open, investigating, resolved, closed
     
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-
 # =========================================
-# PATIENT AUDIT LOGS
+# SECURITY ACTIVITY LOGS
 # =========================================
-class PatientAuditLog(db.Model):
-    __tablename__ = "patient_audit_logs"
+class SecurityActivity(db.Model):
+    __tablename__ = "security_activity"
 
     id = db.Column(db.Integer, primary_key=True)
-    patient_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
-    actor_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
-    action_type = db.Column(db.String(100), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False, index=True)
+    
+    event_type = db.Column(db.String(100), nullable=False) # password_change, login_success, login_failed
     description = db.Column(db.Text)
-    action_metadata = db.Column(db.JSON)
     ip_address = db.Column(db.String(45))
     user_agent = db.Column(db.String(255))
+    
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-    patient = db.relationship("User", foreign_keys=[patient_id], backref="patient_logs")
-    actor = db.relationship("User", foreign_keys=[actor_id], backref="actor_logs")
+    user = db.relationship("User", backref="security_activities")
 
     def to_dict(self):
         return {
             "id": self.id,
-            "patient_id": self.patient_id,
-            "action": self.description,
-            "type": self.action_type,
-            "time": self.created_at.isoformat(),
-            "status": "success" # Default to success for now
+            "event_type": self.event_type,
+            "description": self.description,
+            "ip_address": self.ip_address,
+            "user_agent": self.user_agent,
+            "created_at": self.created_at.isoformat()
         }

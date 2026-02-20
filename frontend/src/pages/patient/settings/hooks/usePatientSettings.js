@@ -3,6 +3,7 @@ import { patientSettingsService } from '../services/patientSettingsService';
 
 export const usePatientSettings = () => {
   const [settings, setSettings]   = useState(null);
+  const [securityActivity, setSecurityActivity] = useState([]);
   const [loading, setLoading]     = useState(true);
   const [saving,  setSaving]      = useState(false);
   const [error,   setError]       = useState(null);
@@ -14,10 +15,14 @@ export const usePatientSettings = () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await patientSettingsService.getSettings();
-      setSettings(data);
+      const [settingsData, activityData] = await Promise.all([
+        patientSettingsService.getSettings(),
+        patientSettingsService.getSecurityActivity()
+      ]);
+      setSettings(settingsData);
+      setSecurityActivity(activityData);
     } catch (e) {
-      setError(e?.response?.data?.error || 'Failed to load settings');
+      setError(e?.response?.data?.error || 'Failed to load data');
     } finally {
       setLoading(false);
     }
@@ -45,5 +50,5 @@ export const usePatientSettings = () => {
   const exportData         = ()     => save(() => patientSettingsService.exportData(), 'Data export ready!');
   const deleteAccount      = (data) => patientSettingsService.deleteAccount(data);
 
-  return { settings, loading, saving, error, success, updateNotifications, updatePrivacy, changePassword, exportData, deleteAccount, reload: load };
+  return { settings, securityActivity, loading, saving, error, success, updateNotifications, updatePrivacy, changePassword, exportData, deleteAccount, reload: load };
 };

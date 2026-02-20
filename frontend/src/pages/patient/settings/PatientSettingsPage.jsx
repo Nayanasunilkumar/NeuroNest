@@ -18,7 +18,7 @@ const SECTIONS = [
 export default function PatientSettingsPage() {
   const [active, setActive] = useState('security');
   const {
-    settings, loading, saving, error, success,
+    settings, securityActivity, loading, saving, error, success,
     updateNotifications, updatePrivacy,
     changePassword, exportData, deleteAccount,
   } = usePatientSettings();
@@ -31,7 +31,7 @@ export default function PatientSettingsPage() {
       </div>
     );
     switch (active) {
-      case 'security':      return <SecuritySection         data={settings} saving={saving} onChangePassword={changePassword} />;
+      case 'security':      return <SecuritySection         data={settings} activity={securityActivity} saving={saving} onChangePassword={changePassword} />;
       case 'privacy':       return <PrivacySection          data={settings} saving={saving} onSave={updatePrivacy} />;
       case 'notifications': return <NotificationPreferences data={settings} saving={saving} onSave={updateNotifications} />;
       case 'data':          return <DataManagementSection   saving={saving} onExport={exportData} />;
@@ -157,7 +157,6 @@ export default function PatientSettingsPage() {
         .pset-grid1 { display:flex; flex-direction:column; gap:1.5rem; }
         .pset-field { display:flex; flex-direction:column; gap:0.5rem; }
         .pset-field label { font-size:0.875rem; font-weight:800; color:#475569; }
-        .pset-field input::placeholder { color: #64748b; opacity: 1; }
         .pset-field input, .pset-field select {
           height:52px; padding:0 1.25rem; border:1.5px solid #e2e8f0; border-radius:14px;
           font-size:0.95rem; background:#f8fafc; color:#0f172a; transition:all 0.2s;

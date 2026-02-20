@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
-from database.models import db, User, PatientAuditLog
+from database.models import db, User, SecurityActivity
 from utils.security import verify_password, hash_password
 from datetime import datetime
 
@@ -69,47 +69,12 @@ def get_settings():
             "preferred_language": getattr(user, "preferred_language", "en") or "en",
         },
         "emergency_contact": dict(ec) if ec else {},
-        "notifications": {k: v for k, v in notif.items() if k not in ("id", "user_id", "created_at", "updated_at")},
         "security": {
             "is_two_factor_enabled": getattr(user, "is_two_factor_enabled", False) or False,
             "email_verified": user.email_verified or False,
-            "activity": _get_security_activity(uid),
-            "sessions": [
-                {
-                    "device": "Chrome on MacOS",
-                    "location": "Bangalore, India",
-                    "last_active": "Active now",
-                    "current": True
-                }
-            ]
-        }
+        },
+        "notifications": {k: v for k, v in notif.items() if k not in ("id", "user_id", "created_at", "updated_at")},
     }), 200
-
-def _get_security_activity(user_id):
-    logs = PatientAuditLog.query.filter(
-        PatientAuditLog.patient_id == user_id,
-        PatientAuditLog.action_type.like("security_%")
-    ).order_by(PatientAuditLog.created_at.desc()).limit(5).all()
-    
-    return [
-        {
-            "action": log.description,
-            "time": _format_relative_time(log.created_at),
-            "status": "success" if "Failed" not in log.description else "warning"
-        } for log in logs
-    ]
-
-def _format_relative_time(dt):
-    diff = datetime.utcnow() - dt
-    if diff.days > 0:
-        return f"{diff.days} day{'s' if diff.days > 1 else ''} ago"
-    if diff.seconds > 3600:
-        val = diff.seconds // 3600
-        return f"{val} hour{'s' if val > 1 else ''} ago"
-    if diff.seconds > 60:
-        val = diff.seconds // 60
-        return f"{val} minute{'s' if val > 1 else ''} ago"
-    return "Just now"
 
 
 # ── PUT /patient/settings/account ────────────────────────────────────────────
@@ -223,6 +188,13 @@ def update_privacy():
 
 # ── POST /patient/settings/change-password ───────────────────────────────────
 
+@patient_settings_bp.route("/security-activity", methods=["GET"])
+@jwt_required()
+def get_security_activity():
+    uid = int(get_jwt_identity())
+    activities = SecurityActivity.query.filter_by(user_id=uid).order_by(SecurityActivity.created_at.desc()).limit(10).all()
+    return jsonify([a.to_dict() for a in activities]), 200
+
 @patient_settings_bp.route("/change-password", methods=["POST"])
 @jwt_required()
 def change_password():
@@ -245,20 +217,19 @@ def change_password():
 
     user.password_hash = hash_password(new_pw)
     
-    logout_others = data.get("logout_others", False)
-    
-    # Log the security event
-    log = PatientAuditLog(
-        patient_id=uid,
-        actor_id=uid,
-        action_type="security_password_change",
-        description=f"Password changed successfully{' (All sessions revoked)' if logout_others else ''}",
-        ip_address=request.remote_addr,
-        user_agent=request.headers.get("User-Agent"),
-        action_metadata={"logout_others": logout_others}
-    )
-    db.session.add(log)
-    
+    # Log password change
+    try:
+        activity = SecurityActivity(
+            user_id=uid,
+            event_type="password_change",
+            description="Password changed successfully",
+            ip_address=request.remote_addr,
+            user_agent=request.headers.get('User-Agent')
+        )
+        db.session.add(activity)
+    except Exception as e:
+        print(f"Error logging password change: {e}")
+
     db.session.commit()
     return jsonify({"message": "Password changed successfully"}), 200
 

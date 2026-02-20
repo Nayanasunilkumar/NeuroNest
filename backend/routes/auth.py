@@ -1,10 +1,25 @@
 import os
 from flask import Blueprint, request, jsonify
-from database.models import db, User, PatientProfile, DoctorProfile
+from database.models import db, User, PatientProfile, DoctorProfile, SecurityActivity
 from utils.security import hash_password, verify_password
 from flask_jwt_extended import create_access_token
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
+
+def log_security_event(user_id, event_type, description):
+    try:
+        activity = SecurityActivity(
+            user_id=user_id,
+            event_type=event_type,
+            description=description,
+            ip_address=request.remote_addr,
+            user_agent=request.headers.get('User-Agent')
+        )
+        db.session.add(activity)
+        db.session.commit()
+    except Exception as e:
+        print(f"Error logging security event: {e}")
+        db.session.rollback()
 
 
 def _maybe_bootstrap_doctor_for_dev(email: str):
@@ -117,6 +132,7 @@ def login():
         return jsonify({"message": "Invalid email or password"}), 401
 
     if not verify_password(password, user.password_hash):
+        log_security_event(user.id, "login_failed", "Failed login attempt detected")
         return jsonify({"message": "Invalid email or password"}), 401
 
     # ✅ CRITICAL FIX: identity MUST be string
@@ -126,6 +142,8 @@ def login():
             "role": user.role
         }
     )
+
+    log_security_event(user.id, "login_success", f"New login from {request.headers.get('User-Agent', 'Unknown Device')}")
 
     return jsonify({
         "message": "Login successful",
