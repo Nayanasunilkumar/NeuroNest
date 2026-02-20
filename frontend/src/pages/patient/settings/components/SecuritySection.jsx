@@ -43,7 +43,7 @@ const SecurityInput = ({ field, value, onChange, show, onToggleShow, label, plac
 );
 
 export default function SecuritySection({ data, saving, onChangePassword }) {
-  const [form, setForm] = useState({ current_password: '', new_password: '', confirm_password: '', logout_others: false });
+  const [form, setForm] = useState({ current_password: '', new_password: '', confirm_password: '' });
   const [show, setShow] = useState({ cur: false, new: false, con: false });
   const [pwError, setPwError] = useState('');
 
@@ -65,10 +65,9 @@ export default function SecuritySection({ data, saving, onChangePassword }) {
     setPwError('');
     onChangePassword({ 
       current_password: form.current_password, 
-      new_password: form.new_password,
-      logout_others: form.logout_others 
+      new_password: form.new_password
     });
-    setForm({ current_password: '', new_password: '', confirm_password: '', logout_others: false });
+    setForm({ current_password: '', new_password: '', confirm_password: '' });
   };
 
   return (
@@ -134,19 +133,7 @@ export default function SecuritySection({ data, saving, onChangePassword }) {
             onChange={v => setForm(p => ({ ...p, confirm_password: v }))}
           />
 
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '0.5rem', background: '#eff6ff', padding: '1rem', borderRadius: '14px', border: '1px solid #dbeafe' }}>
-            <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-              <Shield size={16} color="#3b82f6" />
-              <span style={{ fontSize: '0.85rem', color: '#1e40af', fontWeight: 600 }}>Sign out from all other devices after password change</span>
-            </div>
-            <div 
-              className={`pset-toggle ${form.logout_others ? 'pset-toggle-on' : 'pset-toggle-off'}`} 
-              onClick={() => setForm(p => ({...p, logout_others: !p.logout_others}))}
-              style={{ cursor: 'pointer' }}
-            >
-              <div className="pset-toggle-knob" />
-            </div>
-          </div>
+
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1rem' }}>
             <button className="pset-save-btn" style={{ marginTop: 0 }} disabled={saving || !form.current_password || strength < 4}>
