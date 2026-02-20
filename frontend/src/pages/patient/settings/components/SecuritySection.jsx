@@ -1,6 +1,26 @@
 import React, { useState } from 'react';
 import { Lock, Eye, EyeOff, Shield, AlertTriangle } from 'lucide-react';
 
+const SecurityInput = ({ field, value, onChange, show, onToggleShow, label, placeholder }) => (
+  <div className="pset-field">
+    <label>{label}</label>
+    <div className="pset-icon-input" style={{ position: 'relative' }}>
+      <Lock size={14} />
+      <input
+        type={show ? 'text' : 'password'}
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        placeholder={placeholder}
+        style={{ paddingRight: '2.5rem' }}
+      />
+      <button type="button" onClick={onToggleShow}
+        style={{ position:'absolute', right:'0.6rem', top:'50%', transform:'translateY(-50%)', background:'none', border:'none', cursor:'pointer', color:'#94a3b8' }}>
+        {show ? <EyeOff size={15}/> : <Eye size={15}/>}
+      </button>
+    </div>
+  </div>
+);
+
 export default function SecuritySection({ data, saving, onChangePassword }) {
   const [form, setForm] = useState({ current_password: '', new_password: '', confirm_password: '' });
   const [show, setShow] = useState({ cur: false, new: false, con: false });
@@ -27,26 +47,6 @@ export default function SecuritySection({ data, saving, onChangePassword }) {
     setForm({ current_password: '', new_password: '', confirm_password: '' });
   };
 
-  const Input = ({ field, showKey, label, placeholder }) => (
-    <div className="pset-field">
-      <label>{label}</label>
-      <div className="pset-icon-input" style={{ position: 'relative' }}>
-        <Lock size={14} />
-        <input
-          type={show[showKey] ? 'text' : 'password'}
-          value={form[field]}
-          onChange={e => setForm(p => ({ ...p, [field]: e.target.value }))}
-          placeholder={placeholder}
-          style={{ paddingRight: '2.5rem' }}
-        />
-        <button type="button" onClick={() => setShow(p => ({ ...p, [showKey]: !p[showKey] }))}
-          style={{ position:'absolute', right:'0.6rem', top:'50%', transform:'translateY(-50%)', background:'none', border:'none', cursor:'pointer', color:'#94a3b8' }}>
-          {show[showKey] ? <EyeOff size={15}/> : <Eye size={15}/>}
-        </button>
-      </div>
-    </div>
-  );
-
   return (
     <div className="pset-section">
       <div className="pset-section-header">
@@ -58,8 +58,24 @@ export default function SecuritySection({ data, saving, onChangePassword }) {
       </div>
 
       <div className="pset-grid1">
-        <Input field="current_password" showKey="cur" label="Current Password" placeholder="Enter current password" />
-        <Input field="new_password"     showKey="new" label="New Password"     placeholder="Enter new password" />
+        <SecurityInput 
+          field="current_password" 
+          value={form.current_password} 
+          show={show.cur} 
+          onToggleShow={() => setShow(p => ({ ...p, cur: !p.cur }))} 
+          onChange={v => setForm(p => ({ ...p, current_password: v }))} 
+          label="Current Password" 
+          placeholder="Enter current password" 
+        />
+        <SecurityInput 
+          field="new_password" 
+          value={form.new_password} 
+          show={show.new} 
+          onToggleShow={() => setShow(p => ({ ...p, new: !p.new }))} 
+          onChange={v => setForm(p => ({ ...p, new_password: v }))} 
+          label="New Password" 
+          placeholder="Enter new password" 
+        />
 
         {/* Password strength */}
         {form.new_password && (
@@ -73,7 +89,15 @@ export default function SecuritySection({ data, saving, onChangePassword }) {
           </div>
         )}
 
-        <Input field="confirm_password" showKey="con" label="Confirm New Password" placeholder="Repeat new password" />
+        <SecurityInput 
+          field="confirm_password" 
+          value={form.confirm_password} 
+          show={show.con} 
+          onToggleShow={() => setShow(p => ({ ...p, con: !p.con }))} 
+          onChange={v => setForm(p => ({ ...p, confirm_password: v }))} 
+          label="Confirm New Password" 
+          placeholder="Repeat new password" 
+        />
         {pwError && <div className="pset-inline-error"><AlertTriangle size={13}/>{pwError}</div>}
       </div>
 
