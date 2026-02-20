@@ -8,24 +8,56 @@ const PasswordRequirement = ({ met, text }) => (
   </div>
 );
 
-const SecurityInput = ({ field, value, onChange, show, onToggleShow, label, placeholder, error }) => (
-  <div className="pset-field" style={{ width: '100%' }}>
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-      <label>{label}</label>
-      {error && <span style={{ fontSize: '0.7rem', color: '#ef4444', fontWeight: 600 }}>{error}</span>}
+const SecurityInput = ({ label, value, onChange, show, onToggleShow, placeholder, error }) => (
+  <div className="pset-field" style={{ width: '100%', marginBottom: '0.5rem' }}>
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+      <label style={{ fontSize: '0.875rem', fontWeight: 850, color: '#334155', letterSpacing: '-0.01em' }}>{label}</label>
+      {error && <span style={{ fontSize: '0.75rem', color: '#ef4444', fontWeight: 700 }}>{error}</span>}
     </div>
-    <div className="pset-icon-input">
-      <Lock size={14} />
+    <div style={{ position: 'relative', width: '100%', display: 'flex', alignItems: 'center' }}>
+      <Lock 
+        size={18} 
+        style={{ 
+          position: 'absolute', 
+          left: '1.25rem', 
+          color: '#94a3b8',
+          zIndex: 10,
+          pointerEvents: 'none',
+          opacity: 0.8
+        }} 
+      />
       <input
         type={show ? 'text' : 'password'}
         value={value}
         onChange={e => onChange(e.target.value)}
         placeholder={placeholder}
         style={{ 
-          paddingRight: '3.5rem', 
-          borderColor: error ? '#ef4444' : '' 
+          width: '100%',
+          height: '54px',
+          paddingLeft: '3.25rem',
+          paddingRight: '3.75rem',
+          fontSize: '1rem',
+          fontWeight: '500',
+          borderRadius: '16px',
+          border: `2px solid ${error ? '#f87171' : '#e2e8f0'}`,
+          background: '#f8fafc',
+          color: '#0f172a',
+          transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+          outline: 'none',
+          boxSizing: 'border-box'
         }}
-        className={error ? 'pset-error-border' : ''}
+        onFocus={e => {
+          e.target.style.borderColor = '#4f46e5';
+          e.target.style.background = '#ffffff';
+          e.target.style.boxShadow = '0 0 0 4px rgba(79, 70, 229, 0.08)';
+        }}
+        onBlur={e => {
+          if (!error) {
+            e.target.style.borderColor = '#e2e8f0';
+            e.target.style.background = '#f8fafc';
+          }
+          e.target.style.boxShadow = 'none';
+        }}
       />
       <button 
         type="button" 
@@ -33,23 +65,32 @@ const SecurityInput = ({ field, value, onChange, show, onToggleShow, label, plac
         aria-label={show ? "Hide password" : "Show password"}
         style={{ 
           position:'absolute', 
-          right:'1rem', 
+          right:'0.5rem', 
           top:'50%', 
           transform:'translateY(-50%)', 
-          background:'rgba(241, 245, 249, 0.8)', 
-          border:'none', 
-          borderRadius: '8px',
-          padding: '6px', 
-          cursor:'pointer', 
-          color:'#64748b', 
+          background: 'transparent',
+          border: 'none', 
+          borderRadius: '12px',
+          width: '42px',
+          height: '42px',
           display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center',
+          cursor: 'pointer', 
+          color: '#64748b', 
           transition: 'all 0.2s',
           zIndex: 11
         }}
-        onMouseOver={e => e.currentTarget.style.background = '#e2e8f0'}
-        onMouseOut={e => e.currentTarget.style.background = 'rgba(241, 245, 249, 0.8)'}
+        onMouseOver={e => {
+          e.currentTarget.style.background = '#f1f5f9';
+          e.currentTarget.style.color = '#4f46e5';
+        }}
+        onMouseOut={e => {
+          e.currentTarget.style.background = 'transparent';
+          e.currentTarget.style.color = '#64748b';
+        }}
       >
-        {show ? <EyeOff size={16}/> : <Eye size={16}/>}
+        {show ? <EyeOff size={20}/> : <Eye size={20}/>}
       </button>
     </div>
   </div>
