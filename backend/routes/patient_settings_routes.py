@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
 from database.models import db, User
-from werkzeug.security import check_password_hash, generate_password_hash
+from utils.security import verify_password, hash_password
 from datetime import datetime
 
 patient_settings_bp = Blueprint("patient_settings", __name__)
@@ -205,10 +205,10 @@ def change_password():
         return jsonify({"error": "New password must be at least 8 characters"}), 400
 
     user = User.query.get_or_404(uid)
-    if not check_password_hash(user.password_hash, current_pw):
+    if not verify_password(current_pw, user.password_hash):
         return jsonify({"error": "Current password is incorrect"}), 400
 
-    user.password_hash = generate_password_hash(new_pw)
+    user.password_hash = hash_password(new_pw)
     db.session.commit()
     return jsonify({"message": "Password changed successfully"}), 200
 
@@ -261,7 +261,7 @@ def delete_account():
         return jsonify({"error": "Password confirmation required"}), 400
 
     user = User.query.get_or_404(uid)
-    if not check_password_hash(user.password_hash, password):
+    if not verify_password(password, user.password_hash):
         return jsonify({"error": "Incorrect password"}), 400
 
     # Soft delete
