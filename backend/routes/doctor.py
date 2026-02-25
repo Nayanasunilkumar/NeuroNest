@@ -7,16 +7,25 @@ from database.models import (
     db,
     Appointment,
     AppointmentSlot,
-    DoctorScheduleSetting,
+    DoctorSlotOverride,
     InAppNotification,
     User,
     ClinicalRemark,
     MedicalRecord,
 )
 from utils.slot_engine import (
-    generate_slots_for_doctor,
+    apply_override_to_existing_slots,
     get_or_create_schedule_setting,
+    regenerate_slots_for_doctor,
+    rolling_window_bounds,
     release_expired_holds,
+)
+from services.slot_lifecycle_service import (
+    apply_cancellation_policy,
+    log_slot_event,
+    mark_slot_available,
+    mark_slot_blocked,
+    mark_slot_booked,
 )
 
 doctor_bp = Blueprint("doctor", __name__)
@@ -43,9 +52,9 @@ def get_appointment_requests():
     
     current_user_id = int(get_jwt_identity())
     # Get pending appointments for this doctor
-    requests = Appointment.query.filter_by(
-        doctor_id=current_user_id,
-        status="Pending"
+    requests = Appointment.query.filter(
+        Appointment.doctor_id == current_user_id,
+        Appointment.status.in_(["pending"])
     ).order_by(Appointment.appointment_date.asc(), Appointment.appointment_time.asc()).all()
     
     return jsonify([req.to_dict() for req in requests]), 200
@@ -62,14 +71,17 @@ def approve_appointment(appointment_id):
     if not appointment:
         return jsonify({"message": "Appointment not found"}), 404
     
-    appointment.status = "Approved"
+    appointment.status = "approved"
     if appointment.slot_id:
         slot = _lock_slot(appointment.slot_id)
         if slot:
-            slot.status = "booked"
-            slot.held_by_patient_id = None
-            slot.held_until_utc = None
-            slot.booked_appointment_id = appointment.id
+            mark_slot_booked(
+                slot=slot,
+                appointment_id=appointment.id,
+                actor_user_id=current_user_id,
+                source="doctor_approval",
+                reason="Doctor approved appointment",
+            )
     db.session.commit()
     
     return jsonify({
@@ -89,14 +101,16 @@ def reject_appointment(appointment_id):
     if not appointment:
         return jsonify({"message": "Appointment not found"}), 404
     
-    appointment.status = "Rejected"
+    appointment.status = "rejected"
     if appointment.slot_id:
         slot = _lock_slot(appointment.slot_id)
         if slot and slot.booked_appointment_id == appointment.id:
-            slot.status = "available"
-            slot.held_by_patient_id = None
-            slot.held_until_utc = None
-            slot.booked_appointment_id = None
+            mark_slot_available(
+                slot=slot,
+                actor_user_id=current_user_id,
+                source="doctor_reject",
+                reason="Doctor rejected appointment",
+            )
     db.session.commit()
     
     return jsonify({
@@ -128,10 +142,11 @@ def get_doctor_schedule():
     )
     
     if status_filter and status_filter.lower() != 'all':
-        query = query.filter(Appointment.status == status_filter.capitalize())
+        normalized_status = status_filter.lower().replace("-", "_")
+        query = query.filter(Appointment.status == normalized_status)
     else:
         # Default: Show everything except 'Pending' which should be in Requests
-        query = query.filter(Appointment.status != "Pending")
+        query = query.filter(Appointment.status.notin_(["pending"]))
         
     schedule = query.order_by(Appointment.appointment_time.asc()).all()
     
@@ -163,6 +178,7 @@ def update_schedule_settings():
     slot_duration = int(data.get("slot_duration_minutes", setting.slot_duration_minutes))
     buffer_minutes = int(data.get("buffer_minutes", setting.buffer_minutes))
     approval_mode = data.get("approval_mode", setting.approval_mode)
+    accepting_new_bookings = bool(data.get("accepting_new_bookings", setting.accepting_new_bookings))
     tz = data.get("timezone", setting.timezone or "Asia/Kolkata")
 
     if slot_duration <= 0 or slot_duration > 180:
@@ -172,10 +188,21 @@ def update_schedule_settings():
     if approval_mode not in ("auto_confirm", "doctor_approval"):
         return jsonify({"message": "approval_mode must be auto_confirm or doctor_approval"}), 400
 
+    requires_regeneration = (
+        setting.slot_duration_minutes != slot_duration
+        or setting.buffer_minutes != buffer_minutes
+        or setting.timezone != tz
+    )
+
     setting.slot_duration_minutes = slot_duration
     setting.buffer_minutes = buffer_minutes
     setting.approval_mode = approval_mode
+    setting.accepting_new_bookings = accepting_new_bookings
     setting.timezone = tz
+
+    if requires_regeneration:
+        start_date, end_date = rolling_window_bounds()
+        regenerate_slots_for_doctor(current_user_id, start_date, end_date)
     db.session.commit()
 
     return jsonify(setting.to_dict()), 200
@@ -189,15 +216,15 @@ def generate_schedule_slots():
 
     current_user_id = int(get_jwt_identity())
     data = request.get_json() or {}
-    horizon_days = int(data.get("horizon_days", 60))
-    if horizon_days < 1 or horizon_days > 180:
-        return jsonify({"message": "horizon_days must be between 1 and 180"}), 400
+    horizon_days = int(data.get("horizon_days", 14))
+    if horizon_days < 1 or horizon_days > 30:
+        return jsonify({"message": "horizon_days must be between 1 and 30"}), 400
 
     start_date = date.today()
     end_date = start_date + timedelta(days=horizon_days - 1)
 
     try:
-        summary = generate_slots_for_doctor(current_user_id, start_date, end_date)
+        summary = regenerate_slots_for_doctor(current_user_id, start_date, end_date)
         db.session.commit()
         return jsonify(
             {
@@ -263,11 +290,13 @@ def block_slot(slot_id):
     if slot.status == "booked":
         return jsonify({"message": "Booked slots cannot be blocked"}), 400
 
-    slot.status = "blocked"
+    mark_slot_blocked(
+        slot=slot,
+        actor_user_id=current_user_id,
+        source="doctor_manual_block",
+        reason="Manual doctor block",
+    )
     slot.source = "manual_override"
-    slot.held_by_patient_id = None
-    slot.held_until_utc = None
-    slot.booked_appointment_id = None
     db.session.commit()
     return jsonify(slot.to_dict()), 200
 
@@ -286,13 +315,158 @@ def unblock_slot(slot_id):
     if slot.status == "booked":
         return jsonify({"message": "Booked slots cannot be unblocked"}), 400
 
-    slot.status = "available"
+    mark_slot_available(
+        slot=slot,
+        actor_user_id=current_user_id,
+        source="doctor_manual_unblock",
+        reason="Manual doctor unblock",
+    )
     slot.source = "manual_override"
-    slot.held_by_patient_id = None
-    slot.held_until_utc = None
-    slot.booked_appointment_id = None
     db.session.commit()
     return jsonify(slot.to_dict()), 200
+
+
+@doctor_bp.route("/schedule/overrides", methods=["GET"])
+@jwt_required()
+def list_schedule_overrides():
+    if not check_doctor_role():
+        return jsonify({"message": "Doctor access required"}), 403
+
+    current_user_id = int(get_jwt_identity())
+    date_str = request.args.get("date")
+    query = DoctorSlotOverride.query.filter_by(doctor_user_id=current_user_id, is_active=True)
+    if date_str:
+        try:
+            target_date = datetime.strptime(date_str, "%Y-%m-%d").date()
+            query = query.filter(DoctorSlotOverride.override_date == target_date)
+        except ValueError:
+            return jsonify({"message": "Invalid date format. Use YYYY-MM-DD"}), 400
+
+    rows = query.order_by(DoctorSlotOverride.override_date.asc(), DoctorSlotOverride.created_at.desc()).all()
+    return jsonify([row.to_dict() for row in rows]), 200
+
+
+@doctor_bp.route("/schedule/overrides", methods=["POST"])
+@jwt_required()
+def create_schedule_override():
+    if not check_doctor_role():
+        return jsonify({"message": "Doctor access required"}), 403
+
+    current_user_id = int(get_jwt_identity())
+    data = request.get_json() or {}
+    scope = data.get("scope", "full_day")
+    date_str = data.get("date")
+    reason = data.get("reason")
+    if scope not in ("full_day", "range"):
+        return jsonify({"message": "scope must be full_day or range"}), 400
+    if not date_str:
+        return jsonify({"message": "date is required (YYYY-MM-DD)"}), 400
+
+    try:
+        target_date = datetime.strptime(date_str, "%Y-%m-%d").date()
+    except ValueError:
+        return jsonify({"message": "Invalid date format. Use YYYY-MM-DD"}), 400
+
+    setting = get_or_create_schedule_setting(current_user_id)
+    tz = timezone.utc
+    if setting.timezone:
+        from zoneinfo import ZoneInfo
+        tz = ZoneInfo(setting.timezone)
+
+    start_utc = None
+    end_utc = None
+    if scope == "range":
+        start_str = data.get("start_time")
+        end_str = data.get("end_time")
+        if not start_str or not end_str:
+            return jsonify({"message": "start_time and end_time are required for range scope"}), 400
+        try:
+            start_local_t = datetime.strptime(start_str, "%H:%M").time()
+            end_local_t = datetime.strptime(end_str, "%H:%M").time()
+        except ValueError:
+            return jsonify({"message": "Invalid time format. Use HH:MM"}), 400
+        if start_local_t >= end_local_t:
+            return jsonify({"message": "start_time must be before end_time"}), 400
+
+        start_local_dt = datetime(
+            target_date.year,
+            target_date.month,
+            target_date.day,
+            start_local_t.hour,
+            start_local_t.minute,
+            tzinfo=tz,
+        )
+        end_local_dt = datetime(
+            target_date.year,
+            target_date.month,
+            target_date.day,
+            end_local_t.hour,
+            end_local_t.minute,
+            tzinfo=tz,
+        )
+        start_utc = start_local_dt.astimezone(timezone.utc)
+        end_utc = end_local_dt.astimezone(timezone.utc)
+
+    override = DoctorSlotOverride(
+        doctor_user_id=current_user_id,
+        override_date=target_date,
+        scope=scope,
+        start_time_utc=start_utc,
+        end_time_utc=end_utc,
+        reason=reason,
+        created_by=current_user_id,
+        is_active=True,
+    )
+    db.session.add(override)
+    db.session.flush()
+
+    log_slot_event(
+        event_type="override_created",
+        doctor_user_id=current_user_id,
+        actor_user_id=current_user_id,
+        source="doctor_override",
+        reason=reason,
+        metadata={"override_id": override.id, "scope": scope, "date": str(target_date)},
+    )
+
+    window_start, window_end = rolling_window_bounds()
+    if window_start <= target_date <= window_end:
+        regenerate_slots_for_doctor(current_user_id, target_date, target_date)
+        apply_override_to_existing_slots(current_user_id, target_date)
+
+    db.session.commit()
+    return jsonify(override.to_dict()), 201
+
+
+@doctor_bp.route("/schedule/overrides/<int:override_id>", methods=["DELETE"])
+@jwt_required()
+def delete_schedule_override(override_id):
+    if not check_doctor_role():
+        return jsonify({"message": "Doctor access required"}), 403
+
+    current_user_id = int(get_jwt_identity())
+    override = DoctorSlotOverride.query.filter_by(id=override_id, doctor_user_id=current_user_id, is_active=True).first()
+    if not override:
+        return jsonify({"message": "Override not found"}), 404
+
+    override.is_active = False
+    override.updated_at = datetime.utcnow()
+    log_slot_event(
+        event_type="override_deleted",
+        doctor_user_id=current_user_id,
+        actor_user_id=current_user_id,
+        source="doctor_override",
+        reason=override.reason,
+        metadata={"override_id": override.id, "date": str(override.override_date), "scope": override.scope},
+    )
+
+    window_start, window_end = rolling_window_bounds()
+    if window_start <= override.override_date <= window_end:
+        regenerate_slots_for_doctor(current_user_id, override.override_date, override.override_date)
+
+    db.session.commit()
+    return jsonify({"message": "Override removed", "override_id": override_id}), 200
+
 
 @doctor_bp.route("/appointments/<int:appointment_id>/complete", methods=["PATCH"])
 @jwt_required()
@@ -306,7 +480,7 @@ def complete_appointment(appointment_id):
     if not appointment:
         return jsonify({"message": "Appointment not found"}), 404
         
-    appointment.status = "Completed"
+    appointment.status = "completed"
     db.session.commit()
     
     return jsonify({"message": "Appointment marked as completed"}), 200
@@ -323,14 +497,15 @@ def cancel_appointment(appointment_id):
     if not appointment:
         return jsonify({"message": "Appointment not found"}), 404
         
-    appointment.status = "Cancelled"
+    appointment.status = "cancelled_by_doctor"
     if appointment.slot_id:
-        slot = _lock_slot(appointment.slot_id)
-        if slot and slot.booked_appointment_id == appointment.id:
-            slot.status = "available"
-            slot.held_by_patient_id = None
-            slot.held_until_utc = None
-            slot.booked_appointment_id = None
+        apply_cancellation_policy(
+            appointment=appointment,
+            cancelled_by="doctor",
+            actor_user_id=current_user_id,
+            source="doctor_cancel",
+            reason="Doctor cancelled appointment",
+        )
 
     db.session.add(
         InAppNotification(
@@ -358,7 +533,7 @@ def get_appointment_history():
     
     appointments = Appointment.query.filter(
         Appointment.doctor_id == current_user_id,
-        Appointment.status != "Pending"
+        Appointment.status.notin_(["pending"])
     ).order_by(Appointment.appointment_date.desc(), Appointment.appointment_time.desc()).all()
     
     return jsonify([appt.to_dict() for appt in appointments]), 200
@@ -377,16 +552,16 @@ def get_doctor_stats():
         .filter(Appointment.doctor_id == current_user_id).scalar()
         
     # 2. Today's Appointments
-    today_count = Appointment.query.filter_by(
-        doctor_id=current_user_id,
-        status="Approved",
-        appointment_date=today
+    today_count = Appointment.query.filter(
+        Appointment.doctor_id == current_user_id,
+        Appointment.status.in_(["approved"]),
+        Appointment.appointment_date == today
     ).count()
     
     # 3. Pending Requests
-    pending_requests = Appointment.query.filter_by(
-        doctor_id=current_user_id,
-        status="Pending"
+    pending_requests = Appointment.query.filter(
+        Appointment.doctor_id == current_user_id,
+        Appointment.status.in_(["pending"])
     ).count()
     
     return jsonify({
@@ -407,7 +582,7 @@ def get_doctor_patients():
     # A patient belongs to a doctor if they have an Approved or Completed appointment
     patient_ids = db.session.query(Appointment.patient_id).filter(
         Appointment.doctor_id == current_user_id,
-        Appointment.status.in_(['Approved', 'Completed'])
+        Appointment.status.in_(['approved', 'completed'])
     ).distinct().all()
     
     patient_ids = [pid[0] for pid in patient_ids]
@@ -427,7 +602,7 @@ def get_doctor_patients():
         last_visit = Appointment.query.filter(
             Appointment.patient_id == pid,
             Appointment.doctor_id == current_user_id,
-            Appointment.status.in_(['Completed', 'Approved']),
+            Appointment.status.in_(['completed', 'approved']),
             or_(
                 Appointment.appointment_date < now.date(),
                 and_(Appointment.appointment_date == now.date(), Appointment.appointment_time <= now.time())
@@ -438,7 +613,7 @@ def get_doctor_patients():
         next_visit = Appointment.query.filter(
             Appointment.patient_id == pid,
             Appointment.doctor_id == current_user_id,
-            Appointment.status == 'Approved',
+            Appointment.status.in_(['approved']),
             or_(
                 Appointment.appointment_date > now.date(),
                 and_(Appointment.appointment_date == now.date(), Appointment.appointment_time > now.time())
@@ -452,7 +627,7 @@ def get_doctor_patients():
             "patient_image": patient_user.patient_profile.profile_image if patient_user.patient_profile else None,
             "last_visit": str(last_visit.appointment_date) if last_visit else None,
             "next_appointment": str(next_visit.appointment_date) if next_visit else None,
-            "status": "Active" if next_visit else "Inactive"
+            "status": "Active" if next_visit else "Inactive" # This status is for Clinical Roster, keep as is for UI if needed, but wait.
         })
 
     return jsonify(patients_data), 200
@@ -485,7 +660,15 @@ def mark_no_show(appointment_id):
     if not appointment:
         return jsonify({"message": "Appointment not found"}), 404
         
-    appointment.status = "No-Show"
+    appointment.status = "no_show"
+    if appointment.slot_id:
+        apply_cancellation_policy(
+            appointment=appointment,
+            cancelled_by="no_show",
+            actor_user_id=current_user_id,
+            source="doctor_no_show",
+            reason="Doctor marked patient as no-show",
+        )
     db.session.commit()
     
     return jsonify({"message": "Appointment marked as No-Show"}), 200
@@ -559,7 +742,7 @@ def get_patient_clinical_dossier(patient_id):
     history = Appointment.query.filter(
         Appointment.doctor_id == current_user_id,
         Appointment.patient_id == patient_id,
-        Appointment.status != "Pending"
+        Appointment.status.notin_(["pending"])
     ).order_by(Appointment.appointment_date.desc(), Appointment.appointment_time.desc()).all()
 
     profile = patient_user.patient_profile

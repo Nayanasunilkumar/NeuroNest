@@ -13,6 +13,7 @@ const adminPaymentManagementModule = {
   icon: CreditCard,
   route: '/payment-management',
   rolesAllowed: ['admin'],
+  showInSidebarByRole: [], // Hidden from sidebar
   group: 'Operations',
   enabledByDefault: true,
   componentsByRole: {

@@ -2,14 +2,12 @@ import React, { useState } from 'react';
 import { Shield, Eye, Bell, Package, Trash2, CheckCircle, AlertCircle, Settings, ChevronRight, User } from 'lucide-react';
 import { usePatientSettings } from './hooks/usePatientSettings';
 import SecuritySection          from './components/SecuritySection';
-import PrivacySection           from './components/PrivacySection';
 import NotificationPreferences  from './components/NotificationPreferences';
 import DataManagementSection    from './components/DataManagementSection';
 import DangerZoneSection        from './components/DangerZoneSection';
 
 const SECTIONS = [
   { id: 'security',      label: 'Security',            icon: Shield,  desc: 'Password & Protection' },
-  { id: 'privacy',       label: 'Privacy Controls',    icon: Eye,     desc: 'Data sharing & consent' },
   { id: 'notifications', label: 'Notifications',       icon: Bell,    desc: 'Alerts & Messages' },
   { id: 'data',          label: 'Data & Records',      icon: Package, desc: 'Export & download' },
   { id: 'danger',        label: 'Danger Zone',         icon: Trash2,  desc: 'Account Deletion', danger: true },
@@ -19,8 +17,8 @@ export default function PatientSettingsPage() {
   const [active, setActive] = useState('security');
   const {
     settings, securityActivity, loading, saving, error, success,
-    updateNotifications, updatePrivacy,
-    changePassword, exportData, deleteAccount,
+    updateNotifications,
+    changePassword, exportData, exportReport, exportAppts, exportPresc, deleteAccount,
   } = usePatientSettings();
 
   const renderSection = () => {
@@ -32,9 +30,8 @@ export default function PatientSettingsPage() {
     );
     switch (active) {
       case 'security':      return <SecuritySection         data={settings} activity={securityActivity} saving={saving} onChangePassword={changePassword} />;
-      case 'privacy':       return <PrivacySection          data={settings} saving={saving} onSave={updatePrivacy} />;
       case 'notifications': return <NotificationPreferences data={settings} saving={saving} onSave={updateNotifications} />;
-      case 'data':          return <DataManagementSection   saving={saving} onExport={exportData} />;
+      case 'data':          return <DataManagementSection   saving={saving} onExport={exportData} onExportPDF={exportReport} onExportAppts={exportAppts} onExportPresc={exportPresc} />;
       case 'danger':        return <DangerZoneSection       onDelete={deleteAccount} />;
       default:              return null;
     }
@@ -140,8 +137,17 @@ export default function PatientSettingsPage() {
           border-radius: 28px; 
           padding: 3rem; 
           border: 1px solid #e2e8f0;
-          box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
           animation: sectionFadeIn 0.5s cubic-bezier(0, 0, 0.2, 1);
+          position: relative;
+          overflow: hidden;
+        }
+        .pset-section::before {
+          content: '';
+          position: absolute;
+          top: 0; left: 0; right: 0; height: 6px;
+          background: linear-gradient(90deg, #4f46e5, #7c3aed);
+          opacity: 0.1;
         }
         @keyframes sectionFadeIn {
           from { opacity: 0; transform: translateY(20px); }
@@ -183,9 +189,6 @@ export default function PatientSettingsPage() {
         .pset-toggle-knob { position:absolute; top:4px; width:18px; height:18px; background:#fff; border-radius:50%; transition:all 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow:0 2px 4px rgba(0,0,0,0.1); }
         .pset-toggle-on .pset-toggle-knob  { left:24px; }
         .pset-toggle-off .pset-toggle-knob { left:4px; }
-        .pset-toggle-row { display:flex; align-items:center; justify-content:space-between; padding:1.25rem 0; border-bottom:1px solid #f1f5f9; gap:1.5rem; }
-        .pset-toggle-label { font-size:1rem; font-weight:700; color:#1e293b; }
-        .pset-toggle-hint { font-size:0.85rem; color:#64748b; margin-top:4px; line-height:1.5; }
 
         /* Notification table (Restored) */
         .pset-notif-table { border:1px solid #e2e8f0; border-radius:20px; overflow:hidden; margin-top: 1rem; }
@@ -214,6 +217,54 @@ export default function PatientSettingsPage() {
         .pset-flash.success { background:#ecfdf5; color:#065f46; border-color:#d1fae5; }
         .pset-flash.error   { background:#fef2f2; color:#991b1b; border-color:#fee2e2; }
         
+        .pset-privacy-notice { 
+          background: #fffbeb; 
+          border: 1px solid #fef3c7; 
+          color: #92400e; 
+          padding: 1.25rem 1.5rem; 
+          border-radius: 16px; 
+          font-size: 0.9rem; 
+          font-weight: 600; 
+          line-height: 1.5;
+          margin-bottom: 2rem;
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+        }
+
+        .pset-toggles-list {
+          display: flex;
+          flex-direction: column;
+          gap: 0.5rem;
+        }
+
+        .pset-toggle-row {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 1.5rem;
+          background: #ffffff;
+          border: 1px solid #f1f5f9;
+          border-radius: 20px;
+          transition: all 0.2s;
+        }
+        .pset-toggle-row:hover { border-color: #e2e8f0; background: #f8fafc; }
+
+        .pset-toggle-icon {
+          width: 36px;
+          height: 36px;
+          background: #eff6ff;
+          color: #4f46e5;
+          border-radius: 10px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+        }
+
+        .pset-toggle-label { font-size: 1rem; font-weight: 800; color: #1e293b; }
+        .pset-toggle-hint { font-size: 0.85rem; color: #64748b; margin-top: 2px; }
+        
         .pset-info-chip { display:flex; align-items:center; gap:0.75rem; font-size:0.875rem; color:#4f46e5; background:#eff6ff; border:1px solid #dbeafe; border-radius:14px; padding:1rem 1.25rem; margin-top:2rem; }
         .pset-inline-error { display:flex; align-items:center; gap:0.5rem; color:#ef4444; font-size:0.85rem; font-weight:700; margin-top: 0.5rem; }
 
@@ -239,12 +290,86 @@ export default function PatientSettingsPage() {
         @keyframes psSpin { to{transform:rotate(360deg)} }
 
         /* Export Cards */
-        .pset-export-list { display:grid; grid-template-columns: 1fr; gap:1rem; margin-top: 1.5rem; }
-        .pset-export-card { display:flex; align-items:center; gap:1.25rem; padding:1.25rem 1.5rem; background:#fff; border:1.5px solid #e2e8f0; border-radius:20px; cursor:pointer; transition:all 0.3s; width:100%; text-align: left; }
-        .pset-export-card:hover { border-color:#4f46e5; background: #f8fafc; transform: scale(1.02); }
-        .pset-export-icon { width:48px; height:48px; border-radius:14px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
-        .pset-export-title { font-size:1rem; font-weight:800; color:#1e293b; }
-        .pset-export-desc { font-size:0.85rem; color:#64748b; margin-top:2px; }
+        .pset-export-list { display:grid; grid-template-columns: 1fr 1fr; gap:1.5rem; margin-top: 1.5rem; }
+        @media (max-width: 768px) { .pset-export-list { grid-template-columns: 1fr; } }
+        .pset-export-card { 
+          display:flex; 
+          flex-direction: column;
+          gap:1.5rem; 
+          padding:2rem; 
+          background:#ffffff; 
+          border:1px solid #e2e8f0; 
+          border-radius:24px; 
+          cursor:pointer; 
+          transition:all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+          width:100%; 
+          text-align: left; 
+          position: relative;
+          overflow: hidden;
+        }
+        .pset-export-card:hover { 
+          border-color: transparent; 
+          box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+          transform: translateY(-8px); 
+        }
+        .pset-export-card::before {
+          content: '';
+          position: absolute;
+          top: 0; left: 0; right: 0; height: 4px;
+          background: var(--card-color, #e2e8f0);
+          opacity: 0.5;
+        }
+        .pset-export-card:hover::before { opacity: 1; }
+
+        .pset-export-icon { 
+          width:56px; height:56px; border-radius:18px; 
+          display:flex; align-items:center; justify-content:center; 
+          flex-shrink:0; 
+          font-size: 1.5rem;
+        }
+        .pset-export-title { font-size:1.1rem; font-weight:900; color:#0f172a; margin-bottom: 0.5rem; }
+        .pset-export-desc { font-size:0.875rem; color:#64748b; line-height: 1.5; }
+        
+        .pset-export-footer {
+          margin-top: auto;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding-top: 1.5rem;
+          border-top: 1px solid #f1f5f9;
+        }
+        .pset-export-action {
+          font-size: 0.8rem;
+          font-weight: 800;
+          color: var(--card-color, #4f46e5);
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+        }
+
+        .pset-section.data-mgmt {
+          background: linear-gradient(to bottom right, #ffffff, #f8fafc);
+          position: relative;
+        }
+        .pset-section.data-mgmt::after {
+          content: '';
+          position: absolute;
+          top: 0; right: 0;
+          width: 300px; height: 300px;
+          background: radial-gradient(circle, rgba(79, 70, 229, 0.03) 0%, transparent 70%);
+          pointer-events: none;
+        }
+
+        .pset-data-notice {
+          margin-top: 3rem;
+          padding: 1.5rem;
+          background: #f1f5f9;
+          border-radius: 16px;
+          font-size: 0.85rem;
+          color: #475569;
+          line-height: 1.6;
+          border-left: 4px solid #cbd5e1;
+        }
 
         /* Modal Enhancement */
         .pset-modal-backdrop { position:fixed; inset:0; background:rgba(15, 23, 42, 0.7); backdrop-filter:blur(8px); display:flex; align-items:center; justify-content:center; z-index:9999; }

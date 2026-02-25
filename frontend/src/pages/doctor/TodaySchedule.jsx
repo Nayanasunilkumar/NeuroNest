@@ -62,10 +62,11 @@ const TodaySchedule = () => {
         return { value: `${hour12}:${minute}`, period };
     };
 
-    const getStatusClass = (status) => (status || "").toLowerCase().replace("-", "");
+    const getStatusClass = (status) => (status || "").toLowerCase().replace(/[-_]/g, "");
     const getStatusLabel = (status) => {
         if (!status) return "Unknown";
-        if (status === "No-Show") return "No Show";
+        const s = status.toLowerCase();
+        if (s === "no_show" || s === "no-show") return "No Show";
         return status;
     };
 
@@ -87,7 +88,7 @@ const TodaySchedule = () => {
                         <Check size={20} />
                     </div>
                     <div className="metric-info">
-                        <span className="count">{schedule.filter(a => a.status === 'Approved').length}</span>
+                        <span className="count">{schedule.filter(a => a.status.toLowerCase() === 'approved').length}</span>
                         <span className="label">Approved</span>
                     </div>
                 </div>
@@ -96,7 +97,7 @@ const TodaySchedule = () => {
                         <Clock size={20} />
                     </div>
                     <div className="metric-info">
-                        <span className="count">{schedule.filter(a => a.status === 'Pending').length}</span>
+                        <span className="count">{schedule.filter(a => a.status.toLowerCase() === 'pending').length}</span>
                         <span className="label">Pending</span>
                     </div>
                 </div>
@@ -105,7 +106,7 @@ const TodaySchedule = () => {
                         <X size={20} />
                     </div>
                     <div className="metric-info">
-                        <span className="count">{schedule.filter(a => a.status === 'No-Show').length}</span>
+                        <span className="count">{schedule.filter(a => a.status.toLowerCase() === 'no_show').length}</span>
                         <span className="label">No Show</span>
                     </div>
                 </div>
@@ -227,7 +228,7 @@ const TodaySchedule = () => {
                                             Open Record
                                         </button>
                                         
-                                        {appointment.status === 'Approved' && (
+                                        {appointment.status.toLowerCase() === 'approved' && (
                                             <div className="dossier-secondary-actions">
                                                 <button 
                                                     onClick={() => handleAction(appointment.id, 'complete')}

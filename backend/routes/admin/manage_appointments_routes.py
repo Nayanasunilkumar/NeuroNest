@@ -1,8 +1,9 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from database.models import db, User, Appointment, AppointmentSlot, DoctorProfile, ClinicalStructure
+from database.models import db, User, Appointment, DoctorProfile, ClinicalStructure
 from datetime import datetime
 from sqlalchemy import or_
+from services.slot_lifecycle_service import apply_cancellation_policy, mark_slot_booked
 
 admin_appointments_bp = Blueprint("admin_appointments", __name__)
 
@@ -195,13 +196,28 @@ def update_appointment_status(id):
         
     appointment.status = internal_status
     appointment.notes = (appointment.notes or "") + log_entry
-    
-    # 🏥 Slot Management: If cancelled or marked no-show, release the slot
+
+    if internal_status == "approved" and appointment.slot_id:
+        slot = appointment.slot
+        if slot:
+            mark_slot_booked(
+                slot=slot,
+                appointment_id=appointment.id,
+                actor_user_id=admin_id,
+                source="admin_status_update",
+                reason="Admin approved appointment",
+            )
+
+    # 🏥 Slot Management: central lifecycle policy
     if internal_status in ["cancelled_by_doctor", "no_show"] and appointment.slot_id:
-        slot = AppointmentSlot.query.get(appointment.slot_id)
-        if slot and slot.booked_appointment_id == appointment.id:
-            slot.status = "available"
-            slot.booked_appointment_id = None
+        cancelled_by = "doctor" if internal_status == "cancelled_by_doctor" else "no_show"
+        apply_cancellation_policy(
+            appointment=appointment,
+            cancelled_by=cancelled_by,
+            actor_user_id=admin_id,
+            source="admin_status_update",
+            reason=f"Admin transitioned appointment to {internal_status}",
+        )
             
     db.session.commit()
     return jsonify({

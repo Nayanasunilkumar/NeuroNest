@@ -1,11 +1,5 @@
 import { BarChart4 } from 'lucide-react';
-import ModuleComingSoon from '../../pages/shared/ModuleComingSoon';
-
-const AdminReportsAnalyticsPage = () =>
-  ModuleComingSoon({
-    title: 'Reports',
-    description: 'Operational reports and organization analytics are ready for enablement.',
-  });
+import AdminReports from '../../pages/admin/reports/AdminReports';
 
 const adminReportsAnalyticsModule = {
   key: 'adminReportsAnalytics',
@@ -16,7 +10,7 @@ const adminReportsAnalyticsModule = {
   group: 'Operations',
   enabledByDefault: true,
   componentsByRole: {
-    admin: AdminReportsAnalyticsPage,
+    admin: AdminReports,
   },
   orderByRole: { admin: 60 },
 };

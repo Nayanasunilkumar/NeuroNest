@@ -8,6 +8,7 @@ import ExpertiseTags from '../../components/doctor/ExpertiseTags';
 import AvailabilityOverview from '../../components/doctor/AvailabilityOverview';
 import AvailabilityModal from '../../components/doctor/AvailabilityModal';
 import ProfileHeader from '../../components/doctor/ProfileHeader';
+import { fetchSpecialties } from '../../services/adminDoctorAPI';
 
 const Profile = () => {
     const [profile, setProfile] = useState(null);
@@ -16,10 +17,21 @@ const Profile = () => {
     const [isEditing, setIsEditing] = useState(false);
     const [isAvailabilityModalOpen, setIsAvailabilityModalOpen] = useState(false);
     const [formData, setFormData] = useState({});
+    const [specialties, setSpecialties] = useState([]);
 
     useEffect(() => {
         fetchProfile();
+        loadSpecialties();
     }, []);
+
+    const loadSpecialties = async () => {
+        try {
+            const data = await fetchSpecialties();
+            setSpecialties(data.specialties || []);
+        } catch (err) {
+            console.error('Failed to load specialties', err);
+        }
+    };
 
     const fetchProfile = async () => {
         try {
@@ -217,12 +229,17 @@ const Profile = () => {
                 <div className="input-group">
                     <label className="input-label">Specialization</label>
                     {isEditing ? (
-                        <input 
+                        <select 
                             name="specialization" 
                             className="premium-input" 
                             value={formData.specialization || ''} 
                             onChange={handleChange} 
-                        />
+                        >
+                            <option value="">Select Specialization</option>
+                            {specialties.map(spec => (
+                                <option key={spec} value={spec}>{spec}</option>
+                            ))}
+                        </select>
                     ) : (
                         <div className="read-only-value">{profile.specialization}</div>
                     )}
@@ -258,7 +275,7 @@ const Profile = () => {
                 </div>
 
                 <div className="input-group">
-                    <label className="input-label">Consultation Fee ($)</label>
+                    <label className="input-label">Consultation Fee (₹)</label>
                     {isEditing ? (
                         <input 
                             type="number"
@@ -268,7 +285,7 @@ const Profile = () => {
                             onChange={handleChange} 
                         />
                     ) : (
-                        <div className="read-only-value font-bold text-green-600">${profile.consultation_fee}</div>
+                        <div className="read-only-value font-bold text-green-600">₹{profile.consultation_fee}</div>
                     )}
                 </div>
 
@@ -306,16 +323,18 @@ const Profile = () => {
                         <select 
                             name="consultation_mode" 
                             className="premium-input" 
-                            value={formData.consultation_mode || ''} 
+                            value={formData.consultation_mode === 'Both' ? 'Online and Offline' : (formData.consultation_mode || '')} 
                             onChange={handleChange}
                         >
                             <option value="">Select Mode</option>
                             <option value="Online">Online</option>
                             <option value="Offline">Offline</option>
-                            <option value="Both">Both</option>
+                            <option value="Online and Offline">Online and Offline</option>
                         </select>
                     ) : (
-                        <div className="read-only-value">{profile.consultation_mode || 'Not set'}</div>
+                        <div className="read-only-value">
+                            {profile.consultation_mode === 'Both' ? 'Online and Offline' : (profile.consultation_mode || 'Not set')}
+                        </div>
                     )}
                 </div>
             </div>

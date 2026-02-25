@@ -1,9 +1,17 @@
 import { useState, useEffect, useCallback } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { getPatientDossier, saveClinicalRemark, getClinicalRemarks } from "../../api/doctor";
+import { 
+    getPatientDossier, 
+    saveClinicalRemark, 
+    getClinicalRemarks,
+    completeAppointment,
+    cancelAppointment,
+    markNoShow
+} from "../../api/doctor";
 import { 
     Calendar, User, Clock, Mail, Phone, Info, 
-    ChevronRight, Bookmark, ShieldAlert, Edit3, Folder, StickyNote
+    ChevronRight, Bookmark, ShieldAlert, Edit3, Folder, StickyNote,
+    Check, X, AlertCircle
 } from "lucide-react";
 import { toAssetUrl } from "../../utils/media";
 import "../../styles/doctor-records.css";
@@ -77,6 +85,18 @@ const PatientRecords = () => {
             console.error("Failed to fetch remarks:", err);
         } finally {
             setLoadingRemarks(false);
+        }
+    };
+
+    const handleAction = async (id, type) => {
+        try {
+            if (type === 'complete') await completeAppointment(id);
+            if (type === 'cancel') await cancelAppointment(id);
+            if (type === 'no-show') await markNoShow(id);
+            fetchDossier();
+        } catch (err) {
+            console.error(`Error performing ${type}:`, err);
+            alert(`Failed to ${type} appointment.`);
         }
     };
 
@@ -212,7 +232,7 @@ const PatientRecords = () => {
                                     <div className="encounter-dot" />
                                     <div className="encounter-card-premium">
                                         <div className="encounter-meta-top">
-                                            <span className={`status-badge-premium status-${event.status.toLowerCase().replace('-', '')}`}>
+                                            <span className={`status-badge-premium status-${event.status.toLowerCase().replace(/[_-]/g, '')}`}>
                                                 {event.status}
                                             </span>
                                             <div className="encounter-time-stamp">
@@ -226,6 +246,36 @@ const PatientRecords = () => {
                                         <div className="encounter-notes-box">
                                             {event.notes || "No additional clinical notes recorded for this medical encounter."}
                                         </div>
+
+                                        {event.status.toLowerCase() === 'approved' && (
+                                            <div className="encounter-actions-row">
+                                                <button 
+                                                    onClick={() => handleAction(event.id, 'complete')}
+                                                    className="action-btn-complete"
+                                                    title="Mark as Completed"
+                                                >
+                                                    <Check size={14} strokeWidth={3} />
+                                                    Complete
+                                                </button>
+                                                <div className="action-divider" />
+                                                <button 
+                                                    onClick={() => handleAction(event.id, 'no-show')}
+                                                    className="action-btn-secondary"
+                                                    title="Mark as No Show"
+                                                >
+                                                    <AlertCircle size={14} />
+                                                    No Show
+                                                </button>
+                                                <button 
+                                                    onClick={() => handleAction(event.id, 'cancel')}
+                                                    className="action-btn-danger"
+                                                    title="Cancel Appointment"
+                                                >
+                                                    <X size={14} />
+                                                    Cancel
+                                                </button>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             ))

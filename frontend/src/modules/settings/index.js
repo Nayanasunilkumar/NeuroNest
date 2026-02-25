@@ -1,11 +1,7 @@
 import { Settings } from 'lucide-react';
 import PatientSettingsPage from '../../pages/patient/settings/PatientSettingsPage';
-
-// Placeholder for doctor/admin settings (future)
-const ComingSoon = () => import('../../pages/shared/ModuleComingSoon').then(m => m.default({
-  title: 'Settings',
-  description: 'Settings module is prepared for server-driven access controls.',
-}));
+import DoctorSettingsPage from '../../pages/doctor/settings/DoctorSettingsPage';
+import SettingsPage from '../../pages/admin/SettingsPage';
 
 const settingsModule = {
   key: 'settings',
@@ -17,8 +13,8 @@ const settingsModule = {
   enabledByDefault: true,
   componentsByRole: {
     patient: PatientSettingsPage,
-    doctor:  () => null,
-    admin:   () => null,
+    doctor:  DoctorSettingsPage,
+    admin:   SettingsPage,
   },
   orderByRole: { doctor: 110, patient: 90, admin: 90 },
 };

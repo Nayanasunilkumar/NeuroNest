@@ -33,7 +33,19 @@ export const getDoctors = async () => {
 
 export const getAvailableSlots = async (doctorId, date) => {
   const response = await axios.get(`/appointments/doctors/${doctorId}/available-slots?date=${date}`);
-  return response.data;
+  const payload = response.data;
+  if (Array.isArray(payload)) {
+    return {
+      slots: payload,
+      accepting_new_bookings: true,
+      message: null,
+    };
+  }
+  return {
+    slots: Array.isArray(payload?.slots) ? payload.slots : [],
+    accepting_new_bookings: payload?.accepting_new_bookings !== false,
+    message: payload?.message || null,
+  };
 };
 
 export const bookAppointmentBySlot = async (data) => {

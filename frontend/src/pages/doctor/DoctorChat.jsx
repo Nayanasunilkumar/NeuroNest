@@ -47,6 +47,7 @@ const DoctorChat = () => {
         
         setSelectedConv(conv);
         setMessages([]);
+        setPatientContext(null); // Reset context for new patient
         setLoadingMessages(true);
         setLoadingContext(true);
 

@@ -1,6 +1,6 @@
 from app import app
 from database.models import db
-from models.audit_models import PatientStatusLog, PatientFlag, PatientAuditLog
+from database.models import PatientStatusLog, PatientFlag, PatientAuditLog
 from sqlalchemy import text
 
 def reset_audit_tables():

@@ -127,7 +127,7 @@ const AdminLayout = () => {
         title="Admin Control"
       />
 
-      <main className="dashboard-main">
+      <main className={`dashboard-main ${!sidebarOpen ? 'sidebar-rail-offset' : ''}`}>
         <Outlet />
       </main>
     </div>

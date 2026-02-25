@@ -1,13 +1,24 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from database.models import (
-    db, User, DoctorProfile, Appointment, ClinicalRemark,
-    AppointmentSlot, DoctorScheduleSetting, InAppNotification,
-    MedicalRecord, PatientProfile, EmergencyContact
-)
-from models.audit_models import (
-    DoctorStatusLog, DoctorAuditLog, 
-    PatientStatusLog, PatientAuditLog, PatientFlag
+    db,
+    User,
+    DoctorProfile,
+    Appointment,
+    ClinicalRemark,
+    AppointmentSlot,
+    DoctorScheduleSetting,
+    InAppNotification,
+    MedicalRecord,
+    PatientProfile,
+    EmergencyContact,
+
+    # ✅ Audit & Status Models
+    DoctorStatusLog,
+    DoctorAuditLog,
+    PatientStatusLog,
+    PatientAuditLog,
+    PatientFlag
 )
 from models.chat_models import Participant, Message
 from models.prescription_models import Prescription

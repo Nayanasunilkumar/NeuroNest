@@ -47,11 +47,46 @@
     border-bottom: 1px solid var(--doc-border);
     display: flex;
     align-items: center;
+    gap: 12px;
     padding: 0 24px;
+}
+
+.doc-sidebar-toggle-btn {
+    background: transparent;
+    border: 0;
+    outline: none;
+    padding: 0;
+    margin: 0;
+    width: auto;
+    height: auto;
+    min-width: 0;
+    min-height: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #475569;
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    box-shadow: none;
+}
+
+.doc-sidebar-toggle-btn:hover {
+    color: #2563eb;
+    background: transparent;
+}
+
+.dark .doc-sidebar-toggle-btn {
+    color: #f8fafc;
+}
+
+.dark .doc-sidebar-toggle-btn:hover {
+    color: #bfdbfe;
 }
 
 .doctor-sidebar.collapsed .doc-sidebar-header {
     justify-content: center;
+    gap: 0;
     padding: 0;
 }
 

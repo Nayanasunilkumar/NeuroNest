@@ -1,11 +1,5 @@
 import { Megaphone } from 'lucide-react';
-import ModuleComingSoon from '../../pages/shared/ModuleComingSoon';
-
-const AdminAnnouncementsPage = () =>
-  ModuleComingSoon({
-    title: 'Announcements',
-    description: 'Organization-wide communication publishing workflows are ready for rollout.',
-  });
+import AnnouncementsPage from '../../pages/admin/AnnouncementsPage';
 
 const adminAnnouncementsModule = {
   key: 'adminAnnouncements',
@@ -16,7 +10,7 @@ const adminAnnouncementsModule = {
   group: 'Administration',
   enabledByDefault: true,
   componentsByRole: {
-    admin: AdminAnnouncementsPage,
+    admin: AnnouncementsPage,
   },
   orderByRole: { admin: 80 },
 };

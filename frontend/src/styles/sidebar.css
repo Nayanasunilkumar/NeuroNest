@@ -160,3 +160,82 @@
   color: white;
   border-color: var(--admin-danger);
 }
+
+/* Compact stable icon rail (patient/admin) */
+.sidebar-quick-rail {
+  position: fixed;
+  left: 0;
+  top: 72px;
+  bottom: 0;
+  width: 84px;
+  padding: 0;
+  border-right: 1px solid var(--admin-border);
+  background: var(--admin-panel-bg);
+  backdrop-filter: var(--admin-glass);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  z-index: 998;
+}
+
+.quick-rail-toggle,
+.quick-rail-link {
+  width: 48px;
+  height: 48px;
+  border-radius: 16px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--admin-text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.quick-rail-toggle:hover,
+.quick-rail-link:hover {
+  background: var(--admin-accent-soft);
+  color: var(--admin-text-main);
+  border-color: var(--admin-border);
+}
+
+.quick-rail-link.active {
+  background: var(--admin-accent-gradient);
+  color: #fff;
+}
+
+.quick-rail-links {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 22px 0;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.quick-rail-footer {
+  width: 100%;
+  min-height: 84px;
+  border-top: 1px solid var(--admin-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.quick-rail-logout {
+  color: #64748b;
+}
+
+.quick-rail-logout:hover {
+  color: var(--admin-danger);
+}
+
+@media (max-width: 1024px) {
+  .sidebar-quick-rail {
+    display: none;
+  }
+}

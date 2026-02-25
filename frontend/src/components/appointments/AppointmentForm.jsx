@@ -19,6 +19,7 @@ const AppointmentForm = ({ onSubmit, loading }) => {
   const [availableSlots, setAvailableSlots] = useState([]);
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [slotHint, setSlotHint] = useState("");
+  const [isDoctorPaused, setIsDoctorPaused] = useState(false);
 
   const toYMD = (d) => {
     const year = d.getFullYear();
@@ -35,8 +36,17 @@ const AppointmentForm = ({ onSubmit, loading }) => {
     }
     setLoadingSlots(true);
     try {
-      const slots = await getAvailableSlots(doctorId, date);
-      const normalized = Array.isArray(slots) ? slots : [];
+      const response = await getAvailableSlots(doctorId, date);
+      const normalized = Array.isArray(response?.slots) ? response.slots : [];
+      const paused = response?.accepting_new_bookings === false;
+      setIsDoctorPaused(paused);
+
+      if (paused) {
+        setAvailableSlots([]);
+        setSlotHint(response?.message || "Doctor is not accepting new appointments currently.");
+        return;
+      }
+
       if (normalized.length > 0) {
         setAvailableSlots(normalized);
         setSlotHint("");
@@ -54,8 +64,14 @@ const AppointmentForm = ({ onSubmit, loading }) => {
         const probe = new Date(start);
         probe.setDate(start.getDate() + i);
         const probeDate = toYMD(probe);
-        const nextSlots = await getAvailableSlots(doctorId, probeDate);
-        const nextNormalized = Array.isArray(nextSlots) ? nextSlots : [];
+        const nextResp = await getAvailableSlots(doctorId, probeDate);
+        if (nextResp?.accepting_new_bookings === false) {
+          setAvailableSlots([]);
+          setSlotHint(nextResp?.message || "Doctor is not accepting new appointments currently.");
+          setIsDoctorPaused(true);
+          return;
+        }
+        const nextNormalized = Array.isArray(nextResp?.slots) ? nextResp.slots : [];
         if (nextNormalized.length > 0) {
           setFormData((prev) => ({ ...prev, date: probeDate, slot_id: "", time: "" }));
           setAvailableSlots(nextNormalized);
@@ -103,6 +119,7 @@ const AppointmentForm = ({ onSubmit, loading }) => {
   const handleChange = (e) => {
     const { name, value } = e.target;
     if (name === "doctor_id") {
+      setIsDoctorPaused(false);
       const selectedDoc = doctorsList.find(d => d.id === parseInt(value));
       setFormData({ 
         ...formData, 
@@ -212,6 +229,10 @@ const AppointmentForm = ({ onSubmit, loading }) => {
                     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(120px,1fr))", gap: "8px" }}>
                       {loadingSlots ? (
                         <span style={{ fontSize: "12px", color: "#64748b" }}>Loading slots...</span>
+                      ) : isDoctorPaused ? (
+                        <span style={{ fontSize: "12px", color: "#ef4444" }}>
+                          Doctor is not accepting new appointments currently.
+                        </span>
                       ) : !formData.doctor_id ? (
                         <span style={{ fontSize: "12px", color: "#64748b" }}>Select doctor first</span>
                       ) : !formData.date ? (

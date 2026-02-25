@@ -4,6 +4,26 @@ import {
     Calendar, Edit2
 } from 'lucide-react';
 
+const toMinutes = (value = '') => {
+    if (!value) return null;
+    const parts = String(value).trim().split(':');
+    if (parts.length < 2) return null;
+    const hour = Number(parts[0]);
+    const minute = Number(parts[1]);
+    if (Number.isNaN(hour) || Number.isNaN(minute)) return null;
+    return (hour * 60) + minute;
+};
+
+const formatTimeLabel = (value = '') => {
+    const mins = toMinutes(value);
+    if (mins === null) return String(value || '--');
+    const hour24 = Math.floor(mins / 60) % 24;
+    const minute = mins % 60;
+    const period = hour24 >= 12 ? 'PM' : 'AM';
+    const hour12 = hour24 % 12 || 12;
+    return `${String(hour12).padStart(2, '0')}:${String(minute).padStart(2, '0')} ${period}`;
+};
+
 const AvailabilityOverview = ({ availability, onManage }) => {
     // Sort logic
     const dayOrder = { 'Monday': 1, 'Tuesday': 2, 'Wednesday': 3, 'Thursday': 4, 'Friday': 5, 'Saturday': 6, 'Sunday': 7 };
@@ -37,9 +57,11 @@ const AvailabilityOverview = ({ availability, onManage }) => {
                         <div key={day} className="overview-day-row">
                             <span className="overview-day-name">{day}</span>
                             <div className="overview-slots-col">
-                                {slotsByDay[day].sort((a,b) => a.start_time.localeCompare(b.start_time)).map((slot, idx) => (
+                                {slotsByDay[day]
+                                    .sort((a, b) => (toMinutes(a.start_time) ?? 0) - (toMinutes(b.start_time) ?? 0))
+                                    .map((slot, idx) => (
                                     <span key={idx} className="overview-slot-text">
-                                        {slot.start_time.slice(0,5)} - {slot.end_time.slice(0,5)}
+                                        {formatTimeLabel(slot.start_time)} - {formatTimeLabel(slot.end_time)}
                                     </span>
                                 ))}
                             </div>

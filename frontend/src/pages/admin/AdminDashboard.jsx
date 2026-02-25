@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { adminDashboardApi } from '../../api/adminDashboardApi';
 import '../../styles/admin-dashboard.css';
 
 const IconPatients = () => (
@@ -31,12 +32,51 @@ const IconReviews = () => (
 );
 
 const AdminDashboard = () => {
-  const stats = [
-    { label: 'Total Patients', value: '4,285', trend: '+12.4%', icon: <IconPatients />, color: 'blue' },
-    { label: 'Active Doctors', value: '156', trend: '+5.1%', icon: <IconDoctors />, color: 'green' },
-    { label: 'System Load', value: '24ms', trend: 'Stable', icon: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>, color: 'purple' },
-    { label: 'Revenue (MTD)', value: '$12.5k', trend: '+18.2%', icon: <IconRevenue />, color: 'orange' },
-  ];
+  const [data, setData] = useState({
+    stats: [],
+    activities: [],
+    tasks: [],
+    chartData: []
+  });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
+  const fetchDashboardData = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await adminDashboardApi.getDashboardSummary();
+      
+      // Map API stats to React components
+      const iconMap = {
+        'patients': <IconPatients />,
+        'doctors': <IconDoctors />,
+        'load': <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>,
+        'revenue': <IconRevenue />
+      };
+
+      const mappedStats = (response.stats || []).map(stat => ({
+        ...stat,
+        icon: iconMap[stat.id] || <IconPatients />
+      }));
+
+      setData({
+        stats: mappedStats,
+        activities: response.activities || [],
+        tasks: response.tasks || [],
+        chartData: response.chartData || []
+      });
+    } catch (err) {
+      console.error("Failed to load dashboard data:", err);
+      setError("Failed to load dashboard data. Please try again later.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const modules = [
     { title: 'Manage Patients', desc: 'Securely access and update patient health records.', icon: <IconPatients />, path: '/admin/manage-patients' },
@@ -47,28 +87,24 @@ const AdminDashboard = () => {
     { title: 'Reviews', desc: 'Monitor and respond to patient feedback.', icon: <IconReviews />, path: '/admin/review-management' },
   ];
 
-  const activities = [
-    { text: 'Auth node: Dr. Sarah Smith login established', time: '12:04:22', type: 'info' },
-    { text: 'Patch 2.4.1 deployed to edge cluster', time: '11:45:10', type: 'success' },
-    { text: 'Billing Cron: Monthly reports generated', time: '09:00:00', type: 'info' },
-    { text: 'Access Denied: Multiple failed attempts from IP 192.x', time: '08:12:45', type: 'error' },
-  ];
+  if (loading) {
+    return (
+      <div className="admin-dashboard-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+        <p style={{ color: 'var(--admin-text-light)', fontWeight: 600 }}>Loading operations nexus...</p>
+      </div>
+    );
+  }
 
-  const tasks = [
-    { title: 'Credential Verification', desc: 'Dr. James Wilson (ID: 442)', priority: 'High' },
-    { title: 'Fee Schedule Update', desc: 'Radiology department revisions', priority: 'Medium' },
-    { title: 'SLA Audit', desc: 'Response time threshold analysis', priority: 'High' },
-  ];
-
-  const chartData = [
-    { day: 'M', p: 80, s: 40 },
-    { day: 'T', p: 120, s: 60 },
-    { day: 'W', p: 150, s: 90 },
-    { day: 'T', p: 100, s: 50 },
-    { day: 'F', p: 170, s: 110 },
-    { day: 'S', p: 60, s: 30 },
-    { day: 'S', p: 40, s: 20 },
-  ];
+  if (error) {
+    return (
+      <div className="admin-dashboard-container" style={{ padding: '2rem' }}>
+        <div style={{ background: '#FEE2E2', color: '#991B1B', padding: '1rem', borderRadius: '8px' }}>
+          <strong>Error:</strong> {error}
+        </div>
+        <button onClick={fetchDashboardData} className="admin-btn admin-btn-primary" style={{ marginTop: '1rem' }}>Retry</button>
+      </div>
+    );
+  }
 
   return (
     <div className="admin-dashboard-container">
@@ -88,7 +124,7 @@ const AdminDashboard = () => {
 
       {/* Stats Overview */}
       <div className="admin-stats-grid">
-        {stats.map((stat, index) => (
+        {data.stats.map((stat, index) => (
           <div key={index} className="stat-card">
             <div className="stat-info">
               <span className="stat-label">{stat.label}</span>
@@ -111,13 +147,13 @@ const AdminDashboard = () => {
             </div>
           </div>
           <div className="bar-chart-mock">
-            {chartData.map((data, i) => (
+            {data.chartData.map((d, i) => (
               <div key={i} className="chart-bar-group">
                 <div className="bar-wrapper">
-                  <div className="bar" style={{ height: `${data.p}%`, background: 'var(--admin-accent)' }} data-value={data.p}></div>
-                  <div className="bar" style={{ height: `${data.s}%`, background: 'var(--admin-secondary)' }} data-value={data.s}></div>
+                  <div className="bar" style={{ height: `${d.p}%`, background: 'var(--admin-accent)' }} data-value={d.p}></div>
+                  <div className="bar" style={{ height: `${d.s}%`, background: 'var(--admin-secondary)' }} data-value={d.s}></div>
                 </div>
-                <span className="bar-label" style={{fontFamily: 'monospace'}}>{data.day}</span>
+                <span className="bar-label" style={{fontFamily: 'monospace'}}>{d.day}</span>
               </div>
             ))}
           </div>
@@ -126,7 +162,7 @@ const AdminDashboard = () => {
         <div className="task-card" style={{ border: '1px solid var(--console-border)', borderRadius: '4px' }}>
           <h3 style={{ fontSize: '0.9rem', fontWeight: 800, textTransform: 'uppercase', marginBottom: '1rem' }}>Active Tasks</h3>
           <div className="task-list">
-            {tasks.map((task, i) => (
+            {data.tasks.map((task, i) => (
               <div key={i} className="task-item">
                 <div className="task-info">
                   <div className="task-text">
@@ -165,7 +201,7 @@ const AdminDashboard = () => {
           <h2 className="section-title">System Logs</h2>
           <div className="activity-card" style={{ border: '1px solid var(--console-border)', borderRadius: '4px' }}>
             <div className="activity-list">
-              {activities.map((act, index) => (
+              {data.activities.map((act, index) => (
                 <div key={index} className="activity-item" style={{borderBottom: '1px solid #f1f5f9', paddingBottom: '0.75rem'}}>
                   <div className="activity-details">
                     <p style={{ fontSize: '0.8rem', fontFamily: 'monospace', color: act.type === 'error' ? 'var(--admin-danger)' : 'var(--admin-text-main)' }}>

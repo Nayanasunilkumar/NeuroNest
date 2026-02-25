@@ -6,14 +6,37 @@ from flask_jwt_extended import create_access_token
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
 
+def parse_user_agent(ua_string):
+    if not ua_string: return "Unknown Device"
+    ua_string = ua_string.lower()
+    
+    # Simple OS detection
+    os = "Unknown OS"
+    if "macintosh" in ua_string or "mac os" in ua_string: os = "MacOS"
+    elif "windows" in ua_string: os = "Windows"
+    elif "android" in ua_string: os = "Android"
+    elif "iphone" in ua_string or "ipad" in ua_string: os = "iOS"
+    elif "linux" in ua_string: os = "Linux"
+
+    # Simple Browser detection
+    browser = "Browser"
+    if "chrome" in ua_string and "edg" not in ua_string: browser = "Chrome"
+    elif "safari" in ua_string and "chrome" not in ua_string: browser = "Safari"
+    elif "firefox" in ua_string: browser = "Firefox"
+    elif "edg" in ua_string: browser = "Edge"
+    elif "opera" in ua_string or "opr" in ua_string: browser = "Opera"
+    
+    return f"{browser} on {os}"
+
 def log_security_event(user_id, event_type, description):
+    ua = request.headers.get('User-Agent', '')
     try:
         activity = SecurityActivity(
             user_id=user_id,
             event_type=event_type,
             description=description,
             ip_address=request.remote_addr,
-            user_agent=request.headers.get('User-Agent')
+            user_agent=ua
         )
         db.session.add(activity)
         db.session.commit()
@@ -143,7 +166,9 @@ def login():
         }
     )
 
-    log_security_event(user.id, "login_success", f"New login from {request.headers.get('User-Agent', 'Unknown Device')}")
+    ua = request.headers.get('User-Agent', '')
+    device_info = parse_user_agent(ua)
+    log_security_event(user.id, "login_success", f"New login from {device_info}")
 
     return jsonify({
         "message": "Login successful",

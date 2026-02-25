@@ -110,3 +110,33 @@ export const getClinicalRemarks = async (patientId) => {
   const response = await axios.get(`/doctor/patients/${patientId}/remarks`);
   return response.data;
 };
+
+// ============================================
+// DOCTOR SETTINGS API (New Refactored Routes)
+// ============================================
+
+export const getAllDoctorSettings = async () => {
+  const response = await axios.get("/doctor/settings/");
+  return response.data;
+};
+
+export const updateDoctorScheduleConfig = async (payload) => {
+  const response = await axios.put("/doctor/settings/schedule", payload);
+  return response.data;
+};
+
+export const updateDoctorNotificationSettings = async (payload) => {
+  const response = await axios.put("/doctor/settings/notifications", payload);
+  return response.data;
+};
+
+export const updateDoctorPrivacySettings = async (payload) => {
+  const response = await axios.put("/doctor/settings/privacy", payload);
+  return response.data;
+};
+
+export const updateDoctorConsultationSettings = async (payload) => {
+  const response = await axios.put("/doctor/settings/consultation", payload);
+  return response.data;
+};
+

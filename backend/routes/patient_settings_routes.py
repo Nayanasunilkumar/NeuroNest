@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
 from database.models import db, User, SecurityActivity
 from utils.security import verify_password, hash_password
-from datetime import datetime
+from datetime import datetime, date, time
 
 patient_settings_bp = Blueprint("patient_settings", __name__)
 
@@ -21,12 +21,20 @@ def _get_notification_prefs(user_id):
         text("SELECT * FROM notification_preferences WHERE user_id = :uid"), {"uid": user_id}
     ).mappings().fetchone()
     return dict(row) if row else {}
-
 def _ensure_notification_prefs(user_id):
     """Upsert default notification prefs row."""
     from sqlalchemy import text
     db.session.execute(text("""
         INSERT INTO notification_preferences (user_id) VALUES (:uid)
+        ON CONFLICT (user_id) DO NOTHING
+    """), {"uid": user_id})
+    db.session.commit()
+def _ensure_patient_profile(user_id):
+    """Upsert default patient profile row."""
+    from sqlalchemy import text
+    db.session.execute(text("""
+        INSERT INTO patient_profiles (user_id, full_name)
+        SELECT id, full_name FROM users WHERE id = :uid
         ON CONFLICT (user_id) DO NOTHING
     """), {"uid": user_id})
     db.session.commit()
@@ -44,6 +52,7 @@ def get_settings():
         return jsonify({"error": "Access denied"}), 403
 
     user = User.query.get_or_404(uid)
+    _ensure_patient_profile(uid)
     profile = _get_patient_profile(uid)
     _ensure_notification_prefs(uid)
     notif = _get_notification_prefs(uid)
@@ -88,6 +97,7 @@ def update_account():
 
     data = request.get_json()
     user = User.query.get_or_404(uid)
+    _ensure_patient_profile(uid)
 
     # Update users table
     if "full_name" in data and data["full_name"].strip():
@@ -119,7 +129,7 @@ def update_account():
         if existing_ec:
             db.session.execute(text("""
                 UPDATE emergency_contacts
-                SET contact_name=:name, relationship=:rel, phone=:phone, email=:email, updated_at=NOW()
+                SET contact_name=:name, relationship=:rel, phone=:phone, email=:email, updated_at=CURRENT_TIMESTAMP
                 WHERE patient_id=:uid AND is_primary=TRUE
             """), {"uid": uid, "name": ec.get("contact_name",""), "rel": ec.get("relationship",""), "phone": ec.get("phone",""), "email": ec.get("email","")})
         else:
@@ -147,7 +157,7 @@ def update_notifications():
 
     allowed = [
         "email_appointments","email_prescriptions","email_messages","email_announcements","email_feedback",
-        "sms_appointments","sms_prescriptions",
+        "sms_appointments","sms_prescriptions","sms_messages","sms_announcements",
         "inapp_appointments","inapp_prescriptions","inapp_messages","inapp_announcements",
         "allow_doctor_followup","allow_promotions","allow_anonymous_feedback",
         "share_history_with_doctors","allow_analytics",
@@ -156,7 +166,8 @@ def update_notifications():
     if updates:
         set_clause = ", ".join([f"{k} = :{k}" for k in updates])
         updates["uid"] = uid
-        db.session.execute(text(f"UPDATE notification_preferences SET {set_clause}, updated_at = NOW() WHERE user_id = :uid"), updates)
+        updates["updated_at"] = datetime.utcnow()
+        db.session.execute(text(f"UPDATE notification_preferences SET {set_clause}, updated_at = :updated_at WHERE user_id = :uid"), updates)
         db.session.commit()
 
     return jsonify({"message": "Notification preferences updated"}), 200
@@ -180,7 +191,8 @@ def update_privacy():
     if updates:
         set_clause = ", ".join([f"{k} = :{k}" for k in updates])
         updates["uid"] = uid
-        db.session.execute(text(f"UPDATE notification_preferences SET {set_clause}, updated_at = NOW() WHERE user_id = :uid"), updates)
+        updates["updated_at"] = datetime.utcnow()
+        db.session.execute(text(f"UPDATE notification_preferences SET {set_clause}, updated_at = :updated_at WHERE user_id = :uid"), updates)
         db.session.commit()
 
     return jsonify({"message": "Privacy settings updated"}), 200
@@ -248,23 +260,136 @@ def export_data():
     user = User.query.get_or_404(uid)
     profile = _get_patient_profile(uid)
     appointments = db.session.execute(
-        text("SELECT * FROM appointments WHERE patient_id = :uid ORDER BY appointment_date DESC"),
+        text("SELECT a.*, u.full_name as doctor_name FROM appointments a JOIN users u ON u.id = a.doctor_id WHERE a.patient_id = :uid ORDER BY a.appointment_date DESC"),
         {"uid": uid}
     ).mappings().fetchall()
     prescriptions = db.session.execute(
-        text("SELECT p.*, array_agg(pi.medicine_name) AS medicines FROM prescriptions p LEFT JOIN prescription_items pi ON pi.prescription_id = p.id WHERE p.patient_id = :uid GROUP BY p.id"),
+        text("SELECT p.*, array_agg(COALESCE(pi.medicine_name, 'Unknown') || ' (' || COALESCE(pi.frequency, 'N/A') || ')') AS medicines FROM prescriptions p LEFT JOIN prescription_items pi ON pi.prescription_id = p.id WHERE p.patient_id = :uid GROUP BY p.id"),
         {"uid": uid}
     ).mappings().fetchall()
+
+    def _serial(obj):
+        if isinstance(obj, (datetime, date, time)):
+            return str(obj)
+        return obj
 
     export = {
         "export_generated_at": datetime.utcnow().isoformat(),
         "account": {"email": user.email, "full_name": user.full_name, "created_at": str(user.created_at)},
         "profile": {k: str(v) for k, v in profile.items() if v is not None},
-        "appointments_count": len(appointments),
-        "prescriptions_count": len(prescriptions),
+        "appointments": [{k: str(v) if isinstance(v, (date, time, datetime)) else v for k, v in dict(a).items()} for a in appointments],
+        "prescriptions": [{k: str(v) if isinstance(v, (date, time, datetime)) else v for k, v in dict(p).items()} for p in prescriptions],
         "notice": "This export contains your personal health data. Keep it secure."
     }
     return jsonify(export), 200
+
+@patient_settings_bp.route("/export-report", methods=["POST"])
+@jwt_required()
+def download_report():
+    """Generates and returns a PDF medical report."""
+    uid = int(get_jwt_identity())
+    if not _require_patient(get_jwt()):
+        return jsonify({"error": "Access denied"}), 403
+
+    from sqlalchemy import text
+    from utils.pdf_generator import generate_patient_report
+    from flask import send_file
+
+    user = User.query.get_or_404(uid)
+    profile = _get_patient_profile(uid)
+    
+    # Emergency Contact
+    ec_row = db.session.execute(
+        text("SELECT * FROM emergency_contacts WHERE patient_id = :uid AND is_primary = TRUE LIMIT 1"),
+        {"uid": uid}
+    ).mappings().fetchone()
+
+    # Appointments + Doctor Name
+    appointments = db.session.execute(
+        text("SELECT a.*, u.full_name as doctor_name FROM appointments a JOIN users u ON u.id = a.doctor_id WHERE a.patient_id = :uid ORDER BY a.appointment_date DESC LIMIT 20"),
+        {"uid": uid}
+    ).mappings().fetchall()
+
+    # Prescriptions
+    prescriptions = db.session.execute(
+        text("SELECT p.*, array_agg(COALESCE(pi.medicine_name, 'Unknown') || ' (' || COALESCE(pi.frequency, 'N/A') || ')') AS medicines FROM prescriptions p LEFT JOIN prescription_items pi ON pi.prescription_id = p.id WHERE p.patient_id = :uid GROUP BY p.id ORDER BY p.created_at DESC LIMIT 10"),
+        {"uid": uid}
+    ).mappings().fetchall()
+
+    data = {
+        "account": {"email": user.email, "full_name": user.full_name},
+        "profile": {k: str(v) for k, v in profile.items() if v is not None},
+        "emergency_contact": dict(ec_row) if ec_row else {},
+        "appointments": [dict(a) for a in appointments],
+        "prescriptions": [dict(p) for p in prescriptions]
+    }
+
+    pdf_buffer = generate_patient_report(data)
+    
+    filename = f"NeuroNest_Report_{user.full_name.replace(' ', '_')}_{datetime.now().strftime('%Y%m%d')}.pdf"
+    
+    return send_file(
+        pdf_buffer,
+        mimetype='application/pdf',
+        as_attachment=True,
+        download_name=filename
+    )
+
+@patient_settings_bp.route("/export-appointments", methods=["POST"])
+@jwt_required()
+def export_appointments():
+    """Generates PDF of appointments only."""
+    uid = int(get_jwt_identity())
+    if not _require_patient(get_jwt()):
+        return jsonify({"error": "Access denied"}), 403
+
+    from sqlalchemy import text
+    from utils.pdf_generator import generate_patient_report
+    from flask import send_file
+
+    user = User.query.get_or_404(uid)
+    profile = _get_patient_profile(uid)
+    appointments = db.session.execute(
+        text("SELECT a.*, u.full_name as doctor_name FROM appointments a JOIN users u ON u.id = a.doctor_id WHERE a.patient_id = :uid ORDER BY a.appointment_date DESC"),
+        {"uid": uid}
+    ).mappings().fetchall()
+
+    data = {
+        "account": {"email": user.email, "full_name": user.full_name},
+        "profile": {k: str(v) for k, v in profile.items() if v is not None},
+        "appointments": [dict(a) for a in appointments]
+    }
+
+    pdf_buffer = generate_patient_report(data)
+    return send_file(pdf_buffer, mimetype='application/pdf', as_attachment=True, download_name=f"NeuroNest_Appointments_{datetime.now().strftime('%Y%m%d')}.pdf")
+
+@patient_settings_bp.route("/export-prescriptions", methods=["POST"])
+@jwt_required()
+def export_prescriptions():
+    """Generates PDF of prescriptions only."""
+    uid = int(get_jwt_identity())
+    if not _require_patient(get_jwt()):
+        return jsonify({"error": "Access denied"}), 403
+
+    from sqlalchemy import text
+    from utils.pdf_generator import generate_patient_report
+    from flask import send_file
+
+    user = User.query.get_or_404(uid)
+    profile = _get_patient_profile(uid)
+    prescriptions = db.session.execute(
+        text("SELECT p.*, array_agg(COALESCE(pi.medicine_name, 'Unknown') || ' (' || COALESCE(pi.frequency, 'N/A') || ')') AS medicines FROM prescriptions p LEFT JOIN prescription_items pi ON pi.prescription_id = p.id WHERE p.patient_id = :uid GROUP BY p.id ORDER BY p.created_at DESC"),
+        {"uid": uid}
+    ).mappings().fetchall()
+
+    data = {
+        "account": {"email": user.email, "full_name": user.full_name},
+        "profile": {k: str(v) for k, v in profile.items() if v is not None},
+        "prescriptions": [dict(p) for p in prescriptions]
+    }
+
+    pdf_buffer = generate_patient_report(data)
+    return send_file(pdf_buffer, mimetype='application/pdf', as_attachment=True, download_name=f"NeuroNest_Prescriptions_{datetime.now().strftime('%Y%m%d')}.pdf")
 
 
 # ── POST /patient/settings/delete-account ───────────────────────────────────

@@ -16,7 +16,7 @@ const DoctorSidebar = ({ collapsed, setCollapsed }) => {
       {/* Sidebar Toggle Header */}
       <div className={`doc-sidebar-header flex items-center ${collapsed ? 'justify-center' : 'justify-start px-6'} py-6 mb-2`}>
         <button 
-            className="text-slate-600 dark:text-white hover:text-blue-600 dark:hover:text-blue-200 transition-colors bg-transparent border-none outline-none ring-0 w-auto h-auto min-w-0 min-h-0 flex items-center justify-center p-0"
+            className="doc-sidebar-toggle-btn"
             onClick={() => setCollapsed(!collapsed)}
             title={collapsed ? "Expand Sidebar" : "Collapse Sidebar"}
         >

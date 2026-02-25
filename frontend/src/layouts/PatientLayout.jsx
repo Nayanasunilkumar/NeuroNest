@@ -77,7 +77,9 @@ const PatientLayout = () => {
       />
 
       {/* PAGE CONTENT */}
-      <main className={`dashboard-main ${location.pathname === '/patient/messages' ? 'full-screen-chat' : ''}`}>
+      <main
+        className={`dashboard-main ${!sidebarOpen ? 'sidebar-rail-offset' : ''} ${location.pathname === '/patient/messages' ? 'full-screen-chat' : ''}`}
+      >
         <Outlet />
       </main>
     </div>

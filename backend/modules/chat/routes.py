@@ -238,7 +238,7 @@ def get_patient_context(patient_id):
         Appointment.doctor_id == current_user_id,
         Appointment.patient_id == patient_id,
         Appointment.appointment_date >= now.date(),
-        Appointment.status.in_(["Approved", "Confirmed"])
+        Appointment.status == "approved"
     ).order_by(Appointment.appointment_date.asc(), Appointment.appointment_time.asc()).first()
     
     last_apt = Appointment.query.filter(
@@ -246,7 +246,7 @@ def get_patient_context(patient_id):
         Appointment.patient_id == patient_id,
         # Logic for last: date < today OR (date == today and time < now)
         Appointment.appointment_date <= now.date(),
-        Appointment.status == "Completed"
+        Appointment.status == "completed"
     ).order_by(Appointment.appointment_date.desc(), Appointment.appointment_time.desc()).first()
     
     return jsonify({

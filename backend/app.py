@@ -18,6 +18,7 @@ from routes.medical_records import medical_records_bp
 from routes.prescription_routes import prescriptions_bp
 from routes.doctor_profile import doctor_profile_bp
 from routes.patient_settings_routes import patient_settings_bp
+from routes.announcements import announcements_bp
 
 
 from extensions.socket import socketio
@@ -38,6 +39,7 @@ def create_app():
     app.register_blueprint(appointments_bp, url_prefix="/appointments")
     app.register_blueprint(medical_records_bp)
     app.register_blueprint(prescriptions_bp, url_prefix="/prescriptions")
+    app.register_blueprint(announcements_bp, url_prefix="/api/announcements")
     
     # New Doctor Profile Route
     app.register_blueprint(doctor_profile_bp, url_prefix="/api/doctor/profile")
@@ -61,6 +63,21 @@ def create_app():
     from modules.feedback.routes import feedback_bp
     app.register_blueprint(feedback_bp, url_prefix="/api/feedback")
     app.register_blueprint(patient_settings_bp, url_prefix="/api/patient/settings")
+
+    from routes.doctor_settings_routes import doctor_settings_bp
+    app.register_blueprint(doctor_settings_bp, url_prefix="/api/doctor/settings")
+
+    from routes.admin.reports_routes import admin_reports_bp
+    app.register_blueprint(admin_reports_bp, url_prefix="/api/admin/reports")
+
+    from routes.admin.settings_routes import admin_settings_bp
+    app.register_blueprint(admin_settings_bp, url_prefix="/api/admin/settings")
+
+    from routes.admin.dashboard_routes import admin_dashboard_bp
+    app.register_blueprint(admin_dashboard_bp, url_prefix="/api/admin/dashboard")
+    
+    from routes.admin.announcement_routes import admin_announcements_bp
+    app.register_blueprint(admin_announcements_bp, url_prefix="/api/admin/announcements")
 
 
     # Import socket events to register handlers

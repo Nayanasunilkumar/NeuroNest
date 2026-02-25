@@ -24,7 +24,7 @@ const ProfileHeader = ({ profile, onEdit, onImageUpload, isEditing }) => {
         <div className="profile-banner-card">
             {/* Profile Image with Hover Overlay */}
             <div 
-                className="profile-avatar-wrapper"
+                className="premium-avatar-wrapper"
                 onMouseEnter={() => setIsHovering(true)}
                 onMouseLeave={() => setIsHovering(false)}
                 onClick={handleImageClick}
@@ -33,7 +33,7 @@ const ProfileHeader = ({ profile, onEdit, onImageUpload, isEditing }) => {
                 <img 
                     src={toAssetUrl(profile.profile_image) || "https://via.placeholder.com/150"} 
                     alt="Dr. Profile" 
-                    className="profile-avatar"
+                    className="premium-avatar"
                 />
                 
                 {/* Only show overlay if editing */}
@@ -76,7 +76,7 @@ const ProfileHeader = ({ profile, onEdit, onImageUpload, isEditing }) => {
                         <MapPin size={16} /> <span className="ml-2">{profile.hospital_name || "Hospital Name"}</span>
                     </span>
                     <span className="badge-success badge-pill">
-                        <span className="font-bold">${profile.consultation_fee || 0} / Visit</span>
+                        <span className="font-bold">₹{profile.consultation_fee || 0} / Visit</span>
                     </span>
                 </div>
 

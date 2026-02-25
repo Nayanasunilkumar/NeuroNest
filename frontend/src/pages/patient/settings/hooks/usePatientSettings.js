@@ -34,21 +34,25 @@ export const usePatientSettings = () => {
     setSaving(true);
     setError(null);
     try {
-      await fn();
+      const result = await fn();
       await load();
       flash(successMsg || 'Saved successfully');
+      return result;
     } catch (e) {
       setError(e?.response?.data?.error || 'Failed to save');
+      throw e;
     } finally {
       setSaving(false);
     }
   };
 
   const updateNotifications= (data) => save(() => patientSettingsService.updateNotifications(data), 'Notification preferences saved!');
-  const updatePrivacy      = (data) => save(() => patientSettingsService.updatePrivacy(data), 'Privacy settings saved!');
   const changePassword     = (data) => save(() => patientSettingsService.changePassword(data), 'Password changed!');
   const exportData         = ()     => save(() => patientSettingsService.exportData(), 'Data export ready!');
+  const exportReport       = ()     => save(() => patientSettingsService.exportReport(), 'Medical report ready!');
+  const exportAppts        = ()     => save(() => patientSettingsService.exportAppointments(), 'Appointment list ready!');
+  const exportPresc        = ()     => save(() => patientSettingsService.exportPrescriptions(), 'Prescription list ready!');
   const deleteAccount      = (data) => patientSettingsService.deleteAccount(data);
 
-  return { settings, securityActivity, loading, saving, error, success, updateNotifications, updatePrivacy, changePassword, exportData, deleteAccount, reload: load };
+  return { settings, securityActivity, loading, saving, error, success, updateNotifications, changePassword, exportData, exportReport, exportAppts, exportPresc, deleteAccount, reload: load };
 };

@@ -101,8 +101,8 @@ class PatientProfile(db.Model):
             "allergies": self.allergies,
             "chronic_conditions": self.chronic_conditions,
             "profile_image": self.profile_image,
-            "created_at": str(self.created_at),
-            "updated_at": str(self.updated_at),
+            "created_at": self.created_at.isoformat() + 'Z',
+            "updated_at": self.updated_at.isoformat() + 'Z',
         }
 
 
@@ -149,8 +149,8 @@ class EmergencyContact(db.Model):
             "alternate_phone": self.alternate_phone,
             "email": self.email,
             "is_primary": self.is_primary,
-            "created_at": str(self.created_at),
-            "updated_at": str(self.updated_at),
+            "created_at": self.created_at.isoformat() + 'Z',
+            "updated_at": self.updated_at.isoformat() + 'Z',
         }
     
 # =========================================
@@ -187,12 +187,12 @@ class Appointment(db.Model):
 
     status = db.Column(
         db.String(50),
-        default="Pending"  # Pending / Approved / Rejected / Cancelled / Completed
+        default="pending"  # pending / approved / rejected / cancelled / completed
     )
     booking_mode = db.Column(
         SAEnum("auto_confirm", "doctor_approval", name="booking_mode_enum"),
         nullable=False,
-        default="auto_confirm"
+        default="doctor_approval"
     )
     delay_reason = db.Column(db.Text, nullable=True)
     extended_from_appointment_id = db.Column(
@@ -241,8 +241,8 @@ class Appointment(db.Model):
             "delay_reason": self.delay_reason,
             "extended_from_appointment_id": self.extended_from_appointment_id,
             "feedback_given": self.feedback_given,
-            "created_at": str(self.created_at),
-            "updated_at": str(self.updated_at),
+            "created_at": self.created_at.isoformat() + 'Z',
+            "updated_at": self.updated_at.isoformat() + 'Z',
         }
 
 
@@ -300,6 +300,103 @@ class AppointmentSlot(db.Model):
 
 
 # =========================================
+# DOCTOR SLOT OVERRIDES (EMERGENCY BLOCKS)
+# =========================================
+class DoctorSlotOverride(db.Model):
+    __tablename__ = "doctor_slot_overrides"
+    __table_args__ = (
+        CheckConstraint("scope IN ('full_day', 'range')", name="ck_slot_override_scope"),
+        CheckConstraint(
+            "(scope = 'full_day' AND start_time_utc IS NULL AND end_time_utc IS NULL) OR "
+            "(scope = 'range' AND start_time_utc IS NOT NULL AND end_time_utc IS NOT NULL AND end_time_utc > start_time_utc)",
+            name="ck_slot_override_time_scope",
+        ),
+        Index("idx_slot_override_doctor_date", "doctor_user_id", "override_date"),
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+    doctor_user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False, index=True)
+    override_date = db.Column(db.Date, nullable=False, index=True)
+    scope = db.Column(
+        SAEnum("full_day", "range", name="slot_override_scope_enum"),
+        nullable=False,
+        default="full_day",
+    )
+    start_time_utc = db.Column(db.DateTime(timezone=True), nullable=True)
+    end_time_utc = db.Column(db.DateTime(timezone=True), nullable=True)
+    reason = db.Column(db.String(255), nullable=True)
+    created_by = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=True)
+    is_active = db.Column(db.Boolean, nullable=False, default=True, index=True)
+    created_at = db.Column(db.DateTime(timezone=True), default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime(timezone=True), default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    doctor_user = db.relationship("User", foreign_keys=[doctor_user_id], backref="slot_overrides")
+    created_by_user = db.relationship("User", foreign_keys=[created_by], backref="created_slot_overrides")
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "doctor_user_id": self.doctor_user_id,
+            "override_date": str(self.override_date),
+            "scope": self.scope,
+            "start_time_utc": self.start_time_utc.isoformat() if self.start_time_utc else None,
+            "end_time_utc": self.end_time_utc.isoformat() if self.end_time_utc else None,
+            "reason": self.reason,
+            "created_by": self.created_by,
+            "is_active": self.is_active,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+
+# =========================================
+# SLOT EVENT LOGS
+# =========================================
+class SlotEventLog(db.Model):
+    __tablename__ = "slot_event_logs"
+    __table_args__ = (
+        Index("idx_slot_event_doctor_created", "doctor_user_id", "created_at"),
+        Index("idx_slot_event_slot_created", "slot_id", "created_at"),
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+    event_type = db.Column(db.String(80), nullable=False, index=True)
+    doctor_user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=True, index=True)
+    slot_id = db.Column(db.Integer, db.ForeignKey("appointment_slots.id"), nullable=True, index=True)
+    appointment_id = db.Column(db.Integer, db.ForeignKey("appointments.id"), nullable=True, index=True)
+    actor_user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=True, index=True)
+    source = db.Column(db.String(80), nullable=False, default="system")
+    reason = db.Column(db.String(255), nullable=True)
+    correlation_id = db.Column(db.String(100), nullable=True, index=True)
+    previous_status = db.Column(db.String(50), nullable=True)
+    new_status = db.Column(db.String(50), nullable=True)
+    metadata_json = db.Column(db.JSON, nullable=True)
+    created_at = db.Column(db.DateTime(timezone=True), default=datetime.utcnow, nullable=False, index=True)
+
+    doctor_user = db.relationship("User", foreign_keys=[doctor_user_id], backref="slot_event_logs")
+    actor_user = db.relationship("User", foreign_keys=[actor_user_id], backref="slot_events_by_actor")
+    slot = db.relationship("AppointmentSlot", foreign_keys=[slot_id], backref="event_logs")
+    appointment = db.relationship("Appointment", foreign_keys=[appointment_id], backref="slot_event_logs")
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "event_type": self.event_type,
+            "doctor_user_id": self.doctor_user_id,
+            "slot_id": self.slot_id,
+            "appointment_id": self.appointment_id,
+            "actor_user_id": self.actor_user_id,
+            "source": self.source,
+            "reason": self.reason,
+            "correlation_id": self.correlation_id,
+            "previous_status": self.previous_status,
+            "new_status": self.new_status,
+            "metadata": self.metadata_json or {},
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+        }
+
+
+# =========================================
 # DOCTOR SCHEDULE SETTINGS
 # =========================================
 class DoctorScheduleSetting(db.Model):
@@ -312,8 +409,9 @@ class DoctorScheduleSetting(db.Model):
     approval_mode = db.Column(
         SAEnum("auto_confirm", "doctor_approval", name="approval_mode_enum"),
         nullable=False,
-        default="auto_confirm"
+        default="doctor_approval"
     )
+    accepting_new_bookings = db.Column(db.Boolean, nullable=False, default=True)
     timezone = db.Column(db.String(64), nullable=False, default="Asia/Kolkata")
     created_at = db.Column(db.DateTime(timezone=True), default=datetime.utcnow, nullable=False)
     updated_at = db.Column(db.DateTime(timezone=True), default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
@@ -326,7 +424,111 @@ class DoctorScheduleSetting(db.Model):
             "slot_duration_minutes": self.slot_duration_minutes,
             "buffer_minutes": self.buffer_minutes,
             "approval_mode": self.approval_mode,
+            "accepting_new_bookings": self.accepting_new_bookings,
             "timezone": self.timezone,
+        }
+
+
+# =========================================
+# DOCTOR NOTIFICATION SETTINGS
+# =========================================
+class DoctorNotificationSetting(db.Model):
+    __tablename__ = "doctor_notification_settings"
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    doctor_user_id = db.Column(
+        db.Integer,
+        db.ForeignKey("users.id"),
+        nullable=False,
+        unique=True,
+        index=True
+    )
+
+    email_on_booking = db.Column(db.Boolean, default=True)
+    sms_on_booking = db.Column(db.Boolean, default=False)
+    in_app_notifications = db.Column(db.Boolean, default=True)
+
+    reminder_before_minutes = db.Column(db.Integer, default=30)
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    doctor = db.relationship("User", backref=db.backref("notification_setting", uselist=False))
+
+    def to_dict(self):
+        return {
+            "email_on_booking": self.email_on_booking,
+            "sms_on_booking": self.sms_on_booking,
+            "in_app_notifications": self.in_app_notifications,
+            "reminder_before_minutes": self.reminder_before_minutes,
+        }
+
+# =========================================
+# DOCTOR PRIVACY SETTINGS
+# =========================================
+class DoctorPrivacySetting(db.Model):
+    __tablename__ = "doctor_privacy_settings"
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    doctor_user_id = db.Column(
+        db.Integer,
+        db.ForeignKey("users.id"),
+        nullable=False,
+        unique=True,
+        index=True
+    )
+
+    show_profile_publicly = db.Column(db.Boolean, default=True)
+    show_consultation_fee = db.Column(db.Boolean, default=True)
+    allow_chat_before_booking = db.Column(db.Boolean, default=True)
+    allow_reviews_publicly = db.Column(db.Boolean, default=True)
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    doctor = db.relationship("User", backref=db.backref("privacy_setting", uselist=False))
+
+    def to_dict(self):
+        return {
+            "show_profile_publicly": self.show_profile_publicly,
+            "show_consultation_fee": self.show_consultation_fee,
+            "allow_chat_before_booking": self.allow_chat_before_booking,
+            "allow_reviews_publicly": self.allow_reviews_publicly,
+        }
+
+
+# =========================================
+# DOCTOR CONSULTATION SETTINGS
+# =========================================
+class DoctorConsultationSetting(db.Model):
+    __tablename__ = "doctor_consultation_settings"
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    doctor_user_id = db.Column(
+        db.Integer,
+        db.ForeignKey("users.id"),
+        nullable=False,
+        unique=True,
+        index=True
+    )
+
+    consultation_fee = db.Column(db.Float, nullable=False, default=500.0)
+    consultation_mode = db.Column(db.String(50), default="Online")
+    cancellation_policy_hours = db.Column(db.Integer, default=24)
+    auto_cancel_unpaid_minutes = db.Column(db.Integer, default=15)
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    doctor = db.relationship("User", backref=db.backref("consultation_setting", uselist=False))
+
+    def to_dict(self):
+        return {
+            "consultation_fee": self.consultation_fee,
+            "consultation_mode": self.consultation_mode,
+            "cancellation_policy_hours": self.cancellation_policy_hours,
+            "auto_cancel_unpaid_minutes": self.auto_cancel_unpaid_minutes,
         }
 
 
@@ -415,8 +617,8 @@ class MedicalRecord(db.Model):
             "description": self.description,
             "record_date": str(self.record_date) if self.record_date else None,
             "verified_by_doctor": self.verified_by_doctor,
-            "created_at": str(self.created_at),
-            "updated_at": str(self.updated_at),
+            "created_at": self.created_at.isoformat() + 'Z',
+            "updated_at": self.updated_at.isoformat() + 'Z',
         }
 
 
@@ -517,8 +719,8 @@ class DoctorProfile(db.Model):
             "consultation_fee": self.consultation_fee,
             "consultation_mode": self.consultation_mode,
             "profile_image": self.profile_image,
-            "created_at": str(self.created_at),
-            "updated_at": str(self.updated_at),
+            "created_at": self.created_at.isoformat() + 'Z',
+            "updated_at": self.updated_at.isoformat() + 'Z',
             "availability": [a.to_dict() for a in self.availability],
             "blocked_dates": [b.to_dict() for b in self.blocked_dates],
             "expertise_tags": [t.to_dict() for t in self.expertise_tags]
@@ -623,8 +825,8 @@ class ClinicalRemark(db.Model):
             "patient_id": self.patient_id,
             "doctor_id": self.doctor_id,
             "content": self.content,
-            "created_at": str(self.created_at),
-            "updated_at": str(self.updated_at)
+            "created_at": self.created_at.isoformat() + 'Z',
+            "updated_at": self.updated_at.isoformat() + 'Z'
         }
 
 
@@ -658,8 +860,8 @@ class ModuleConfig(db.Model):
             "display_name": self.display_name,
             "is_enabled": self.is_enabled,
             "roles_allowed": self.roles_allowed or [],
-            "created_at": str(self.created_at),
-            "updated_at": str(self.updated_at),
+            "created_at": self.created_at.isoformat() + 'Z',
+            "updated_at": self.updated_at.isoformat() + 'Z',
         }
 
 # =========================================
@@ -701,7 +903,7 @@ class Review(db.Model):
             "sentiment": self.sentiment,
             "is_hidden": self.is_hidden,
             "is_flagged": self.is_flagged,
-            "created_at": str(self.created_at)
+            "created_at": self.created_at.isoformat() + 'Z'
         }
 
 # =========================================
@@ -766,5 +968,88 @@ class SecurityActivity(db.Model):
             "description": self.description,
             "ip_address": self.ip_address,
             "user_agent": self.user_agent,
-            "created_at": self.created_at.isoformat()
+            "created_at": self.created_at.isoformat() + 'Z'
         }
+
+class PatientAuditLog(db.Model):
+    __tablename__ = "patient_audit_logs"
+
+    id = db.Column(db.Integer, primary_key=True)
+    patient_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    actor_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+
+    action_type = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.Text)
+    audit_metadata = db.Column(db.JSON)   # 👈 FIXED HERE
+
+    ip_address = db.Column(db.String(45))
+    user_agent = db.Column(db.String(255))
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class PatientFlag(db.Model):
+    __tablename__ = "patient_flags"
+
+    id = db.Column(db.Integer, primary_key=True)
+    patient_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    reporter_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+
+    category = db.Column(db.String(100), nullable=False)
+    reason = db.Column(db.Text, nullable=False)
+    severity = db.Column(db.String(20), default="medium")
+
+    is_resolved = db.Column(db.Boolean, default=False)
+    resolved_at = db.Column(db.DateTime)
+    resolved_by = db.Column(db.Integer, db.ForeignKey("users.id"))
+    resolution_note = db.Column(db.Text)
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class PatientStatusLog(db.Model):
+    __tablename__ = "patient_status_logs"
+
+    id = db.Column(db.Integer, primary_key=True)
+    patient_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    admin_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+
+    previous_status = db.Column(db.String(50))
+    new_status = db.Column(db.String(50), nullable=False)
+    reason = db.Column(db.Text)
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+
+# =========================================
+# DOCTOR STATUS LOG
+# =========================================
+class DoctorStatusLog(db.Model):
+    __tablename__ = "doctor_status_logs"
+
+    id = db.Column(db.Integer, primary_key=True)
+    doctor_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    admin_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+
+    previous_status = db.Column(db.String(50))
+    new_status = db.Column(db.String(50), nullable=False)
+    reason = db.Column(db.Text)
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+# =========================================
+# DOCTOR AUDIT LOG
+# =========================================
+class DoctorAuditLog(db.Model):
+    __tablename__ = "doctor_audit_logs"
+
+    id = db.Column(db.Integer, primary_key=True)
+    doctor_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    actor_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+
+    action_type = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.Text)
+    audit_metadata = db.Column(db.JSON)
+
+    ip_address = db.Column(db.String(45))
+    user_agent = db.Column(db.String(255))
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)

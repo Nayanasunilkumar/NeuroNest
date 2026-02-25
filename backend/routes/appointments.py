@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import get_jwt, get_jwt_identity, jwt_required
@@ -7,8 +7,6 @@ from database.models import (
     Appointment,
     AppointmentSlot,
     DoctorProfile,
-    DoctorScheduleSetting,
-    InAppNotification,
     User,
     db,
 )
@@ -16,7 +14,14 @@ from utils.slot_engine import (
     find_slot_for_legacy_time,
     generate_slots_for_doctor,
     get_or_create_schedule_setting,
+    rolling_window_bounds,
     release_expired_holds,
+)
+from services.slot_lifecycle_service import (
+    apply_cancellation_policy,
+    mark_slot_available,
+    mark_slot_booked,
+    mark_slot_held,
 )
 
 appointments_bp = Blueprint("appointments", __name__)
@@ -31,7 +36,7 @@ def _utc_now():
 
 
 def _appointment_status_for_mode(mode: str) -> str:
-    return "Approved" if mode == "auto_confirm" else "Pending"
+    return "approved" if mode == "auto_confirm" else "pending"
 
 
 def _lock_slot(slot_id: int):
@@ -44,6 +49,9 @@ def _lock_slot(slot_id: int):
 
 def _book_slot_atomic(*, current_user_id: int, doctor_id: int, slot_id: int, reason: str, notes: str):
     now_utc = _utc_now()
+    setting = get_or_create_schedule_setting(doctor_id)
+    if not setting.accepting_new_bookings:
+        return None, "Doctor is not accepting new appointments currently", 409
     release_expired_holds(doctor_id)
 
     slot = _lock_slot(slot_id)
@@ -59,7 +67,6 @@ def _book_slot_atomic(*, current_user_id: int, doctor_id: int, slot_id: int, rea
     if slot.status != "available":
         return None, "Slot already booked", 409
 
-    setting = get_or_create_schedule_setting(doctor_id)
     booking_mode = setting.approval_mode
 
     appointment = Appointment(
@@ -77,13 +84,23 @@ def _book_slot_atomic(*, current_user_id: int, doctor_id: int, slot_id: int, rea
     db.session.flush()
 
     if booking_mode == "doctor_approval":
-        slot.status = "held"
-        slot.held_by_patient_id = current_user_id
-        slot.held_until_utc = now_utc + timedelta(minutes=15)
+        mark_slot_held(
+            slot=slot,
+            patient_id=current_user_id,
+            hold_minutes=5,
+            actor_user_id=current_user_id,
+            source="patient_booking",
+            reason="Patient selected slot; temporary soft-lock",
+        )
+        slot.booked_appointment_id = appointment.id
     else:
-        slot.status = "booked"
-
-    slot.booked_appointment_id = appointment.id
+        mark_slot_booked(
+            slot=slot,
+            appointment_id=appointment.id,
+            actor_user_id=current_user_id,
+            source="patient_booking",
+            reason="Auto-confirm booking",
+        )
 
     return appointment, None, None
 
@@ -129,10 +146,26 @@ def get_available_slots(doctor_id):
             return jsonify({"error": "date is required (YYYY-MM-DD)"}), 400
 
         target_date = datetime.strptime(date_str, "%Y-%m-%d").date()
-        # Opportunistically ensure slots exist for requested day.
-        generate_slots_for_doctor(doctor_id, target_date, target_date)
+        window_start, window_end = rolling_window_bounds()
+        if target_date < window_start or target_date > window_end:
+            return jsonify({
+                "slots": [],
+                "accepting_new_bookings": True,
+                "message": None,
+            }), 200
+
+        setting = get_or_create_schedule_setting(doctor_id)
+        # Opportunistically ensure rolling-window slots exist.
+        generate_slots_for_doctor(doctor_id, window_start, window_end)
         release_expired_holds(doctor_id)
         db.session.commit()
+
+        if not setting.accepting_new_bookings:
+            return jsonify({
+                "slots": [],
+                "accepting_new_bookings": False,
+                "message": "Doctor is not accepting new appointments currently.",
+            }), 200
 
         slots = (
             AppointmentSlot.query.filter(
@@ -144,7 +177,11 @@ def get_available_slots(doctor_id):
             .all()
         )
 
-        return jsonify([s.to_dict() for s in slots]), 200
+        return jsonify({
+            "slots": [s.to_dict() for s in slots],
+            "accepting_new_bookings": True,
+            "message": None,
+        }), 200
     except ValueError:
         return jsonify({"error": "Invalid date format. Use YYYY-MM-DD"}), 400
     except Exception as e:
@@ -235,7 +272,7 @@ def book_appointment():
             Appointment.doctor_id == doctor_id,
             Appointment.appointment_date == appointment_date,
             Appointment.appointment_time == appointment_time,
-            Appointment.status.in_(["Pending", "Approved", "Completed", "No-Show"]),
+            Appointment.status.in_(["pending", "approved", "completed", "no_show"]),
         ).first()
 
         if existing:
@@ -248,7 +285,7 @@ def book_appointment():
             appointment_time=appointment_time,
             reason=data["reason"],
             notes=data.get("notes", ""),
-            status="Pending",
+            status="pending",
             booking_mode="doctor_approval",
         )
 
@@ -300,18 +337,19 @@ def cancel_appointment(id):
         if not appointment:
             return jsonify({"error": "Appointment not found"}), 404
 
-        if appointment.status == "Cancelled":
+        if appointment.status == "cancelled_by_patient":
             return jsonify({"message": "Appointment already cancelled"}), 200
 
-        appointment.status = "Cancelled"
+        appointment.status = "cancelled_by_patient"
 
         if appointment.slot_id:
-            slot = _lock_slot(appointment.slot_id)
-            if slot and slot.booked_appointment_id == appointment.id:
-                slot.status = "available"
-                slot.held_by_patient_id = None
-                slot.held_until_utc = None
-                slot.booked_appointment_id = None
+            apply_cancellation_policy(
+                appointment=appointment,
+                cancelled_by="patient",
+                actor_user_id=current_user_id,
+                source="patient_cancel",
+                reason="Patient cancelled appointment",
+            )
 
         db.session.commit()
         return jsonify({"message": "Appointment cancelled successfully"}), 200
@@ -358,10 +396,12 @@ def reschedule_appointment(id):
             if appointment.slot_id:
                 old_slot = _lock_slot(appointment.slot_id)
                 if old_slot and old_slot.booked_appointment_id == appointment.id:
-                    old_slot.status = "available"
-                    old_slot.held_by_patient_id = None
-                    old_slot.held_until_utc = None
-                    old_slot.booked_appointment_id = None
+                    mark_slot_available(
+                        slot=old_slot,
+                        actor_user_id=current_user_id,
+                        source="patient_reschedule",
+                        reason="Patient moved to a new slot",
+                    )
 
             setting = get_or_create_schedule_setting(doctor_id)
             mode = setting.approval_mode
@@ -372,15 +412,23 @@ def reschedule_appointment(id):
             appointment.booking_mode = mode
 
             if mode == "doctor_approval":
-                slot.status = "held"
-                slot.held_by_patient_id = current_user_id
-                slot.held_until_utc = _utc_now() + timedelta(minutes=15)
+                mark_slot_held(
+                    slot=slot,
+                    patient_id=current_user_id,
+                    hold_minutes=5,
+                    actor_user_id=current_user_id,
+                    source="patient_reschedule",
+                    reason="Rescheduled slot soft-lock",
+                )
+                slot.booked_appointment_id = appointment.id
             else:
-                slot.status = "booked"
-                slot.held_by_patient_id = None
-                slot.held_until_utc = None
-
-            slot.booked_appointment_id = appointment.id
+                mark_slot_booked(
+                    slot=slot,
+                    appointment_id=appointment.id,
+                    actor_user_id=current_user_id,
+                    source="patient_reschedule",
+                    reason="Rescheduled slot confirmed",
+                )
             db.session.commit()
             return jsonify({"message": "Appointment rescheduled successfully", "appointment": appointment.to_dict()}), 200
 
@@ -390,7 +438,7 @@ def reschedule_appointment(id):
         if "time" in data:
             appointment.appointment_time = datetime.strptime(data["time"], "%H:%M").time()
 
-        appointment.status = "Pending"
+        appointment.status = "pending"
         appointment.booking_mode = "doctor_approval"
         db.session.commit()
 

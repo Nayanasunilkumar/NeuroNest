@@ -1,9 +1,10 @@
 from flask import Blueprint, request, jsonify, current_app, send_from_directory
 from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
 from database.models import db, DoctorProfile, User, DoctorAvailability, DoctorExpertiseTag, AppointmentSlot
-from datetime import datetime
+from datetime import datetime, timezone
 import os
 from werkzeug.utils import secure_filename
+from utils.slot_engine import regenerate_slots_for_doctor, rolling_window_bounds
 
 doctor_profile_bp = Blueprint("doctor_profile", __name__, url_prefix="/api/doctor/profile")
 
@@ -215,9 +216,8 @@ def add_availability():
         )
         
         db.session.add(new_slot)
-        from datetime import date, timedelta
-        from utils.slot_engine import generate_slots_for_doctor
-        generate_slots_for_doctor(user_id, date.today(), date.today() + timedelta(days=59))
+        start_date, end_date = rolling_window_bounds()
+        regenerate_slots_for_doctor(user_id, start_date, end_date)
         db.session.commit()
         
         return jsonify(profile.to_dict()), 201
@@ -231,69 +231,74 @@ def add_availability():
 @doctor_profile_bp.route("/availability/<int:slot_id>", methods=["DELETE"])
 @jwt_required()
 def delete_availability(slot_id):
-    claims = get_jwt()
-    if claims.get("role") != "doctor":
-        return jsonify({"message": "Doctor access required"}), 403
+    try:
+        claims = get_jwt()
+        if claims.get("role") != "doctor":
+            return jsonify({"message": "Doctor access required"}), 403
 
-    user_id = int(get_jwt_identity())
-    profile = DoctorProfile.query.filter_by(user_id=user_id).first()
-    
-    slot = DoctorAvailability.query.get(slot_id)
-    
-    if not slot:
-        return jsonify({"message": "Slot not found"}), 404
-        
-    if slot.doctor_id != profile.id:
-        return jsonify({"message": "Unauthorized"}), 403
-        
-    # Block deletion when booked/held slots exist for this weekday window.
-    day_name = slot.day_of_week
-    start_t = slot.start_time
-    end_t = slot.end_time
+        user_id = int(get_jwt_identity())
+        profile = DoctorProfile.query.filter_by(user_id=user_id).first()
+        if not profile:
+            return jsonify({"message": "Doctor profile not found"}), 404
 
-    day_index = {
-        "Monday": 0, "Tuesday": 1, "Wednesday": 2, "Thursday": 3,
-        "Friday": 4, "Saturday": 5, "Sunday": 6,
-    }.get(day_name)
+        slot = DoctorAvailability.query.get(slot_id)
 
-    if day_index is not None:
-        # Check next 60 days for overlapping non-editable slots.
-        from datetime import date, timedelta
-        target_dates = []
-        d = date.today()
-        for _ in range(60):
-            if d.weekday() == day_index:
-                target_dates.append(d)
-            d += timedelta(days=1)
+        if not slot:
+            return jsonify({"message": "Availability range not found"}), 404
 
-        if target_dates:
-            overlap_slots = AppointmentSlot.query.filter(
-                AppointmentSlot.doctor_user_id == user_id,
-                AppointmentSlot.slot_date_local.in_(target_dates),
-                AppointmentSlot.status.in_(["booked", "held"]),
-            ).all()
+        if slot.doctor_id != profile.id:
+            return jsonify({"message": "Unauthorized"}), 403
 
-            from zoneinfo import ZoneInfo
-            tz = ZoneInfo("Asia/Kolkata")
-            for s in overlap_slots:
-                t = s.slot_start_utc.astimezone(tz).time()
-                if start_t <= t < end_t:
-                    return jsonify({
-                        "message": "Cannot delete availability range containing booked/held slots. Cancel or resolve appointments first."
-                    }), 400
+        # Block deletion when booked/held slots exist for this weekday window.
+        day_name = slot.day_of_week
+        start_t = slot.start_time
+        end_t = slot.end_time
 
-            # Cleanup non-booked generated slots in this range.
-            cleanup_slots = AppointmentSlot.query.filter(
-                AppointmentSlot.doctor_user_id == user_id,
-                AppointmentSlot.slot_date_local.in_(target_dates),
-                AppointmentSlot.status.in_(["available", "blocked", "cancelled"]),
-            ).all()
-            for s in cleanup_slots:
-                t = s.slot_start_utc.astimezone(tz).time()
-                if start_t <= t < end_t:
-                    db.session.delete(s)
+        day_index = {
+            "Monday": 0, "Tuesday": 1, "Wednesday": 2, "Thursday": 3,
+            "Friday": 4, "Saturday": 5, "Sunday": 6,
+        }.get(day_name)
 
-    db.session.delete(slot)
-    db.session.commit()
-    
-    return jsonify(profile.to_dict()), 200
+        if day_index is not None:
+            # Check next 60 days for overlapping non-editable slots.
+            from datetime import date, timedelta
+            target_dates = []
+            d = date.today()
+            for _ in range(60):
+                if d.weekday() == day_index:
+                    target_dates.append(d)
+                d += timedelta(days=1)
+
+            if target_dates:
+                overlap_slots = AppointmentSlot.query.filter(
+                    AppointmentSlot.doctor_user_id == user_id,
+                    AppointmentSlot.slot_date_local.in_(target_dates),
+                    AppointmentSlot.status.in_(["booked", "held"]),
+                ).all()
+
+                from zoneinfo import ZoneInfo
+                tz = ZoneInfo("Asia/Kolkata")
+                for appointment_slot in overlap_slots:
+                    slot_dt = appointment_slot.slot_start_utc
+                    if not slot_dt:
+                        continue
+
+                    # Tolerate legacy naive UTC datetimes.
+                    if slot_dt.tzinfo is None:
+                        slot_dt = slot_dt.replace(tzinfo=timezone.utc)
+
+                    local_time = slot_dt.astimezone(tz).time()
+                    if start_t <= local_time < end_t:
+                        return jsonify({
+                            "message": "Cannot delete availability range containing booked/held slots. Cancel or resolve appointments first."
+                        }), 400
+
+        db.session.delete(slot)
+        start_date, end_date = rolling_window_bounds()
+        regenerate_slots_for_doctor(user_id, start_date, end_date)
+        db.session.commit()
+
+        return jsonify(profile.to_dict()), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"message": f"Failed to delete availability: {str(e)}"}), 500
