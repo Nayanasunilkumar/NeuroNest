@@ -35,8 +35,12 @@ def create_app():
     # ========== CORS ========== 
     # In production, set CORS_ORIGINS to your Vercel frontend URL (comma-separated)
     # e.g. CORS_ORIGINS=https://neuronest.vercel.app
+    import re
     _raw_origins = os.getenv("CORS_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173")
     _allowed_origins = [o.strip() for o in _raw_origins.split(",") if o.strip()]
+    # Dynamically allow all Vercel preview deployments
+    _allowed_origins.append(re.compile(r"^https://.*\.vercel\.app$"))
+    
     CORS(app, origins=_allowed_origins, supports_credentials=True)
     db.init_app(app)
     jwt = JWTManager(app)
