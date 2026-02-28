@@ -7,5 +7,11 @@ class Config:
     JWT_ACCESS_TOKEN_EXPIRES = False
     SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URL")
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    SQLALCHEMY_POOL_SIZE = 10
-    SQLALCHEMY_MAX_OVERFLOW = 20
+    
+    # SQLAlchemy Engine config to fix "SSL connection closed unexpectedly" on Neon/Render
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        "pool_size": 10,
+        "max_overflow": 20,
+        "pool_pre_ping": True,
+        "pool_recycle": 280,
+    }
