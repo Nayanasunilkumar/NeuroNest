@@ -1,0 +1,573 @@
+/* =============================================================
+   NEURONEST — GLOBAL RESPONSIVE STYLESHEET
+   Mobile-first. 5-tier breakpoint system.
+   XS:  320–480px  | SM: 481–768px | MD: 769–1024px
+   LG: 1025–1440px | XL: 1441px+
+============================================================== */
+
+/* ---- BASE RESET ------------------------------------------ */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  overflow-x: hidden;
+  scroll-behavior: smooth;
+}
+
+body {
+  overflow-x: hidden;
+  min-width: 320px;
+  -webkit-text-size-adjust: 100%;
+}
+
+img, video {
+  max-width: 100%;
+  height: auto;
+  object-fit: cover;
+}
+
+/* ---- TYPOGRAPHY SCALE (fluid) ---------------------------- */
+:root {
+  --fs-xs:   clamp(0.7rem,  1.5vw, 0.75rem);
+  --fs-sm:   clamp(0.8rem,  1.8vw, 0.875rem);
+  --fs-base: clamp(0.875rem,2vw,   1rem);
+  --fs-lg:   clamp(1rem,    2.5vw, 1.125rem);
+  --fs-xl:   clamp(1.1rem,  3vw,   1.5rem);
+  --fs-2xl:  clamp(1.3rem,  3.5vw, 2rem);
+  --fs-3xl:  clamp(1.5rem,  4vw,   2.5rem);
+
+  /* Spacing 8-pt scale */
+  --sp-1: 0.5rem;    /* 8px  */
+  --sp-2: 1rem;      /* 16px */
+  --sp-3: 1.5rem;    /* 24px */
+  --sp-4: 2rem;      /* 32px */
+  --sp-5: 2.5rem;    /* 40px */
+  --sp-6: 3rem;      /* 48px */
+}
+
+/* ---- DOCTOR LAYOUT RESPONSIVENESS ----------------------- */
+
+/* Mobile: sidebar slides over content */
+@media (max-width: 768px) {
+  .doctor-layout {
+    flex-direction: column;
+    overflow: visible;
+    height: auto;
+    min-height: 100vh;
+  }
+
+  .doctor-sidebar {
+    position: fixed;
+    top: 0;
+    left: -100%;
+    width: 80%;
+    max-width: 300px;
+    height: 100vh;
+    z-index: 1050;
+    transition: left 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 4px 0 24px rgba(0,0,0,0.15);
+    overflow-y: auto;
+  }
+
+  .doctor-sidebar.mobile-open {
+    left: 0;
+  }
+
+  .doctor-sidebar.collapsed {
+    width: 80%;
+  }
+
+  /* Backdrop overlay */
+  .sidebar-mobile-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    z-index: 1049;
+    backdrop-filter: blur(2px);
+  }
+
+  .sidebar-mobile-overlay.active {
+    display: block;
+  }
+
+  .doctor-main {
+    width: 100%;
+    flex: 1;
+  }
+
+  .doctor-navbar {
+    padding: 0 var(--sp-2);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .doc-nav-left h1.page-title {
+    font-size: var(--fs-lg);
+  }
+
+  .doc-nav-date {
+    display: none;
+  }
+
+  .doc-global-search {
+    width: 100%;
+    max-width: 200px;
+  }
+
+  .doc-profile-info {
+    display: none;
+  }
+
+  .doctor-content {
+    padding: var(--sp-2);
+  }
+}
+
+/* Tablet: icon-only collapsed sidebar */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .doctor-sidebar {
+    width: 72px;
+  }
+
+  .doctor-sidebar .nav-item span {
+    display: none;
+  }
+
+  .doctor-sidebar .doc-sidebar-header span {
+    display: none;
+  }
+
+  .doctor-sidebar .nav-item {
+    justify-content: center;
+    padding: 12px;
+  }
+
+  .doctor-content {
+    padding: var(--sp-3);
+  }
+
+  .doc-global-search {
+    width: 220px;
+  }
+}
+
+/* ---- PATIENT LAYOUT RESPONSIVENESS ---------------------- */
+
+@media (max-width: 768px) {
+  .dashboard-header-inner {
+    padding: 0 var(--sp-2);
+  }
+
+  .system-status-pill {
+    display: none;
+  }
+
+  .header-search {
+    display: none;
+  }
+
+  .dashboard-main {
+    padding: var(--sp-2);
+    padding-top: 0;
+  }
+
+  .dashboard-main.sidebar-rail-offset {
+    padding-left: var(--sp-2);
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboard-header-inner {
+    padding: 0 var(--sp-1);
+    gap: var(--sp-1);
+  }
+
+  .logo-group {
+    padding-right: var(--sp-1);
+  }
+
+  .dashboard-logo {
+    font-size: 0.9rem;
+  }
+}
+
+/* ---- DOCTOR NAVBAR MOBILE HAMBURGER -------------------- */
+.doc-mobile-menu-btn {
+  display: none;
+  background: transparent;
+  border: none;
+  color: var(--doc-text-main, #1E293B);
+  padding: 8px;
+  cursor: pointer;
+  border-radius: 10px;
+  transition: background 0.2s;
+}
+
+.doc-mobile-menu-btn:hover {
+  background: #F1F5F9;
+}
+
+@media (max-width: 768px) {
+  .doc-mobile-menu-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+/* ---- CARD GRID SYSTEM ----------------------------------- */
+.responsive-grid {
+  display: grid;
+  gap: var(--sp-2);
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 600px) {
+  .responsive-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .responsive-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 1280px) {
+  .responsive-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* Appointment request-specific grid */
+.requests-grid {
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 600px) {
+  .requests-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1100px) {
+  .requests-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* ---- DOCTOR SETTINGS RESPONSIVE ------------------------ */
+
+@media (max-width: 768px) {
+  .doc-settings-root {
+    gap: var(--sp-2);
+    padding-bottom: var(--sp-4);
+  }
+
+  .doc-settings-layout {
+    grid-template-columns: 1fr;
+    gap: var(--sp-2);
+  }
+
+  .doc-settings-sidebar {
+    position: static;
+  }
+
+  .doc-settings-nav {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 8px;
+    gap: 6px;
+    scrollbar-width: none;
+  }
+
+  .doc-settings-nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .nav-btn {
+    flex-shrink: 0;
+    padding: 10px 14px;
+    font-size: 12px;
+    gap: 8px;
+    white-space: nowrap;
+  }
+
+  .nav-btn span {
+    display: none;
+  }
+
+  .pane-form-grid {
+    padding: var(--sp-2);
+    gap: var(--sp-3);
+  }
+
+  .pane-header {
+    padding: var(--sp-2) var(--sp-2);
+  }
+
+  .pane-footer.fixed-pane-footer {
+    padding: var(--sp-2);
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .btn-save-premium {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .form-field-row {
+    flex-direction: column;
+    gap: var(--sp-2);
+  }
+
+  .radio-cards-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  .doc-settings-layout {
+    grid-template-columns: 220px 1fr;
+    gap: var(--sp-3);
+  }
+}
+
+/* ---- VIDEO CONSULTATION RESPONSIVE --------------------- */
+.video-page-root {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: #0a0a0f;
+  overflow: hidden;
+}
+
+.video-stage {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  padding: 16px;
+  flex: 1;
+  overflow: auto;
+}
+
+@media (min-width: 769px) {
+  .video-stage {
+    grid-template-columns: 1fr 1fr;
+    align-items: center;
+  }
+}
+
+.video-remote-container,
+.video-local-container {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  position: relative;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #111;
+}
+
+.video-remote-container video,
+.video-local-container video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+@media (max-width: 768px) {
+  .video-remote-container {
+    aspect-ratio: 16 / 9;
+  }
+
+  .video-local-container {
+    aspect-ratio: 4 / 3;
+  }
+
+  .video-controls-bar {
+    padding: var(--sp-2);
+    gap: 12px;
+  }
+
+  .video-control-btn {
+    width: 48px !important;
+    height: 48px !important;
+  }
+}
+
+/* ---- AUTH PAGES ---------------------------------------- */
+
+@media (max-width: 480px) {
+  .auth-card {
+    padding: var(--sp-3) var(--sp-2);
+    border-radius: 14px;
+    margin: 0;
+  }
+
+  .auth-title {
+    font-size: 1.5rem;
+  }
+}
+
+/* ---- FORMS GLOBAL -------------------------------------- */
+
+@media (max-width: 768px) {
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="number"],
+  input[type="tel"],
+  select,
+  textarea {
+    width: 100%;
+    font-size: 16px; /* prevent iOS zoom */
+  }
+
+  .premium-select,
+  .premium-input {
+    font-size: 16px;
+  }
+}
+
+/* ---- APPOINTMENTS PAGE --------------------------------- */
+
+@media (max-width: 768px) {
+  .appointment-requests-page {
+    max-width: 100%;
+  }
+
+  .doc-page-header h1 {
+    font-size: var(--fs-2xl);
+  }
+
+  .doc-page-header p {
+    font-size: var(--fs-sm);
+  }
+
+  .request-card {
+    min-height: auto;
+  }
+
+  .card-actions {
+    flex-direction: column;
+  }
+
+  .btn-approve {
+    width: 100%;
+  }
+
+  .btn-reject {
+    width: 100%;
+  }
+}
+
+/* ---- ADMIN PAGES ---------------------------------------- */
+
+@media (max-width: 768px) {
+  .sidebar {
+    left: -280px;
+  }
+
+  .sidebar.open {
+    left: 0;
+  }
+
+  .dashboard-main {
+    padding: var(--sp-2);
+  }
+
+  .dashboard-main.sidebar-rail-offset {
+    padding-left: var(--sp-2);
+  }
+
+  .sidebar-quick-rail {
+    display: none;
+  }
+}
+
+/* ---- TABLES -------------------------------------------- */
+
+@media (max-width: 768px) {
+  .responsive-table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  table {
+    min-width: 600px;
+  }
+}
+
+/* ---- UTILITY CLASSES ----------------------------------- */
+
+/* Hide on mobile */
+.hide-on-mobile {
+  display: block;
+}
+
+@media (max-width: 768px) {
+  .hide-on-mobile {
+    display: none !important;
+  }
+}
+
+/* Show only on mobile */
+.show-on-mobile {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .show-on-mobile {
+    display: block;
+  }
+}
+
+/* Full-width on mobile */
+@media (max-width: 768px) {
+  .mobile-full-width {
+    width: 100% !important;
+  }
+
+  .mobile-text-center {
+    text-align: center;
+  }
+
+  .mobile-px {
+    padding-left: var(--sp-2);
+    padding-right: var(--sp-2);
+  }
+}
+
+/* ---- SCROLLBAR POLISH ---------------------------------- */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0,0,0,0.15);
+  border-radius: 99px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0,0,0,0.3);
+}
+
+/* ---- SAFE AREA (NOTCH/ISLANDS) ------------------------- */
+@supports (padding: env(safe-area-inset-bottom)) {
+  .video-controls-bar,
+  .pane-footer.fixed-pane-footer {
+    padding-bottom: max(var(--sp-2), env(safe-area-inset-bottom));
+  }
+}

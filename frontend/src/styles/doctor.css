@@ -774,3 +774,141 @@
         font-size: 1.6rem;
     }
 }
+
+/* ========= RESPONSIVE: DOCTOR LAYOUT ========= */
+
+/* Navbar fluid adjustments */
+.doctor-navbar {
+    padding: 0 clamp(1rem, 3vw, 2rem);
+}
+
+.doc-global-search {
+    width: clamp(160px, 25vw, 420px);
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+    .doctor-layout {
+        position: relative;
+        overflow: visible;
+        height: auto;
+        min-height: 100dvh;
+    }
+
+    /* Sidebar slides in from left as overlay */
+    .doctor-sidebar {
+        position: fixed;
+        top: 0;
+        left: -100%;
+        width: min(85vw, 300px);
+        height: 100dvh;
+        z-index: 1050;
+        transition: left 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 6px 0 30px rgba(0,0,0,0.2);
+        overflow-y: auto;
+    }
+
+    .doctor-sidebar.mobile-open {
+        left: 0;
+    }
+
+    .doctor-sidebar.collapsed {
+        width: min(85vw, 300px);
+    }
+
+    /* Show all nav labels even when "collapsed" on mobile */
+    .doctor-sidebar .nav-item span {
+        display: inline !important;
+    }
+
+    .doctor-sidebar.collapsed .nav-item {
+        justify-content: flex-start;
+        padding: 12px 16px;
+    }
+
+    .doctor-main {
+        width: 100%;
+        min-height: 100dvh;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .doctor-navbar {
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        height: 60px;
+    }
+
+    .page-title {
+        font-size: 1.1rem;
+    }
+
+    .doc-global-search {
+        display: none;
+    }
+
+    .doctor-content {
+        padding: clamp(0.75rem, 3vw, 1.25rem);
+        flex: 1;
+        overflow-y: auto;
+    }
+
+    .doc-profile-info {
+        display: none;
+    }
+
+    .doc-nav-date {
+        display: none;
+    }
+}
+
+/* Tablet */
+@media (min-width: 769px) and (max-width: 1024px) {
+    .doctor-sidebar {
+        width: 72px;
+        position: relative;
+        flex-shrink: 0;
+    }
+
+    .doctor-sidebar.collapsed {
+        width: 72px;
+    }
+
+    .doctor-sidebar .nav-item span {
+        display: none;
+    }
+
+    .doctor-sidebar .nav-item {
+        justify-content: center;
+        padding: 12px;
+    }
+
+    .doc-sidebar-header span {
+        display: none;
+    }
+
+    .doctor-content {
+        padding: 20px;
+    }
+
+    .doc-global-search {
+        width: 200px;
+    }
+}
+
+/* Mobile overlay for sidebar backdrop */
+.sidebar-mobile-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1049;
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+}
+
+.sidebar-mobile-overlay.active {
+    display: block;
+}
+

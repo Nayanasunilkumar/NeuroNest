@@ -192,213 +192,337 @@ export default function VideoConsultation() {
     };
 
     return (
-        <div style={{ height: '100vh', width: '100vw', background: '#0f172a', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-            {/* Header */}
-            <div style={{ 
-                padding: '20px 32px', 
-                background: 'rgba(15, 23, 42, 0.8)', 
-                backdropFilter: 'blur(10px)',
-                display: 'flex', 
-                justifyContent: 'space-between', 
-                alignItems: 'center',
-                borderBottom: '1px solid rgba(255,255,255,0.1)',
-                zIndex: 10
-            }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <div style={{ 
-                        width: '40px', 
-                        height: '40px', 
-                        background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
-                        borderRadius: '10px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: 'white'
-                    }}>
+        <div className="video-call-page">
+            {/* Header Bar */}
+            <div className="video-call-header">
+                <div className="video-call-header-left">
+                    <div className="video-call-logo">
                         <Video size={20} />
                     </div>
                     <div>
-                        <h2 style={{ margin: 0, fontSize: '1.1rem', color: 'white', fontWeight: '700' }}>Secure P2P Consultation</h2>
-                        <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Room: {roomId} • End-to-end Encrypted WebRTC</span>
+                        <h2 className="video-call-title">Secure P2P Consultation</h2>
+                        <span className="video-call-subtitle">Room: {roomId} • End-to-end Encrypted</span>
                     </div>
                 </div>
-
-                <div style={{ display: 'flex', gap: '12px' }}>
-                    <button 
-                        onClick={handleHangup}
-                        style={{
-                            padding: '10px 20px',
-                            background: 'rgba(239, 68, 68, 0.1)',
-                            border: '1px solid rgba(239, 68, 68, 0.2)',
-                            borderRadius: '10px',
-                            color: '#ef4444',
-                            fontWeight: '700',
-                            fontSize: '0.9rem',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '8px',
-                            transition: 'all 0.2s'
-                        }}
-                        onMouseOver={(e) => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)'}
-                        onMouseOut={(e) => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'}
-                    >
-                        <PhoneOff size={18} />
-                        Leave Call
-                    </button>
-                </div>
+                <button className="video-leave-btn" onClick={handleHangup}>
+                    <PhoneOff size={16} />
+                    <span>Leave Call</span>
+                </button>
             </div>
 
-            {/* Main Video Area */}
-            <div style={{ flex: 1, position: 'relative', display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '20px' }}>
-                
-                {/* Remote Video (Full Screen) */}
-                <video 
-                    ref={remoteVideo} 
-                    autoPlay 
-                    playsInline
-                    style={{
-                        width: '100%',
-                        height: '100%',
-                        objectFit: 'cover',
-                        borderRadius: '16px',
-                        background: '#1e293b',
-                        display: isRemoteConnected ? 'block' : 'none',
-                        boxShadow: '0 10px 30px rgba(0,0,0,0.5)'
-                    }} 
-                />
-
-                {/* loader when no remote */}
-                {!isRemoteConnected && (
-                    <div style={{ 
-                        position: 'absolute', 
-                        inset: 0, 
-                        display: 'flex', 
-                        flexDirection: 'column', 
-                        alignItems: 'center', 
-                        justifyContent: 'center',
-                        background: '#0f172a',
-                        color: '#64748b',
-                        zIndex: 1
-                    }}>
-                        <div className="telehealth-pulse" style={{ marginBottom: '24px' }}>
-                            <div style={{ 
-                                width: '80px', 
-                                height: '80px', 
-                                borderRadius: '50%', 
-                                border: '2px solid #3b82f6',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                background: 'rgba(59, 130, 246, 0.1)'
-                            }}>
-                                 <Video size={32} color="#3b82f6" />
-                            </div>
-                        </div>
-                        <p style={{ fontSize: '1.2rem', fontWeight: '500', color: '#cbd5e1' }}>Waiting for the other participant to join...</p>
-                        <p style={{ marginTop: '8px' }}>Room ID: {roomId}</p>
-                    </div>
-                )}
-
-                {/* Local Video (Picture in Picture style) */}
-                <div style={{
-                    position: 'absolute',
-                    bottom: '40px',
-                    right: '40px',
-                    width: '320px',
-                    height: '240px',
-                    borderRadius: '16px',
-                    overflow: 'hidden',
-                    border: '3px solid rgba(255,255,255,0.2)',
-                    boxShadow: '0 20px 40px rgba(0,0,0,0.4)',
-                    background: '#000',
-                    zIndex: 10,
-                    transition: 'all 0.3s ease',
-                    transform: isRemoteConnected ? 'scale(1)' : 'scale(1.5) translate(-40%, -40%)'
-                }}>
-                    <video 
-                        ref={localVideo} 
-                        autoPlay 
-                        muted 
+            {/* Main Video Stage */}
+            <div className="video-stage">
+                {/* Remote video */}
+                <div className="video-remote-container">
+                    <video
+                        ref={remoteVideo}
+                        autoPlay
                         playsInline
-                        style={{
-                            width: '100%',
-                            height: '100%',
-                            objectFit: 'cover',
-                            transform: 'scaleX(-1)' // mirror effect
-                        }} 
+                        style={{ display: isRemoteConnected ? 'block' : 'none' }}
                     />
-
-                    {/* Local Controls overlay on the small video */}
-                    {isRemoteConnected && (
-                        <div style={{
-                            position: 'absolute',
-                            bottom: '10px',
-                            left: '0',
-                            right: '0',
-                            display: 'flex',
-                            justifyContent: 'center',
-                            gap: '10px'
-                        }}>
-                             <button onClick={toggleAudio} style={{
-                                width: '36px', height: '36px', borderRadius: '50%', 
-                                border: 'none', background: isMuted ? '#ef4444' : 'rgba(0,0,0,0.6)',
-                                color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                cursor: 'pointer', backdropFilter: 'blur(4px)'
-                            }}>
-                                {isMuted ? <MicOff size={16} /> : <Mic size={16} />}
-                            </button>
-                            <button onClick={toggleVideo} style={{
-                                width: '36px', height: '36px', borderRadius: '50%', 
-                                border: 'none', background: isVideoOff ? '#ef4444' : 'rgba(0,0,0,0.6)',
-                                color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                cursor: 'pointer', backdropFilter: 'blur(4px)'
-                            }}>
-                                {isVideoOff ? <VideoOff size={16} /> : <Video size={16} />}
-                            </button>
+                    {!isRemoteConnected && (
+                        <div className="video-waiting-overlay">
+                            <div className="telehealth-pulse">
+                                <div className="telehealth-pulse-icon">
+                                    <Video size={32} color="#3b82f6" />
+                                </div>
+                            </div>
+                            <p className="video-waiting-title">Waiting for the other participant...</p>
+                            <p className="video-waiting-room">Room ID: {roomId}</p>
                         </div>
                     )}
                 </div>
 
-                {/* Larger Controls when waiting */}
-                {!isRemoteConnected && (
-                    <div style={{
-                        position: 'absolute',
-                        bottom: '40px',
-                        display: 'flex',
-                        gap: '20px',
-                        zIndex: 20
-                    }}>
-                        <button onClick={toggleAudio} style={{
-                            width: '56px', height: '56px', borderRadius: '50%', 
-                            border: '1px solid rgba(255,255,255,0.2)', 
-                            background: isMuted ? '#ef4444' : 'rgba(30, 41, 59, 0.8)',
-                            color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            cursor: 'pointer', backdropFilter: 'blur(8px)', transition: 'all 0.2s'
-                        }}>
-                            {isMuted ? <MicOff size={24} /> : <Mic size={24} />}
-                        </button>
-                        <button onClick={toggleVideo} style={{
-                            width: '56px', height: '56px', borderRadius: '50%', 
-                            border: '1px solid rgba(255,255,255,0.2)', 
-                            background: isVideoOff ? '#ef4444' : 'rgba(30, 41, 59, 0.8)',
-                            color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            cursor: 'pointer', backdropFilter: 'blur(8px)', transition: 'all 0.2s'
-                        }}>
-                            {isVideoOff ? <VideoOff size={24} /> : <Video size={24} />}
-                        </button>
-                    </div>
-                )}
+                {/* Local video */}
+                <div className="video-local-container">
+                    <video
+                        ref={localVideo}
+                        autoPlay
+                        muted
+                        playsInline
+                        style={{ transform: 'scaleX(-1)' }}
+                    />
+                    <div className="video-local-label">You</div>
+                </div>
+            </div>
+
+            {/* Controls Bar */}
+            <div className="video-controls-bar">
+                <button
+                    className={`video-control-btn ${isMuted ? 'active-danger' : ''}`}
+                    onClick={toggleAudio}
+                    title={isMuted ? 'Unmute' : 'Mute'}
+                >
+                    {isMuted ? <MicOff size={22} /> : <Mic size={22} />}
+                </button>
+                <button
+                    className={`video-control-btn ${isVideoOff ? 'active-danger' : ''}`}
+                    onClick={toggleVideo}
+                    title={isVideoOff ? 'Turn on camera' : 'Turn off camera'}
+                >
+                    {isVideoOff ? <VideoOff size={22} /> : <Video size={22} />}
+                </button>
+                <button
+                    className="video-control-btn hangup"
+                    onClick={handleHangup}
+                    title="End call"
+                >
+                    <PhoneOff size={22} />
+                </button>
             </div>
 
             <style>{`
+                .video-call-page {
+                    height: 100vh;
+                    width: 100%;
+                    background: #0f172a;
+                    display: flex;
+                    flex-direction: column;
+                    overflow: hidden;
+                }
+
+                .video-call-header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    padding: 14px 20px;
+                    background: rgba(15, 23, 42, 0.9);
+                    backdrop-filter: blur(10px);
+                    border-bottom: 1px solid rgba(255,255,255,0.08);
+                    flex-shrink: 0;
+                    gap: 12px;
+                }
+
+                .video-call-header-left {
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                    min-width: 0;
+                }
+
+                .video-call-logo {
+                    width: 38px;
+                    height: 38px;
+                    flex-shrink: 0;
+                    background: linear-gradient(135deg, #3b82f6, #2563eb);
+                    border-radius: 10px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    color: white;
+                }
+
+                .video-call-title {
+                    margin: 0;
+                    font-size: clamp(0.9rem, 2vw, 1.1rem);
+                    color: white;
+                    font-weight: 700;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                }
+
+                .video-call-subtitle {
+                    font-size: 0.75rem;
+                    color: #64748b;
+                    display: block;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                }
+
+                .video-leave-btn {
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    padding: 9px 16px;
+                    background: rgba(239, 68, 68, 0.12);
+                    border: 1px solid rgba(239, 68, 68, 0.25);
+                    border-radius: 10px;
+                    color: #ef4444;
+                    font-weight: 700;
+                    font-size: 0.875rem;
+                    cursor: pointer;
+                    white-space: nowrap;
+                    flex-shrink: 0;
+                    transition: all 0.2s;
+                }
+
+                .video-leave-btn:hover {
+                    background: rgba(239, 68, 68, 0.22);
+                }
+
+                /* Mobile: hide text, show only icon */
+                @media (max-width: 480px) {
+                    .video-leave-btn span { display: none; }
+                    .video-leave-btn { padding: 9px 12px; }
+                    .video-call-subtitle { display: none; }
+                }
+
+                /* Video Stage */
+                .video-stage {
+                    flex: 1;
+                    display: grid;
+                    gap: 12px;
+                    padding: 12px;
+                    overflow: hidden;
+                    /* Mobile: stack vertically */
+                    grid-template-rows: 1fr 1fr;
+                    grid-template-columns: 1fr;
+                }
+
+                @media (min-width: 769px) {
+                    /* Desktop: side by side */
+                    .video-stage {
+                        grid-template-rows: 1fr;
+                        grid-template-columns: 1fr 1fr;
+                        align-items: center;
+                    }
+                }
+
+                .video-remote-container,
+                .video-local-container {
+                    position: relative;
+                    border-radius: 14px;
+                    overflow: hidden;
+                    background: #111827;
+                    height: 100%;
+                    min-height: 0;
+                }
+
+                .video-remote-container video,
+                .video-local-container video {
+                    width: 100%;
+                    height: 100%;
+                    object-fit: cover;
+                }
+
+                .video-local-label {
+                    position: absolute;
+                    bottom: 10px;
+                    left: 12px;
+                    background: rgba(0,0,0,0.55);
+                    color: white;
+                    font-size: 0.75rem;
+                    font-weight: 600;
+                    padding: 3px 10px;
+                    border-radius: 999px;
+                    backdrop-filter: blur(4px);
+                }
+
+                /* Waiting overlay */
+                .video-waiting-overlay {
+                    position: absolute;
+                    inset: 0;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    background: #0f172a;
+                    color: #64748b;
+                    padding: 24px;
+                    text-align: center;
+                }
+
                 .telehealth-pulse {
                     animation: pulse-blue 2s infinite;
                     border-radius: 50%;
+                    margin-bottom: 20px;
                 }
+
+                .telehealth-pulse-icon {
+                    width: 72px;
+                    height: 72px;
+                    border-radius: 50%;
+                    border: 2px solid #3b82f6;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    background: rgba(59, 130, 246, 0.1);
+                }
+
+                .video-waiting-title {
+                    font-size: clamp(0.9rem, 2vw, 1.1rem);
+                    font-weight: 500;
+                    color: #cbd5e1;
+                    margin: 0;
+                }
+
+                .video-waiting-room {
+                    margin-top: 6px;
+                    font-size: 0.8rem;
+                    color: #475569;
+                }
+
+                /* Controls Bar */
+                .video-controls-bar {
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    gap: 16px;
+                    padding: 16px;
+                    background: rgba(15, 23, 42, 0.9);
+                    border-top: 1px solid rgba(255,255,255,0.08);
+                    flex-shrink: 0;
+                }
+
+                .video-control-btn {
+                    width: 54px;
+                    height: 54px;
+                    border-radius: 50%;
+                    border: 1px solid rgba(255,255,255,0.15);
+                    background: rgba(30, 41, 59, 0.85);
+                    color: white;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    cursor: pointer;
+                    backdrop-filter: blur(8px);
+                    transition: all 0.2s;
+                }
+
+                .video-control-btn:hover {
+                    background: rgba(51, 65, 85, 0.95);
+                    border-color: rgba(255,255,255,0.3);
+                    transform: translateY(-2px);
+                }
+
+                .video-control-btn.active-danger {
+                    background: #ef4444;
+                    border-color: #ef4444;
+                }
+
+                .video-control-btn.hangup {
+                    background: #dc2626;
+                    border-color: #dc2626;
+                    width: 60px;
+                    height: 60px;
+                }
+
+                .video-control-btn.hangup:hover {
+                    background: #b91c1c;
+                }
+
+                @media (max-width: 480px) {
+                    .video-controls-bar {
+                        gap: 12px;
+                        padding: 12px;
+                    }
+
+                    .video-control-btn {
+                        width: 48px;
+                        height: 48px;
+                    }
+
+                    .video-control-btn.hangup {
+                        width: 52px;
+                        height: 52px;
+                    }
+                }
+
                 @keyframes pulse-blue {
                     0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); }
-                    70% { box-shadow: 0 0 0 30px rgba(59, 130, 246, 0); }
+                    70% { box-shadow: 0 0 0 24px rgba(59, 130, 246, 0); }
                     100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
                 }
             `}</style>
