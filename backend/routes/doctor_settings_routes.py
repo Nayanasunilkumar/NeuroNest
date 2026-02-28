@@ -6,7 +6,8 @@ from database.models import (
     DoctorScheduleSetting,
     DoctorNotificationSetting,
     DoctorPrivacySetting,
-    DoctorConsultationSetting
+    DoctorConsultationSetting,
+    User,
 )
 from utils.slot_engine import regenerate_slots_for_doctor, rolling_window_bounds
 
@@ -52,8 +53,13 @@ def get_all_settings():
 
     doctor_id = int(get_jwt_identity())
     schedule, notifications, privacy, consultation = _get_or_create_settings(doctor_id)
+    user = User.query.get(doctor_id)
 
     return jsonify({
+        "account": {
+            "full_name": user.full_name if user else "",
+            "email": user.email if user else "",
+        },
         "schedule": schedule.to_dict(),
         "notifications": notifications.to_dict(),
         "privacy": privacy.to_dict(),
@@ -170,3 +176,52 @@ def update_consultation_settings():
 
     db.session.commit()
     return jsonify({"message": "Consultation settings updated", "settings": consultation.to_dict()}), 200
+
+
+@doctor_settings_bp.route("/account", methods=["PUT"])
+@jwt_required()
+def update_account():
+    if not _is_doctor():
+        return jsonify({"message": "Doctor access required"}), 403
+
+    doctor_id = int(get_jwt_identity())
+    data = request.json or {}
+    user = User.query.get(doctor_id)
+    if not user:
+        return jsonify({"message": "User not found"}), 404
+
+    if "full_name" in data and data["full_name"].strip():
+        user.full_name = data["full_name"].strip()
+
+    db.session.commit()
+    return jsonify({"message": "Account updated successfully", "full_name": user.full_name, "email": user.email}), 200
+
+
+@doctor_settings_bp.route("/change-password", methods=["POST"])
+@jwt_required()
+def change_password():
+    if not _is_doctor():
+        return jsonify({"message": "Doctor access required"}), 403
+
+    doctor_id = int(get_jwt_identity())
+    data = request.json or {}
+    current_pw = data.get("current_password", "")
+    new_pw = data.get("new_password", "")
+
+    if not current_pw or not new_pw:
+        return jsonify({"error": "Both current and new password are required"}), 400
+    if len(new_pw) < 8:
+        return jsonify({"error": "New password must be at least 8 characters"}), 400
+
+    user = User.query.get(doctor_id)
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+
+    from utils.security import verify_password, hash_password
+    if not verify_password(current_pw, user.password_hash):
+        return jsonify({"error": "Current password is incorrect"}), 400
+
+    user.password_hash = hash_password(new_pw)
+    db.session.commit()
+    return jsonify({"message": "Password changed successfully"}), 200
+

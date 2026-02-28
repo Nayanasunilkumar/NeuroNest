@@ -140,3 +140,12 @@ export const updateDoctorConsultationSettings = async (payload) => {
   return response.data;
 };
 
+export const updateDoctorAccount = async (payload) => {
+  const response = await axios.put("/doctor/settings/account", payload);
+  return response.data;
+};
+
+export const changeDoctorPassword = async (payload) => {
+  const response = await axios.post("/doctor/settings/change-password", payload);
+  return response.data;
+};

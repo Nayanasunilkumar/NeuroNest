@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { User, Calendar, Bell, Shield, Wallet, Loader2 } from "lucide-react";
 import { getAllDoctorSettings } from "../../../api/doctor";
+import AccountSettings from "./components/AccountSettings";
 import ScheduleSettings from "./components/ScheduleSettings";
 import ConsultationSettings from "./components/ConsultationSettings";
 import NotificationSettings from "./components/NotificationSettings";
@@ -16,7 +17,7 @@ const TABS = [
 ];
 
 const DoctorSettingsPage = () => {
-    const [activeTab, setActiveTab] = useState("schedule");
+    const [activeTab, setActiveTab] = useState("account");
     const [settings, setSettings] = useState(null);
     const [loading, setLoading] = useState(true);
 
@@ -38,7 +39,12 @@ const DoctorSettingsPage = () => {
     const renderTabContent = () => {
         if (loading) return null;
         switch (activeTab) {
-            case "account": return <div className="settings-pane-placeholder">Account Settings coming soon...</div>;
+            case "account": return (
+                <AccountSettings
+                    data={settings?.account}
+                    onSaveSuccess={(newData) => setSettings(prev => ({...prev, account: newData}))}
+                />
+            );
             case "schedule": return (
                 <ScheduleSettings 
                     data={settings?.schedule} 
