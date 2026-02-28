@@ -97,10 +97,24 @@ export default function VideoConsultation() {
         });
 
         // Listen for WebRTC Signaling calls
+        let iceCandidateQueue = [];
+
         socket.current.on("webrtc_offer", async data => {
             if (!peerConnection.current) return;
             try {
+                // Determine if we need to ignore this offer to avoid collisions
+                if (peerConnection.current.signalingState !== "stable") {
+                    console.warn("Ignoring offer because signaling state is", peerConnection.current.signalingState);
+                    return;
+                }
                 await peerConnection.current.setRemoteDescription(new RTCSessionDescription(data.offer));
+                
+                // Process any ICE Candidates that arrived before the Remote Description
+                while (iceCandidateQueue.length > 0) {
+                    const c = iceCandidateQueue.shift();
+                    await peerConnection.current.addIceCandidate(c);
+                }
+
                 const answer = await peerConnection.current.createAnswer();
                 await peerConnection.current.setLocalDescription(answer);
                 socket.current.emit("webrtc_answer", { room, answer });
@@ -113,6 +127,11 @@ export default function VideoConsultation() {
             if (!peerConnection.current) return;
             try {
                 await peerConnection.current.setRemoteDescription(new RTCSessionDescription(data.answer));
+                // Add queued candidates
+                while (iceCandidateQueue.length > 0) {
+                    const c = iceCandidateQueue.shift();
+                    await peerConnection.current.addIceCandidate(c);
+                }
             } catch (error) {
                 console.error("Error handling answer:", error);
             }
@@ -122,7 +141,12 @@ export default function VideoConsultation() {
             if (!peerConnection.current) return;
             try {
                 if (data.candidate) {
-                    await peerConnection.current.addIceCandidate(new RTCIceCandidate(data.candidate));
+                    const newCandidate = new RTCIceCandidate(data.candidate);
+                    if (peerConnection.current.remoteDescription) {
+                        await peerConnection.current.addIceCandidate(newCandidate);
+                    } else {
+                        iceCandidateQueue.push(newCandidate);
+                    }
                 }
             } catch (error) {
                 console.error("Error adding ice candidate:", error);
