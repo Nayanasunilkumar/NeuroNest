@@ -4,7 +4,7 @@ from datetime import date, datetime, time, timedelta, timezone
 from typing import Optional
 from zoneinfo import ZoneInfo
 
-from sqlalchemy import inspect
+from sqlalchemy import inspect, text
 
 from database.models import (
     AppointmentSlot,
@@ -35,6 +35,7 @@ LOCKED_SLOT_DURATION_MINUTES = 30
 LOCKED_BUFFER_MINUTES = 10
 LOCKED_SLOT_STEP_MINUTES = LOCKED_SLOT_DURATION_MINUTES + LOCKED_BUFFER_MINUTES
 _slot_overrides_table_available: Optional[bool] = None
+_schedule_settings_schema_checked: Optional[bool] = None
 
 
 class SlotConflictError(Exception):
@@ -45,7 +46,45 @@ def utc_now():
     return datetime.now(timezone.utc)
 
 
+def _ensure_schedule_settings_schema() -> None:
+    """Backfill schema drift for older DBs before ORM queries touch the model."""
+    global _schedule_settings_schema_checked
+    if _schedule_settings_schema_checked:
+        return
+
+    try:
+        inspector = inspect(db.engine)
+        if not inspector.has_table("doctor_schedule_settings"):
+            _schedule_settings_schema_checked = True
+            return
+
+        columns = {col["name"] for col in inspector.get_columns("doctor_schedule_settings")}
+        if "accepting_new_bookings" not in columns:
+            dialect = db.engine.dialect.name
+            if dialect == "postgresql":
+                db.session.execute(
+                    text(
+                        "ALTER TABLE doctor_schedule_settings "
+                        "ADD COLUMN accepting_new_bookings BOOLEAN NOT NULL DEFAULT TRUE"
+                    )
+                )
+            else:
+                db.session.execute(
+                    text(
+                        "ALTER TABLE doctor_schedule_settings "
+                        "ADD COLUMN accepting_new_bookings BOOLEAN DEFAULT 1"
+                    )
+                )
+            db.session.commit()
+    except Exception:
+        # Avoid blocking booking flow if migration check fails; route-level error handlers remain in place.
+        db.session.rollback()
+    finally:
+        _schedule_settings_schema_checked = True
+
+
 def get_or_create_schedule_setting(doctor_user_id: int) -> DoctorScheduleSetting:
+    _ensure_schedule_settings_schema()
     setting = DoctorScheduleSetting.query.filter_by(doctor_user_id=doctor_user_id).first()
     if setting:
         return setting

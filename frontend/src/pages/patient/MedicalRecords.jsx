@@ -1,28 +1,121 @@
-import React, { useState, useEffect } from 'react';
-import { Plus, Check, AlertCircle } from 'lucide-react';
+import React, { useState, useEffect } from "react";
+import { useSearchParams, useNavigate } from "react-router-dom";
+import { Plus, AlertCircle, X, Sun, Sunrise, Sunset, Moon, Minus, ChevronUp, ChevronDown, ChevronLeft, Flame, Activity, Pill, FileText, Search, Filter } from "lucide-react";
+import { getPatientDossier } from "../../api/doctor";
 
 // Components
-import MedicalRecordTable from '../../components/patient/medicalRecords/MedicalRecordTable';
-import UploadMedicalRecordModal from '../../components/patient/medicalRecords/UploadMedicalRecordModal';
-import DeleteConfirmationModal from '../../components/patient/medicalRecords/DeleteConfirmationModal';
-import ViewMedicalRecordModal from '../../components/patient/medicalRecords/ViewMedicalRecordModal';
-import RecordFilters from '../../components/patient/medicalRecords/RecordFilters';
+import MedicalRecordTable from "../../components/patient/medicalRecords/MedicalRecordTable";
+import UploadMedicalRecordModal from "../../components/patient/medicalRecords/UploadMedicalRecordModal";
+import DeleteConfirmationModal from "../../components/patient/medicalRecords/DeleteConfirmationModal";
+import ViewMedicalRecordModal from "../../components/patient/medicalRecords/ViewMedicalRecordModal";
+import RecordFilters from "../../components/patient/medicalRecords/RecordFilters";
 
 // Services
-import medicalRecordService from '../../services/medicalRecordService';
+import medicalRecordService from "../../services/medicalRecordService";
 
 // Styles
-import '../../styles/medical-records.css';
+import "../../styles/medical-records.css";
 
-const MedicalRecords = () => {
+const ALLERGY_REACTIONS = [
+  "Rash",
+  "Anaphylaxis",
+  "Breathing difficulty",
+  "Swelling",
+  "Nausea",
+  "Other",
+];
+
+const MedicalRecords = ({ patientId: propPatientId = null }) => {
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const patientId = propPatientId || searchParams.get("patientId");
+  const [identity, setIdentity] = useState(null);
+
+  const formatDate = (value) => {
+    if (!value) return "N/A";
+    const d = new Date(value);
+    if (Number.isNaN(d.getTime())) return "N/A";
+    return d.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  };
+  const toLabel = (value) => {
+    if (!value) return "N/A";
+    const str = String(value).replaceAll("_", " ");
+    return str.charAt(0).toUpperCase() + str.slice(1);
+  };
+  const actorLabel = (role) =>
+    role === "doctor" ? "Doctor" : role === "admin" ? "Admin" : "Patient";
+  const severityLabel = (value) => {
+    if (!value) return "Unknown";
+    const normalized = String(value).toLowerCase();
+    if (normalized === "mild") return "Mild";
+    if (normalized === "moderate") return "Moderate";
+    return "Severe";
+  };
+  const medicationSourceLabel = (item) => {
+    if (item.read_only) {
+      return "Doctor Prescription";
+    }
+    if (
+      item.medication_origin === "current_doctor" ||
+      item.created_by_role === "doctor"
+    ) {
+      return "Current Doctor";
+    }
+    if (item.medication_origin === "past_external") {
+      return "Past (Other Hospital)";
+    }
+    return "Patient Entered";
+  };
+  const medicationSourceClass = (item) =>
+    item.medication_origin === "current_doctor" ||
+    item.created_by_role === "doctor"
+      ? "meta-badge-source-current"
+      : "meta-badge-source-past";
   // State
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [summary, setSummary] = useState(null);
+  const [allergies, setAllergies] = useState([]);
+  const [conditions, setConditions] = useState([]);
+  const [medications, setMedications] = useState([]);
+  const [allergyFormOpen, setAllergyFormOpen] = useState(false);
+  const [conditionFormOpen, setConditionFormOpen] = useState(false);
+  const [medicationFormOpen, setMedicationFormOpen] = useState(false);
+  const [allergyForm, setAllergyForm] = useState({
+    allergy_name: "",
+    reaction: "Rash",
+    severity: "severe",
+    diagnosed_date: "",
+    status: "active",
+  });
+  const [conditionForm, setConditionForm] = useState({
+    condition_name: "",
+    diagnosed_date: "",
+    last_reviewed: "",
+    status: "active",
+    under_treatment: true,
+  });
+  const [medicationForm, setMedicationForm] = useState({
+    drug_name: "",
+    dosage: "",
+    frequency: "",
+    start_date: "",
+    end_date: "",
+    prescribed_by: "",
+    medication_origin: "past_external",
+    source_hospital_name: "",
+    status: "active",
+  });
 
   // Filters
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("All");
+  const [sourceFilter, setSourceFilter] = useState("All");
 
   // Modals
   const [isUploadOpen, setIsUploadOpen] = useState(false);
@@ -30,17 +123,35 @@ const MedicalRecords = () => {
   const [recordToDelete, setRecordToDelete] = useState(null);
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [recordToView, setRecordToView] = useState(null);
+  const severeAllergyCount = allergies.filter(
+    (item) => String(item.severity || "").toLowerCase() === "severe",
+  ).length;
 
   // Fetch Records
   const fetchRecords = async () => {
     try {
       setLoading(true);
-      const data = await medicalRecordService.getRecords();
+      const [data, summaryData, allergyData, conditionData, medicationData] =
+        await Promise.all([
+          medicalRecordService.getRecords(patientId),
+          medicalRecordService.getSummary(patientId),
+          medicalRecordService.getAllergies(patientId),
+          medicalRecordService.getConditions(patientId),
+          medicalRecordService.getMedications(patientId),
+        ]);
       setRecords(data);
+      setSummary(summaryData);
+      setAllergies(allergyData);
+      setConditions(conditionData);
+      setMedications(medicationData);
       setError(null);
     } catch (err) {
       console.error("Error fetching medical records:", err);
-      setError(err.response?.data?.error || "Failed to load record content.");
+      setError(
+        err.response?.data?.error ||
+          err.response?.data?.message ||
+          "Failed to load record content.",
+      );
     } finally {
       setLoading(false);
     }
@@ -48,16 +159,21 @@ const MedicalRecords = () => {
 
   useEffect(() => {
     fetchRecords();
-  }, []);
+    if (patientId) {
+      getPatientDossier(patientId)
+        .then(data => setIdentity(data.identity))
+        .catch(err => console.error("Error fetching patient identity:", err));
+    }
+  }, [patientId]);
 
   // Handlers
   const handleUpload = async (formData) => {
     try {
-        await medicalRecordService.uploadRecord(formData);
-        fetchRecords(); // Refresh list
+      await medicalRecordService.uploadRecord(formData, patientId);
+      fetchRecords(); // Refresh list
     } catch (err) {
-        console.error("Upload failed", err);
-        throw err; // Modal handles error display
+      console.error("Upload failed", err);
+      throw err; // Modal handles error display
     }
   };
 
@@ -69,14 +185,14 @@ const MedicalRecords = () => {
   const handleDelete = async () => {
     if (!recordToDelete) return;
     try {
-        await medicalRecordService.deleteRecord(recordToDelete.id);
-        // Optimistic update
-        setRecords(records.filter(r => r.id !== recordToDelete.id));
-        setIsDeleteOpen(false);
-        setRecordToDelete(null);
+      await medicalRecordService.deleteRecord(recordToDelete.id, patientId);
+      // Optimistic update
+      setRecords(records.filter((r) => r.id !== recordToDelete.id));
+      setIsDeleteOpen(false);
+      setRecordToDelete(null);
     } catch (err) {
-        console.error("Delete failed", err);
-        alert("Failed to delete record.");
+      console.error("Delete failed", err);
+      alert("Failed to delete record.");
     }
   };
 
@@ -87,81 +203,838 @@ const MedicalRecords = () => {
 
   const downloadRecord = async (record) => {
     try {
-        await medicalRecordService.downloadRecord(record.file_path, record.title);
+      await medicalRecordService.downloadRecord(
+        record.id,
+        record.title,
+        record.file_type,
+        patientId
+      );
     } catch {
-        alert("Download failed.");
+      alert("Download failed.");
     }
   };
 
   // Filtering Logic
-  const filteredRecords = records.filter(record => {
-    const matchesSearch = (record.title && record.title.toLowerCase().includes(searchTerm.toLowerCase())) || 
-                          (record.doctor_name && record.doctor_name.toLowerCase().includes(searchTerm.toLowerCase()));
-    
-    const matchesCategory = categoryFilter === "All" || record.category === categoryFilter;
-    
-    return matchesSearch && matchesCategory;
+  const filteredRecords = records.filter((record) => {
+    const matchesSearch =
+      (record.title &&
+        record.title.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (record.doctor_name &&
+        record.doctor_name.toLowerCase().includes(searchTerm.toLowerCase()));
+
+    const matchesCategory =
+      categoryFilter === "All" ||
+      (record.category || "").toLowerCase() === categoryFilter.toLowerCase();
+
+    const matchesSource = 
+      sourceFilter === "All" ||
+      (sourceFilter === "patient" && (!record.uploaded_by || record.uploaded_by === record.patient_id)) ||
+      (sourceFilter === "doctor" && (record.uploaded_by && record.uploaded_by !== record.patient_id));
+
+    return matchesSearch && matchesCategory && matchesSource;
   });
 
-  return (
-    <div className="medical-records-container fade-in">
-        {/* Header */}
-        <div className="medical-header">
-            <h1>
-                Medical Records
-            </h1>
-            <button className="upload-btn" onClick={() => setIsUploadOpen(true)}>
-                <Plus size={20} />
-                Upload Record
+  const addAllergy = async () => {
+    if (!allergyForm.allergy_name.trim()) return;
+    try {
+      await medicalRecordService.addAllergy({
+        allergy_name: allergyForm.allergy_name.trim(),
+        reaction: allergyForm.reaction,
+        severity: allergyForm.severity,
+        diagnosed_date: allergyForm.diagnosed_date || null,
+        status: allergyForm.status,
+      }, patientId);
+      setAllergyForm({
+        allergy_name: "",
+        reaction: "Rash",
+        severity: "severe",
+        diagnosed_date: "",
+        status: "active",
+      });
+      setAllergyFormOpen(false);
+      fetchRecords();
+    } catch (err) {
+      alert(err.response?.data?.message || "Failed to add allergy.");
+    }
+  };
+
+  const addCondition = async () => {
+    if (!conditionForm.condition_name.trim()) return;
+    try {
+      await medicalRecordService.addCondition({
+        condition_name: conditionForm.condition_name.trim(),
+        diagnosed_date: conditionForm.diagnosed_date || null,
+        last_reviewed: conditionForm.last_reviewed || null,
+        status: conditionForm.status,
+        under_treatment: conditionForm.under_treatment,
+      }, patientId);
+      setConditionForm({
+        condition_name: "",
+        diagnosed_date: "",
+        last_reviewed: "",
+        status: "active",
+        under_treatment: true,
+      });
+      setConditionFormOpen(false);
+      fetchRecords();
+    } catch (err) {
+      alert(err.response?.data?.message || "Failed to add condition.");
+    }
+  };
+
+  const addMedication = async () => {
+    if (!medicationForm.drug_name.trim()) return;
+    try {
+      await medicalRecordService.addMedication({
+        ...medicationForm,
+        drug_name: medicationForm.drug_name.trim(),
+        start_date: medicationForm.start_date || null,
+        end_date: medicationForm.end_date || null,
+      }, patientId);
+      setMedicationForm({
+        drug_name: "",
+        dosage: "",
+        frequency: "",
+        start_date: "",
+        end_date: "",
+        prescribed_by: "",
+        medication_origin: "past_external",
+        source_hospital_name: "",
+        status: "active",
+      });
+      setMedicationFormOpen(false);
+      fetchRecords();
+    } catch (err) {
+      alert(err.response?.data?.message || "Failed to add medication.");
+    }
+  };
+
+  const renderClinicalContent = () => (
+    <>
+      {summary && (summary.severe_allergy_count ?? 0) > 0 && (
+        <div className="critical-allergy-banner-premium">
+          <div className="banner-icon-ring">
+            <Flame size={20} className="text-red-600" />
+          </div>
+          <div className="banner-text-stack">
+            <span className="banner-headline">Critical Safety Alert</span>
+            <p className="banner-subline">
+              {summary.severe_allergy_count} severe{" "}
+              {summary.severe_allergy_count === 1 ? "allergy" : "allergies"}{" "}
+              recorded. Ensure clinical data is cross-referenced during treatment.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {summary && (
+        <div className="clinical-summary-grid-premium">
+          <div className="clinical-summary-card-prm allergies">
+            <div className="card-prm-icon"><Flame size={20} /></div>
+            <div className="card-prm-content">
+              <p>Severe Allergies</p>
+              <h3>{summary.severe_allergy_count ?? 0}</h3>
+            </div>
+          </div>
+          <div className="clinical-summary-card-prm conditions">
+            <div className="card-prm-icon"><Activity size={20} /></div>
+            <div className="card-prm-content">
+              <p>Active Conditions</p>
+              <h3>{summary.active_condition_count ?? 0}</h3>
+            </div>
+          </div>
+          <div className="clinical-summary-card-prm medications">
+            <div className="card-prm-icon"><Pill size={20} /></div>
+            <div className="card-prm-content">
+              <p>Medications</p>
+              <h3>{summary.active_medication_count ?? 0}</h3>
+            </div>
+          </div>
+          <div className="clinical-summary-card-prm records">
+            <div className="card-prm-icon"><FileText size={20} /></div>
+            <div className="card-prm-content">
+              <p>Total Records</p>
+              <h3>{summary.total_records_uploaded ?? 0}</h3>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="structured-medical-grid">
+        <div className="structured-card-premium allergies-card">
+          <div className="card-premium-header">
+            <div className="header-text">
+              <h3>Severe Allergies</h3>
+              <p>{allergies.length} {allergies.length === 1 ? "Allergy" : "Allergies"} ({severeAllergyCount} Severe)</p>
+            </div>
+            <button className="card-action-btn-prm" onClick={() => setAllergyFormOpen(true)}>
+              <Plus size={16} />
             </button>
+          </div>
+          <div className="structured-list-premium custom-scrollbar">
+            {allergies.length === 0 && (
+              <div className="structured-empty-prm">
+                <p>No allergy entries yet. Add details for clinical safety checks.</p>
+              </div>
+            )}
+            {Array.isArray(allergies) && allergies.map((item) => (
+              <div key={item.id} className="structured-item-premium">
+                <div className="item-premium-body">
+                  <div className="item-premium-main">
+                    <p className="item-title-prm">{item.allergy_name}</p>
+                    <span className={`pill-badge prm-severity-${(item.severity || "severe").toLowerCase()}`}>
+                      {severityLabel(item.severity)}
+                    </span>
+                  </div>
+                  <div className="item-premium-meta-grid">
+                    <div className="meta-cell">
+                      <span className="meta-label">Reaction</span>
+                      <span className="meta-value">{item.reaction || "Not set"}</span>
+                    </div>
+                    <div className="meta-cell">
+                      <span className="meta-label">Diagnosed</span>
+                      <span className="meta-value">{formatDate(item.diagnosed_date)}</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="item-premium-actions">
+                  <button onClick={() => medicalRecordService.deleteAllergy(item.id, patientId).then(fetchRecords)} className="btn-icon-tiny">
+                    <X size={14} />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
 
-        {/* Filters */}
-        <RecordFilters 
-            searchTerm={searchTerm} 
-            setSearchTerm={setSearchTerm} 
-            categoryFilter={categoryFilter} 
-            setCategoryFilter={setCategoryFilter} 
-        />
-
-        {/* Content */}
-        {error ? (
-            <div className="bg-red-50 border border-red-100 rounded-xl p-6 text-center text-red-600 flex flex-col items-center gap-2">
-                <AlertCircle size={32} />
-                <p>{error}</p>
-                <button onClick={fetchRecords} className="text-blue-600 hover:underline text-sm font-semibold mt-2">Try Again</button>
+        <div className="structured-card-premium conditions-card">
+          <div className="card-premium-header">
+            <div className="header-text">
+              <h3>Active Conditions</h3>
+              <p>{conditions.length} Active {conditions.length === 1 ? "Condition" : "Conditions"}</p>
             </div>
-        ) : (
-            <MedicalRecordTable 
-                records={filteredRecords} 
-                onView={viewRecord} 
+            {patientId && (
+              <button className="card-action-btn-prm" onClick={() => setConditionFormOpen(true)}>
+                <Plus size={16} />
+              </button>
+            )}
+          </div>
+          <div className="structured-list-premium custom-scrollbar">
+            {conditions.length === 0 && (
+              <div className="structured-empty-prm">
+                <p>{patientId ? "No active conditions recorded. You can add one above." : "No active conditions listed. Conditions are managed by your doctor."}</p>
+              </div>
+            )}
+            {Array.isArray(conditions) && conditions.map((item) => (
+              <div key={item.id} className="structured-item-premium">
+                <div className="item-premium-body">
+                  <div className="item-premium-main">
+                    <p className="item-title-prm">{item.condition_name}</p>
+                    {item.under_treatment && <span className="pill-badge prm-status-active">Under Tx</span>}
+                  </div>
+                  <div className="item-premium-meta-grid">
+                    <div className="meta-cell">
+                      <span className="meta-label">Status</span>
+                      <span className="meta-value">{toLabel(item.status)}</span>
+                    </div>
+                    <div className="meta-cell">
+                      <span className="meta-label">Last Review</span>
+                      <span className="meta-value">{formatDate(item.last_reviewed)}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+        
+        {(() => {
+          const otherMeds = Array.isArray(medications) ? medications.filter(m => medicationSourceLabel(m) !== "Past (Other Hospital)") : [];
+          const pastMedsCount = Array.isArray(medications) ? medications.filter(m => medicationSourceLabel(m) === "Past (Other Hospital)").length : 0;
+          const activeMedsCount = otherMeds.filter(m => m.status === 'active').length;
+          
+          return (
+            <div className="structured-card-premium medications-card">
+              <div className="card-premium-header">
+                <div className="header-text">
+                  <h3>Medications</h3>
+                  <p>{activeMedsCount} Active • {pastMedsCount} Past</p>
+                </div>
+                <button className="card-action-btn-prm" onClick={() => setMedicationFormOpen(true)}>
+                  <Plus size={16} />
+                </button>
+              </div>
+              <div className="structured-list-premium custom-scrollbar">
+                {medications.length === 0 && (
+                  <div className="structured-empty-prm">
+                    <p>No medications recorded. Add details to support interaction checks.</p>
+                  </div>
+                )}
+                {Array.isArray(medications) && medications.map((item) => (
+                  <div key={item.id} className="structured-item-premium">
+                    <div className="item-premium-body">
+                      <div className="item-premium-main">
+                        <p className="item-title-prm" style={{ opacity: item.status !== 'active' ? 0.6 : 1 }}>{item.drug_name}</p>
+                        <div className="item-premium-badges">
+                          <span className={`pill-badge-tiny ${medicationSourceLabel(item).includes("Doctor") ? "prm-source-doc" : "prm-source-past"}`}>
+                            {medicationSourceLabel(item)}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="item-premium-meta-grid">
+                        <div className="meta-cell">
+                          <span className="meta-label">Dose</span>
+                          <span className="meta-value">{item.dosage || "N/A"}</span>
+                        </div>
+                        <div className="meta-cell">
+                          <span className="meta-label">Frequency</span>
+                          <span className="meta-value">{item.frequency || "N/A"}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="item-premium-actions">
+                      {!item.read_only && (
+                        <button onClick={() => medicalRecordService.deleteMedication(item.id, patientId).then(fetchRecords)} className="btn-icon-tiny">
+                          <X size={14} />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        })()}
+      </div>
+
+      <div className="medical-archive-section-premium">
+        <div className="archive-header-prm">
+          <div className="archive-title-stack">
+            <h2>Medical Records Archive</h2>
+            <p className="archive-subtitle">Secure longitudinal patient documentation and diagnostic reports</p>
+          </div>
+          <button className="upload-btn-premium" onClick={() => setIsUploadOpen(true)}>
+            <Plus size={18} />
+            <span>Upload New Record</span>
+          </button>
+        </div>
+
+        <div className="archive-vault-card">
+          <div className="vault-filter-toolbar">
+            <RecordFilters
+              searchTerm={searchTerm}
+              setSearchTerm={setSearchTerm}
+              categoryFilter={categoryFilter}
+              setCategoryFilter={setCategoryFilter}
+              sourceFilter={sourceFilter}
+              setSourceFilter={setSourceFilter}
+            />
+          </div>
+
+          <div className="vault-table-wrapper">
+            {error ? (
+              <div className="vault-error-state">
+                <AlertCircle size={40} className="text-red-500" />
+                <p>{error}</p>
+                <button onClick={fetchRecords} className="btn-retry-prm">Try Again</button>
+              </div>
+            ) : (
+              <MedicalRecordTable
+                records={filteredRecords}
+                onView={viewRecord}
                 onDelete={confirmDelete}
                 onDownload={downloadRecord}
                 loading={loading}
+                isDoctorView={!!patientId}
+              />
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Modals */}
+      <UploadMedicalRecordModal
+        isOpen={isUploadOpen}
+        onClose={() => setIsUploadOpen(false)}
+        onUpload={handleUpload}
+      />
+
+      <DeleteConfirmationModal
+        isOpen={isDeleteOpen}
+        onClose={() => setIsDeleteOpen(false)}
+        onConfirm={handleDelete}
+        record={recordToDelete}
+      />
+
+      <ViewMedicalRecordModal
+        isOpen={isViewOpen}
+        onClose={() => setIsViewOpen(false)}
+        record={recordToView}
+      />
+
+      {allergyFormOpen && (
+        <SimpleMedicalModal
+          title="Add Severe Allergy"
+          onClose={() => setAllergyFormOpen(false)}
+          onSave={addAllergy}
+        >
+          <input
+            value={allergyForm.allergy_name}
+            onChange={(e) =>
+              setAllergyForm((prev) => ({
+                ...prev,
+                allergy_name: e.target.value,
+              }))
+            }
+            placeholder="Allergy name"
+          />
+          <select
+            value={allergyForm.reaction}
+            onChange={(e) =>
+              setAllergyForm((prev) => ({ ...prev, reaction: e.target.value }))
+            }
+          >
+            {ALLERGY_REACTIONS.map((r) => (
+              <option key={r} value={r}>
+                {r}
+              </option>
+            ))}
+          </select>
+          <select
+            value={allergyForm.severity}
+            onChange={(e) =>
+              setAllergyForm((prev) => ({ ...prev, severity: e.target.value }))
+            }
+          >
+            <option value="mild">Mild</option>
+            <option value="moderate">Moderate</option>
+            <option value="severe">Severe</option>
+          </select>
+          <input
+            type="date"
+            value={allergyForm.diagnosed_date}
+            onChange={(e) =>
+              setAllergyForm((prev) => ({
+                ...prev,
+                diagnosed_date: e.target.value,
+              }))
+            }
+          />
+        </SimpleMedicalModal>
+      )}
+
+      {conditionFormOpen && (
+        <SimpleMedicalModal
+          title="Add Active Condition"
+          onClose={() => setConditionFormOpen(false)}
+          onSave={addCondition}
+        >
+          <input
+            value={conditionForm.condition_name}
+            onChange={(e) =>
+              setConditionForm((prev) => ({
+                ...prev,
+                condition_name: e.target.value,
+              }))
+            }
+            placeholder="Condition name"
+          />
+          <input
+            type="date"
+            value={conditionForm.diagnosed_date}
+            onChange={(e) =>
+              setConditionForm((prev) => ({
+                ...prev,
+                diagnosed_date: e.target.value,
+              }))
+            }
+          />
+          <input
+            type="date"
+            value={conditionForm.last_reviewed}
+            onChange={(e) =>
+              setConditionForm((prev) => ({
+                ...prev,
+                last_reviewed: e.target.value,
+              }))
+            }
+          />
+          <label className="medical-inline-check">
+            <input
+              type="checkbox"
+              checked={conditionForm.under_treatment}
+              onChange={(e) =>
+                setConditionForm((prev) => ({
+                  ...prev,
+                  under_treatment: e.target.checked,
+                }))
+              }
             />
-        )}
+            Under treatment
+          </label>
+        </SimpleMedicalModal>
+      )}
 
-        {/* Modals */}
-        <UploadMedicalRecordModal 
-            isOpen={isUploadOpen} 
-            onClose={() => setIsUploadOpen(false)} 
-            onUpload={handleUpload} 
-        />
-        
-        <DeleteConfirmationModal 
-            isOpen={isDeleteOpen} 
-            onClose={() => setIsDeleteOpen(false)} 
-            onConfirm={handleDelete} 
-            record={recordToDelete} 
-        />
+      {medicationFormOpen && (
+        <SimpleMedicalModal
+          title="Add Medication"
+          onClose={() => setMedicationFormOpen(false)}
+          onSave={addMedication}
+        >
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '8px', marginTop: '4px', gridColumn: '1 / -1' }}>
+            <label style={{ fontSize: '13px', fontWeight: '500', color: '#64748b' }}>Medication Type</label>
+            <select
+              value={medicationForm.medication_origin}
+              onChange={(e) =>
+                setMedicationForm((prev) => ({
+                  ...prev,
+                  medication_origin: e.target.value,
+                }))
+              }
+              style={{ margin: 0, padding: '10px 14px', borderRadius: '8px', border: '1px solid #e2e8f0' }}
+            >
+              <option value="past_external">
+                Past Medication (Other Hospital)
+              </option>
+              <option value="current_doctor" disabled>
+                Current Medication (Treating Doctor)
+              </option>
+            </select>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '8px', marginTop: '4px' }}>
+            <label style={{ fontSize: '13px', fontWeight: '500', color: '#64748b' }}>Drug name</label>
+            <input
+              value={medicationForm.drug_name}
+              onChange={(e) =>
+                setMedicationForm((prev) => ({
+                  ...prev,
+                  drug_name: e.target.value,
+                }))
+              }
+              placeholder="e.g. Paracetamol"
+              style={{ margin: 0 }}
+            />
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '8px', marginTop: '4px' }}>
+            <label style={{ fontSize: '13px', fontWeight: '500', color: '#64748b' }}>Dosage</label>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <div style={{ display: 'flex', flex: 1, border: '1px solid #cbd5e1', borderRadius: '10px', background: '#f8fafc', overflow: 'hidden' }}>
+                <input
+                  value={String(medicationForm.dosage || "").match(/[0-9\.]+/) ? String(medicationForm.dosage || "").match(/[0-9\.]+/)[0] : ""}
+                  onChange={(e) => {
+                    const newNum = e.target.value;
+                    const valStr = String(medicationForm.dosage || "0");
+                    const currentUnit = valStr.replace(/[0-9\.]/g, '').trim() || "mg";
+                    setMedicationForm((prev) => ({ ...prev, dosage: newNum ? `${newNum} ${currentUnit}` : currentUnit }));
+                  }}
+                  placeholder="e.g. 500"
+                  style={{ flex: 1, margin: 0, border: 'none', borderRadius: 0, background: 'transparent', outline: 'none' }}
+                />
+                <div style={{ width: '1px', background: '#cbd5e1' }}></div>
+                <select
+                  value={String(medicationForm.dosage || "").replace(/[0-9\.]/g, '').trim() || "mg"}
+                  onChange={(e) => {
+                    const newUnit = e.target.value;
+                    const valStr = String(medicationForm.dosage || "0");
+                    const numMatch = valStr.match(/[0-9\.]+/);
+                    const currentNum = numMatch ? numMatch[0] : "";
+                    setMedicationForm((prev) => ({ ...prev, dosage: currentNum ? `${currentNum} ${newUnit}` : newUnit }));
+                  }}
+                  style={{ 
+                    width: '95px', 
+                    margin: 0, 
+                    border: 'none', 
+                    borderRadius: 0, 
+                    backgroundColor: 'transparent', 
+                    outline: 'none', 
+                    cursor: 'pointer',
+                    appearance: 'none',
+                    WebkitAppearance: 'none',
+                    backgroundImage: 'url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%23475569\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3e%3cpolyline points=\'6 9 12 15 18 9\'%3e%3c/polyline%3e%3c/svg%3e")',
+                    backgroundRepeat: 'no-repeat',
+                    backgroundPosition: 'right 8px center',
+                    backgroundSize: '14px',
+                    paddingLeft: '12px',
+                    paddingRight: '24px'
+                  }}
+                >
+                  <option value="mg">mg</option>
+                  <option value="g">g</option>
+                  <option value="ml">ml</option>
+                  <option value="Drop(s)">Drop(s)</option>
+                  <option value="Tablet(s)">Tablet(s)</option>
+                  <option value="Capsule(s)">Capsule(s)</option>
+                </select>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const valStr = String(medicationForm.dosage || "0");
+                    const numMatch = valStr.match(/[0-9\.]+/);
+                    let currentNum = numMatch ? parseFloat(numMatch[0]) : 0;
+                    const currentUnit = valStr.replace(/[0-9\.]/g, '').trim() || "mg";
+                    
+                    let step = 1;
+                    if (currentUnit.toLowerCase() === "mg") step = 50;
+                    else if (currentUnit.toLowerCase() === "ml") step = 5;
+                    
+                    const newNum = currentNum + step;
+                    setMedicationForm(prev => ({ 
+                      ...prev, 
+                      dosage: `${newNum} ${currentUnit}`
+                    }));
+                  }}
+                  style={{ height: '18px', width: '28px', borderRadius: '4px', border: '1px solid #cbd5e1', background: '#f8fafc', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
+                >
+                  <ChevronUp size={14} strokeWidth={2.5} className="text-slate-600" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const valStr = String(medicationForm.dosage || "0");
+                    const numMatch = valStr.match(/[0-9\.]+/);
+                    let currentNum = numMatch ? parseFloat(numMatch[0]) : 0;
+                    const currentUnit = valStr.replace(/[0-9\.]/g, '').trim() || "mg";
+                    
+                    let step = 1;
+                    if (currentUnit.toLowerCase() === "mg") step = 50;
+                    else if (currentUnit.toLowerCase() === "ml") step = 5;
+                    
+                    const newNum = Math.max(0, currentNum - step);
+                    setMedicationForm(prev => ({ 
+                      ...prev, 
+                      dosage: `${newNum} ${currentUnit}`
+                    }));
+                  }}
+                  style={{ height: '18px', width: '28px', borderRadius: '4px', border: '1px solid #cbd5e1', background: '#f8fafc', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
+                >
+                  <ChevronDown size={14} strokeWidth={2.5} className="text-slate-600" />
+                </button>
+              </div>
+            </div>
+          </div>
+          
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '12px', marginTop: '8px', gridColumn: '1 / -1' }}>
+            <label style={{ fontSize: '14px', fontWeight: '700', color: '#64748b' }}>
+              Frequency ({medicationForm.frequency && medicationForm.frequency.split('-').length === 4 ? medicationForm.frequency : "0-0-0-0"})
+            </label>
+            <div style={{ 
+              display: "flex", 
+              justifyContent: "space-between", 
+              border: "1px solid #e2e8f0", 
+              borderRadius: "16px", 
+              padding: "10px 24px",
+              background: "#f8fafc"
+            }}>
+              {[
+                { label: "MRNG", icon: <Sunrise size={22} strokeWidth={1.5} />, idx: 0 },
+                { label: "AFTN", icon: <Sun size={22} strokeWidth={1.5} />, idx: 1 },
+                { label: "EVE", icon: <Sunset size={22} strokeWidth={1.5} />, idx: 2 },
+                { label: "NIGHT", icon: <Moon size={22} strokeWidth={1.5} />, idx: 3 }
+              ].map((slot) => {
+                const parts = (medicationForm.frequency && medicationForm.frequency.split('-').length === 4) 
+                  ? medicationForm.frequency.split('-') 
+                  : ["0", "0", "0", "0"];
+                const isActive = parts[slot.idx] !== "0";
+                
+                return (
+                  <button
+                    key={slot.label}
+                    type="button"
+                    onClick={() => {
+                      const newParts = [...parts];
+                      if (isActive) {
+                        newParts[slot.idx] = "0";
+                      } else {
+                        // For a simple toggle we use 1
+                        newParts[slot.idx] = "1";
+                      }
+                      setMedicationForm(prev => ({ ...prev, frequency: newParts.join('-') }));
+                    }}
+                    style={{ 
+                      display: "flex", 
+                      flexDirection: "column", 
+                      alignItems: "center", 
+                      gap: "8px", 
+                      background: "none", 
+                      border: "none", 
+                      cursor: "pointer",
+                      color: isActive ? "#3b82f6" : "#94a3b8",
+                      transition: "all 0.2s"
+                    }}
+                  >
+                    <div style={{
+                      transform: isActive ? "scale(1.1)" : "scale(1)",
+                      transition: "transform 0.2s"
+                    }}>
+                      {slot.icon}
+                    </div>
+                    <span style={{ 
+                      fontSize: "12px", 
+                      fontWeight: "700", 
+                      letterSpacing: "0.05em",
+                      color: isActive ? "#3b82f6" : "#94a3b8" 
+                    }}>
+                      {slot.label}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '8px', marginTop: '4px' }}>
+            <label style={{ fontSize: '13px', fontWeight: '500', color: '#64748b' }}>Prescribed by</label>
+            <input
+              value={medicationForm.prescribed_by}
+              onChange={(e) =>
+                setMedicationForm((prev) => ({
+                  ...prev,
+                  prescribed_by: e.target.value,
+                }))
+              }
+              placeholder="e.g. Dr. Smith"
+              style={{ margin: 0 }}
+            />
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '8px', marginTop: '4px' }}>
+            <label style={{ fontSize: '13px', fontWeight: '500', color: '#64748b' }}>Source Hospital / Clinic</label>
+            <input
+              value={medicationForm.source_hospital_name}
+              onChange={(e) =>
+                setMedicationForm((prev) => ({
+                  ...prev,
+                  source_hospital_name: e.target.value,
+                }))
+              }
+              placeholder={
+                medicationForm.medication_origin === "past_external"
+                  ? "Other hospital / clinic name"
+                  : "Current hospital / clinic name"
+              }
+              style={{ margin: 0 }}
+            />
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '8px', marginTop: '4px' }}>
+            <label style={{ fontSize: '13px', fontWeight: '500', color: '#64748b' }}>Start Date</label>
+            <input
+              type="date"
+              value={medicationForm.start_date}
+              onChange={(e) =>
+                setMedicationForm((prev) => ({
+                  ...prev,
+                  start_date: e.target.value,
+                }))
+              }
+              style={{ margin: 0 }}
+            />
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '8px', marginTop: '4px' }}>
+            <label style={{ fontSize: '13px', fontWeight: '500', color: '#64748b' }}>End Date</label>
+            <input
+              type="date"
+              value={medicationForm.end_date}
+              onChange={(e) =>
+                setMedicationForm((prev) => ({
+                  ...prev,
+                  end_date: e.target.value,
+                }))
+              }
+              style={{ margin: 0 }}
+            />
+          </div>
+        </SimpleMedicalModal>
+      )}
+    </>
+  );
 
-        <ViewMedicalRecordModal 
-            isOpen={isViewOpen} 
-            onClose={() => setIsViewOpen(false)} 
-            record={recordToView} 
-        />
+  return (
+    <div 
+      className={patientId ? "opd-dashboard-root" : "medical-records-container fade-in"}
+      style={patientId ? { padding: '0 20px 20px 20px' } : {}}
+    >
+      {patientId ? (
+        <div className="dossier-premium-root">
+          <div className="dossier-premium-header">
+            <div className="header-nexus-left">
+              <button onClick={() => navigate(-1)} className="btn-back-circle">
+                <ChevronLeft size={20} />
+              </button>
+              <div className="header-title-stack">
+                <span className="header-breadcrumb-mini">Clinical Dossier / Medical Records</span>
+                <h1 className="dossier-premium-title">Medical Summary</h1>
+              </div>
+            </div>
+            <div className="header-nexus-right">
+              {identity && (
+                <div className="patient-identity-capsule">
+                  <div className="capsule-avatar-mini">
+                    {identity.full_name ? identity.full_name.charAt(0) : "P"}
+                  </div>
+                  <div className="capsule-text">
+                    <span className="capsule-name">{identity.full_name}</span>
+                    <span className="capsule-id">#PID-{identity.id}</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+          <div 
+            className="dossier-premium-grid-single custom-scrollbar" 
+            style={{ 
+              paddingRight: '12px', 
+              overflowY: 'auto',
+              flex: 1,
+              display: 'flex',
+              flexDirection: 'column'
+            }}
+          >
+            <div className="fade-in" style={{ paddingBottom: '80px', flex: 1, display: 'flex', flexDirection: 'column' }}>
+              {loading && !summary ? (
+                <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '400px' }}>
+                   <div className="animate-spin" style={{ width: '40px', height: '40px', border: '4px solid #f3f3f3', borderTop: '4px solid #3b82f6', borderRadius: '50%' }}></div>
+                </div>
+              ) : (
+                renderClinicalContent()
+              )}
+            </div>
+          </div>
+        </div>
+      ) : (
+        <>
+          <div className="medical-header">
+            <h1>Medical Summary</h1>
+          </div>
+          {renderClinicalContent()}
+        </>
+      )}
     </div>
   );
 };
+
+const SimpleMedicalModal = ({ title, children, onClose, onSave }) => (
+  <div className="modal-overlay" onClick={onClose}>
+    <div
+      className="modal-content structured-modal"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <div className="modal-header">
+        <h2>{title}</h2>
+        <button onClick={onClose} className="close-modal-btn">
+          <X size={20} />
+        </button>
+      </div>
+      <div className="structured-modal-grid">{children}</div>
+      <div className="structured-modal-actions">
+        <button className="structured-cancel-btn" onClick={onClose}>
+          Cancel
+        </button>
+        <button className="structured-save-btn" onClick={onSave}>
+          Save
+        </button>
+      </div>
+    </div>
+  </div>
+);
 
 export default MedicalRecords;

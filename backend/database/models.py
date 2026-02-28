@@ -569,6 +569,10 @@ class InAppNotification(db.Model):
 # =========================================
 class MedicalRecord(db.Model):
     __tablename__ = "medical_records"
+    __table_args__ = (
+        Index("idx_medical_records_patient_date", "patient_id", "record_date"),
+        Index("idx_medical_records_patient_category", "patient_id", "category"),
+    )
 
     id = db.Column(db.Integer, primary_key=True)
 
@@ -581,8 +585,11 @@ class MedicalRecord(db.Model):
     title = db.Column(db.String(255), nullable=False)
     category = db.Column(db.String(100), nullable=False)
     file_path = db.Column(db.String(500), nullable=False)
+    file_type = db.Column(db.String(50), nullable=True)
+    file_size_bytes = db.Column(db.BigInteger, nullable=True)
     
     doctor_name = db.Column(db.String(120))
+    hospital_name = db.Column(db.String(200))
     appointment_id = db.Column(
         db.Integer,
         db.ForeignKey("appointments.id"),
@@ -590,7 +597,10 @@ class MedicalRecord(db.Model):
     )
     
     description = db.Column(db.Text)
+    notes = db.Column(db.Text)
     record_date = db.Column(db.Date)
+    status = db.Column(db.String(30), nullable=False, default="active")
+    uploaded_by = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=True)
     
     verified_by_doctor = db.Column(db.Boolean, default=False)
 
@@ -604,6 +614,7 @@ class MedicalRecord(db.Model):
         default=datetime.utcnow,
         onupdate=datetime.utcnow
     )
+    tags = db.relationship("MedicalRecordTag", backref="record", lazy=True, cascade="all, delete-orphan")
 
     def to_dict(self):
         return {
@@ -612,11 +623,152 @@ class MedicalRecord(db.Model):
             "title": self.title,
             "category": self.category,
             "file_path": self.file_path,
+            "file_type": self.file_type,
+            "file_size_bytes": self.file_size_bytes,
             "doctor_name": self.doctor_name,
+            "hospital_name": self.hospital_name,
             "appointment_id": self.appointment_id,
             "description": self.description,
+            "notes": self.notes,
+            "status": self.status,
+            "uploaded_by": self.uploaded_by,
+            "tags": [tag.tag_name for tag in self.tags],
             "record_date": str(self.record_date) if self.record_date else None,
             "verified_by_doctor": self.verified_by_doctor,
+            "created_at": self.created_at.isoformat() + 'Z',
+            "updated_at": self.updated_at.isoformat() + 'Z',
+        }
+
+
+class MedicalRecordTag(db.Model):
+    __tablename__ = "record_tags"
+    __table_args__ = (
+        UniqueConstraint("record_id", "tag_name", name="uq_record_tag_name"),
+        Index("idx_record_tags_record_id", "record_id"),
+        Index("idx_record_tags_tag_name", "tag_name"),
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+    record_id = db.Column(db.Integer, db.ForeignKey("medical_records.id", ondelete="CASCADE"), nullable=False)
+    tag_name = db.Column(db.String(80), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "record_id": self.record_id,
+            "tag_name": self.tag_name,
+            "created_at": self.created_at.isoformat() + 'Z',
+        }
+
+
+class PatientAllergy(db.Model):
+    __tablename__ = "patient_allergies"
+    __table_args__ = (
+        UniqueConstraint("patient_id", "allergy_name", name="uq_patient_allergy_name"),
+        Index("idx_patient_allergies_patient_status", "patient_id", "status"),
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+    patient_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    allergy_name = db.Column(db.String(120), nullable=False)
+    created_by_user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=True)
+    created_by_role = db.Column(db.String(20), nullable=False, default="patient")
+    reaction = db.Column(db.String(255), nullable=True)
+    severity = db.Column(db.String(20), nullable=False, default="mild")
+    diagnosed_date = db.Column(db.Date, nullable=True)
+    status = db.Column(db.String(30), nullable=False, default="active")
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "patient_id": self.patient_id,
+            "allergy_name": self.allergy_name,
+            "created_by_user_id": self.created_by_user_id,
+            "created_by_role": self.created_by_role,
+            "reaction": self.reaction,
+            "severity": self.severity,
+            "diagnosed_date": str(self.diagnosed_date) if self.diagnosed_date else None,
+            "status": self.status,
+            "created_at": self.created_at.isoformat() + 'Z',
+            "updated_at": self.updated_at.isoformat() + 'Z',
+        }
+
+
+class PatientCondition(db.Model):
+    __tablename__ = "patient_conditions"
+    __table_args__ = (
+        UniqueConstraint("patient_id", "condition_name", name="uq_patient_condition_name"),
+        Index("idx_patient_conditions_patient_status", "patient_id", "status"),
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+    patient_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    condition_name = db.Column(db.String(120), nullable=False)
+    created_by_user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=True)
+    created_by_role = db.Column(db.String(20), nullable=False, default="patient")
+    diagnosed_date = db.Column(db.Date, nullable=True)
+    status = db.Column(db.String(30), nullable=False, default="active")
+    under_treatment = db.Column(db.Boolean, nullable=False, default=True)
+    last_reviewed = db.Column(db.Date, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "patient_id": self.patient_id,
+            "condition_name": self.condition_name,
+            "created_by_user_id": self.created_by_user_id,
+            "created_by_role": self.created_by_role,
+            "diagnosed_date": str(self.diagnosed_date) if self.diagnosed_date else None,
+            "status": self.status,
+            "under_treatment": self.under_treatment,
+            "last_reviewed": str(self.last_reviewed) if self.last_reviewed else None,
+            "created_at": self.created_at.isoformat() + 'Z',
+            "updated_at": self.updated_at.isoformat() + 'Z',
+        }
+
+
+class PatientMedication(db.Model):
+    __tablename__ = "patient_medications"
+    __table_args__ = (
+        Index("idx_patient_medications_patient_active", "patient_id", "status", "end_date"),
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+    patient_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    drug_name = db.Column(db.String(150), nullable=False)
+    created_by_user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=True)
+    created_by_role = db.Column(db.String(20), nullable=False, default="patient")
+    dosage = db.Column(db.String(80), nullable=True)
+    frequency = db.Column(db.String(80), nullable=True)
+    start_date = db.Column(db.Date, nullable=True)
+    end_date = db.Column(db.Date, nullable=True)
+    prescribed_by = db.Column(db.String(120), nullable=True)
+    medication_origin = db.Column(db.String(30), nullable=False, default="past_external")
+    source_hospital_name = db.Column(db.String(200), nullable=True)
+    status = db.Column(db.String(30), nullable=False, default="active")
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "patient_id": self.patient_id,
+            "drug_name": self.drug_name,
+            "created_by_user_id": self.created_by_user_id,
+            "created_by_role": self.created_by_role,
+            "dosage": self.dosage,
+            "frequency": self.frequency,
+            "start_date": str(self.start_date) if self.start_date else None,
+            "end_date": str(self.end_date) if self.end_date else None,
+            "prescribed_by": self.prescribed_by,
+            "medication_origin": self.medication_origin,
+            "source_hospital_name": self.source_hospital_name,
+            "status": self.status,
             "created_at": self.created_at.isoformat() + 'Z',
             "updated_at": self.updated_at.isoformat() + 'Z',
         }

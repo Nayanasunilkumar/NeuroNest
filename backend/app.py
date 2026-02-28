@@ -19,6 +19,7 @@ from routes.prescription_routes import prescriptions_bp
 from routes.doctor_profile import doctor_profile_bp
 from routes.patient_settings_routes import patient_settings_bp
 from routes.announcements import announcements_bp
+from routes.patient_medical_records import patient_medical_bp
 
 
 from extensions.socket import socketio
@@ -38,6 +39,7 @@ def create_app():
     app.register_blueprint(profile_bp, url_prefix="/profile")
     app.register_blueprint(appointments_bp, url_prefix="/appointments")
     app.register_blueprint(medical_records_bp)
+    app.register_blueprint(patient_medical_bp)
     app.register_blueprint(prescriptions_bp, url_prefix="/prescriptions")
     app.register_blueprint(announcements_bp, url_prefix="/api/announcements")
     

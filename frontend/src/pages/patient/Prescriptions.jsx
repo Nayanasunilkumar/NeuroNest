@@ -41,6 +41,18 @@ const Prescriptions = () => {
         return new Date(dateString).toLocaleDateString("en-US", { year: 'numeric', month: 'short', day: 'numeric' });
     };
 
+    const getEffectiveStatus = (prescription) => {
+        const rawStatus = String(prescription?.status || "").toLowerCase();
+        if (rawStatus === "cancelled" || rawStatus === "draft") return rawStatus;
+        if (prescription?.valid_until) {
+            const endDate = new Date(prescription.valid_until);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            if (!Number.isNaN(endDate.getTime()) && endDate < today) return "expired";
+        }
+        return "active";
+    };
+
     return (
         <div className="prescriptions-page-shell">
             {/* Header */}
@@ -88,15 +100,18 @@ const Prescriptions = () => {
                 </div>
             ) : (
                 <div className="prescriptions-grid">
-                    {prescriptions.map((p) => (
+                    {prescriptions.map((p) => {
+                        const effectiveStatus = getEffectiveStatus(p);
+                        const statusLabel = effectiveStatus.charAt(0).toUpperCase() + effectiveStatus.slice(1);
+                        return (
                         <div key={p.id} className="rx-card">
                             <div className="rx-card-header">
                                 <div className="rx-date-badge">
                                     <Calendar size={14} />
                                     {formatDate(p.created_at)}
                                 </div>
-                                <span className={`rx-status-badge ${String(p.status).toLowerCase() === 'active' ? 'rx-status-active' : 'rx-status-expired'}`}>
-                                    {p.status}
+                                <span className={`rx-status-badge ${effectiveStatus === 'active' ? 'rx-status-active' : 'rx-status-expired'}`}>
+                                    {statusLabel}
                                 </span>
                             </div>
 
@@ -122,7 +137,8 @@ const Prescriptions = () => {
                                 View Prescription
                             </button>
                         </div>
-                    ))}
+                        );
+                    })}
                 </div>
             )}
 

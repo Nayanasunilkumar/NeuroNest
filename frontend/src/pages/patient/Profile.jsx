@@ -3,10 +3,13 @@ import api from "../../api/axios";
 import axios from "axios";
 import { toAssetUrl } from "../../utils/media";
 import "../../styles/ProfileStyles.css"; // ✅ Use new premium styles
+import { useNavigate } from "react-router-dom";
+import { getAppointments } from "../../api/appointments";
 import { 
   User, Phone, Mail, MapPin, Activity, 
   Heart, Calendar, Ruler, Weight, Edit2, 
-  Save, X, Plus, Trash2, ShieldAlert 
+  Save, X, Plus, Trash2, ShieldAlert,
+  CalendarDays, History, ArrowRight, Clock 
 } from "lucide-react";
 
 const PROFILE_KEYS = [
@@ -26,6 +29,128 @@ const PROFILE_KEYS = [
   "chronic_conditions",
   "profile_image",
 ];
+
+const ALLERGY_SUGGESTIONS = [
+  "Penicillin",
+  "Sulfa drugs",
+  "Pollen",
+  "Dust",
+  "Latex",
+  "Nuts",
+  "Seafood",
+  "Milk",
+];
+
+const CONDITION_SUGGESTIONS = [
+  "Diabetes",
+  "Hypertension",
+  "Asthma",
+  "Thyroid disorder",
+  "Arthritis",
+  "Migraine",
+  "Heart disease",
+  "Kidney disease",
+];
+
+const normalizeProfile = (data = {}) =>
+  PROFILE_KEYS.reduce((acc, key) => {
+    acc[key] = data[key] ?? "";
+    return acc;
+  }, {});
+
+const normalizeEmergencyContacts = (contacts = []) =>
+  (contacts || []).map((contact) => ({
+    contact_name: contact.contact_name ?? "",
+    relationship: contact.relationship ?? "",
+    phone: contact.phone ?? "",
+    alternate_phone: contact.alternate_phone ?? "",
+    email: contact.email ?? "",
+    is_primary: Boolean(contact.is_primary),
+  }));
+
+const normalizeText = (value = "") => value.toString().trim().toLowerCase();
+const splitMedicalTags = (value = "") =>
+  value
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+
+const joinMedicalTags = (tags = []) => tags.join(", ");
+
+const levenshteinDistance = (a = "", b = "") => {
+  const left = normalizeText(a);
+  const right = normalizeText(b);
+  const rows = left.length + 1;
+  const cols = right.length + 1;
+  const dp = Array.from({ length: rows }, () => Array(cols).fill(0));
+
+  for (let i = 0; i < rows; i += 1) dp[i][0] = i;
+  for (let j = 0; j < cols; j += 1) dp[0][j] = j;
+
+  for (let i = 1; i < rows; i += 1) {
+    for (let j = 1; j < cols; j += 1) {
+      const cost = left[i - 1] === right[j - 1] ? 0 : 1;
+      dp[i][j] = Math.min(
+        dp[i - 1][j] + 1,
+        dp[i][j - 1] + 1,
+        dp[i - 1][j - 1] + cost
+      );
+    }
+  }
+
+  return dp[rows - 1][cols - 1];
+};
+
+const pickBestPincode = (postOffices = [], { city, state }) => {
+  const normalizedCity = normalizeText(city);
+  const normalizedState = normalizeText(state);
+
+  const scored = postOffices
+    .map((office) => {
+      const officeState = normalizeText(office.State);
+      const officeDistrict = normalizeText(office.District);
+      const officeName = normalizeText(office.Name);
+      const officeTaluk = normalizeText(office.Taluk || office.Block || office.Region || office.Division);
+      const branchType = normalizeText(office.BranchType);
+
+      let score = 0;
+      if (normalizedState && officeState === normalizedState) score += 50;
+      if (normalizedCity && officeDistrict === normalizedCity) score += 30;
+      if (normalizedCity && officeName === normalizedCity) score += 20;
+      if (
+        normalizedCity &&
+        (
+          officeName.includes(normalizedCity) ||
+          normalizedCity.includes(officeName) ||
+          officeTaluk.includes(normalizedCity) ||
+          normalizedCity.includes(officeTaluk)
+        )
+      ) score += 15;
+      if (
+        normalizedCity &&
+        (
+          levenshteinDistance(officeName, normalizedCity) <= 2 ||
+          levenshteinDistance(officeTaluk, normalizedCity) <= 2
+        )
+      ) score += 12;
+      if (branchType.includes("head")) score += 10;
+
+      return { office, score };
+    })
+    .filter(({ office }) => Boolean(office?.Pincode));
+
+  if (!scored.length) return "";
+
+  scored.sort((a, b) => {
+    if (b.score !== a.score) return b.score - a.score;
+    const pinA = String(a.office.Pincode).padStart(6, "0");
+    const pinB = String(b.office.Pincode).padStart(6, "0");
+    if (pinA !== pinB) return pinA.localeCompare(pinB);
+    return normalizeText(a.office.Name).localeCompare(normalizeText(b.office.Name));
+  });
+
+  return scored[0].office.Pincode ?? "";
+};
 
 const Profile = () => {
   const [profile, setProfile] = useState({
@@ -53,8 +178,13 @@ const Profile = () => {
   const [states, setStates] = useState([]);
   const [cities, setCities] = useState([]);
 
+  const navigate = useNavigate();
+
   const [editing, setEditing] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [apptStats, setApptStats] = useState({ total: 0, next: null, last: null });
+  const [initialProfileSnapshot, setInitialProfileSnapshot] = useState(null);
+  const [initialEmergencySnapshot, setInitialEmergencySnapshot] = useState(null);
 
   // ... (Keep existing fetch functions: fetchEmergencyContact, handleEmergencyChange, addNewContact, removeContact, fetchProfile, fetchCountries, fetchStates, fetchCities, fetchPincode, handleChange, handleImageChange, handleSave) ...
   // NOTE: For brevity in this replacement, I am assuming the logic methods ABOVE render return are unchanged. 
@@ -70,8 +200,9 @@ const Profile = () => {
     try {
       const res = await api.get("/profile/emergency-contact/me");
       if (Array.isArray(res.data)) {
-        setEmergencyContacts(res.data);
-        localStorage.setItem("emergencyContacts", JSON.stringify(res.data));
+        const normalizedContacts = normalizeEmergencyContacts(res.data);
+        setEmergencyContacts(normalizedContacts);
+        localStorage.setItem("emergencyContacts", JSON.stringify(normalizedContacts));
       } else {
         setEmergencyContacts([]);
       }
@@ -121,10 +252,7 @@ const Profile = () => {
 
     try {
       const res = await api.get("/profile/me");
-      const cleanedData = {};
-      PROFILE_KEYS.forEach((key) => {
-        cleanedData[key] = res.data[key] ?? "";
-      });
+      const cleanedData = normalizeProfile(res.data);
       setProfile(cleanedData);
       localStorage.setItem("userProfile", JSON.stringify(cleanedData));
 
@@ -167,30 +295,69 @@ const Profile = () => {
     } catch { setCities([]); }
   };
 
-  const fetchPincode = async (city) => {
+  const fetchPincode = async ({ country, state, city }) => {
+    if (normalizeText(country) !== "india" || !city) {
+      setProfile((prev) => ({ ...prev, pincode: "" }));
+      return;
+    }
+
     try {
       const res = await axios.get(`https://api.postalpincode.in/postoffice/${city}`);
-      if (res.data[0].Status === "Success" && res.data[0].PostOffice.length > 0) {
-        setProfile((prev) => ({ ...prev, pincode: res.data[0].PostOffice[0].Pincode }));
+      const payload = Array.isArray(res.data) ? res.data[0] : null;
+      let postOffices = payload?.Status === "Success" ? payload.PostOffice || [] : [];
+
+      // Fallback: if city query is empty (common for variant spellings), query state and score locally.
+      if (!postOffices.length && state) {
+        const fallbackRes = await axios.get(`https://api.postalpincode.in/postoffice/${state}`);
+        const fallbackPayload = Array.isArray(fallbackRes.data) ? fallbackRes.data[0] : null;
+        postOffices = fallbackPayload?.Status === "Success" ? fallbackPayload.PostOffice || [] : [];
       }
-    } catch { console.log("Pincode fetch failed"); }
+
+      const bestPincode = pickBestPincode(postOffices, { city, state });
+
+      if (!bestPincode) return;
+
+      setProfile((prev) => {
+        // Prevent stale async responses from overwriting current selection
+        if (
+          normalizeText(prev.country) !== normalizeText(country) ||
+          normalizeText(prev.state) !== normalizeText(state) ||
+          normalizeText(prev.city) !== normalizeText(city)
+        ) {
+          return prev;
+        }
+        return { ...prev, pincode: bestPincode };
+      });
+    } catch {
+      console.log("Pincode fetch failed");
+    }
   };
 
   const handleChange = async (e) => {
     const { name, value } = e.target;
-    setProfile((prev) => ({ ...prev, [name]: value }));
 
     if (name === "country") {
-      setStates([]); setCities([]);
+      setProfile((prev) => ({ ...prev, country: value, state: "", city: "", pincode: "" }));
+      setStates([]);
+      setCities([]);
       await fetchStates(value);
-      setProfile((prev) => ({ ...prev, state: "", city: "", pincode: "" }));
+      return;
     }
+
     if (name === "state") {
+      setProfile((prev) => ({ ...prev, state: value, city: "", pincode: "" }));
       setCities([]);
       await fetchCities(profile.country, value);
-      setProfile((prev) => ({ ...prev, city: "", pincode: "" }));
+      return;
     }
-    if (name === "city") fetchPincode(value);
+
+    if (name === "city") {
+      setProfile((prev) => ({ ...prev, city: value, pincode: "" }));
+      await fetchPincode({ country: profile.country, state: profile.state, city: value });
+      return;
+    }
+
+    setProfile((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleImageChange = (e) => {
@@ -199,6 +366,32 @@ const Profile = () => {
       setProfileImageName(e.target.files[0].name);
     }
   };
+
+  const startEditing = () => {
+    setInitialProfileSnapshot(normalizeProfile(profile));
+    setInitialEmergencySnapshot(normalizeEmergencyContacts(emergencyContacts));
+    setEditing(true);
+  };
+
+  const cancelEdit = () => {
+    if (initialProfileSnapshot) {
+      setProfile(initialProfileSnapshot);
+    }
+    if (initialEmergencySnapshot) {
+      setEmergencyContacts(initialEmergencySnapshot);
+    }
+    setProfileImage(null);
+    setProfileImageName("");
+    setEditing(false);
+  };
+
+  const hasUnsavedChanges =
+    editing &&
+    (
+      Boolean(profileImage) ||
+      JSON.stringify(normalizeProfile(profile)) !== JSON.stringify(initialProfileSnapshot || {}) ||
+      JSON.stringify(normalizeEmergencyContacts(emergencyContacts)) !== JSON.stringify(initialEmergencySnapshot || [])
+    );
 
   const handleSave = async () => {
     try {
@@ -213,6 +406,10 @@ const Profile = () => {
       await api.put("/profile/me", formData, { headers: { "Content-Type": "multipart/form-data" } });
       await api.put("/profile/emergency-contact/me", emergencyContacts);
 
+      setInitialProfileSnapshot(normalizeProfile(profile));
+      setInitialEmergencySnapshot(normalizeEmergencyContacts(emergencyContacts));
+      setProfileImage(null);
+      setProfileImageName("");
       setEditing(false);
       fetchProfile();
       fetchEmergencyContact();
@@ -231,6 +428,41 @@ const Profile = () => {
     fetchCountries();
     fetchProfile();
     fetchEmergencyContact();
+
+    const fetchApptStats = async () => {
+      try {
+        const appts = await getAppointments();
+        if (Array.isArray(appts)) {
+          const now = new Date();
+          let next = null;
+          let last = null;
+
+          appts.forEach(appt => {
+            const timeStr = appt.appointment_time || "00:00:00";
+            const apptDate = new Date(`${appt.appointment_date}T${timeStr}`);
+            if (apptDate >= now && (appt.status === 'pending' || appt.status === 'approved')) {
+              if (!next || apptDate < new Date(`${next.appointment_date}T${next.appointment_time || "00:00:00"}`)) {
+                next = appt;
+              }
+            } else if (apptDate < now && appt.status === 'completed') {
+              if (!last || apptDate > new Date(`${last.appointment_date}T${last.appointment_time || "00:00:00"}`)) {
+                last = appt;
+              }
+            }
+          });
+
+          setApptStats({
+            total: appts.length,
+            next: next,
+            last: last
+          });
+        }
+      } catch (err) {
+        console.error("Failed to load appointment stats", err);
+      }
+    };
+
+    fetchApptStats();
   }, [fetchProfile]);
 
   if (loading) return <div className="loading-spinner">Loading Profile...</div>;
@@ -266,7 +498,7 @@ const Profile = () => {
 
             <button 
                 className={`edit-toggle-btn ${editing ? 'cancel' : ''}`} 
-                onClick={() => setEditing(!editing)}
+                onClick={() => (editing ? cancelEdit() : startEditing())}
             >
                 {editing ? <><X size={18}/> Cancel Edit</> : <><Edit2 size={18}/> Edit Profile</>}
             </button>
@@ -298,24 +530,41 @@ const Profile = () => {
                 <InfoRow label="Full Address" value={profile.address} />
             </div>
 
-             {/* 3. MEDICAL INFO */}
-             <div className="info-card full-width">
-                <div className="card-title"><Activity size={20} className="text-red-500"/> Medical Information</div>
-                <div className="mb-4">
-                    <div className="label mb-2">Allergies</div>
-                    <div className="medical-tags-container">
-                        {profile.allergies ? profile.allergies.split(',').map((tag, i) => (
-                            <span key={i} className="medical-tag allergy">{tag.trim()}</span>
-                        )) : <span className="value">None reported</span>}
-                    </div>
+
+
+            {/* APPOINTMENT STATS */}
+            <div 
+               className="info-card full-width appointment-stats-card" 
+               onClick={() => navigate('/patient/appointments')} 
+            >
+                <div className="card-title flex items-center justify-between" style={{marginBottom: '0'}}>
+                   <div style={{display: 'flex', alignItems: 'center', gap: '8px', color: '#6366f1'}}>
+                       <CalendarDays size={20}/> Appointment History Snapshot
+                   </div>
+                   <ArrowRight size={18} className="text-gray-400" />
                 </div>
-                <div>
-                    <div className="label mb-2">Chronic Conditions</div>
-                     <div className="medical-tags-container">
-                        {profile.chronic_conditions ? profile.chronic_conditions.split(',').map((tag, i) => (
-                            <span key={i} className="medical-tag condition">{tag.trim()}</span>
-                        )) : <span className="value">None reported</span>}
+                
+                <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginTop: '20px'}}>
+                    
+                    <div style={{padding: '16px', background: '#f8fafc', borderRadius: '12px', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
+                        <span style={{fontSize: '13px', fontWeight: '600', color: '#64748b', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '6px'}}><History size={15}/> Total Consultations</span>
+                        <span style={{fontSize: '24px', fontWeight: '700', color: '#1e293b'}}>{apptStats.total}</span>
                     </div>
+
+                    <div style={{padding: '16px', background: '#eff6ff', borderRadius: '12px', border: '1px solid #dbeafe', display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
+                         <span style={{fontSize: '13px', fontWeight: '600', color: '#2563eb', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '6px'}}><Clock size={15}/> Next Upcoming</span>
+                         <span style={{fontSize: '15px', fontWeight: '700', color: '#1e3a8a', textAlign: 'center'}}>
+                           {apptStats.next ? `${new Date(apptStats.next.appointment_date).toLocaleDateString('en-IN', {month: 'short', day: 'numeric'})} at ${(apptStats.next.appointment_time || "00:00").substring(0,5)}` : "No upcoming"}
+                         </span>
+                    </div>
+
+                    <div style={{padding: '16px', background: '#ecfdf5', borderRadius: '12px', border: '1px solid #d1fae5', display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
+                         <span style={{fontSize: '13px', fontWeight: '600', color: '#059669', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '6px'}}><Calendar size={15}/> Last Consult</span>
+                         <span style={{fontSize: '15px', fontWeight: '700', color: '#064e3b', textAlign: 'center'}}>
+                           {apptStats.last ? `${new Date(apptStats.last.appointment_date).toLocaleDateString('en-IN', {month: 'short', day: 'numeric'})} with ${apptStats.last.doctor_name || 'Doctor'}` : "None"}
+                         </span>
+                    </div>
+                    
                 </div>
             </div>
 
@@ -436,18 +685,7 @@ const Profile = () => {
             </div>
 
 
-            {/* --- 3. MEDICAL INFO SECTION --- */}
-            <div className="form-section-title mt-6"><Activity size={20} className="text-red-500"/> Medical Information</div>
 
-            <div className="form-group full-width">
-                <label>Allergies (comma separated)</label>
-                <input name="allergies" value={profile.allergies} onChange={handleChange} placeholder="e.g. Peanuts, Penicillin" />
-            </div>
-
-            <div className="form-group full-width">
-                <label>Chronic Conditions (comma separated)</label>
-                <input name="chronic_conditions" value={profile.chronic_conditions} onChange={handleChange} placeholder="e.g. Asthma, Diabetes" />
-            </div>
 
 
             {/* --- 4. EMERGENCY CONTACTS SECTION --- */}
@@ -498,13 +736,27 @@ const Profile = () => {
                 <button className="secondary-btn flex items-center gap-2 mt-2 w-full justify-center py-3 border-dashed border-2 hover:border-solid" onClick={addNewContact}><Plus size={18}/> Add Another Emergency Contact</button>
             </div>
 
-            <div className="form-actions-refined">
-                <button className="btn-premium-cancel" onClick={() => setEditing(false)}><X size={18}/> Cancel</button>
-                <button className="btn-premium-save" onClick={handleSave}><Save size={18}/> Save Changes</button>
-            </div>
         </div>
       )}
     </div>
+
+    {editing && (
+      <div className="profile-floating-action-bar">
+        <span className="profile-floating-hint">
+          {hasUnsavedChanges ? "Unsaved changes..." : "No changes yet"}
+        </span>
+        <button className="btn-premium-cancel" onClick={cancelEdit}>
+          <X size={18}/> Cancel
+        </button>
+        <button
+          className="btn-premium-save"
+          onClick={handleSave}
+          disabled={!hasUnsavedChanges}
+        >
+          <Save size={18}/> Save Changes
+        </button>
+      </div>
+    )}
     </>
   );
 };
@@ -516,5 +768,109 @@ const InfoRow = ({ label, value }) => (
         <span className="value">{value || "-"}</span>
     </div>
 );
+
+const TagInputField = ({ name, value, onChange, suggestions, placeholder }) => {
+  const [draft, setDraft] = useState("");
+  const [error, setError] = useState("");
+  const tags = splitMedicalTags(value);
+
+  const updateValue = (nextTags) => {
+    onChange({ target: { name, value: joinMedicalTags(nextTags) } });
+  };
+
+  const addTag = (rawValue) => {
+    const cleaned = rawValue.replace(/\s+/g, " ").trim();
+    if (!cleaned) return;
+    if (cleaned.length < 3) {
+      setError("Enter at least 3 letters.");
+      return;
+    }
+    if (!/^[A-Za-z ]+$/.test(cleaned)) {
+      setError("Use only letters and spaces.");
+      return;
+    }
+    if (tags.length >= 10) {
+      setError("Maximum 10 entries allowed.");
+      return;
+    }
+    if (tags.some((tag) => normalizeText(tag) === normalizeText(cleaned))) {
+      setError("This entry is already added.");
+      return;
+    }
+
+    updateValue([...tags, cleaned]);
+    setDraft("");
+    setError("");
+  };
+
+  const removeTag = (index) => {
+    const nextTags = tags.filter((_, i) => i !== index);
+    updateValue(nextTags);
+    setError("");
+  };
+
+  const filteredSuggestions = suggestions
+    .filter((item) => !tags.some((tag) => normalizeText(tag) === normalizeText(item)))
+    .filter((item) => (draft ? normalizeText(item).includes(normalizeText(draft)) : true))
+    .slice(0, 6);
+
+  return (
+    <div className="tag-input-wrap">
+      <div className="tag-chip-list">
+        {tags.map((tag, index) => (
+          <span key={`${tag}-${index}`} className="tag-chip">
+            {tag}
+            <button
+              type="button"
+              className="tag-chip-remove"
+              onClick={() => removeTag(index)}
+              aria-label={`Remove ${tag}`}
+            >
+              <X size={13} />
+            </button>
+          </span>
+        ))}
+      </div>
+
+      <div className="tag-input-row">
+        <input
+          type="text"
+          value={draft}
+          onChange={(e) => {
+            setDraft(e.target.value);
+            setError("");
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              addTag(draft);
+            }
+          }}
+          placeholder={placeholder}
+        />
+        <button type="button" className="tag-add-btn" onClick={() => addTag(draft)}>
+          Add
+        </button>
+      </div>
+
+      {filteredSuggestions.length > 0 && (
+        <div className="tag-suggestions">
+          {filteredSuggestions.map((item) => (
+            <button
+              type="button"
+              key={item}
+              className="tag-suggestion-chip"
+              onClick={() => addTag(item)}
+            >
+              {item}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {error && <p className="tag-input-error">{error}</p>}
+    </div>
+  );
+};
 
 export default Profile;

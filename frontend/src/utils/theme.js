@@ -6,7 +6,9 @@ export const getTheme = () => {
 
 export const applyTheme = (theme) => {
   localStorage.setItem(THEME_KEY, theme);
-  document.documentElement.classList.toggle("dark", theme === "dark");
+  const isDark = theme === "dark";
+  document.documentElement.classList.toggle("dark", isDark);
+  document.body.classList.toggle("dark", isDark);
 };
 
 export const toggleTheme = () => {

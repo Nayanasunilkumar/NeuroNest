@@ -588,6 +588,62 @@
   border-bottom-left-radius: 4px;
 }
 
+/* Call Card Styling */
+.nexus-call-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 240px;
+  padding: 4px 0;
+}
+
+.nexus-call-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.9;
+}
+
+.nexus-call-desc {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.4;
+  opacity: 0.95;
+}
+
+.nexus-call-join-btn {
+  background: white;
+  color: #3b82f6;
+  border: none;
+  border-radius: 10px;
+  padding: 10px;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  width: 100%;
+}
+
+.nexus-call-join-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+  background: #f8fafc;
+}
+
+.received .nexus-call-join-btn {
+  background: #3b82f6;
+  color: white;
+}
+
+.received .nexus-call-join-btn:hover {
+  background: #2563eb;
+}
+
 .nexus-msg-meta {
   display: flex;
   width: auto;

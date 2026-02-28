@@ -6,12 +6,14 @@ const medicalRecordsModule = {
   label: 'Medical Records',
   icon: Files,
   route: '/medical-records',
-  rolesAllowed: ['patient'],
+  rolesAllowed: ['patient', 'doctor'],
   enabledByDefault: true,
   componentsByRole: {
     patient: MedicalRecords,
+    doctor: MedicalRecords,
   },
-  orderByRole: { patient: 50 },
+  showInSidebarByRole: ['patient'],
+  orderByRole: { patient: 50, doctor: 110 },
 };
 
 export default medicalRecordsModule;

@@ -13,7 +13,7 @@ const ViewMedicalRecordModal = ({ isOpen, onClose, record }) => {
             const fetchBlob = async () => {
                 try {
                     setLoading(true);
-                    const blobData = await medicalRecordService.getRecordBlob(record.file_path);
+                    const blobData = await medicalRecordService.getRecordBlob(record.id);
                     setContent(blobData.url);
                     setFileType(blobData.type);
                 } catch (err) {
@@ -134,7 +134,7 @@ const ViewMedicalRecordModal = ({ isOpen, onClose, record }) => {
                             }}
                             onMouseEnter={(e) => e.target.style.backgroundColor = '#374151'}
                             onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
-                            onClick={() => medicalRecordService.downloadRecord(record.file_path, record.title)}
+                            onClick={() => medicalRecordService.downloadRecord(record.id, record.title, record.file_type)}
                         >
                             <Download size={16} />
                             <span>Download</span>
@@ -207,7 +207,7 @@ const ViewMedicalRecordModal = ({ isOpen, onClose, record }) => {
                                         margin: '0 auto',
                                         cursor: 'pointer'
                                     }}
-                                    onClick={() => medicalRecordService.downloadRecord(record.file_path, record.title)}
+                                    onClick={() => medicalRecordService.downloadRecord(record.id, record.title, record.file_type)}
                                 >
                                     <Download size={18} /> Download to View
                                 </button>

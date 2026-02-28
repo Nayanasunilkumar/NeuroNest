@@ -4,7 +4,7 @@ import { useLocation } from 'react-router-dom';
 import { getDoctorProfile } from '../../services/doctorProfileService';
 import { getModuleByPathname } from '../../modules/moduleRegistry';
 
-const DoctorNavbar = ({ darkMode, setDarkMode }) => {
+const DoctorNavbar = ({ darkMode, toggleTheme }) => {
   const location = useLocation();
   const matchedModule = getModuleByPathname(location.pathname);
   const title = matchedModule?.label || 'Dashboard';
@@ -59,7 +59,7 @@ const DoctorNavbar = ({ darkMode, setDarkMode }) => {
         <div className="doc-nav-right">
             <button 
                 className="action-btn theme-toggle" 
-                onClick={() => setDarkMode(!darkMode)}
+                onClick={toggleTheme}
                 title={darkMode ? "Switch to Light Mode" : "Dark Mode"}
             >
                 {darkMode ? <Sun size={20} className="text-yellow-400" /> : <Moon size={20} className="text-slate-600" />}

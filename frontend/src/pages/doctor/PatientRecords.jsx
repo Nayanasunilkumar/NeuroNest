@@ -3,7 +3,6 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import { 
     getPatientDossier, 
     saveClinicalRemark, 
-    getClinicalRemarks,
     completeAppointment,
     cancelAppointment,
     markNoShow
@@ -11,7 +10,7 @@ import {
 import { 
     Calendar, User, Clock, Mail, Phone, Info, 
     ChevronRight, Bookmark, ShieldAlert, Edit3, Folder, StickyNote,
-    Check, X, AlertCircle
+    Check, X, AlertCircle, FileText, Activity, MessageSquare, LayoutGrid, Bell
 } from "lucide-react";
 import { toAssetUrl } from "../../utils/media";
 import "../../styles/doctor-records.css";
@@ -30,16 +29,11 @@ const PatientRecords = () => {
     const [showRemarkModal, setShowRemarkModal] = useState(false);
     const [remarkContent, setRemarkContent] = useState("");
     const [savingRemark, setSavingRemark] = useState(false);
-    
-    // View Remarks List State
-    const [showRemarksListModal, setShowRemarksListModal] = useState(false);
-    const [remarksList, setRemarksList] = useState([]);
-    const [loadingRemarks, setLoadingRemarks] = useState(false);
 
     const fetchDossier = useCallback(async () => {
         try {
             setLoading(true);
-            setImageError(false); // Reset image error when fetching new dossier
+            setImageError(false);
             const data = await getPatientDossier(patientId);
             setDossier(data);
             setError(null);
@@ -75,31 +69,6 @@ const PatientRecords = () => {
         }
     };
 
-    const handleViewRemarks = async () => {
-        try {
-            setLoadingRemarks(true);
-            setShowRemarksListModal(true);
-            const data = await getClinicalRemarks(patientId);
-            setRemarksList(data);
-        } catch (err) {
-            console.error("Failed to fetch remarks:", err);
-        } finally {
-            setLoadingRemarks(false);
-        }
-    };
-
-    const handleAction = async (id, type) => {
-        try {
-            if (type === 'complete') await completeAppointment(id);
-            if (type === 'cancel') await cancelAppointment(id);
-            if (type === 'no-show') await markNoShow(id);
-            fetchDossier();
-        } catch (err) {
-            console.error(`Error performing ${type}:`, err);
-            alert(`Failed to ${type} appointment.`);
-        }
-    };
-
     if (loading) return (
         <div className="flex flex-col items-center justify-center h-[80vh] gap-4">
             <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
@@ -131,7 +100,6 @@ const PatientRecords = () => {
                 {/* Header Section */}
                 <div className="dossier-premium-header">
                     <h1 className="dossier-premium-title">Clinical Dossier</h1>
-                    <p className="dossier-premium-subtitle">Comprehensive medical archive and longitudinal engagement timeline.</p>
                 </div>
 
                 <div className="dossier-premium-grid">
@@ -146,13 +114,15 @@ const PatientRecords = () => {
                                         onError={() => setImageError(true)}
                                     />
                                 ) : (
-                                    <span className="text-4xl font-black text-blue-500">
+                                    <span className="text-3xl font-black text-blue-500">
                                         {identity.full_name.charAt(0)}
                                     </span>
                                 )}
                             </div>
-                            <h2 className="sidebar-name">{identity.full_name}</h2>
-                            <span className="pid-badge">Patient ID #00{identity.id}</span>
+                            <div className="sidebar-identity-text">
+                                <h2 className="sidebar-name">{identity.full_name}</h2>
+                                <span className="pid-badge">Patient ID #00{identity.id}</span>
+                            </div>
                         </div>
 
                         <div className="sidebar-info-group">
@@ -160,7 +130,7 @@ const PatientRecords = () => {
                                 <div className="info-icon-circle"><Mail size={16} /></div>
                                 <div className="info-value-stack">
                                     <span className="info-mini-label">Email Access</span>
-                                    <span className="info-mini-value">{identity.email}</span>
+                                    <span className="info-mini-value truncate max-w-[150px]">{identity.email}</span>
                                 </div>
                             </div>
                             <div className="info-mini-row">
@@ -194,97 +164,91 @@ const PatientRecords = () => {
                                 <Edit3 size={16} />
                                 Add Remark
                             </button>
-                            <button 
-                                onClick={handleViewRemarks}
-                                className="btn-premium-secondary"
-                            >
-                                <Folder size={16} />
-                                View All Notes
-                            </button>
                         </div>
                     </div>
 
-                    {/* RIGHT PANEL: Clinical Axis Timeline */}
+                    {/* RIGHT PANEL: Clinical Hub Nexus */}
                     <div className="timeline-premium-axis">
-                        <div className="timeline-vertical-line" />
-                        
-                        <div className="timeline-section-header">
-                            <div className="timeline-header-content">
-                                <h3 className="timeline-main-title">Timeline Record</h3>
-                                <div className="timeline-counter-badge">
-                                    <span className="counter-label">Encounters:</span>
-                                    <span className="counter-value">{timeline.length}</span>
-                                </div>
+                        <div className="clinical-hub-nexus fade-in">
+                            <div className="hub-grid">
+                                <button onClick={() => navigate(`/doctor/patient-timeline?patientId=${patientId}`)} className="hub-card timeline">
+                                    <div className="hub-card-icon"><Calendar size={24} /></div>
+                                    <div className="hub-card-content">
+                                        <h4>Clinical Timeline</h4>
+                                        <p>{timeline.length} Recorded Encounters</p>
+                                    </div>
+                                    <ChevronRight size={18} className="hub-arrow" />
+                                </button>
+
+                                <button onClick={() => navigate(`/doctor/medical-records?patientId=${patientId}`)} className="hub-card medical">
+                                    <div className="hub-card-icon"><FileText size={24} /></div>
+                                    <div className="hub-card-content">
+                                        <h4>Medical Summary</h4>
+                                        <p>Allergies, Meds & Conditions</p>
+                                    </div>
+                                    <ChevronRight size={18} className="hub-arrow" />
+                                </button>
+
+                                <button onClick={() => navigate(`/doctor/write-prescription?patientId=${patientId}`)} className="hub-card prescription">
+                                    <div className="hub-card-icon"><Edit3 size={24} /></div>
+                                    <div className="hub-card-content">
+                                        <h4>Write Prescription</h4>
+                                        <p>Issue high-fidelity scripts</p>
+                                    </div>
+                                    <ChevronRight size={18} className="hub-arrow" />
+                                </button>
+
+                                <button onClick={() => navigate(`/doctor/assessment-reports?patientId=${patientId}`)} className="hub-card assessments">
+                                    <div className="hub-card-icon"><ShieldAlert size={24} /></div>
+                                    <div className="hub-card-content">
+                                        <h4>Assessment Reports</h4>
+                                        <p>Clinical evaluation results</p>
+                                    </div>
+                                    <ChevronRight size={18} className="hub-arrow" />
+                                </button>
+
+                                <button onClick={() => navigate(`/doctor/performance-analytics?patientId=${patientId}`)} className="hub-card analytics">
+                                    <div className="hub-card-icon"><Activity size={24} /></div>
+                                    <div className="hub-card-content">
+                                        <h4>Performance Analytics</h4>
+                                        <p>Therapeutic outcome data</p>
+                                    </div>
+                                    <ChevronRight size={18} className="hub-arrow" />
+                                </button>
+
+                                <button onClick={() => navigate(`/doctor/chat?patientId=${patientId}`)} className="hub-card chat">
+                                    <div className="hub-card-icon"><MessageSquare size={24} /></div>
+                                    <div className="hub-card-content">
+                                        <h4>Patients Chat</h4>
+                                        <p>Clinical consultation threads</p>
+                                    </div>
+                                    <ChevronRight size={18} className="hub-arrow" />
+                                </button>
+
+                                <button onClick={() => navigate(`/doctor/clinical-archives?patientId=${patientId}`)} className="hub-card archives">
+                                    <div className="hub-card-icon"><Folder size={24} /></div>
+                                    <div className="hub-card-content">
+                                        <h4>Clinical Archives</h4>
+                                        <p>Remark logs & longitudinal history</p>
+                                    </div>
+                                    <ChevronRight size={18} className="hub-arrow" />
+                                </button>
+
+                                <button onClick={() => navigate(`/doctor/alerts?patientId=${patientId}`)} className="hub-card alerts">
+                                    <div className="hub-card-icon"><Bell size={24} /></div>
+                                    <div className="hub-card-content">
+                                        <h4>Alerts</h4>
+                                        <p>Clinical triggers & notifications</p>
+                                    </div>
+                                    <ChevronRight size={18} className="hub-arrow" />
+                                </button>
                             </div>
                         </div>
-
-                        {timeline.length === 0 ? (
-                            <div className="encounter-item-premium">
-                                <div className="encounter-card-premium text-center py-20 bg-slate-50/50">
-                                    <Bookmark size={48} className="text-slate-200 mx-auto mb-4" />
-                                    <h4 className="text-slate-800 dark:text-slate-200 font-bold">Timeline Empty</h4>
-                                    <p className="text-slate-400 text-xs text-center">No clinical sessions recorded for this dossier.</p>
-                                </div>
-                            </div>
-                        ) : (
-                            timeline.map((event) => (
-                                <div key={event.id} className="encounter-item-premium">
-                                    <div className="encounter-dot" />
-                                    <div className="encounter-card-premium">
-                                        <div className="encounter-meta-top">
-                                            <span className={`status-badge-premium status-${event.status.toLowerCase().replace(/[_-]/g, '')}`}>
-                                                {event.status}
-                                            </span>
-                                            <div className="encounter-time-stamp">
-                                                <Clock size={14} />
-                                                {new Date(event.appointment_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })} • {event.appointment_time.substring(0, 5)}
-                                            </div>
-                                        </div>
-                                        <h4 className="encounter-reason-title">
-                                            {event.reason || "Routine Clinical Assessment"}
-                                        </h4>
-                                        <div className="encounter-notes-box">
-                                            {event.notes || "No additional clinical notes recorded for this medical encounter."}
-                                        </div>
-
-                                        {event.status.toLowerCase() === 'approved' && (
-                                            <div className="encounter-actions-row">
-                                                <button 
-                                                    onClick={() => handleAction(event.id, 'complete')}
-                                                    className="action-btn-complete"
-                                                    title="Mark as Completed"
-                                                >
-                                                    <Check size={14} strokeWidth={3} />
-                                                    Complete
-                                                </button>
-                                                <div className="action-divider" />
-                                                <button 
-                                                    onClick={() => handleAction(event.id, 'no-show')}
-                                                    className="action-btn-secondary"
-                                                    title="Mark as No Show"
-                                                >
-                                                    <AlertCircle size={14} />
-                                                    No Show
-                                                </button>
-                                                <button 
-                                                    onClick={() => handleAction(event.id, 'cancel')}
-                                                    className="action-btn-danger"
-                                                    title="Cancel Appointment"
-                                                >
-                                                    <X size={14} />
-                                                    Cancel
-                                                </button>
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            ))
-                        )}
                     </div>
                 </div>
             </div>
 
-            {/* Clinical Remark Modal Overhaul */}
+            {/* Clinical Remark Modal */}
             {showRemarkModal && (
                 <div className="modal-premium-overlay" onClick={() => setShowRemarkModal(false)}>
                     <div className="modal-premium-card" onClick={e => e.stopPropagation()}>
@@ -295,9 +259,9 @@ const PatientRecords = () => {
                             </div>
                             <button 
                                 onClick={() => setShowRemarkModal(false)}
-                                className="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100/50 dark:bg-slate-800 text-slate-400 hover:text-red-500 transition-all border border-transparent hover:border-red-500/20"
+                                className="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100/50 dark:bg-slate-800 text-slate-400 hover:text-red-500 transition-all"
                             >
-                                <ChevronRight size={20} className="rotate-90" />
+                                <X size={20} />
                             </button>
                         </div>
                         
@@ -331,69 +295,6 @@ const PatientRecords = () => {
                                 className="btn-premium-primary px-10 py-3 rounded-xl"
                             >
                                 {savingRemark ? "SAVING..." : "SAVE REMARK"}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-            {/* Clinical Remarks History Modal */}
-            {showRemarksListModal && (
-                <div className="modal-premium-overlay" onClick={() => setShowRemarksListModal(false)}>
-                    <div className="modal-premium-card max-w-2xl" onClick={e => e.stopPropagation()}>
-                        <div className="modal-header-row">
-                            <div>
-                                <h3 className="modal-premium-title">Internal Observations Log</h3>
-                                <p className="text-slate-400 text-sm font-medium mt-1">Longitudinal history for {identity.full_name}</p>
-                            </div>
-                            <button 
-                                onClick={() => setShowRemarksListModal(false)}
-                                className="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100/50 dark:bg-slate-800 text-slate-400 hover:text-red-500 transition-all border border-transparent hover:border-red-500/20"
-                            >
-                                <ChevronRight size={20} className="rotate-90" />
-                            </button>
-                        </div>
-                        
-                        <div className="modal-divider" />
-
-                        <div className="remarks-archive-vault max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
-                            {loadingRemarks ? (
-                                <div className="py-20 text-center">
-                                    <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Decrypting Archives...</p>
-                                </div>
-                            ) : remarksList.length === 0 ? (
-                                <div className="py-20 text-center bg-slate-50/50 dark:bg-slate-900/30 rounded-3xl">
-                                    <StickyNote size={40} className="text-slate-200 mx-auto mb-4" />
-                                    <p className="text-slate-400 text-xs font-medium">No archived observations found for this dossier.</p>
-                                </div>
-                            ) : (
-                                <div className="space-y-4">
-                                    {remarksList.map((remark) => (
-                                        <div key={remark.id} className="remark-archive-card p-6 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-slate-100 dark:border-slate-800/50">
-                                            <div className="flex items-center justify-between mb-4">
-                                                <div className="flex items-center gap-2">
-                                                    <Calendar size={12} className="text-blue-500" />
-                                                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
-                                                        {new Date(remark.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
-                                                    </span>
-                                                </div>
-                                                <span className="text-[10px] font-black text-slate-300 dark:text-slate-600 uppercase tracking-widest">Ref #REM-00{remark.id}</span>
-                                            </div>
-                                            <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
-                                                {remark.content}
-                                            </p>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-
-                        <div className="modal-premium-footer">
-                            <button 
-                                onClick={() => setShowRemarksListModal(false)}
-                                className="px-10 py-3 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-xl font-bold text-sm hover:bg-slate-200 transition-all"
-                            >
-                                Close Archives
                             </button>
                         </div>
                     </div>

@@ -4,7 +4,10 @@ import { X, Upload, FileText, CheckCircle } from 'lucide-react';
 const UploadMedicalRecordModal = ({ isOpen, onClose, onUpload }) => {
     const [title, setTitle] = useState("");
     const [doctorName, setDoctorName] = useState("");
-    const [category, setCategory] = useState("Prescription");
+    const [hospitalName, setHospitalName] = useState("");
+    const [tags, setTags] = useState("");
+    const [notes, setNotes] = useState("");
+    const [category, setCategory] = useState("prescription");
     const [recordDate, setRecordDate] = useState(new Date().toISOString().split('T')[0]);
     const [file, setFile] = useState(null);
     const [loading, setLoading] = useState(false);
@@ -26,8 +29,11 @@ const UploadMedicalRecordModal = ({ isOpen, onClose, onUpload }) => {
         formData.append("file", file);
         formData.append("title", title);
         formData.append("doctor_name", doctorName);
+        formData.append("hospital_name", hospitalName);
         formData.append("category", category);
         formData.append("record_date", recordDate);
+        formData.append("tags", tags);
+        formData.append("notes", notes);
 
         try {
             await onUpload(formData);
@@ -35,10 +41,13 @@ const UploadMedicalRecordModal = ({ isOpen, onClose, onUpload }) => {
             // Reset form
             setTitle("");
             setDoctorName("");
+            setHospitalName("");
+            setTags("");
+            setNotes("");
             setFile(null);
         } catch (error) {
             console.error(error);
-            const errorMessage = error.response?.data?.error || error.message || "Upload failed";
+            const errorMessage = error.response?.data?.message || error.response?.data?.error || error.message || "Upload failed";
             alert(`Upload failed: ${errorMessage}`);
         } finally {
             setLoading(false);
@@ -76,6 +85,18 @@ const UploadMedicalRecordModal = ({ isOpen, onClose, onUpload }) => {
                             />
                         </div>
                         <div className="modal-form-group">
+                            <label>Hospital / Facility</label>
+                            <input
+                                className="modal-input"
+                                value={hospitalName}
+                                onChange={(e) => setHospitalName(e.target.value)}
+                                placeholder="City Hospital"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="modal-form-group">
                             <label>Date</label>
                             <input 
                                 type="date" 
@@ -93,12 +114,33 @@ const UploadMedicalRecordModal = ({ isOpen, onClose, onUpload }) => {
                             value={category} 
                             onChange={(e) => setCategory(e.target.value)}
                         >
-                            <option value="Prescription">Prescription</option>
-                            <option value="Lab Report">Lab Report</option>
-                            <option value="Scan">Scan (MRI/X-Ray)</option>
-                            <option value="Discharge Summary">Discharge Summary</option>
-                            <option value="Other">Other</option>
+                            <option value="prescription">Prescription</option>
+                            <option value="lab">Lab Report</option>
+                            <option value="scan">Scan (MRI/X-Ray)</option>
+                            <option value="discharge">Discharge Summary</option>
+                            <option value="other">Other</option>
                         </select>
+                    </div>
+
+                    <div className="modal-form-group">
+                        <label>Tags (comma separated)</label>
+                        <input
+                            className="modal-input"
+                            value={tags}
+                            onChange={(e) => setTags(e.target.value)}
+                            placeholder="blood-test, annual-checkup"
+                        />
+                    </div>
+
+                    <div className="modal-form-group">
+                        <label>Notes</label>
+                        <textarea
+                            className="modal-textarea"
+                            value={notes}
+                            onChange={(e) => setNotes(e.target.value)}
+                            placeholder="Any important details"
+                            rows={3}
+                        />
                     </div>
 
                     <div className="modal-form-group">
@@ -120,7 +162,7 @@ const UploadMedicalRecordModal = ({ isOpen, onClose, onUpload }) => {
                                 <div className="flex flex-col items-center">
                                     <Upload size={32} className="mb-2 text-gray-400" />
                                     <span className="font-medium text-gray-600">Click to upload or drag & drop</span>
-                                    <span className="text-sm text-gray-400 mt-1">PDF, JPG, PNG (Max 10MB)</span>
+                                    <span className="text-sm text-gray-400 mt-1">PDF, JPG, PNG, DOC (Max 15MB)</span>
                                 </div>
                             )}
                         </div>

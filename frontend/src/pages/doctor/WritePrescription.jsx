@@ -1,16 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import prescriptionService from '../../services/prescriptionService';
 import { getConversations } from '../../api/chat';
 import MedicineRow from '../../components/prescription/MedicineRow';
 import PrescriptionList from '../../components/prescription/PrescriptionList';
 import Avatar from '../../components/shared/Avatar';
-import { Plus, Save, FileText, Calendar, AlertCircle, User, Clock, ShieldAlert, Activity, ChevronDown, CheckCircle, X } from 'lucide-react';
+import { Plus, Save, FileText, Calendar, AlertCircle, User, Clock, ShieldAlert, Activity, ChevronDown, ChevronLeft, CheckCircle, X } from 'lucide-react';
 import '../../styles/doctor.css';
 import '../../styles/doctor-prescription-pro.css';
 
-const WritePrescription = () => {
+const WritePrescription = ({ isEmbedded = false }) => {
     const [searchParams] = useSearchParams();
+    const navigate = useNavigate();
     const patientIdParam = searchParams.get('patientId');
     
     // State
@@ -156,13 +157,13 @@ const WritePrescription = () => {
     const activeProfile = patientDossier?.identity || selectedPatient;
 
     return (
-        <div className="write-prescription-page" style={{ 
+        <div className="opd-dashboard-root custom-scrollbar" style={{ 
             display: 'flex', 
-            height: 'calc(100vh - 80px)', 
-            padding: '24px', 
-            gap: '32px', 
+            flexDirection: 'row',
+            padding: '0 24px 24px 24px', 
+            gap: '24px', 
+            height: 'calc(100vh - 120px)',
             overflow: 'hidden',
-            background: 'var(--doc-bg)'
         }}>
             {/* LEFT PANEL: FORM (70%) */}
             <div className="prescription-form-panel" style={{ 
@@ -176,103 +177,188 @@ const WritePrescription = () => {
                 overflow: 'hidden',
                 position: 'relative'
             }}>
-                {/* 1. Header Area */}
-                <div style={{ 
-                    padding: '24px 32px', 
-                    borderBottom: '1px solid #F1F5F9',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    background: '#FFFFFF',
-                    zIndex: 20
-                }}>
-                    <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: 0, display: 'flex', alignItems: 'center', gap: '12px', color: '#1E293B' }}>
-                        <div style={{ width: 42, height: 42, borderRadius: '12px', background: '#F1F5F9', color: '#2563EB', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <FileText size={20} />
+                {/* 1. Header Area - Slim Sub-header */}
+                {!isEmbedded && (
+                    <div className="dossier-premium-header" style={{ 
+                        padding: '10px 32px', 
+                        marginBottom: 0, 
+                        borderRadius: 0, 
+                        border: 'none', 
+                        borderBottom: '1px solid #F1F5F9',
+                        minHeight: 'auto',
+                        background: '#FFFFFF'
+                    }}>
+                        <div className="header-nexus-left">
+                            <button
+                                onClick={() => selectedPatient 
+                                    ? navigate(`/doctor/patient-records?patientId=${selectedPatient.id}`) 
+                                    : navigate(-1)
+                                }
+                                title="Back to Clinical Dossier"
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    width: '34px',
+                                    height: '34px',
+                                    borderRadius: '50%',
+                                    border: '1px solid #E2E8F0',
+                                    background: '#F8FAFC',
+                                    color: '#64748B',
+                                    cursor: 'pointer',
+                                    flexShrink: 0,
+                                    transition: 'all 0.2s',
+                                }}
+                                onMouseEnter={e => { e.currentTarget.style.background = '#EFF6FF'; e.currentTarget.style.borderColor = '#2563EB'; e.currentTarget.style.color = '#2563EB'; }}
+                                onMouseLeave={e => { e.currentTarget.style.background = '#F8FAFC'; e.currentTarget.style.borderColor = '#E2E8F0'; e.currentTarget.style.color = '#64748B'; }}
+                            >
+                                <ChevronLeft size={18} />
+                            </button>
+                            <div className="header-title-stack">
+                                <span className="header-breadcrumb-mini" style={{ fontSize: '11px' }}>WORKSPACE / CLINICAL SCRIPTING</span>
+                                <h2 style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: '#64748B' }}>Secure Prescription Interface</h2>
+                            </div>
                         </div>
-                        Write Prescription
-                    </h2>
 
-                    <div style={{ position: 'relative', width: '280px' }}>
-                        <select 
-                            className="pro-input" 
-                            style={{ height: '44px', paddingRight: '40px', fontWeight: 600, background: '#F8FAFC', border: '1px solid #E2E8F0' }}
-                            value={selectedPatient?.id || ''}
-                            onChange={(e) => {
-                                const p = patients.find(pat => pat.id === parseInt(e.target.value));
-                                setSelectedPatient(p);
-                            }}
-                        >
-                            <option value="">Select Patient...</option>
-                            {patients.map(p => (
-                                <option key={p.id} value={p.id}>
-                                    {p.full_name || p.name} (ID: {p.id})
-                                </option>
-                            ))}
-                        </select>
-                        <User size={16} style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', color: '#94A3B8', pointerEvents: 'none' }} />
+                        <div className="header-nexus-right">
+                            <div style={{ position: 'relative', minWidth: '240px' }}>
+                                <select 
+                                    className="pro-input" 
+                                    style={{ 
+                                        height: '36px', 
+                                        paddingLeft: '16px', 
+                                        paddingRight: '36px',
+                                        fontSize: '13px', 
+                                        fontWeight: 600, 
+                                        background: '#F8FAFC', 
+                                        borderRadius: '30px', 
+                                        border: '1px solid #E2E8F0',
+                                        appearance: 'none',
+                                        cursor: 'pointer',
+                                        color: '#1E293B',
+                                        width: '100%',
+                                    }}
+                                    value={selectedPatient?.id || ''}
+                                    onChange={(e) => {
+                                        const p = patients.find(pat => pat.id === parseInt(e.target.value));
+                                        setSelectedPatient(p);
+                                    }}
+                                >
+                                    <option value="" disabled>— Select Patient —</option>
+                                    {patients.map(p => (
+                                        <option key={p.id} value={p.id}>
+                                            {p.full_name || p.name || `Patient #${p.id}`}
+                                        </option>
+                                    ))}
+                                </select>
+                                <ChevronDown size={14} style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', color: '#64748B', pointerEvents: 'none' }} />
+                            </div>
+                        </div>
                     </div>
-                </div>
+                )}
 
                 {/* 2. Scrollable Content Area */}
                 <div className="scroll-content" style={{ flex: 1, overflowY: 'auto', padding: '32px 32px 100px 32px' }}>
                     
-                    {selectedPatient && activeProfile && (
-                        <div className="patient-context-card fade-in" style={{ marginBottom: '32px' }}>
+                    {selectedPatient && activeProfile && (() => {
+                        const age = getAge(activeProfile.dob);
+                        const ageLabel = (!activeProfile.dob || activeProfile.dob === 'N/A' || age === 0) 
+                            ? null 
+                            : `${age} yrs`;
+                        const lastVisitRaw = patientDossier?.timeline?.[0]?.appointment_date;
+                        const lastVisit = lastVisitRaw 
+                            ? new Date(lastVisitRaw).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                            : null;
+
+                        const Chip = ({ icon, label, color = '#64748B', bg = '#F1F5F9' }) => (
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', background: bg, color, padding: '4px 10px', borderRadius: '999px', fontSize: '12px', fontWeight: 600, whiteSpace: 'nowrap' }}>
+                                {icon}{label}
+                            </span>
+                        );
+
+                        return (
+                        <div className="patient-context-card fade-in" style={{ marginBottom: '24px', background: 'linear-gradient(105deg, #ffffff 60%, #f0f7ff)', borderLeft: '5px solid #2563EB', padding: '18px 24px' }}>
                             <div className="patient-info-grid">
-                                <Avatar src={activeProfile.profile_image} alt={activeProfile.full_name} style={{ width: 80, height: 80, borderRadius: '20px', boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }} />
-                                
-                                <div>
-                                    <h3 style={{ margin: '0 0 8px 0', fontSize: '1.5rem', fontWeight: 700, color: '#1E293B', letterSpacing: '-0.02em' }}>
-                                        {activeProfile.full_name} 
-                                    </h3>
-                                    <div style={{ display: 'grid', gridTemplateColumns: 'auto auto', gap: '8px 24px', fontSize: '0.9rem', color: '#64748B', fontWeight: 500 }}>
-                                        <span>Title: {activeProfile.gender || 'Unknown'}, {getAge(activeProfile.dob)} yrs</span>
-                                        <span>Patient ID: #{activeProfile.id}</span>
-                                        <span>Last Visit: {patientDossier?.timeline?.[0]?.appointment_date || 'New Patient'}</span>
+                                {/* Avatar */}
+                                <div style={{ position: 'relative', flexShrink: 0 }}>
+                                    <Avatar 
+                                        src={activeProfile.profile_image} 
+                                        alt={activeProfile.full_name} 
+                                        style={{ width: 64, height: 64, borderRadius: '18px', boxShadow: '0 6px 12px rgba(0,0,0,0.08)' }} 
+                                    />
+                                    <div style={{ position: 'absolute', bottom: 0, right: 0, width: 14, height: 14, background: '#22C55E', border: '2.5px solid #fff', borderRadius: '50%' }}></div>
+                                </div>
+
+                                {/* Info */}
+                                <div style={{ flex: 1, minWidth: 0 }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px', flexWrap: 'wrap' }}>
+                                        <h3 style={{ margin: 0, fontSize: '1.35rem', fontWeight: 800, color: '#0F172A', letterSpacing: '-0.02em', lineHeight: 1 }}>
+                                            {activeProfile.full_name}
+                                        </h3>
+                                        <span className="capsule-id" style={{ fontSize: '11px' }}>#PID-{activeProfile.id}</span>
+                                    </div>
+                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                                        {activeProfile.gender && (
+                                            <Chip icon={<User size={11} />} label={activeProfile.gender} />
+                                        )}
+                                        {ageLabel && (
+                                            <Chip icon={<Clock size={11} />} label={ageLabel} />
+                                        )}
+                                        {lastVisit && (
+                                            <Chip icon={<Calendar size={11} />} label={`Last visit: ${lastVisit}`} bg="#EFF6FF" color="#2563EB" />
+                                        )}
                                     </div>
                                 </div>
 
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', alignItems: 'flex-end' }}>
+                                {/* Alert Badges */}
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'flex-end', flexShrink: 0 }}>
                                     {activeProfile.allergies && activeProfile.allergies !== 'None' && (
-                                        <div className="badge-allergy">
-                                            <ShieldAlert size={16} /> Allergy: {activeProfile.allergies}
+                                        <div className="badge-allergy" style={{ borderRadius: '10px', fontSize: '12px', padding: '5px 12px' }}>
+                                            <ShieldAlert size={12} /> {activeProfile.allergies}
                                         </div>
                                     )}
                                     {activeProfile.chronic_conditions && activeProfile.chronic_conditions !== 'None' && (
-                                        <div className="badge-chronic">
-                                            <Activity size={16} /> Chronic: {activeProfile.chronic_conditions}
+                                        <div className="badge-chronic" style={{ borderRadius: '10px', fontSize: '12px', padding: '5px 12px' }}>
+                                            <Activity size={12} /> {activeProfile.chronic_conditions}
                                         </div>
                                     )}
                                 </div>
                             </div>
                         </div>
-                    )}
+                        );
+                    })()}
 
                     {selectedPatient ? (
                         <form onSubmit={(e) => e.preventDefault()} style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
                             
-                            <div style={{ display: 'grid', gridTemplateColumns: '7fr 3fr', gap: '24px', alignItems: 'start' }}>
-                                <div>
-                                    <label className="pro-label">Diagnosis / Condition <span style={{color: '#EF4444'}}>*</span></label>
-                                    <input 
-                                        type="text" 
-                                        className="pro-input-lg" 
-                                        placeholder="e.g. Acute Bronchitis"
-                                        value={diagnosis}
-                                        onChange={(e) => setDiagnosis(e.target.value)}
-                                        autoFocus
-                                    />
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px', alignItems: 'start' }}>
+                                <div className="input-field-premium">
+                                    <label className="pro-label">Clinical Diagnosis <span style={{color: '#EF4444'}}>*</span></label>
+                                    <div style={{ position: 'relative' }}>
+                                        <input 
+                                            type="text" 
+                                            className="pro-input-lg" 
+                                            placeholder="Enter primary condition..."
+                                            value={diagnosis}
+                                            onChange={(e) => setDiagnosis(e.target.value)}
+                                            style={{ paddingLeft: '48px' }}
+                                            autoFocus
+                                        />
+                                        <Activity size={20} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: '#94A3B8' }} />
+                                    </div>
                                 </div>
-                                <div style={{ paddingTop: '2px' }}>
-                                    <label className="pro-label" style={{ opacity: 0.7, fontWeight: 500 }}>Valid Until (Optional)</label>
-                                    <input 
-                                        type="date" 
-                                        className="pro-input" 
-                                        style={{ height: '48px', color: '#64748B', background: '#F8FAFC' }}
-                                        value={validUntil}
-                                        onChange={(e) => setValidUntil(e.target.value)}
-                                    />
+                                <div className="input-field-premium">
+                                    <label className="pro-label">Prescription Validity</label>
+                                    <div style={{ position: 'relative' }}>
+                                        <input 
+                                            type="date" 
+                                            className="pro-input-lg" 
+                                            value={validUntil}
+                                            onChange={(e) => setValidUntil(e.target.value)}
+                                            style={{ paddingLeft: '48px', height: '56px' }}
+                                        />
+                                        <Calendar size={20} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: '#94A3B8' }} />
+                                    </div>
                                 </div>
                             </div>
 
@@ -301,19 +387,24 @@ const WritePrescription = () => {
                             <div style={{ height: '1px', background: '#F1F5F9', margin: '10px 0' }}></div>
 
                             <div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                                    <h3 className="pro-section-title">Prescribed Medicines</h3>
+                            <div style={{ padding: '32px', background: '#F8FAFC', borderRadius: '24px', border: '1px solid #E2E8F0', borderStyle: 'dashed' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+                                    <div>
+                                        <h3 className="pro-section-title" style={{ fontSize: '1.25rem', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                            <div style={{ width: 32, height: 32, borderRadius: '8px', background: '#2563EB', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                <ShieldAlert size={18} />
+                                            </div>
+                                            Medication Regimen
+                                        </h3>
+                                        <p style={{ margin: '4px 0 0 42px', fontSize: '0.85rem', color: '#64748B', fontWeight: 500 }}>Specify drugs, dosages, and administration intervals.</p>
+                                    </div>
                                     <button 
                                         type="button" 
-                                        className="nexus-btn secondary" 
+                                        className="upload-btn-premium" 
                                         onClick={handleAddItem} 
-                                        style={{ 
-                                            display: 'flex', alignItems: 'center', gap: '6px', 
-                                            padding: '8px 16px', borderRadius: '8px', fontSize: '0.85rem',
-                                            border: '1px solid #E2E8F0', background: 'transparent'
-                                        }}
+                                        style={{ padding: '0 20px', height: '42px', fontSize: '0.85rem', background: '#0F172A' }}
                                     >
-                                        <Plus size={16} /> Add Drug
+                                        <Plus size={16} /> Add Medication
                                     </button>
                                 </div>
 
@@ -328,28 +419,34 @@ const WritePrescription = () => {
                                         />
                                     ))}
                                 </div>
+                                </div>
                             </div>
 
-                            <div>
-                                <label className="pro-label">Clinical Notes</label>
+                            <div className="clinical-notes-area" style={{ marginTop: '10px' }}>
+                                <label className="pro-label" style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#1E293B' }}>
+                                    <FileText size={16} /> Extended Clinical Notes
+                                </label>
                                 <textarea 
                                     className="pro-input" 
-                                    rows="3"
-                                    placeholder="Add notes..."
+                                    rows="4"
+                                    placeholder="Briefly document findings, patient instructions, or special observations..."
                                     value={notes}
                                     onChange={(e) => setNotes(e.target.value)}
-                                    style={{ height: 'auto', padding: '14px', lineHeight: '1.6' }}
+                                    style={{ height: 'auto', padding: '20px', lineHeight: '1.6', borderRadius: '16px', background: '#F8FAFC', border: '1px solid #E2E8F0', fontStyle: notes ? 'normal' : 'italic' }}
                                 />
                             </div>
 
                         </form>
                     ) : (
-                        <div className="empty-state-card" style={{ marginTop: '60px' }}>
-                            <div style={{ width: 80, height: 80, background: '#F1F5F9', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px', color: '#94A3B8' }}>
-                                <User size={40} />
+                        <div className="empty-state-card fade-in" style={{ marginTop: '100px', textAlign: 'center', padding: '40px' }}>
+                            <div style={{ position: 'relative', width: 140, height: 140, margin: '0 auto 32px' }}>
+                                <div style={{ position: 'absolute', inset: 0, background: '#EFF6FF', borderRadius: '50%', animation: 'pulse 2s infinite' }}></div>
+                                <div style={{ position: 'absolute', inset: 20, background: '#2563EB', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', boxShadow: '0 10px 20px rgba(37, 99, 235, 0.3)' }}>
+                                    <User size={50} />
+                                </div>
                             </div>
-                            <h3 style={{ color: '#1E293B', fontWeight: 700 }}>No Patient Selected</h3>
-                            <p style={{ color: '#64748B' }}>Please select a patient from the header to start.</p>
+                            <h2 style={{ color: '#0F172A', fontWeight: 800, fontSize: '1.8rem', marginBottom: '12px' }}>Clinical Session Idle</h2>
+                            <p style={{ color: '#64748B', maxWidth: '300px', margin: '0 auto', lineHeight: '1.6', fontWeight: 500 }}>Select a patient from the search nexus above to initiate a new prescription script.</p>
                         </div>
                     )}
                 </div>
@@ -373,25 +470,20 @@ const WritePrescription = () => {
                         <div style={{ display: 'flex', gap: '16px' }}>
                             <button 
                                 type="button" 
-                                className="nexus-btn secondary"
+                                className="btn-retry-prm"
                                 onClick={() => initiateSubmit('Draft')}
                                 disabled={loading}
-                                style={{ height: '48px', padding: '0 24px', fontSize: '0.95rem', fontWeight: 600 }}
+                                style={{ padding: '0 24px', height: '48px', borderRadius: '14px' }}
                             >
                                 Save Draft
                             </button>
 
                             <button 
                                 type="button" 
-                                className="nexus-btn primary" 
+                                className="upload-btn-premium" 
                                 onClick={() => initiateSubmit('Active')}
                                 disabled={loading} 
-                                style={{ 
-                                    height: '48px', padding: '0 32px', fontSize: '1rem', fontWeight: 700,
-                                    background: 'linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%)',
-                                    boxShadow: '0 4px 12px rgba(37, 99, 235, 0.25)',
-                                    border: 'none', borderRadius: '12px', color: 'white'
-                                }}
+                                style={{ height: '48px', padding: '0 32px', border: 'none' }}
                             >
                                 {loading ? 'Processing...' : 'Issue Prescription'}
                             </button>
@@ -412,8 +504,11 @@ const WritePrescription = () => {
                 overflow: 'hidden',
                 border: '1px solid #E2E8F0'
             }}>
-                <div style={{ padding: '24px', borderBottom: '1px solid #F1F5F9' }}>
-                    <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700, color: '#1E293B' }}>History</h3>
+                <div style={{ padding: '16px 24px', borderBottom: '1px solid #F1F5F9', background: '#F8FAFC' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <Clock size={16} className="text-gray-400" />
+                        <h3 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 700, color: '#1E293B', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Script History</h3>
+                    </div>
                 </div>
                 <div style={{ flex: 1, overflow: 'hidden' }}>
                     <PrescriptionList 

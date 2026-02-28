@@ -4,7 +4,7 @@ import DoctorChat from '../../pages/doctor/DoctorChat';
 
 const patientChatModule = {
   key: 'patientChat',
-  label: 'Patient Chat',
+  label: 'Patients Chat',
   icon: MessageSquare,
   route: '/messages',
   routeByRole: {
@@ -18,6 +18,7 @@ const patientChatModule = {
     doctor: DoctorChat,
     patient: Chat,
   },
+  showInSidebarByRole: ['doctor', 'patient', 'admin'],
   orderByRole: { doctor: 100, patient: 70, admin: 110 },
 };
 

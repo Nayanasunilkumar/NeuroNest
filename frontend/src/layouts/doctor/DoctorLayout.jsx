@@ -1,21 +1,14 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import DoctorSidebar from "./DoctorSidebar";
 import DoctorNavbar from "./DoctorNavbar";
+import { useTheme } from "../../context/ThemeContext";
 import "../../styles/doctor.css";
 
 const DoctorLayout = () => {
   const [collapsed, setCollapsed] = useState(false);
-  const [darkMode, setDarkMode] = useState(false);
+  const { isDark: darkMode, toggleTheme } = useTheme();
   const location = useLocation();
-
-  useEffect(() => {
-     if (darkMode) {
-       document.body.classList.add("dark");
-     } else {
-       document.body.classList.remove("dark");
-     }
-  }, [darkMode]);
 
   const isChatRoute = location.pathname === '/doctor/chat';
 
@@ -27,7 +20,7 @@ const DoctorLayout = () => {
         <DoctorNavbar 
           collapsed={collapsed} 
           darkMode={darkMode}
-          setDarkMode={setDarkMode}
+          toggleTheme={toggleTheme}
         />
         <div className={`doctor-content ${isChatRoute ? 'no-padding' : ''}`}>
            <Outlet />

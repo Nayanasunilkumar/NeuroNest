@@ -7,18 +7,25 @@
 
 /* 1. PATIENT CONTEXT HEADER -------------------- */
 .patient-context-card {
-    background: linear-gradient(135deg, #F8FAFC 0%, #FFFFFF 100%);
+    background: white;
     border: 1px solid #E2E8F0;
-    border-radius: 16px;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    border-radius: 20px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
     overflow: hidden;
     padding: 24px !important;
 }
 
-.patient-context-card:hover {
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08);
+.patient-context-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 6px;
+    height: 100%;
+    background: #2563EB;
+    border-radius: 20px 0 0 20px;
 }
 
 .patient-info-grid {
@@ -100,20 +107,19 @@
 /* 3. MEDICINE BLOCK (NEW STRUCTURE) ------------ */
 .medicine-block {
     background: #FFFFFF;
-    border: 1px solid #E2E8F0;
-    border-left: 4px solid #CBD5E1;
-    border-radius: 12px;
+    border: 1px solid #f1f5f9;
+    border-radius: 20px;
     padding: 24px;
-    margin-bottom: 20px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
-    transition: all 0.2s ease;
+    margin-bottom: 24px;
+    transition: all 0.3s ease;
+    border-left: 6px solid #e2e8f0;
 }
 
 .medicine-block:hover {
-    border-color: #CBD5E1;
-    border-left-color: #2563EB;
-    box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05);
-    transform: translateY(-1px);
+    border-color: #e2e8f0;
+    border-left-color: #3b82f6;
+    box-shadow: 0 12px 24px -10px rgba(0,0,0,0.08);
+    transform: translateX(4px);
 }
 
 .row-number-badge {
@@ -398,16 +404,16 @@
 .sticky-footer-bar {
     position: sticky;
     bottom: 0;
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(16px);
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(20px);
     border-top: 1px solid #E2E8F0;
-    padding: 24px 32px;
+    padding: 20px 32px;
     margin: 0 -32px -32px -32px;
     display: flex;
     justify-content: space-between;
     align-items: center;
     z-index: 50;
-    box-shadow: 0 -4px 12px rgba(0,0,0,0.03);
+    box-shadow: 0 -10px 20px -10px rgba(0,0,0,0.05);
 }
 
 .pro-modal-overlay {
@@ -435,6 +441,47 @@
     animation: zoomIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-@keyframes zoomIn {
-    to { transform: scale(1); }
+/* History Item Premium Polish */
+.history-item {
+    border: 1px solid #F1F5F9 !important;
+    background: #FFFFFF !important;
+}
+
+.history-item:hover {
+    border-color: #3b82f6 !important;
+    transform: translateY(-2px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.04) !important;
+}
+
+.pro-input-lg[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(0.5);
+    cursor: pointer;
+}
+
+.pro-input-lg[type="date"] {
+    position: relative;
+    font-size: 0.95rem;
+}
+
+@keyframes pulse {
+    0% { transform: scale(0.95); opacity: 0.5; }
+    50% { transform: scale(1.05); opacity: 0.8; }
+    100% { transform: scale(0.95); opacity: 0.5; }
+}
+
+.input-field-premium {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.input-field-premium .pro-label {
+    margin-bottom: 0;
+}
+
+.clinical-notes-area textarea:focus {
+    background: #FFFFFF !important;
+    border-color: #2563EB !important;
+    box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.05);
+    outline: none;
 }

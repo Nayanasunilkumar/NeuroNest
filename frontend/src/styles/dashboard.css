@@ -12,7 +12,9 @@ html, body {
 }
 
 .dashboard-page {
+  --dashboard-header-height: 72px;
   min-height: 100vh;
+  padding-top: var(--dashboard-header-height);
   background: var(--admin-bg);
   font-family: 'Inter', system-ui, sans-serif;
   color: var(--admin-text-main);
@@ -24,17 +26,21 @@ html, body {
 ========================= */
 .dashboard-header {
   width: 100%;
+  height: var(--dashboard-header-height);
   background: var(--admin-header-bg);
   backdrop-filter: var(--admin-glass);
   border-bottom: 1px solid var(--admin-border);
-  position: sticky;
+  position: fixed;
   top: 0;
+  left: 0;
+  right: 0;
   z-index: 1000;
 }
 
 .dashboard-header-inner {
   width: 100%;
-  padding: 0.75rem 2rem;
+  height: 100%;
+  padding: 0 2rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -300,6 +306,20 @@ body.dark .theme-toggle-btn::before {
   .dashboard-main.sidebar-rail-offset {
     padding-left: 2.5rem;
   }
+}
+
+/* Patient chat route should sit directly under navbar without extra top gap */
+.dashboard-main.full-screen-chat {
+  max-width: none;
+  padding-top: 0;
+}
+
+.dashboard-main.full-screen-chat.sidebar-rail-offset {
+  padding-left: calc(2.5rem + 84px);
+}
+
+.dashboard-main.full-screen-chat .patient-chat-nexus {
+  margin-top: 0;
 }
 
 .dashboard-card {

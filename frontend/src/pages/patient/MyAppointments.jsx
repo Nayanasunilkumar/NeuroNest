@@ -63,9 +63,9 @@ const MyAppointments = () => {
     setIsModalOpen(true);
   };
 
-  const handleReschedule = async (id, newDate, newTime) => {
+  const handleReschedule = async (id, newDate, newTime, slotId) => {
     try {
-      await rescheduleAppointment(id, newDate, newTime);
+      await rescheduleAppointment(id, newDate, newTime, slotId);
       fetchAppointments();
       setIsModalOpen(false);
     } catch (err) {

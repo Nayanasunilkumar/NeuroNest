@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Trash2, Sun, Moon, Sunset, Coffee, Clock } from 'lucide-react';
+import { Trash2, Sun, Moon, Sunset, Coffee, Clock, X } from 'lucide-react';
 import '../../styles/doctor-prescription-pro.css';
 
 const MedicineRow = ({ item, index, onChange, onRemove }) => {
@@ -66,30 +66,27 @@ const MedicineRow = ({ item, index, onChange, onRemove }) => {
             <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '20px' }}>
                 <div className="row-number-badge">{index + 1}</div>
                 
-                <div style={{ flex: 1 }}>
-                    {/* <label className="pro-label-subtle" style={{marginBottom: 2}}>Medicine Name</label> */}
+                <div style={{ flex: 1, position: 'relative' }}>
                     <input 
                         type="text" 
                         placeholder="Drug Name (e.g. Paracetamol)"
                         value={item.medicine_name}
                         onChange={(e) => onChange(index, 'medicine_name', e.target.value)}
                         className="pro-input"
-                        style={{ fontSize: '1.1rem', fontWeight: 600, border: 'none', background: 'transparent', padding: 0 }}
+                        style={{ fontSize: '1.2rem', fontWeight: 800, border: 'none', background: 'transparent', padding: '0 0 4px 0', borderBottom: '2px solid #F1F5F9', borderRadius: 0, height: 'auto', color: '#1E293B' }}
                         required
                     />
                 </div>
 
-                <div style={{ background: '#F1F5F9', padding: '4px', borderRadius: '8px' }}>
-                    <button 
-                        type="button" 
-                        onClick={() => onRemove(index)} 
-                        className="nexus-btn-icon"
-                        style={{ color: '#EF4444', width: 28, height: 28 }}
-                        title="Remove"
-                    >
-                        <Trash2 size={16} />
-                    </button>
-                </div>
+                <button 
+                    type="button" 
+                    onClick={() => onRemove(index)} 
+                    className="btn-icon-tiny"
+                    style={{ width: 36, height: 36, background: '#FEF2F2' }}
+                    title="Remove"
+                >
+                    <X size={18} />
+                </button>
             </div>
 
             {/* 2. Structured Inputs Grid */}

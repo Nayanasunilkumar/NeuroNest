@@ -2,14 +2,13 @@ import { useState, useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import { logout } from '../utils/auth';
+import { useTheme } from '../context/ThemeContext';
 import '../styles/theme.css';
 import '../styles/dashboard.css';
 
 const AdminLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [darkMode, setDarkMode] = useState(() => {
-    return localStorage.getItem('admin-theme') === 'dark';
-  });
+  const { isDark: darkMode, toggleTheme } = useTheme();
   const [nodeCount, setNodeCount] = useState(4285);
   const [currentTime, setCurrentTime] = useState(new Date());
 
@@ -17,16 +16,6 @@ const AdminLayout = () => {
     const timeInterval = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timeInterval);
   }, []);
-
-  useEffect(() => {
-    if (darkMode) {
-      document.body.classList.add("dark");
-      localStorage.setItem('admin-theme', 'dark');
-    } else {
-      document.body.classList.remove("dark");
-      localStorage.setItem('admin-theme', 'light');
-    }
-  }, [darkMode]);
 
   // Operationalize real-time telemetry fluctuations
   useEffect(() => {
@@ -88,10 +77,10 @@ const AdminLayout = () => {
 
             <button
               className="theme-toggle-btn"
-              onClick={() => setDarkMode(!darkMode)}
+              onClick={toggleTheme}
               title={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
             >
-              {/* The ::before element in CSS handles the content/icon */}
+              {/* CSS pseudo-elements handle icons */}
             </button>
 
             <button className="header-icon-btn">

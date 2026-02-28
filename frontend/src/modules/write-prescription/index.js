@@ -11,6 +11,7 @@ const writePrescriptionModule = {
   componentsByRole: {
     doctor: WritePrescription,
   },
+  showInSidebarByRole: ['admin'],
   orderByRole: { doctor: 60, admin: 70 },
 };
 

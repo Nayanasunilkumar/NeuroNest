@@ -17,6 +17,7 @@ const assessmentReportsModule = {
   componentsByRole: {
     doctor: AssessmentReportsPage,
   },
+  showInSidebarByRole: [],
   orderByRole: { doctor: 70 },
 };
 

@@ -60,7 +60,7 @@ const ConversationList = ({ conversations, selectedId, onSelect, currentUserId }
                         <p className="nexus-last-message">
                             {lastMessage ? (
                                 <span>
-                                    {lastMessage.sender_id === currentUserId ? 'You: ' : ''}{lastMessage.content}
+                                    {String(lastMessage.sender_id) === String(currentUserId) ? 'You: ' : ''}{lastMessage.content}
                                 </span>
                             ) : (
                                 <span style={{ fontStyle: 'italic', opacity: 0.7 }}>Start a conversation</span>

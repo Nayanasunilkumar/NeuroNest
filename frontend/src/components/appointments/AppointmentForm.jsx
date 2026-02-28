@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { User, Calendar, Clock, FileText } from "lucide-react";
 import { getDoctors, getAvailableSlots } from "../../api/appointments";
 import "../../styles/appointments.css";
 
@@ -224,9 +225,9 @@ const AppointmentForm = ({ onSubmit, loading }) => {
                     />
                   </div>
 
-                  <div className="form-group">
+                  <div className="form-group full-width">
                     <label>Select Slot</label>
-                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(120px,1fr))", gap: "8px" }}>
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(110px,1fr))", gap: "12px", marginTop: "8px" }}>
                       {loadingSlots ? (
                         <span style={{ fontSize: "12px", color: "#64748b" }}>Loading slots...</span>
                       ) : isDoctorPaused ? (
@@ -253,15 +254,7 @@ const AppointmentForm = ({ onSubmit, loading }) => {
                               key={slot.id}
                               type="button"
                               onClick={() => handleSlotSelect(slot)}
-                              style={{
-                                border: selected ? "1px solid #2563eb" : "1px solid #cbd5e1",
-                                borderRadius: "10px",
-                                padding: "8px 10px",
-                                background: selected ? "#eff6ff" : "#fff",
-                                fontWeight: 700,
-                                fontSize: "12px",
-                                cursor: "pointer",
-                              }}
+                              className={`slot-select-btn ${selected ? "selected" : ""}`}
                             >
                               {slotLabel}
                             </button>
@@ -315,15 +308,15 @@ const AppointmentForm = ({ onSubmit, loading }) => {
               <h3>Booking Summary</h3>
               <div className="summary-details">
                 <div className="summary-row">
-                  <span className="label">Doctor</span>
+                  <span className="label"><User size={16} /> Doctor</span>
                   <span className="value">{formData.doctor_name || "—"}</span>
                 </div>
                 <div className="summary-row">
-                  <span className="label">Date</span>
+                  <span className="label"><Calendar size={16} /> Date</span>
                   <span className="value">{formData.date ? new Date(formData.date).toLocaleDateString() : "—"}</span>
                 </div>
                 <div className="summary-row">
-                  <span className="label">Slot</span>
+                  <span className="label"><Clock size={16} /> Slot</span>
                   <span className="value">
                     {formData.time
                       ? new Date(`1970-01-01T${formData.time}:00`).toLocaleTimeString("en-IN", {
@@ -335,7 +328,7 @@ const AppointmentForm = ({ onSubmit, loading }) => {
                   </span>
                 </div>
                 <div className="summary-row">
-                  <span className="label">Reason</span>
+                  <span className="label"><FileText size={16} /> Reason</span>
                   <span className="value">{formData.reason || "—"}</span>
                 </div>
               </div>

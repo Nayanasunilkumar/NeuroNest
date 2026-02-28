@@ -10,7 +10,17 @@ const getBadgeClass = (category) => {
     return 'badge-other';
 };
 
-const MedicalRecordTable = ({ records, onView, onDelete, onDownload, loading }) => {
+const formatCategory = (category) => {
+    if (!category) return "Other";
+    const c = category.toLowerCase();
+    if (c === "lab") return "Lab Report";
+    if (c === "scan") return "Scan";
+    if (c === "discharge") return "Discharge Summary";
+    if (c === "prescription") return "Prescription";
+    return category;
+};
+
+const MedicalRecordTable = ({ records, onView, onDelete, onDownload, loading, isDoctorView = false }) => {
     if (loading) {
         return (
             <div className="records-table-container">
@@ -84,20 +94,20 @@ const MedicalRecordTable = ({ records, onView, onDelete, onDownload, loading }) 
                 <tbody>
                     {records.map((record) => (
                         <tr key={record.id}>
-                            <td className="text-gray-500 font-medium text-sm whitespace-nowrap">
+                            <td className="record-date">
                                 {new Date(record.record_date || record.created_at).toLocaleDateString('en-US', { 
                                     year: 'numeric', month: 'short', day: 'numeric' 
                                 })}
                             </td>
                             <td>
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600 shrink-0 border border-blue-100 dark:bg-gray-800 dark:border-gray-700 dark:text-blue-400">
+                                <div className="record-detail-wrap">
+                                    <div className="record-detail-icon">
                                         <FileText size={20} />
                                     </div>
-                                    <div>
-                                        <p className="font-semibold text-gray-900 dark:text-white truncate max-w-[200px]" title={record.title}>{record.title}</p>
+                                    <div className="record-detail-text">
+                                        <p className="record-detail-title" title={record.title}>{record.title}</p>
                                         {record.description && (
-                                            <p className="text-xs text-gray-500 truncate max-w-[200px]">
+                                            <p className="record-detail-subtitle">
                                                 {record.description}
                                             </p>
                                         )}
@@ -106,20 +116,27 @@ const MedicalRecordTable = ({ records, onView, onDelete, onDownload, loading }) 
                             </td>
                             <td>
                                 <span className={`record-badge ${getBadgeClass(record.category)}`}>
-                                    {record.category}
+                                    {formatCategory(record.category)}
                                 </span>
                             </td>
-                            <td className="text-gray-600 dark:text-gray-300 font-medium">
-                                {record.doctor_name || <span className="text-gray-400 text-sm">Not specified</span>}
+                            <td className="record-doctor-cell">
+                                <div className="record-doctor-wrap">
+                                    <span>{record.doctor_name || "Not specified"}</span>
+                                    {record.hospital_name && (
+                                        <span className="record-hospital">{record.hospital_name}</span>
+                                    )}
+                                </div>
                             </td>
                             <td>
-                                {record.verified_by_doctor ? (
-                                    <div className="flex items-center gap-1.5 text-xs font-medium text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-100 w-fit">
-                                        <ShieldCheck size={13} fill="currentColor" className="text-emerald-500/20" /> Verified
+                                {(!record.uploaded_by || record.uploaded_by === record.patient_id) ? (
+                                    <div className="record-status-badge record-status-self">
+                                        <User size={13} className="record-status-icon" /> 
+                                        {isDoctorView ? "Added by Patient" : "Added by You"}
                                     </div>
                                 ) : (
-                                    <div className="flex items-center gap-1.5 text-xs font-medium text-gray-500 bg-gray-50 px-2.5 py-1 rounded-full border border-gray-200 w-fit">
-                                        <User size={13} /> Self Upload
+                                    <div className="record-status-badge record-status-verified" style={{ background: '#ecfdf5', color: '#059669', border: '1px solid #d1fae5' }}>
+                                        <ShieldCheck size={13} fill="currentColor" className="record-status-icon" /> 
+                                        {isDoctorView ? "Added by Doctor" : "Added by Doctor"}
                                     </div>
                                 )}
                             </td>

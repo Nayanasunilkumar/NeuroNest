@@ -24,3 +24,8 @@ export const getPatientContext = async (patientId) => {
     const response = await axios.get(`/api/chat/patient-context/${patientId}`);
     return response.data;
 };
+
+export const sendMessage = async (conversationId, content, type = 'text') => {
+    const response = await axios.post(`/api/chat/${conversationId}/messages`, { content, type });
+    return response.data;
+};

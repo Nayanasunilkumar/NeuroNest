@@ -18,11 +18,10 @@ export const cancelAppointment = async (id) => {
   return response.data;
 };
 
-export const rescheduleAppointment = async (id, date, time) => {
-  const response = await axios.put(`/appointments/${id}/reschedule`, {
-    date,
-    time
-  });
+export const rescheduleAppointment = async (id, date, time, slotId = null) => {
+  const payload = { date, time };
+  if (slotId) payload.slot_id = slotId;
+  const response = await axios.put(`/appointments/${id}/reschedule`, payload);
   return response.data;
 };
 

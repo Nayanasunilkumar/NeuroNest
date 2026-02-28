@@ -2,9 +2,27 @@ from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
 from database.models import db, User, Appointment
 from models.prescription_models import Prescription, PrescriptionItem
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 
 prescriptions_bp = Blueprint("prescriptions", __name__)
+
+
+def _effective_prescription_status(prescription: Prescription) -> str:
+    """Return computed status so expired validity never appears as active."""
+    current_status = (prescription.status or "").lower()
+    if current_status in {"draft", "cancelled"}:
+        return current_status
+
+    if prescription.valid_until and prescription.valid_until < date.today():
+        return "expired"
+
+    return "active"
+
+
+def _serialize_prescription_with_effective_status(prescription: Prescription) -> dict:
+    payload = prescription.to_dict()
+    payload["status"] = _effective_prescription_status(prescription)
+    return payload
 
 # =======================================================
 # 1. CREATE PRESCRIPTION (Doctor Only)
@@ -98,7 +116,7 @@ def get_doctor_prescriptions():
     # Enrich with patient name?
     results = []
     for p in prescriptions:
-        p_dict = p.to_dict()
+        p_dict = _serialize_prescription_with_effective_status(p)
         patient = User.query.get(p.patient_id)
         p_dict["patient_name"] = patient.full_name if patient else "Unknown"
         results.append(p_dict)
@@ -122,7 +140,7 @@ def get_patient_prescriptions_doctor_view(patient_id):
     
     results = []
     for p in prescriptions:
-        p_dict = p.to_dict()
+        p_dict = _serialize_prescription_with_effective_status(p)
         # Add doctor name if needed (though current user is the doctor?)
         # Wait, patient might have prescriptions from OTHER doctors too?
         # A doctor should be able to see ALL prescriptions for the patient? Or only their own?
@@ -155,7 +173,7 @@ def get_patient_prescriptions():
     # Enrich with doctor name
     results = []
     for p in prescriptions:
-        p_dict = p.to_dict()
+        p_dict = _serialize_prescription_with_effective_status(p)
         doctor = User.query.get(p.doctor_id)
         p_dict["doctor_name"] = doctor.full_name if doctor else "Unknown"
         results.append(p_dict)
@@ -176,7 +194,7 @@ def get_prescription_details(id):
     if str(prescription.doctor_id) != str(current_user_id) and str(prescription.patient_id) != str(current_user_id):
         return jsonify({"message": "Access denied"}), 403
 
-    data = prescription.to_dict()
+    data = _serialize_prescription_with_effective_status(prescription)
     
     # Add names
     doctor = User.query.get(prescription.doctor_id)

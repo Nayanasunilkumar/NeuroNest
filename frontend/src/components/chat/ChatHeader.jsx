@@ -12,7 +12,7 @@ const formatAppointmentIST = (appointment) => {
     return timeLabel ? `${dateLabel} @ ${timeLabel}` : dateLabel;
 };
 
-const ChatHeader = ({ otherUser, context, isDoctor, onToggleSidebar, showSidebar }) => {
+const ChatHeader = ({ otherUser, context, isDoctor, onToggleSidebar, showSidebar, onVideoCall }) => {
     const statusText = otherUser?.is_online ? 'Online' : 'Last seen recently';
 
     return (
@@ -54,7 +54,11 @@ const ChatHeader = ({ otherUser, context, isDoctor, onToggleSidebar, showSidebar
                 <button className="nexus-input-action-btn">
                     <Phone size={18} />
                 </button>
-                <button className="nexus-input-action-btn">
+                <button 
+                    className="nexus-input-action-btn" 
+                    title="Start Video Consultation"
+                    onClick={onVideoCall}
+                >
                     <Video size={18} />
                 </button>
                 <div className="nexus-header-divider"></div>

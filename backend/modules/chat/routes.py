@@ -189,6 +189,10 @@ def send_message_http(conversation_id):
     db.session.add(msg)
     db.session.commit()
     
+    # Broadcast to socket room for real-time
+    from extensions.socket import socketio
+    socketio.emit('new_message', msg.to_dict(), room=f"conversation_{conversation_id}")
+    
     return jsonify(msg.to_dict()), 201
 
 # =======================================================

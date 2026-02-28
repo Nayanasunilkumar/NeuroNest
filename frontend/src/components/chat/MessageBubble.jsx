@@ -1,5 +1,6 @@
 import React from 'react';
-import { Check, CheckCheck, Download, Paperclip } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Check, CheckCheck, Download, Paperclip, Video } from 'lucide-react';
 import { resolveApiUrl } from '../../config/env';
 import { formatTimeIST } from '../../utils/time';
 import '../../styles/patient-chat.css';
@@ -25,6 +26,7 @@ const getMessageFileUrl = (content = '') => {
 };
 
 const MessageBubble = ({ message, isMe }) => {
+    const navigate = useNavigate();
     const content = message?.content || '';
     const isFileMessage = message?.type === 'file' || content.includes('/uploads/');
     const fileUrl = getMessageFileUrl(content);
@@ -33,7 +35,18 @@ const MessageBubble = ({ message, isMe }) => {
     return (
         <div className={`nexus-msg-row ${isMe ? 'sent' : 'received'}`}>
             <div className="nexus-bubble">
-                {isFileMessage && fileUrl ? (
+                {message?.type === 'call_request' ? (
+                    <div className="nexus-call-card">
+                        <div className="nexus-call-header">
+                            <Video size={16} />
+                            <span>Video Consultation</span>
+                        </div>
+                        <p className="nexus-call-desc">{content}</p>
+                        <button className="nexus-call-join-btn" onClick={() => navigate(`/consultation/${message.conversation_id}`)}>
+                            Join Consult
+                        </button>
+                    </div>
+                ) : isFileMessage && fileUrl ? (
                     <div className="nexus-file-card">
                         <div className="nexus-file-topline">
                             <Paperclip size={14} />

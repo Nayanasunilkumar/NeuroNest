@@ -83,7 +83,7 @@ const ChatWindow = ({ messages, currentUserId, onSendMessage, loadingMessages, m
                 <MessageBubble 
                     key={msg.id || index} 
                     message={msg} 
-                    isMe={msg.sender_id === currentUserId}
+                    isMe={String(msg.sender_id) === String(currentUserId)}
                 />
             );
         });

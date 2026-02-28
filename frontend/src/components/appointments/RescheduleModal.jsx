@@ -1,9 +1,13 @@
 import { useState, useEffect } from "react";
+import { getAvailableSlots } from "../../api/appointments";
 import "../../styles/appointments.css";
 
 const RescheduleModal = ({ isOpen, onClose, onSave, currentAppointment }) => {
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
+  const [selectedSlotId, setSelectedSlotId] = useState("");
+  const [availableSlots, setAvailableSlots] = useState([]);
+  const [loadingSlots, setLoadingSlots] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(""); // For validation messages
 
@@ -11,29 +15,69 @@ const RescheduleModal = ({ isOpen, onClose, onSave, currentAppointment }) => {
   useEffect(() => {
     if (currentAppointment) {
       setDate(currentAppointment.appointment_date);
-      setTime(currentAppointment.appointment_time);
+      setTime("");
+      setSelectedSlotId("");
+      setAvailableSlots([]);
     }
   }, [currentAppointment]);
 
+  useEffect(() => {
+    const fetchSlots = async () => {
+      if (!isOpen || !currentAppointment?.doctor_id || !date) {
+        setAvailableSlots([]);
+        return;
+      }
+
+      setLoadingSlots(true);
+      try {
+        const response = await getAvailableSlots(currentAppointment.doctor_id, date);
+        const slots = Array.isArray(response?.slots) ? response.slots : [];
+        const filtered = slots.filter(
+          (slot) => String(slot.id) !== String(currentAppointment.slot_id),
+        );
+        setAvailableSlots(filtered);
+        if (filtered.length === 0) {
+          setSelectedSlotId("");
+          setTime("");
+          setError("No available slots for selected date.");
+        } else {
+          setError("");
+        }
+      } catch (e) {
+        setAvailableSlots([]);
+        setSelectedSlotId("");
+        setTime("");
+        setError("Unable to load available slots for this date.");
+      } finally {
+        setLoadingSlots(false);
+      }
+    };
+
+    fetchSlots();
+  }, [currentAppointment, date, isOpen]);
+
   if (!isOpen || !currentAppointment) return null;
+
+  const normalizeTime = (value = "") => String(value).slice(0, 5);
+  const currentTime = normalizeTime(currentAppointment.appointment_time);
 
   const handleSave = async () => {
     // Validation
     setError("");
-    if (!date || !time) {
-        setError("Please select both a new date and time.");
+    if (!date || !selectedSlotId || !time) {
+        setError("Please select an available slot.");
         return;
     }
     
     // Check if slot is same as current (optional but good UX)
-    if (date === currentAppointment.appointment_date && time === currentAppointment.appointment_time) {
+    if (date === currentAppointment.appointment_date && time === currentTime) {
         setError("Please select a different slot.");
         return;
     }
 
     setLoading(true);
     try {
-        await onSave(currentAppointment.id, date, time);
+        await onSave(currentAppointment.id, date, time, selectedSlotId);
         // Modal will be closed by parent on success, or we can close here.
         // Parent implementation closes it, so we don't need to do anything else.
         // But if we want to show loading, we should wait.
@@ -80,7 +124,7 @@ const RescheduleModal = ({ isOpen, onClose, onSave, currentAppointment }) => {
                 <span className="pm-slot-label">Current Slot</span>
                 <div className="pm-slot-details">
                     <span className="pm-date">{new Date(currentAppointment.appointment_date).toLocaleDateString("en-US", { month: 'short', day: 'numeric', year: 'numeric' })}</span>
-                    <span className="pm-time">{currentAppointment.appointment_time.substring(0, 5)}</span>
+                    <span className="pm-time">{currentTime}</span>
                 </div>
             </div>
             
@@ -111,7 +155,12 @@ const RescheduleModal = ({ isOpen, onClose, onSave, currentAppointment }) => {
               type="date"
               min={today}
               value={date}
-              onChange={(e) => setDate(e.target.value)}
+              onChange={(e) => {
+                setDate(e.target.value);
+                setSelectedSlotId("");
+                setTime("");
+                setError("");
+              }}
               className={ !date ? "input-empty" : ""}
             />
           </div>
@@ -119,19 +168,42 @@ const RescheduleModal = ({ isOpen, onClose, onSave, currentAppointment }) => {
           <div className="pm-form-group">
             <label>New Time</label>
             <select
-                value={time}
-                onChange={(e) => setTime(e.target.value)}
+                value={selectedSlotId}
+                onChange={(e) => {
+                  const nextId = e.target.value;
+                  setSelectedSlotId(nextId);
+                  const selectedSlot = availableSlots.find((slot) => String(slot.id) === String(nextId));
+                  if (!selectedSlot) {
+                    setTime("");
+                    return;
+                  }
+                  const localTime = new Date(selectedSlot.slot_start_utc).toLocaleTimeString("en-IN", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    hour12: false,
+                    timeZone: "Asia/Kolkata",
+                  });
+                  setTime(localTime);
+                }}
                 className="pm-time-select"
+                disabled={loadingSlots}
             >
-                <option value="">Select Time</option>
-                <option value="09:00">09:00 AM</option>
-                <option value="10:00">10:00 AM</option>
-                <option value="11:00">11:00 AM</option>
-                <option value="12:00">12:00 PM</option>
-                <option value="13:00">01:00 PM</option>
-                <option value="14:00">02:00 PM</option>
-                <option value="15:00">03:00 PM</option>
-                <option value="16:00">04:00 PM</option>
+                <option value="">
+                  {loadingSlots ? "Loading slots..." : "Select Time"}
+                </option>
+                {availableSlots.map((slot) => {
+                  const label = new Date(slot.slot_start_utc).toLocaleTimeString("en-IN", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    hour12: true,
+                    timeZone: "Asia/Kolkata",
+                  });
+                  return (
+                    <option key={slot.id} value={slot.id}>
+                      {label}
+                    </option>
+                  );
+                })}
             </select>
           </div>
         </div>
@@ -147,7 +219,7 @@ const RescheduleModal = ({ isOpen, onClose, onSave, currentAppointment }) => {
           <button 
             onClick={handleSave} 
             className="pm-btn-primary"
-            disabled={loading || !date || !time}
+            disabled={loading || !date || !selectedSlotId || !time}
           >
             {loading ? (
                 <span className="spinner-loader"></span>

@@ -165,10 +165,10 @@
 .sidebar-quick-rail {
   position: fixed;
   left: 0;
-  top: 72px;
+  top: 0;
   bottom: 0;
   width: 84px;
-  padding: 0;
+  padding: var(--dashboard-header-height, 72px) 0 0;
   border-right: 1px solid var(--admin-border);
   background: var(--admin-panel-bg);
   backdrop-filter: var(--admin-glass);

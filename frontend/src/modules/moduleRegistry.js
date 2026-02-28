@@ -25,6 +25,8 @@ import assessmentReportsModule from './assessment-reports';
 import performanceAnalyticsModule from './performance-analytics';
 import alertsModule from './alerts';
 import patientChatModule from './patient-chat';
+import patientTimelineModule from './patient-timeline';
+import clinicalArchivesModule from './clinical-archives';
 import settingsModule from './settings';
 
 export const ROLE_BASE_PATH = {
@@ -62,6 +64,8 @@ export const moduleRegistry = [
   performanceAnalyticsModule,
   alertsModule,
   patientChatModule,
+  patientTimelineModule,
+  clinicalArchivesModule,
   settingsModule,
 ];
 

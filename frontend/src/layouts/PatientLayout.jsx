@@ -1,21 +1,14 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 import { logout } from "../utils/auth";
+import { useTheme } from "../context/ThemeContext";
 import "../styles/dashboard.css";
 
 const PatientLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [darkMode, setDarkMode] = useState(false);
+  const { isDark: darkMode, toggleTheme } = useTheme();
   const location = useLocation();
-
-  useEffect(() => {
-    if (darkMode) {
-      document.body.classList.add("dark");
-    } else {
-      document.body.classList.remove("dark");
-    }
-  }, [darkMode]);
 
   return (
     <div className="dashboard-page">
@@ -39,9 +32,9 @@ const PatientLayout = () => {
           <div className="dashboard-header-right">
             <button
               className="theme-toggle-btn"
-              onClick={() => setDarkMode(!darkMode)}
+              onClick={toggleTheme}
             >
-              {darkMode ? "" : ""}
+              {darkMode ? "🌞" : "🌙"}
             </button>
 
             <button

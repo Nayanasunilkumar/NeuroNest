@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { initSocket, getSocket, disconnectSocket } from '../../services/socket';
 import chatAPI from '../../services/chatAPI';
 import ConversationList from '../../components/chat/ConversationList';
@@ -9,6 +10,7 @@ import { formatDateTimeIST, toEpochMs } from '../../utils/time';
 import '../../styles/patient-chat.css';
 
 const Chat = () => {
+    const navigate = useNavigate();
     const [conversations, setConversations] = useState([]);
     const [selectedConv, setSelectedConv] = useState(null);
     const [messages, setMessages] = useState([]);
@@ -108,7 +110,7 @@ const Chat = () => {
                                 sender_id: msg.sender_id
                             },
                             unread_count:
-                                msg.sender_id !== currentUser?.id && selectedConv?.id !== msg.conversation_id
+                                String(msg.sender_id) !== String(currentUser?.id) && selectedConv?.id !== msg.conversation_id
                                     ? c.unread_count + 1
                                     : c.unread_count
                         };
@@ -168,6 +170,12 @@ const Chat = () => {
         }
     };
 
+    const handleVideoCall = async () => {
+        if (!selectedConv) return;
+        await handleSendMessage(`${currentUser?.full_name || 'Patient'} is requesting a secure video consultation.`, 'call_request');
+        navigate(`/consultation/${selectedConv.id}`);
+    };
+
     return (
         <div className="patient-chat-nexus">
             {/* Sidebar */}
@@ -186,6 +194,7 @@ const Chat = () => {
                         isDoctor={false} // This is patient view
                         showSidebar={showInfoPanel}
                         onToggleSidebar={() => setShowInfoPanel((prev) => !prev)}
+                        onVideoCall={handleVideoCall}
                     />
                     <ChatWindow 
                         messages={messages}
