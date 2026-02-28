@@ -7,9 +7,5 @@ class Config:
     JWT_ACCESS_TOKEN_EXPIRES = False
     SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URL")
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    
-    # Disable Connection Pooling to prevent Eventlet lock crashes in production
-    from sqlalchemy.pool import NullPool
-    SQLALCHEMY_ENGINE_OPTIONS = {
-        'poolclass': NullPool
-    }
+    SQLALCHEMY_POOL_SIZE = 10
+    SQLALCHEMY_MAX_OVERFLOW = 20
