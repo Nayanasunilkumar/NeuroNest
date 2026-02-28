@@ -1,98 +1,175 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Video, Mic, MicOff, VideoOff, PhoneOff, Maximize, Minimize, Settings } from 'lucide-react';
+import { Video, Mic, MicOff, VideoOff, PhoneOff } from 'lucide-react';
 import { getUser } from '../../utils/auth';
+import { io } from 'socket.io-client';
 
-const VideoConsultation = () => {
+export default function VideoConsultation() {
     const { roomId } = useParams();
     const navigate = useNavigate();
-    const jitsiContainerRef = useRef(null);
-    const [api, setApi] = useState(null);
+    const user = getUser();
+    
+    const localVideo = useRef(null);
+    const remoteVideo = useRef(null);
+    const peerConnection = useRef(null);
+    const socket = useRef(null);
+    
     const [isMuted, setIsMuted] = useState(false);
     const [isVideoOff, setIsVideoOff] = useState(false);
-    const user = getUser();
+    const [isRemoteConnected, setIsRemoteConnected] = useState(false);
 
     useEffect(() => {
-        // Load Jitsi Script
-        const script = document.createElement('script');
-        script.src = 'https://meet.jit.si/external_api.js';
-        script.async = true;
-        document.body.appendChild(script);
+        // Initialize Socket.IO connection
+        const API_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
+        socket.current = io(API_URL, {
+            transports: ['websocket', 'polling']
+        });
 
-        script.onload = () => {
-            const domain = 'meet.jit.si';
-            const options = {
-                roomName: `NeuroNest_Consult_${roomId}`,
-                width: '100%',
-                height: '100%',
-                parentNode: jitsiContainerRef.current,
-                userInfo: {
-                    displayName: user?.full_name || 'Healthcare Provider',
-                    email: user?.email
-                },
-                configOverwrite: {
-                    startWithAudioMuted: false,
-                    startWithVideoMuted: false,
-                    prejoinPageEnabled: false,
-                    disableDeepLinking: true,
-                    toolbarButtons: [
-                        'microphone', 'camera', 'closedcaptions', 'desktop', 'fullscreen',
-                        'fodeviceselection', 'hangup', 'profile', 'chat', 'recording',
-                        'livestreaming', 'etherpad', 'sharedvideo', 'settings', 'raisehand',
-                        'videoquality', 'filmstrip', 'invite', 'feedback', 'stats', 'shortcuts',
-                        'tileview', 'videobackgroundblur', 'download', 'help', 'mute-everyone',
-                        'security'
-                    ],
-                },
-                interfaceConfigOverwrite: {
-                    // Customizations
-                    SHOW_JITSI_WATERMARK: false,
-                    SHOW_WATERMARK_FOR_GUESTS: false,
-                    DEFAULT_BACKGROUND: '#0f172a',
-                    TOOLBAR_BUTTONS: [] // We use our own buttons to control Jitsi if needed, 
-                    // or keep Jitsi's for simplicity. Let's keep Jitsi's but hide the background.
+        const room = `consult_${roomId}`;
+        socket.current.emit("join_video_room", { room });
+
+        // Request local media
+        navigator.mediaDevices.getUserMedia({
+            video: true,
+            audio: true
+        }).then(stream => {
+            if (localVideo.current) {
+                localVideo.current.srcObject = stream;
+            }
+
+            peerConnection.current = new RTCPeerConnection({
+                iceServers: [
+                    { urls: "stun:stun.l.google.com:19302" },
+                    { urls: "stun:stun1.l.google.com:19302" }
+                ]
+            });
+
+            // Add local tracks to the peer connection
+            stream.getTracks().forEach(track => {
+                if (peerConnection.current) {
+                    peerConnection.current.addTrack(track, stream);
+                }
+            });
+
+            // Handle incoming remote tracks
+            peerConnection.current.ontrack = event => {
+                if (remoteVideo.current) {
+                    remoteVideo.current.srcObject = event.streams[0];
+                    setIsRemoteConnected(true);
                 }
             };
 
-            const jitsiApi = new window.JitsiMeetExternalAPI(domain, options);
-            setApi(jitsiApi);
-
-            jitsiApi.addEventListeners({
-                readyToClose: () => {
-                   navigate(-1);
-                },
-                videoConferenceLeft: () => {
-                    navigate(-1);
+            // Handle ICE candidates
+            peerConnection.current.onicecandidate = event => {
+                if (event.candidate && socket.current) {
+                    socket.current.emit("ice_candidate", {
+                        room,
+                        candidate: event.candidate
+                    });
+                }
+            };
+            
+            // Create offer if a NEW user joins after us
+            socket.current.on("user_joined", async () => {
+                console.log("Another user joined. creating offer...");
+                if (!peerConnection.current) return;
+                
+                try {
+                    const offer = await peerConnection.current.createOffer();
+                    await peerConnection.current.setLocalDescription(offer);
+                    socket.current.emit("webrtc_offer", { room, offer });
+                } catch (error) {
+                    console.error("Error creating offer:", error);
                 }
             });
-        };
+            
+            socket.current.on("user_left", () => {
+                console.log("Remote user left the call");
+                setIsRemoteConnected(false);
+                if (remoteVideo.current) {
+                    remoteVideo.current.srcObject = null;
+                }
+            });
+            
+        }).catch(err => {
+            console.error("Error accessing media devices.", err);
+            alert("Could not access camera or microphone. Please check your permissions.");
+        });
+
+        // Listen for WebRTC Signaling calls
+        socket.current.on("webrtc_offer", async data => {
+            if (!peerConnection.current) return;
+            try {
+                await peerConnection.current.setRemoteDescription(new RTCSessionDescription(data.offer));
+                const answer = await peerConnection.current.createAnswer();
+                await peerConnection.current.setLocalDescription(answer);
+                socket.current.emit("webrtc_answer", { room, answer });
+            } catch (error) {
+                console.error("Error handling offer:", error);
+            }
+        });
+
+        socket.current.on("webrtc_answer", async data => {
+            if (!peerConnection.current) return;
+            try {
+                await peerConnection.current.setRemoteDescription(new RTCSessionDescription(data.answer));
+            } catch (error) {
+                console.error("Error handling answer:", error);
+            }
+        });
+
+        socket.current.on("ice_candidate", async data => {
+            if (!peerConnection.current) return;
+            try {
+                if (data.candidate) {
+                    await peerConnection.current.addIceCandidate(new RTCIceCandidate(data.candidate));
+                }
+            } catch (error) {
+                console.error("Error adding ice candidate:", error);
+            }
+        });
 
         return () => {
-            if (api) api.dispose();
-            document.body.removeChild(script);
+            // Cleanup on unmount
+            if (socket.current) {
+                socket.current.emit("leave_video_room", { room });
+                socket.current.disconnect();
+            }
+            if (peerConnection.current) {
+                peerConnection.current.close();
+            }
+            if (localVideo.current && localVideo.current.srcObject) {
+                localVideo.current.srcObject.getTracks().forEach(track => track.stop());
+            }
         };
-    }, [roomId, user?.full_name, user?.email]);
+    }, [roomId]);
 
     const handleHangup = () => {
-        if (api) api.executeCommand('hangup');
+        navigate(-1);
     };
 
     const toggleAudio = () => {
-        if (api) {
-            api.executeCommand('toggleAudio');
-            setIsMuted(!isMuted);
+        if (localVideo.current && localVideo.current.srcObject) {
+            const audioTrack = localVideo.current.srcObject.getAudioTracks()[0];
+            if (audioTrack) {
+                audioTrack.enabled = !audioTrack.enabled;
+                setIsMuted(!audioTrack.enabled);
+            }
         }
     };
 
     const toggleVideo = () => {
-        if (api) {
-            api.executeCommand('toggleVideo');
-            setIsVideoOff(!isVideoOff);
+        if (localVideo.current && localVideo.current.srcObject) {
+            const videoTrack = localVideo.current.srcObject.getVideoTracks()[0];
+            if (videoTrack) {
+                videoTrack.enabled = !videoTrack.enabled;
+                setIsVideoOff(!videoTrack.enabled);
+            }
         }
     };
 
     return (
-        <div style={{ height: '100vh', width: '100vw', background: '#0f172a', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ height: '100vh', width: '100vw', background: '#0f172a', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
             {/* Header */}
             <div style={{ 
                 padding: '20px 32px', 
@@ -118,14 +195,14 @@ const VideoConsultation = () => {
                         <Video size={20} />
                     </div>
                     <div>
-                        <h2 style={{ margin: 0, fontSize: '1.1rem', color: 'white', fontWeight: '700' }}>Secure Consultation</h2>
-                        <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Room: {roomId} • End-to-end Encrypted</span>
+                        <h2 style={{ margin: 0, fontSize: '1.1rem', color: 'white', fontWeight: '700' }}>Secure P2P Consultation</h2>
+                        <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Room: {roomId} • End-to-end Encrypted WebRTC</span>
                     </div>
                 </div>
 
                 <div style={{ display: 'flex', gap: '12px' }}>
-                     <button 
-                        onClick={() => navigate(-1)}
+                    <button 
+                        onClick={handleHangup}
                         style={{
                             padding: '10px 20px',
                             background: 'rgba(239, 68, 68, 0.1)',
@@ -150,34 +227,145 @@ const VideoConsultation = () => {
             </div>
 
             {/* Main Video Area */}
-            <div ref={jitsiContainerRef} style={{ flex: 1, position: 'relative' }}>
-                {/* Fallback/Loader */}
-                <div style={{ 
-                    position: 'absolute', 
-                    inset: 0, 
-                    display: 'flex', 
-                    flexDirection: 'column', 
-                    alignItems: 'center', 
-                    justifyContent: 'center',
-                    background: '#0f172a',
-                    color: '#64748b',
-                    zIndex: -1
-                }}>
-                    <div className="telehealth-pulse" style={{ marginBottom: '24px' }}>
-                        <div style={{ 
-                            width: '80px', 
-                            height: '80px', 
-                            borderRadius: '50%', 
-                            border: '2px solid #3b82f6',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center'
-                        }}>
-                             <Video size={32} color="#3b82f6" />
+            <div style={{ flex: 1, position: 'relative', display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '20px' }}>
+                
+                {/* Remote Video (Full Screen) */}
+                <video 
+                    ref={remoteVideo} 
+                    autoPlay 
+                    playsInline
+                    style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                        borderRadius: '16px',
+                        background: '#1e293b',
+                        display: isRemoteConnected ? 'block' : 'none',
+                        boxShadow: '0 10px 30px rgba(0,0,0,0.5)'
+                    }} 
+                />
+
+                {/* loader when no remote */}
+                {!isRemoteConnected && (
+                    <div style={{ 
+                        position: 'absolute', 
+                        inset: 0, 
+                        display: 'flex', 
+                        flexDirection: 'column', 
+                        alignItems: 'center', 
+                        justifyContent: 'center',
+                        background: '#0f172a',
+                        color: '#64748b',
+                        zIndex: 1
+                    }}>
+                        <div className="telehealth-pulse" style={{ marginBottom: '24px' }}>
+                            <div style={{ 
+                                width: '80px', 
+                                height: '80px', 
+                                borderRadius: '50%', 
+                                border: '2px solid #3b82f6',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                background: 'rgba(59, 130, 246, 0.1)'
+                            }}>
+                                 <Video size={32} color="#3b82f6" />
+                            </div>
                         </div>
+                        <p style={{ fontSize: '1.2rem', fontWeight: '500', color: '#cbd5e1' }}>Waiting for the other participant to join...</p>
+                        <p style={{ marginTop: '8px' }}>Room ID: {roomId}</p>
                     </div>
-                    <p>Connecting to secure medical server...</p>
+                )}
+
+                {/* Local Video (Picture in Picture style) */}
+                <div style={{
+                    position: 'absolute',
+                    bottom: '40px',
+                    right: '40px',
+                    width: '320px',
+                    height: '240px',
+                    borderRadius: '16px',
+                    overflow: 'hidden',
+                    border: '3px solid rgba(255,255,255,0.2)',
+                    boxShadow: '0 20px 40px rgba(0,0,0,0.4)',
+                    background: '#000',
+                    zIndex: 10,
+                    transition: 'all 0.3s ease',
+                    transform: isRemoteConnected ? 'scale(1)' : 'scale(1.5) translate(-40%, -40%)'
+                }}>
+                    <video 
+                        ref={localVideo} 
+                        autoPlay 
+                        muted 
+                        playsInline
+                        style={{
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'cover',
+                            transform: 'scaleX(-1)' // mirror effect
+                        }} 
+                    />
+
+                    {/* Local Controls overlay on the small video */}
+                    {isRemoteConnected && (
+                        <div style={{
+                            position: 'absolute',
+                            bottom: '10px',
+                            left: '0',
+                            right: '0',
+                            display: 'flex',
+                            justifyContent: 'center',
+                            gap: '10px'
+                        }}>
+                             <button onClick={toggleAudio} style={{
+                                width: '36px', height: '36px', borderRadius: '50%', 
+                                border: 'none', background: isMuted ? '#ef4444' : 'rgba(0,0,0,0.6)',
+                                color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                cursor: 'pointer', backdropFilter: 'blur(4px)'
+                            }}>
+                                {isMuted ? <MicOff size={16} /> : <Mic size={16} />}
+                            </button>
+                            <button onClick={toggleVideo} style={{
+                                width: '36px', height: '36px', borderRadius: '50%', 
+                                border: 'none', background: isVideoOff ? '#ef4444' : 'rgba(0,0,0,0.6)',
+                                color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                cursor: 'pointer', backdropFilter: 'blur(4px)'
+                            }}>
+                                {isVideoOff ? <VideoOff size={16} /> : <Video size={16} />}
+                            </button>
+                        </div>
+                    )}
                 </div>
+
+                {/* Larger Controls when waiting */}
+                {!isRemoteConnected && (
+                    <div style={{
+                        position: 'absolute',
+                        bottom: '40px',
+                        display: 'flex',
+                        gap: '20px',
+                        zIndex: 20
+                    }}>
+                        <button onClick={toggleAudio} style={{
+                            width: '56px', height: '56px', borderRadius: '50%', 
+                            border: '1px solid rgba(255,255,255,0.2)', 
+                            background: isMuted ? '#ef4444' : 'rgba(30, 41, 59, 0.8)',
+                            color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            cursor: 'pointer', backdropFilter: 'blur(8px)', transition: 'all 0.2s'
+                        }}>
+                            {isMuted ? <MicOff size={24} /> : <Mic size={24} />}
+                        </button>
+                        <button onClick={toggleVideo} style={{
+                            width: '56px', height: '56px', borderRadius: '50%', 
+                            border: '1px solid rgba(255,255,255,0.2)', 
+                            background: isVideoOff ? '#ef4444' : 'rgba(30, 41, 59, 0.8)',
+                            color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            cursor: 'pointer', backdropFilter: 'blur(8px)', transition: 'all 0.2s'
+                        }}>
+                            {isVideoOff ? <VideoOff size={24} /> : <Video size={24} />}
+                        </button>
+                    </div>
+                )}
             </div>
 
             <style>{`
@@ -187,12 +375,10 @@ const VideoConsultation = () => {
                 }
                 @keyframes pulse-blue {
                     0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); }
-                    70% { box-shadow: 0 0 0 20px rgba(59, 130, 246, 0); }
+                    70% { box-shadow: 0 0 0 30px rgba(59, 130, 246, 0); }
                     100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
                 }
             `}</style>
         </div>
     );
-};
-
-export default VideoConsultation;
+}

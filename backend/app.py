@@ -92,6 +92,9 @@ def create_app():
 
     # Import socket events to register handlers
     import modules.chat.socket_events
+    
+    from sockets.video_socket import register_video_events
+    register_video_events(socketio)
 
     # ================= Home Route =================
     @app.route("/")
