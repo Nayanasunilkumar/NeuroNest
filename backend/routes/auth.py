@@ -139,44 +139,50 @@ def register():
 # --------------------------------------------------
 @auth_bp.route("/login", methods=["POST"])
 def login():
-    data = request.get_json() or {}
+    try:
+        data = request.get_json() or {}
 
-    email = (data.get("email") or "").strip().lower()
-    password = data.get("password") or ""
+        email = (data.get("email") or "").strip().lower()
+        password = data.get("password") or ""
 
-    if not email or not password:
-        return jsonify({"message": "Email and password required"}), 400
+        if not email or not password:
+            return jsonify({"message": "Email and password required"}), 400
 
-    user = User.query.filter_by(email=email).first()
-    if not user:
-        user = _maybe_bootstrap_doctor_for_dev(email)
+        user = User.query.filter_by(email=email).first()
+        if not user:
+            user = _maybe_bootstrap_doctor_for_dev(email)
 
-    if not user:
-        return jsonify({"message": "Invalid email or password"}), 401
+        if not user:
+            return jsonify({"message": "Invalid email or password"}), 401
 
-    if not verify_password(password, user.password_hash):
-        log_security_event(user.id, "login_failed", "Failed login attempt detected")
-        return jsonify({"message": "Invalid email or password"}), 401
+        is_verified = verify_password(password, user.password_hash)
 
-    # ✅ CRITICAL FIX: identity MUST be string
-    token = create_access_token(
-        identity=str(user.id),   # 🔥 THIS FIXES "Subject must be a string"
-        additional_claims={
-            "role": user.role
-        }
-    )
+        if not is_verified:
+            log_security_event(user.id, "login_failed", "Failed login attempt detected")
+            return jsonify({"message": "Invalid email or password"}), 401
 
-    ua = request.headers.get('User-Agent', '')
-    device_info = parse_user_agent(ua)
-    log_security_event(user.id, "login_success", f"New login from {device_info}")
+        # ✅ CRITICAL FIX: identity MUST be string
+        token = create_access_token(
+            identity=str(user.id),   # 🔥 THIS FIXES "Subject must be a string"
+            additional_claims={
+                "role": user.role
+            }
+        )
 
-    return jsonify({
-        "message": "Login successful",
-        "token": token,
-        "user": {
-            "id": user.id,
-            "email": user.email,
-            "role": user.role,
-            "full_name": user.full_name
-        }
-    }), 200
+        ua = request.headers.get('User-Agent', '')
+        device_info = parse_user_agent(ua)
+        log_security_event(user.id, "login_success", f"New login from {device_info}")
+
+        return jsonify({
+            "message": "Login successful",
+            "token": token,
+            "user": {
+                "id": user.id,
+                "email": user.email,
+                "role": user.role,
+                "full_name": user.full_name
+            }
+        }), 200
+    except Exception as e:
+        import traceback
+        return jsonify({"message": f"Login crash: {str(e)}", "trace": traceback.format_exc()}), 500
