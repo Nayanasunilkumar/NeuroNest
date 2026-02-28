@@ -6,9 +6,9 @@ from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from dotenv import load_dotenv
 
-# Always load backend/.env regardless of run directory.
+# Always load backend/.env regardless of run directory, overriding inherited.
 BASE_DIR = Path(__file__).resolve().parent
-load_dotenv(BASE_DIR / ".env")
+load_dotenv(BASE_DIR / ".env", override=True)
 
 from config.config import Config
 from database.models import db

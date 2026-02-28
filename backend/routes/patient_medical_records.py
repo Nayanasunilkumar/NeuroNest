@@ -4,6 +4,7 @@ from datetime import datetime
 from flask import Blueprint, jsonify, request, redirect
 from flask_jwt_extended import get_jwt, get_jwt_identity, jwt_required
 from sqlalchemy import func
+from werkzeug.utils import secure_filename
 
 from database.models import (
     MedicalRecord,

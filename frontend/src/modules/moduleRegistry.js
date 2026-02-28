@@ -21,7 +21,7 @@ import todayScheduleModule from './today-schedule';
 import myPatientsModule from './my-patients';
 import patientRecordsModule from './patient-records';
 import writePrescriptionModule from './write-prescription';
-import assessmentReportsModule from './assessment-reports';
+import assessmentReportsModule from './assessment-reports/index.jsx';
 import performanceAnalyticsModule from './performance-analytics';
 import alertsModule from './alerts';
 import patientChatModule from './patient-chat';

@@ -19,5 +19,5 @@ SQLAlchemy==2.0.46
 typing_extensions==4.15.0
 Werkzeug==3.1.5
 zipp==3.23.0
-cloudinary>=1.36.0
+cloudinary==1.44.1
 gunicorn==21.2.0
