@@ -1,151 +1,304 @@
 import { useState, useEffect } from "react";
 import { getAppointmentRequests, approveAppointment, rejectAppointment } from "../../api/doctor";
-import { Check, X, Clock, Calendar, MessageSquare, User } from "lucide-react";
+import {
+  Check, X, Clock, Calendar, MessageSquare,
+  User, CheckCircle2, XCircle, Inbox, RefreshCw,
+  Stethoscope, AlertCircle, ChevronRight
+} from "lucide-react";
 import "../../styles/doctor.css";
+import "../../styles/appointment-requests.css";
 
 const AppointmentRequests = () => {
-    const [requests, setRequests] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [actionLoading, setActionLoading] = useState(null);
+  const [requests, setRequests]       = useState([]);
+  const [loading, setLoading]         = useState(true);
+  const [actionLoading, setActionLoading] = useState(null);
+  const [approved, setApproved]       = useState([]);
+  const [rejected, setRejected]       = useState([]);
+  const [refreshing, setRefreshing]   = useState(false);
 
-    useEffect(() => {
-        fetchRequests();
-    }, []);
+  useEffect(() => { fetchRequests(); }, []);
 
-    const fetchRequests = async () => {
-        try {
-            setLoading(true);
-            const data = await getAppointmentRequests();
-            setRequests(data);
-        } catch (err) {
-            console.error("Error fetching requests:", err);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleAction = async (id, action) => {
-        setActionLoading(id);
-        try {
-            if (action === "approve") {
-                await approveAppointment(id);
-            } else {
-                await rejectAppointment(id);
-            }
-            // Filter out the acted upon request
-            setRequests(requests.filter(req => req.id !== id));
-        } catch (err) {
-            console.error(`Error ${action}ing appointment:`, err);
-        } finally {
-            setActionLoading(null);
-        }
-    };
-
-    const formatTime = (timeString) => {
-        if (!timeString) return "Time not set";
-        const [hour, minute] = timeString.split(":");
-        const hourNum = Number(hour);
-        if (Number.isNaN(hourNum)) return timeString.substring(0, 5);
-        const period = hourNum >= 12 ? "PM" : "AM";
-        const convertedHour = hourNum % 12 || 12;
-        return `${convertedHour}:${minute} ${period}`;
-    };
-
-    if (loading) {
-        return (
-            <div className="doc-loader-container">
-                <div className="doc-spinner"></div>
-                <p className="text-slate-500">Fetching your requests...</p>
-            </div>
-        );
+  const fetchRequests = async () => {
+    try {
+      setLoading(true);
+      const data = await getAppointmentRequests();
+      setRequests(data);
+    } catch (err) {
+      console.error("Error fetching requests:", err);
+    } finally {
+      setLoading(false);
     }
+  };
 
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await fetchRequests();
+    setRefreshing(false);
+  };
+
+  const handleAction = async (id, action) => {
+    setActionLoading(id + action);
+    try {
+      if (action === "approve") {
+        await approveAppointment(id);
+        setApproved(prev => [...prev, id]);
+      } else {
+        await rejectAppointment(id);
+        setRejected(prev => [...prev, id]);
+      }
+      setTimeout(() => {
+        setRequests(prev => prev.filter(r => r.id !== id));
+        setApproved(prev => prev.filter(a => a !== id));
+        setRejected(prev => prev.filter(r => r !== id));
+      }, 700);
+    } catch (err) {
+      console.error(`Error ${action}ing:`, err);
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const formatTime = (t) => {
+    if (!t) return "—";
+    const [h, m] = t.split(":");
+    const hn = Number(h);
+    if (isNaN(hn)) return t.substring(0, 5);
+    return `${hn % 12 || 12}:${m} ${hn >= 12 ? "PM" : "AM"}`;
+  };
+
+  const formatDate = (d) =>
+    new Date(d).toLocaleDateString("en-US", {
+      weekday: "short", month: "short", day: "numeric", year: "numeric"
+    });
+
+  const getInitials = (name = "") =>
+    name.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2) || "?";
+
+  const avatarColors = [
+    ["#dbeafe", "#1d4ed8"], ["#fce7f3", "#be185d"], ["#dcfce7", "#15803d"],
+    ["#fef3c7", "#b45309"], ["#ede9fe", "#7c3aed"], ["#ffedd5", "#c2410c"],
+  ];
+
+  const getAvatarColor = (name = "") => {
+    const idx = (name.charCodeAt(0) || 0) % avatarColors.length;
+    return avatarColors[idx];
+  };
+
+  const isUrgent = (dateStr) => {
+    const diff = (new Date(dateStr) - new Date()) / (1000 * 60 * 60 * 24);
+    return diff >= 0 && diff <= 2;
+  };
+
+  // ── Loading ──────────────────────────────────────────────
+  if (loading) {
     return (
-        <div className="fade-in appointment-requests-page">
-            <div className="doc-page-header">
-                <h1>Appointment Requests</h1>
-                <p>Review and manage incoming patient booking requests</p>
+      <div className="ar-page fade-in">
+        <div className="ar-skeleton-header" />
+        <div className="ar-grid">
+          {[1, 2, 3].map(i => (
+            <div key={i} className="ar-skeleton-card">
+              <div className="ar-skeleton-row ar-sk-avatar" />
+              <div className="ar-skeleton-row ar-sk-line" />
+              <div className="ar-skeleton-row ar-sk-line-sm" />
+              <div className="ar-skeleton-row ar-sk-bar" />
             </div>
-
-            {requests.length === 0 ? (
-                <div className="empty-state-card">
-                    <Clock size={48} className="mx-auto mb-4 text-slate-300" />
-                    <h3>No pending requests</h3>
-                    <p>New appointment requests will appear here when patients book with you.</p>
-                </div>
-            ) : (
-                <div className="requests-grid">
-                    {requests.map((request) => (
-                        <div key={request.id} className="request-card">
-                            <div className="card-header">
-                                <div className="patient-info-mini">
-                                    <div className="patient-avatar-mini">
-                                        {request.patient_name ? request.patient_name.charAt(0) : <User size={20} />}
-                                    </div>
-                                    <div className="patient-name-stack">
-                                        <h4>{request.patient_name}</h4>
-                                        <span>Requested on {new Date(request.created_at).toLocaleDateString()}</span>
-                                    </div>
-                                </div>
-                                <span className="doc-badge doc-badge-amber">
-                                    Pending
-                                </span>
-                            </div>
-
-                            <div className="appointment-details-list">
-                                <div className="detail-item">
-                                    <Calendar size={16} />
-                                    <span>{new Date(request.appointment_date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}</span>
-                                </div>
-                                <div className="detail-item">
-                                    <Clock size={16} />
-                                    <span>{formatTime(request.appointment_time)}</span>
-                                </div>
-                                <div className="detail-item">
-                                    <MessageSquare size={16} />
-                                    <div className="reason-container">
-                                        <p><strong>Reason:</strong> {request.reason}</p>
-                                    </div>
-                                </div>
-                                {request.notes && (
-                                    <div className="detail-item request-notes">
-                                        <div className="notes-text">
-                                            "{request.notes}"
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-
-                            <div className="card-actions">
-                                <button 
-                                    onClick={() => handleAction(request.id, "approve")}
-                                    disabled={actionLoading === request.id}
-                                    className="btn-approve"
-                                >
-                                    {actionLoading === request.id ? (
-                                        <div className="doc-spinner spinner-sm"></div>
-                                    ) : (
-                                        <>
-                                            <Check size={18} />
-                                            Approve Request
-                                        </>
-                                    )}
-                                </button>
-                                <button 
-                                    onClick={() => handleAction(request.id, "reject")}
-                                    disabled={actionLoading === request.id}
-                                    className="btn-reject"
-                                    title="Reject Request"
-                                >
-                                    <X size={18} />
-                                </button>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            )}
+          ))}
         </div>
+      </div>
     );
+  }
+
+  // ── Empty ────────────────────────────────────────────────
+  if (requests.length === 0) {
+    return (
+      <div className="ar-page fade-in">
+        <div className="ar-topbar">
+          <div>
+            <h1 className="ar-title">Appointment Requests</h1>
+            <p className="ar-subtitle">Review and manage incoming patient booking requests</p>
+          </div>
+          <button className="ar-refresh-btn" onClick={handleRefresh}>
+            <RefreshCw size={16} className={refreshing ? "ar-spin" : ""} />
+            Refresh
+          </button>
+        </div>
+
+        <div className="ar-empty-state">
+          <div className="ar-empty-icon-ring">
+            <Inbox size={38} strokeWidth={1.5} />
+          </div>
+          <h3>All clear for now</h3>
+          <p>When patients submit booking requests, they'll appear here for your review.</p>
+          <button className="ar-refresh-btn" onClick={handleRefresh} style={{ marginTop: '8px' }}>
+            <RefreshCw size={16} />
+            Check again
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Main ─────────────────────────────────────────────────
+  return (
+    <div className="ar-page fade-in">
+
+      {/* ── Top Bar ── */}
+      <div className="ar-topbar">
+        <div>
+          <h1 className="ar-title">Appointment Requests</h1>
+          <p className="ar-subtitle">
+            Review and manage incoming patient booking requests
+          </p>
+        </div>
+        <div className="ar-topbar-right">
+          <div className="ar-count-pill">
+            <span className="ar-count-dot" />
+            {requests.length} pending
+          </div>
+          <button className="ar-refresh-btn" onClick={handleRefresh} disabled={refreshing}>
+            <RefreshCw size={15} className={refreshing ? "ar-spin" : ""} />
+            Refresh
+          </button>
+        </div>
+      </div>
+
+      {/* ── Stats Strip ── */}
+      <div className="ar-stats-strip">
+        <div className="ar-stat-item">
+          <div className="ar-stat-icon ar-stat-icon-amber">
+            <Clock size={18} />
+          </div>
+          <div>
+            <div className="ar-stat-num">{requests.length}</div>
+            <div className="ar-stat-label">Pending</div>
+          </div>
+        </div>
+        <div className="ar-stat-divider" />
+        <div className="ar-stat-item">
+          <div className="ar-stat-icon ar-stat-icon-red">
+            <AlertCircle size={18} />
+          </div>
+          <div>
+            <div className="ar-stat-num">
+              {requests.filter(r => isUrgent(r.appointment_date)).length}
+            </div>
+            <div className="ar-stat-label">Urgent (≤ 2 days)</div>
+          </div>
+        </div>
+        <div className="ar-stat-divider" />
+        <div className="ar-stat-item">
+          <div className="ar-stat-icon ar-stat-icon-blue">
+            <Stethoscope size={18} />
+          </div>
+          <div>
+            <div className="ar-stat-num">
+              {new Set(requests.map(r => r.patient_name)).size}
+            </div>
+            <div className="ar-stat-label">Unique Patients</div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Cards Grid ── */}
+      <div className="ar-grid">
+        {requests.map((req) => {
+          const [bg, fg] = getAvatarColor(req.patient_name);
+          const urgent = isUrgent(req.appointment_date);
+          const isApproved = approved.includes(req.id);
+          const isRejected = rejected.includes(req.id);
+
+          return (
+            <div
+              key={req.id}
+              className={`ar-card ${urgent ? "ar-card-urgent" : ""} ${isApproved ? "ar-card-approved" : ""} ${isRejected ? "ar-card-rejected" : ""}`}
+            >
+              {/* Urgent ribbon */}
+              {urgent && (
+                <div className="ar-urgent-ribbon">
+                  <AlertCircle size={12} />
+                  Urgent
+                </div>
+              )}
+
+              {/* ── Header ── */}
+              <div className="ar-card-header">
+                <div className="ar-patient-row">
+                  <div className="ar-avatar" style={{ background: bg, color: fg }}>
+                    {getInitials(req.patient_name)}
+                  </div>
+                  <div className="ar-patient-info">
+                    <h3 className="ar-patient-name">{req.patient_name}</h3>
+                    <span className="ar-requested-on">
+                      Requested {new Date(req.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                    </span>
+                  </div>
+                </div>
+                <span className="ar-badge-pending">
+                  <span className="ar-badge-dot" />
+                  Pending
+                </span>
+              </div>
+
+              {/* ── Details ── */}
+              <div className="ar-details">
+                <div className="ar-detail-row">
+                  <div className="ar-detail-icon">
+                    <Calendar size={14} />
+                  </div>
+                  <span>{formatDate(req.appointment_date)}</span>
+                </div>
+                <div className="ar-detail-row">
+                  <div className="ar-detail-icon">
+                    <Clock size={14} />
+                  </div>
+                  <span>{formatTime(req.appointment_time)}</span>
+                </div>
+                {req.reason && (
+                  <div className="ar-reason-box">
+                    <div className="ar-reason-label">
+                      <MessageSquare size={12} />
+                      Chief Complaint
+                    </div>
+                    <p className="ar-reason-text">{req.reason}</p>
+                  </div>
+                )}
+                {req.notes && (
+                  <div className="ar-notes-text">
+                    <ChevronRight size={12} />
+                    {req.notes}
+                  </div>
+                )}
+              </div>
+
+              {/* ── Actions ── */}
+              <div className="ar-actions">
+                <button
+                  className="ar-btn-approve"
+                  onClick={() => handleAction(req.id, "approve")}
+                  disabled={!!actionLoading}
+                >
+                  {actionLoading === req.id + "approve" || isApproved ? (
+                    <CheckCircle2 size={16} />
+                  ) : (
+                    <Check size={16} />
+                  )}
+                  {isApproved ? "Approved!" : "Approve"}
+                </button>
+                <button
+                  className="ar-btn-reject"
+                  onClick={() => handleAction(req.id, "reject")}
+                  disabled={!!actionLoading}
+                  title="Decline request"
+                >
+                  {isRejected ? <XCircle size={16} /> : <X size={16} />}
+                </button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
 };
 
 export default AppointmentRequests;
