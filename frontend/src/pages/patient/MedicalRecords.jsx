@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { Plus, AlertCircle, X, Sun, Sunrise, Sunset, Moon, Minus, ChevronUp, ChevronDown, ChevronLeft, Flame, Activity, Pill, FileText, Search, Filter } from "lucide-react";
 import { getPatientDossier } from "../../api/doctor";
+import { getUser } from "../../utils/auth";
+import { getDoctorProfile } from "../../services/doctorProfileService";
 
 // Components
 import MedicalRecordTable from "../../components/patient/medicalRecords/MedicalRecordTable";
@@ -30,6 +32,9 @@ const MedicalRecords = ({ patientId: propPatientId = null }) => {
   const navigate = useNavigate();
   const patientId = propPatientId || searchParams.get("patientId");
   const [identity, setIdentity] = useState(null);
+  const [currentUser] = useState(() => getUser()); // logged-in user
+  const isDoctor = currentUser?.role === 'doctor';
+  const [doctorDefaults, setDoctorDefaults] = useState({ name: '', hospital: '' });
 
   const formatDate = (value) => {
     if (!value) return "N/A";
@@ -112,6 +117,17 @@ const MedicalRecords = ({ patientId: propPatientId = null }) => {
     status: "active",
   });
 
+  // When doctor opens the medication form, pre-fill their name and set correct origin
+  const openMedicationForm = () => {
+    setMedicationForm(prev => ({
+      ...prev,
+      prescribed_by: isDoctor ? (currentUser?.full_name || '') : '',
+      medication_origin: isDoctor ? 'current_doctor' : 'past_external',
+      source_hospital_name: '',
+    }));
+    setMedicationFormOpen(true);
+  };
+
   // Filters
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("All");
@@ -156,6 +172,15 @@ const MedicalRecords = ({ patientId: propPatientId = null }) => {
       setLoading(false);
     }
   };
+
+  // Fetch doctor's own profile defaults (name + hospital) once on mount
+  useEffect(() => {
+    if (isDoctor) {
+      getDoctorProfile()
+        .then(p => setDoctorDefaults({ name: p.full_name || '', hospital: p.hospital_name || '' }))
+        .catch(() => {});
+    }
+  }, [isDoctor]);
 
   useEffect(() => {
     fetchRecords();
@@ -396,6 +421,67 @@ const MedicalRecords = ({ patientId: propPatientId = null }) => {
                       <span className="meta-value">{formatDate(item.diagnosed_date)}</span>
                     </div>
                   </div>
+
+                  {/* Doctor attribution row */}
+                  {item.added_by_name && (
+                    <div style={{
+                      marginTop: '10px',
+                      paddingTop: '10px',
+                      borderTop: '1px dashed #E2E8F0',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                    }}>
+                      {/* Avatar initial */}
+                      <div style={{
+                        width: 26, height: 26, borderRadius: '50%', flexShrink: 0,
+                        background: item.added_by_role === 'doctor' ? '#EFF6FF' : '#F0FDF4',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: '11px', fontWeight: 800,
+                        color: item.added_by_role === 'doctor' ? '#2563EB' : '#16A34A',
+                      }}>
+                        {item.added_by_name.charAt(0).toUpperCase()}
+                      </div>
+
+                      <div style={{ minWidth: 0, display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                        {/* Name */}
+                        <span style={{ fontSize: '12px', fontWeight: 700, color: '#1E293B' }}>
+                          {item.added_by_role === 'doctor' && !item.added_by_name?.toLowerCase().startsWith('dr.')
+                            ? 'Dr. ' : ''}{item.added_by_name}
+                        </span>
+
+                        {/* Specialization pill */}
+                        {item.added_by_specialization && (
+                          <span style={{
+                            fontSize: '11px', fontWeight: 600, color: '#2563EB',
+                            background: '#EFF6FF', padding: '2px 8px', borderRadius: '999px',
+                            border: '1px solid #BFDBFE',
+                          }}>
+                            {item.added_by_specialization}
+                          </span>
+                        )}
+
+                        {/* Self-reported label */}
+                        {!item.added_by_specialization && item.added_by_role !== 'doctor' && (
+                          <span style={{ fontSize: '11px', color: '#94A3B8', fontWeight: 600 }}>
+                            Self-reported
+                          </span>
+                        )}
+
+                        {/* Verified by doctor badge */}
+                        {item.added_by_role === 'doctor' && (
+                          <span style={{
+                            fontSize: '10px', fontWeight: 700, letterSpacing: '0.04em',
+                            color: '#059669', background: '#ECFDF5', padding: '2px 7px',
+                            borderRadius: '999px', border: '1px solid #A7F3D0',
+                            textTransform: 'uppercase',
+                          }}>
+                            ✓ Clinically Verified
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
                 <div className="item-premium-actions">
                   <button onClick={() => medicalRecordService.deleteAllergy(item.id, patientId).then(fetchRecords)} className="btn-icon-tiny">
@@ -404,6 +490,7 @@ const MedicalRecords = ({ patientId: propPatientId = null }) => {
                 </div>
               </div>
             ))}
+
           </div>
         </div>
 
@@ -441,10 +528,62 @@ const MedicalRecords = ({ patientId: propPatientId = null }) => {
                       <span className="meta-label">Last Review</span>
                       <span className="meta-value">{formatDate(item.last_reviewed)}</span>
                     </div>
+                    {item.diagnosed_date && (
+                      <div className="meta-cell">
+                        <span className="meta-label">Diagnosed</span>
+                        <span className="meta-value">{formatDate(item.diagnosed_date)}</span>
+                      </div>
+                    )}
                   </div>
+
+                  {/* Attribution row */}
+                  {item.added_by_name && (
+                    <div style={{
+                      marginTop: '10px',
+                      paddingTop: '10px',
+                      borderTop: '1px dashed #E2E8F0',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                    }}>
+                      <div style={{
+                        width: 26, height: 26, borderRadius: '50%',
+                        background: item.added_by_role === 'doctor' ? '#EFF6FF' : '#F0FDF4',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: '11px', fontWeight: 800,
+                        color: item.added_by_role === 'doctor' ? '#2563EB' : '#16A34A',
+                        flexShrink: 0,
+                      }}>
+                        {item.added_by_name.charAt(0).toUpperCase()}
+                      </div>
+                      <div style={{ minWidth: 0 }}>
+                        <span style={{ fontSize: '12px', fontWeight: 700, color: '#1E293B' }}>
+                          {item.added_by_role === 'doctor' && !item.added_by_name?.toLowerCase().startsWith('dr.') ? 'Dr. ' : ''}{item.added_by_name}
+                        </span>
+                        {item.added_by_specialization && (
+                          <span style={{
+                            marginLeft: '6px',
+                            fontSize: '11px', fontWeight: 600,
+                            color: '#64748B',
+                            background: '#F1F5F9',
+                            padding: '1px 7px',
+                            borderRadius: '999px',
+                          }}>
+                            {item.added_by_specialization}
+                          </span>
+                        )}
+                        {!item.added_by_specialization && item.added_by_role === 'patient' && (
+                          <span style={{ marginLeft: '6px', fontSize: '11px', color: '#94A3B8', fontWeight: 600 }}>
+                            Self-reported
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
+
           </div>
         </div>
         
@@ -460,7 +599,7 @@ const MedicalRecords = ({ patientId: propPatientId = null }) => {
                   <h3>Medications</h3>
                   <p>{activeMedsCount} Active • {pastMedsCount} Past</p>
                 </div>
-                <button className="card-action-btn-prm" onClick={() => setMedicationFormOpen(true)}>
+                <button className="card-action-btn-prm" onClick={openMedicationForm}>
                   <Plus size={16} />
                 </button>
               </div>
@@ -557,6 +696,8 @@ const MedicalRecords = ({ patientId: propPatientId = null }) => {
         isOpen={isUploadOpen}
         onClose={() => setIsUploadOpen(false)}
         onUpload={handleUpload}
+        defaultDoctorName={isDoctor ? doctorDefaults.name : ''}
+        defaultHospitalName={isDoctor ? doctorDefaults.hospital : ''}
       />
 
       <DeleteConfirmationModal
@@ -629,51 +770,82 @@ const MedicalRecords = ({ patientId: propPatientId = null }) => {
           onClose={() => setConditionFormOpen(false)}
           onSave={addCondition}
         >
-          <input
-            value={conditionForm.condition_name}
-            onChange={(e) =>
-              setConditionForm((prev) => ({
-                ...prev,
-                condition_name: e.target.value,
-              }))
-            }
-            placeholder="Condition name"
-          />
-          <input
-            type="date"
-            value={conditionForm.diagnosed_date}
-            onChange={(e) =>
-              setConditionForm((prev) => ({
-                ...prev,
-                diagnosed_date: e.target.value,
-              }))
-            }
-          />
-          <input
-            type="date"
-            value={conditionForm.last_reviewed}
-            onChange={(e) =>
-              setConditionForm((prev) => ({
-                ...prev,
-                last_reviewed: e.target.value,
-              }))
-            }
-          />
-          <label className="medical-inline-check">
-            <input
-              type="checkbox"
-              checked={conditionForm.under_treatment}
-              onChange={(e) =>
-                setConditionForm((prev) => ({
-                  ...prev,
-                  under_treatment: e.target.checked,
-                }))
-              }
-            />
-            Under treatment
-          </label>
+          {/* Full-width single-column layout */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', gridColumn: '1 / -1' }}>
+
+            {/* Condition Name */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <label style={{ fontSize: '12px', fontWeight: 700, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                Condition Name <span style={{ color: '#EF4444' }}>*</span>
+              </label>
+              <input
+                value={conditionForm.condition_name}
+                onChange={(e) => setConditionForm((prev) => ({ ...prev, condition_name: e.target.value }))}
+                placeholder="e.g. Type 2 Diabetes, Hypertension"
+                style={{ border: '1px solid #E2E8F0', borderRadius: '10px', padding: '10px 14px', fontSize: '14px', background: '#F8FAFC', color: '#1E293B', outline: 'none', width: '100%', boxSizing: 'border-box' }}
+                onFocus={e => e.target.style.borderColor = '#2563EB'}
+                onBlur={e => e.target.style.borderColor = '#E2E8F0'}
+              />
+            </div>
+
+            {/* Two-column date row */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <label style={{ fontSize: '12px', fontWeight: 700, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  Date Diagnosed
+                </label>
+                <input
+                  type="date"
+                  value={conditionForm.diagnosed_date}
+                  onChange={(e) => setConditionForm((prev) => ({ ...prev, diagnosed_date: e.target.value }))}
+                  style={{ border: '1px solid #E2E8F0', borderRadius: '10px', padding: '10px 12px', fontSize: '14px', background: '#F8FAFC', color: '#1E293B', width: '100%', boxSizing: 'border-box' }}
+                />
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <label style={{ fontSize: '12px', fontWeight: 700, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  Last Reviewed
+                </label>
+                <input
+                  type="date"
+                  value={conditionForm.last_reviewed}
+                  onChange={(e) => setConditionForm((prev) => ({ ...prev, last_reviewed: e.target.value }))}
+                  style={{ border: '1px solid #E2E8F0', borderRadius: '10px', padding: '10px 12px', fontSize: '14px', background: '#F8FAFC', color: '#1E293B', width: '100%', boxSizing: 'border-box' }}
+                />
+              </div>
+            </div>
+
+            {/* Under Treatment Toggle Row */}
+            <div
+              onClick={() => setConditionForm((prev) => ({ ...prev, under_treatment: !prev.under_treatment }))}
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                padding: '12px 16px', borderRadius: '12px', cursor: 'pointer',
+                background: conditionForm.under_treatment ? '#EFF6FF' : '#F8FAFC',
+                border: `1px solid ${conditionForm.under_treatment ? '#BFDBFE' : '#E2E8F0'}`,
+                transition: 'all 0.2s',
+              }}
+            >
+              <div>
+                <div style={{ fontSize: '13px', fontWeight: 700, color: '#1E293B' }}>Currently Under Treatment</div>
+                <div style={{ fontSize: '12px', color: '#64748B', marginTop: '2px' }}>Patient is actively receiving care for this condition</div>
+              </div>
+              <div style={{
+                width: 42, height: 24, borderRadius: '999px', flexShrink: 0,
+                background: conditionForm.under_treatment ? '#2563EB' : '#CBD5E1',
+                position: 'relative', transition: 'background 0.2s',
+              }}>
+                <div style={{
+                  position: 'absolute', top: 3, left: conditionForm.under_treatment ? 21 : 3,
+                  width: 18, height: 18, borderRadius: '50%', background: '#fff',
+                  transition: 'left 0.2s', boxShadow: '0 1px 4px rgba(0,0,0,0.15)',
+                }}></div>
+              </div>
+            </div>
+
+          </div>
         </SimpleMedicalModal>
       )}
+
 
       {medicationFormOpen && (
         <SimpleMedicalModal
@@ -681,26 +853,20 @@ const MedicalRecords = ({ patientId: propPatientId = null }) => {
           onClose={() => setMedicationFormOpen(false)}
           onSave={addMedication}
         >
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '8px', marginTop: '4px', gridColumn: '1 / -1' }}>
-            <label style={{ fontSize: '13px', fontWeight: '500', color: '#64748b' }}>Medication Type</label>
-            <select
-              value={medicationForm.medication_origin}
-              onChange={(e) =>
-                setMedicationForm((prev) => ({
-                  ...prev,
-                  medication_origin: e.target.value,
-                }))
-              }
-              style={{ margin: 0, padding: '10px 14px', borderRadius: '8px', border: '1px solid #e2e8f0' }}
-            >
-              <option value="past_external">
-                Past Medication (Other Hospital)
-              </option>
-              <option value="current_doctor" disabled>
-                Current Medication (Treating Doctor)
-              </option>
-            </select>
-          </div>
+          {/* Medication Type — only show for patients (doctors always add as current_doctor) */}
+          {!isDoctor && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '8px', marginTop: '4px', gridColumn: '1 / -1' }}>
+              <label style={{ fontSize: '13px', fontWeight: '500', color: '#64748b' }}>Medication Type</label>
+              <select
+                value={medicationForm.medication_origin}
+                onChange={(e) => setMedicationForm((prev) => ({ ...prev, medication_origin: e.target.value }))}
+                style={{ margin: 0, padding: '10px 14px', borderRadius: '8px', border: '1px solid #e2e8f0' }}
+              >
+                <option value="past_external">Past Medication (Other Hospital)</option>
+                <option value="current_doctor">Current Medication (Treating Doctor)</option>
+              </select>
+            </div>
+          )}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '8px', marginTop: '4px' }}>
             <label style={{ fontSize: '13px', fontWeight: '500', color: '#64748b' }}>Drug name</label>
             <input
@@ -887,34 +1053,27 @@ const MedicalRecords = ({ patientId: propPatientId = null }) => {
             <label style={{ fontSize: '13px', fontWeight: '500', color: '#64748b' }}>Prescribed by</label>
             <input
               value={medicationForm.prescribed_by}
-              onChange={(e) =>
-                setMedicationForm((prev) => ({
-                  ...prev,
-                  prescribed_by: e.target.value,
-                }))
-              }
+              onChange={(e) => setMedicationForm((prev) => ({ ...prev, prescribed_by: e.target.value }))}
               placeholder="e.g. Dr. Smith"
-              style={{ margin: 0 }}
+              readOnly={isDoctor}  
+              style={{ margin: 0, background: isDoctor ? '#F1F5F9' : undefined, color: isDoctor ? '#475569' : undefined, cursor: isDoctor ? 'default' : 'text' }}
             />
+            {isDoctor && (
+              <span style={{ fontSize: '11px', color: '#94A3B8', fontWeight: 600 }}>Auto-filled from your profile</span>
+            )}
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '8px', marginTop: '4px' }}>
-            <label style={{ fontSize: '13px', fontWeight: '500', color: '#64748b' }}>Source Hospital / Clinic</label>
-            <input
-              value={medicationForm.source_hospital_name}
-              onChange={(e) =>
-                setMedicationForm((prev) => ({
-                  ...prev,
-                  source_hospital_name: e.target.value,
-                }))
-              }
-              placeholder={
-                medicationForm.medication_origin === "past_external"
-                  ? "Other hospital / clinic name"
-                  : "Current hospital / clinic name"
-              }
-              style={{ margin: 0 }}
-            />
-          </div>
+          {/* Source Hospital — hidden for doctors (they're the current treating doctor) */}
+          {!isDoctor && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '8px', marginTop: '4px' }}>
+              <label style={{ fontSize: '13px', fontWeight: '500', color: '#64748b' }}>Source Hospital / Clinic</label>
+              <input
+                value={medicationForm.source_hospital_name}
+                onChange={(e) => setMedicationForm((prev) => ({ ...prev, source_hospital_name: e.target.value }))}
+                placeholder="Other hospital / clinic name"
+                style={{ margin: 0 }}
+              />
+            </div>
+          )}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '8px', marginTop: '4px' }}>
             <label style={{ fontSize: '13px', fontWeight: '500', color: '#64748b' }}>Start Date</label>
             <input

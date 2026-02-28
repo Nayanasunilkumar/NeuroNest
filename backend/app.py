@@ -1,6 +1,7 @@
 from pathlib import Path
+import os
 
-from flask import Flask, send_from_directory
+from flask import Flask
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from dotenv import load_dotenv
@@ -28,8 +29,12 @@ def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
 
-    # ================= Extensions =================
-    CORS(app)
+    # ========== CORS ========== 
+    # In production, set CORS_ORIGINS to your Vercel frontend URL (comma-separated)
+    # e.g. CORS_ORIGINS=https://neuronest.vercel.app
+    _raw_origins = os.getenv("CORS_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173")
+    _allowed_origins = [o.strip() for o in _raw_origins.split(",") if o.strip()]
+    CORS(app, origins=_allowed_origins, supports_credentials=True)
     db.init_app(app)
     jwt = JWTManager(app)
     socketio.init_app(app)
@@ -88,12 +93,9 @@ def create_app():
     # ================= Home Route =================
     @app.route("/")
     def home():
-        return {"status": "Backend running"}
+        return {"status": "NeuroNest backend running"}
 
-    # ================= Serve Uploaded Images =================
-    @app.route("/uploads/<filename>")
-    def uploaded_file(filename):
-        return send_from_directory("uploads", filename)
+    # NOTE: /uploads/<filename> route removed — files are now served by Cloudinary directly.
 
     return app
 

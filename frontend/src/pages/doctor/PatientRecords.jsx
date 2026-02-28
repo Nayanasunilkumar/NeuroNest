@@ -9,7 +9,7 @@ import {
 } from "../../api/doctor";
 import { 
     Calendar, User, Clock, Mail, Phone, Info, 
-    ChevronRight, Bookmark, ShieldAlert, Edit3, Folder, StickyNote,
+    ChevronRight, ChevronLeft, Bookmark, ShieldAlert, Edit3, Folder, StickyNote,
     Check, X, AlertCircle, FileText, Activity, MessageSquare, LayoutGrid, Bell
 } from "lucide-react";
 import { toAssetUrl } from "../../utils/media";
@@ -99,7 +99,53 @@ const PatientRecords = () => {
             <div className="dossier-premium-root">
                 {/* Header Section */}
                 <div className="dossier-premium-header">
-                    <h1 className="dossier-premium-title">Clinical Dossier</h1>
+                    <div className="header-nexus-left">
+                        {/* Highlighted Back Button */}
+                        <button
+                            onClick={() => navigate('/doctor/patients')}
+                            title="Back to My Patients"
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px',
+                                padding: '0 18px',
+                                height: '38px',
+                                borderRadius: '999px',
+                                border: 'none',
+                                background: 'linear-gradient(135deg, #2563EB, #1D4ED8)',
+                                color: '#ffffff',
+                                fontWeight: 700,
+                                fontSize: '13px',
+                                cursor: 'pointer',
+                                boxShadow: '0 4px 12px rgba(37, 99, 235, 0.35)',
+                                transition: 'all 0.2s cubic-bezier(0.4,0,0.2,1)',
+                                flexShrink: 0,
+                                letterSpacing: '0.01em',
+                            }}
+                            onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 6px 18px rgba(37, 99, 235, 0.45)'; }}
+                            onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(37, 99, 235, 0.35)'; }}
+                        >
+                            <ChevronLeft size={16} />
+                            My Patients
+                        </button>
+
+                        <div className="header-title-stack">
+                            <span className="header-breadcrumb-mini">My Patients / Clinical Dossier</span>
+                            <h1 className="dossier-premium-title">Clinical Dossier</h1>
+                        </div>
+                    </div>
+
+                    <div className="header-nexus-right">
+                        <div className="patient-identity-capsule">
+                            <div className="capsule-avatar-mini">
+                                {identity.full_name ? identity.full_name.charAt(0).toUpperCase() : 'P'}
+                            </div>
+                            <div className="capsule-text">
+                                <span className="capsule-name">{identity.full_name}</span>
+                                <span className="capsule-id">#PID-{identity.id}</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <div className="dossier-premium-grid">

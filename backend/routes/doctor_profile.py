@@ -1,9 +1,8 @@
-from flask import Blueprint, request, jsonify, current_app, send_from_directory
+from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
 from database.models import db, DoctorProfile, User, DoctorAvailability, DoctorExpertiseTag, AppointmentSlot
 from datetime import datetime, timezone
-import os
-from werkzeug.utils import secure_filename
+from utils.cloudinary_upload import upload_file as cld_upload
 from utils.slot_engine import regenerate_slots_for_doctor, rolling_window_bounds
 
 doctor_profile_bp = Blueprint("doctor_profile", __name__, url_prefix="/api/doctor/profile")
@@ -113,44 +112,31 @@ def upload_profile_image():
 
     user_id = int(get_jwt_identity())
     profile = DoctorProfile.query.filter_by(user_id=user_id).first()
-    
+
     if not profile:
         return jsonify({"message": "Profile not found"}), 404
 
     if 'file' not in request.files:
         return jsonify({"message": "No file part"}), 400
-        
+
     file = request.files['file']
-    
     if file.filename == '':
         return jsonify({"message": "No selected file"}), 400
-        
-    if file and allowed_file(file.filename):
-        filename = secure_filename(file.filename)
-        unique_filename = f"doctor_{user_id}_{int(datetime.now().timestamp())}_{filename}"
-        
-        # Ensure upload folder exists
-        upload_folder = os.path.join(current_app.root_path, 'uploads', 'profiles')
-        os.makedirs(upload_folder, exist_ok=True)
-        
-        file_path = os.path.join(upload_folder, unique_filename)
-        file.save(file_path)
-        
-        # Store relative URL so frontend can resolve per environment.
-        image_url = f"/api/doctor/profile/uploads/{unique_filename}"
-        
-        profile.profile_image = image_url
-        db.session.commit()
-        
-        return jsonify({"message": "Image uploaded successfully", "image_url": image_url}), 200
-    
-    return jsonify({"message": "Invalid file type"}), 400
 
-# Route to serve uploaded images directly
-@doctor_profile_bp.route("/uploads/<filename>")
-def serve_profile_image(filename):
-    upload_folder = os.path.join(current_app.root_path, 'uploads', 'profiles')
-    return send_from_directory(upload_folder, filename)
+    if not allowed_file(file.filename):
+        return jsonify({"message": "Invalid file type"}), 400
+
+    public_id = f"neuronest/profiles/doctor_{user_id}"
+    try:
+        result = cld_upload(file.stream, public_id=public_id, folder="neuronest/profiles", resource_type="image")
+    except Exception as e:
+        return jsonify({"message": f"Upload failed: {str(e)}"}), 500
+
+    image_url = result["secure_url"]
+    profile.profile_image = image_url
+    db.session.commit()
+
+    return jsonify({"message": "Image uploaded successfully", "image_url": image_url}), 200
 
 
 # ============================

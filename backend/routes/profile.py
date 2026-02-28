@@ -1,22 +1,15 @@
-from flask import Blueprint, request, jsonify, current_app
+from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
 from database.models import db, PatientProfile, User, EmergencyContact
-from werkzeug.utils import secure_filename
 from datetime import datetime
-import os
+from utils.cloudinary_upload import upload_file as cld_upload
 
 profile_bp = Blueprint("profile", __name__, url_prefix="/profile")
 
-# ============================
-# IMAGE CONFIG
-# ============================
-UPLOAD_FOLDER = "uploads"
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "webp"}
 
-
 def allowed_file(filename):
-    return "." in filename and \
-        filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
 # ============================
@@ -136,20 +129,13 @@ def update_my_profile():
 
     if "profile_image" in request.files:
         file = request.files["profile_image"]
-
         if file and file.filename != "" and allowed_file(file.filename):
-
-            ext = file.filename.rsplit(".", 1)[1].lower()
-            unique_filename = f"user_{user_id}_{int(datetime.utcnow().timestamp())}.{ext}"
-            filename = secure_filename(unique_filename)
-
-            upload_path = os.path.join(current_app.root_path, UPLOAD_FOLDER)
-            os.makedirs(upload_path, exist_ok=True)
-
-            file_path = os.path.join(upload_path, filename)
-            file.save(file_path)
-
-            profile.profile_image = f"/uploads/{filename}"
+            public_id = f"neuronest/profiles/patient_{user_id}"
+            try:
+                result = cld_upload(file.stream, public_id=public_id, folder="neuronest/profiles", resource_type="image")
+                profile.profile_image = result["secure_url"]
+            except Exception as e:
+                return jsonify({"message": f"Image upload failed: {str(e)}"}), 500
 
     db.session.commit()
 

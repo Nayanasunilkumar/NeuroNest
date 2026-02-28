@@ -1,11 +1,9 @@
 import json
-import os
 from datetime import datetime
 
-from flask import Blueprint, current_app, jsonify, request, send_file
+from flask import Blueprint, jsonify, request, redirect
 from flask_jwt_extended import get_jwt, get_jwt_identity, jwt_required
 from sqlalchemy import func
-from werkzeug.utils import secure_filename
 
 from database.models import (
     MedicalRecord,
@@ -209,17 +207,18 @@ def create_medical_record(patient_id=None):
         return jsonify({"message": "File too large (max 15MB)"}), 400
     file.seek(0)
 
-    original_filename = secure_filename(file.filename)
-    extension = original_filename.rsplit(".", 1)[1].lower()
+    original_filename = secure_filename(file.filename) if hasattr(file, 'filename') else 'record'
+    extension = original_filename.rsplit(".", 1)[1].lower() if '.' in original_filename else 'bin'
     timestamp = int(datetime.utcnow().timestamp() * 1000)
-    filename = f"{patient_id}_{timestamp}_{original_filename}"
+    public_id = f"neuronest/medical_records/{patient_id}_{timestamp}"
 
-    upload_folder = os.path.join(current_app.root_path, "uploads", str(patient_id), "medical_records")
-    os.makedirs(upload_folder, exist_ok=True)
-    full_path = os.path.join(upload_folder, filename)
-    file.save(full_path)
+    from utils.cloudinary_upload import upload_file as cld_upload
+    try:
+        cld_result = cld_upload(file.stream, public_id=public_id, folder="neuronest/medical_records")
+    except Exception as e:
+        return jsonify({"message": f"File upload failed: {str(e)}"}), 500
 
-    db_path = f"uploads/{patient_id}/medical_records/{filename}"
+    file_url = cld_result["secure_url"]
     actor_id, actor_role = _actor_info()
 
     record = MedicalRecord(
@@ -230,7 +229,7 @@ def create_medical_record(patient_id=None):
         hospital_name=(request.form.get("hospital_name") or None),
         description=(request.form.get("description") or None),
         notes=(request.form.get("notes") or None),
-        file_path=db_path,
+        file_path=file_url,             # Cloudinary HTTPS URL
         file_type=extension,
         file_size_bytes=file_size,
         uploaded_by=actor_id,
@@ -320,12 +319,17 @@ def delete_medical_record(record_id, patient_id=None):
     if not record:
         return jsonify({"message": "Record not found"}), 404
 
-    try:
-        full_path = os.path.join(current_app.root_path, record.file_path)
-        if os.path.exists(full_path):
-            os.remove(full_path)
-    except Exception:
-        pass
+    # Delete from Cloudinary if stored there
+    if record.file_path and 'cloudinary.com' in (record.file_path or ''):
+        from utils.cloudinary_upload import delete_file as cld_delete
+        try:
+            parts = record.file_path.split('/upload/')
+            if len(parts) == 2:
+                public_id_with_ext = '/'.join(parts[1].split('/')[1:])  # strip version segment
+                public_id = public_id_with_ext.rsplit('.', 1)[0]
+                cld_delete(public_id)
+        except Exception:
+            pass
 
     db.session.delete(record)
     db.session.commit()
@@ -350,11 +354,11 @@ def download_medical_record(record_id, patient_id=None):
     if not record:
         return jsonify({"message": "Record not found"}), 404
 
-    full_path = os.path.join(current_app.root_path, record.file_path)
-    if not os.path.exists(full_path):
-        return jsonify({"message": "File missing from storage"}), 404
+    # Cloudinary URLs are direct — redirect the client
+    if record.file_path and record.file_path.startswith('http'):
+        return redirect(record.file_path)
 
-    return send_file(full_path, as_attachment=True)
+    return jsonify({"message": "File not available"}), 404
 
 
 @patient_medical_bp.route("/allergies", methods=["GET"])
@@ -373,7 +377,32 @@ def get_allergies(patient_id=None):
     if not include_inactive:
         query = query.filter_by(status="active")
     rows = query.order_by(PatientAllergy.created_at.desc()).all()
-    return jsonify([row.to_dict() for row in rows]), 200
+
+    # Enrich with creator name + specialization
+    from database.models import DoctorProfile
+    creator_ids = {r.created_by_user_id for r in rows if r.created_by_user_id}
+    creators = {u.id: u for u in User.query.filter(User.id.in_(creator_ids)).all()} if creator_ids else {}
+    doctor_profiles = {
+        dp.user_id: dp
+        for dp in DoctorProfile.query.filter(DoctorProfile.user_id.in_(creator_ids)).all()
+    } if creator_ids else {}
+
+    result = []
+    for row in rows:
+        d = row.to_dict()
+        creator = creators.get(row.created_by_user_id)
+        if creator:
+            dp = doctor_profiles.get(creator.id)
+            d["added_by_name"] = creator.full_name
+            d["added_by_role"] = row.created_by_role
+            d["added_by_specialization"] = dp.specialization if dp and dp.specialization else None
+        else:
+            d["added_by_name"] = None
+            d["added_by_role"] = row.created_by_role
+            d["added_by_specialization"] = None
+        result.append(d)
+
+    return jsonify(result), 200
 
 
 @patient_medical_bp.route("/allergies", methods=["POST"])
@@ -491,7 +520,32 @@ def get_conditions(patient_id=None):
     if not include_inactive:
         query = query.filter_by(status="active")
     rows = query.order_by(PatientCondition.created_at.desc()).all()
-    return jsonify([row.to_dict() for row in rows]), 200
+
+    # Enrich with creator name + specialization
+    from database.models import DoctorProfile
+    creator_ids = {r.created_by_user_id for r in rows if r.created_by_user_id}
+    creators = {u.id: u for u in User.query.filter(User.id.in_(creator_ids)).all()} if creator_ids else {}
+    doctor_profiles = {
+        dp.user_id: dp
+        for dp in DoctorProfile.query.filter(DoctorProfile.user_id.in_(creator_ids)).all()
+    } if creator_ids else {}
+
+    result = []
+    for row in rows:
+        d = row.to_dict()
+        creator = creators.get(row.created_by_user_id)
+        if creator:
+            dp = doctor_profiles.get(creator.id)
+            d["added_by_name"] = creator.full_name
+            d["added_by_role"] = row.created_by_role
+            d["added_by_specialization"] = dp.specialization if dp and dp.specialization else None
+        else:
+            d["added_by_name"] = None
+            d["added_by_role"] = row.created_by_role
+            d["added_by_specialization"] = None
+        result.append(d)
+
+    return jsonify(result), 200
 
 
 @patient_medical_bp.route("/conditions", methods=["POST"])
