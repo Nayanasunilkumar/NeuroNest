@@ -357,19 +357,100 @@ const MedicalRecords = ({ patientId: propPatientId = null }) => {
         )}
 
         {summary && (
-          <div className="clinical-summary-grid-premium">
-            <div className="clinical-summary-card-prm allergies">
-              <div className="card-prm-icon"><Flame size={20} /></div>
-              <div className="card-prm-content">
-                <p>Severe Allergies</p>
-                <h3>{summary.severe_allergy_count ?? 0}</h3>
+          <div className="structured-medical-grid">
+            {/* Allergies Card */}
+            <div className="structured-card-premium allergies-card">
+              <div className="card-premium-header">
+                <div className="header-text">
+                  <h3>Severe Allergies</h3>
+                  <p>{severeAllergyCount} Severe / {allergies.length} Total</p>
+                </div>
+                <button className="card-action-btn-prm" onClick={() => setAllergyFormOpen(true)}>
+                  <Plus size={16} />
+                </button>
+              </div>
+              <div className="structured-list-premium custom-scrollbar">
+                {allergies.length === 0 ? (
+                  <div className="structured-empty-prm">
+                    <p>No severe allergies documented.</p>
+                  </div>
+                ) : (
+                  allergies.map((item) => (
+                    <div key={item.id} className="structured-item-premium">
+                      <div className="item-premium-body">
+                        <div className="item-premium-main">
+                          <p className="item-title-prm">{item.allergy_name}</p>
+                          <span className={`pill-badge-tiny prm-severity-${item.severity || 'mild'}`}>
+                            {item.severity}
+                          </span>
+                        </div>
+                        <div className="item-premium-meta-grid">
+                           <div className="meta-cell">
+                             <span className="meta-label">Reaction</span>
+                             <span className="meta-value">{item.reaction || 'N/A'}</span>
+                           </div>
+                           <div className="meta-cell">
+                             <span className="meta-label">Diagnosed</span>
+                             <span className="meta-value">{formatDate(item.diagnosed_date)}</span>
+                           </div>
+                        </div>
+                      </div>
+                      <div className="item-premium-actions">
+                        <button onClick={() => medicalRecordService.deleteAllergy(item.id, patientId).then(fetchRecords)} className="btn-icon-tiny">
+                          <X size={14} />
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
-            <div className="clinical-summary-card-prm conditions">
-              <div className="card-prm-icon"><Activity size={20} /></div>
-              <div className="card-prm-content">
-                <p>Active Conditions</p>
-                <h3>{summary.active_condition_count ?? 0}</h3>
+
+            {/* Conditions Card */}
+            <div className="structured-card-premium conditions-card">
+              <div className="card-premium-header">
+                <div className="header-text">
+                  <h3>Active Conditions</h3>
+                  <p>{conditions.filter(c => c.status === 'active').length} Active / {conditions.length} Total</p>
+                </div>
+                <button className="card-action-btn-prm" onClick={() => setConditionFormOpen(true)}>
+                  <Plus size={16} />
+                </button>
+              </div>
+              <div className="structured-list-premium custom-scrollbar">
+                {conditions.length === 0 ? (
+                  <div className="structured-empty-prm">
+                    <p>No active conditions documented.</p>
+                  </div>
+                ) : (
+                  conditions.map((item) => (
+                    <div key={item.id} className="structured-item-premium">
+                      <div className="item-premium-body">
+                        <div className="item-premium-main">
+                          <p className="item-title-prm">{item.condition_name}</p>
+                          {item.under_treatment && (
+                            <span className="pill-badge-tiny prm-status-active">Treating</span>
+                          )}
+                        </div>
+                        <div className="item-premium-meta-grid">
+                           <div className="meta-cell">
+                             <span className="meta-label">Diagnosed</span>
+                             <span className="meta-value">{formatDate(item.diagnosed_date)}</span>
+                           </div>
+                           <div className="meta-cell">
+                             <span className="meta-label">Last Review</span>
+                             <span className="meta-value">{formatDate(item.last_reviewed)}</span>
+                           </div>
+                        </div>
+                      </div>
+                      <div className="item-premium-actions">
+                        <button onClick={() => medicalRecordService.deleteCondition(item.id, patientId).then(fetchRecords)} className="btn-icon-tiny">
+                          <X size={14} />
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
 
