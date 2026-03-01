@@ -166,11 +166,6 @@ const Profile = () => {
                         <h2 className="dark-username">{formData.full_name || "Dr. Name"}</h2>
                         <h3 className="dark-usertitle">{formData.specialization || "Clinical Specialist"}</h3>
 
-                        <button className="dark-btn-outline" onClick={() => setIsEditing(!isEditing)}>
-                            {isEditing ? <><User size={16}/> Viewing Mode</> : <><Settings size={16}/> Edit Settings</>}
-                            <ArrowRight size={14}/>
-                        </button>
-
                         <div className="dark-section-title mt-2">Skills and Expertise</div>
                         <div className="dark-tags">
                             {formData.expertise_tags?.length > 0 ? (
@@ -266,7 +261,6 @@ const Profile = () => {
                                     </div>
                                     <div className="dark-card-actions">
                                         <button className="dark-btn-primary" onClick={() => setIsEditing(true)}>Review Info</button>
-                                        <button className="dark-btn-ghost">Message</button>
                                     </div>
                                 </div>
 
@@ -289,7 +283,6 @@ const Profile = () => {
                                     </div>
                                     <div className="dark-card-actions">
                                         <button className="dark-btn-primary" onClick={() => setIsEditing(true)}>Update Profile</button>
-                                        <button className="dark-btn-secondary">View Board</button>
                                     </div>
                                 </div>
 
