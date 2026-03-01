@@ -133,20 +133,22 @@ const DoctorNavbar = ({ darkMode, toggleTheme }) => {
       </div>
 
       {/* Right Actions */}
-      <div className="d-flex align-items-center justify-content-end gap-2 gap-md-3 flex-shrink-0" style={{ width: '220px' }}>
+      <div className="d-flex align-items-center justify-content-end gap-2 gap-md-3" style={{ minWidth: '220px' }}>
         <button
-          className="btn btn-outline-secondary d-none d-md-flex align-items-center justify-content-center border-0 rounded-circle shadow-sm"
+          className="btn btn-outline-secondary d-flex align-items-center justify-content-center border-0 rounded-circle shadow-sm transition-all"
           style={{ width: '40px', height: '40px' }}
           onClick={toggleTheme}
+          title="Toggle Theme"
         >
           {darkMode ? <Sun size={20} className="text-warning" /> : <Moon size={20} className="text-secondary" />}
         </button>
 
         <div className="position-relative" ref={dropdownRef}>
           <button 
-            className="btn btn-outline-secondary d-flex align-items-center justify-content-center border-0 rounded-circle position-relative shadow-sm"
+            className="btn btn-outline-secondary d-flex align-items-center justify-content-center border-0 rounded-circle position-relative shadow-sm transition-all"
             style={{ width: '40px', height: '40px' }}
             onClick={() => setShowDropdown(!showDropdown)}
+            title="Notifications"
           >
             <BellRing size={20} className={darkMode ? 'text-light' : 'text-secondary'} />
             {hasNotifications && (
@@ -169,7 +171,7 @@ const DoctorNavbar = ({ darkMode, toggleTheme }) => {
               <div className="p-1 max-vh-50 overflow-auto">
                 {notifications.length > 0 ? (
                   notifications.map(n => (
-                    <div key={n.id} onClick={() => { setShowDropdown(false); navigate(n.link); }} className={`d-flex gap-3 p-2 rounded-3 cursor-pointer mb-1 transition-all ${darkMode ? 'text-light hover-bg-light hover-bg-opacity-10' : 'text-dark hover-bg-light'}`}>
+                    <div key={n.id} onClick={() => { setShowDropdown(false); navigate(n.link); }} className={`d-flex gap-3 p-2 rounded-3 cursor-pointer mb-1 transition-all ${darkMode ? 'text-light hover-bg-dark' : 'text-dark hover-bg-light'}`}>
                       <div className="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0 shadow-sm" style={{ 
                         width: '38px', height: '38px',
                         background: n.type === 'request' ? 'rgba(13, 110, 253, 0.1)' : n.type === 'chat' ? 'rgba(25, 135, 84, 0.1)' : 'rgba(255, 193, 7, 0.1)'
@@ -188,26 +190,24 @@ const DoctorNavbar = ({ darkMode, toggleTheme }) => {
           )}
         </div>
 
-        <div className="vr mx-1 opacity-10 d-none d-md-block"></div>
-
         <div className={`d-flex align-items-center gap-2 p-1 rounded-pill ps-2 pe-1 transition-all border ${darkMode ? 'hover-bg-dark border-secondary bg-dark bg-opacity-50' : 'hover-bg-light border-light bg-light bg-opacity-50'}`} style={{ cursor: 'pointer' }} onClick={() => navigate('/doctor/profile')}>
           <div className="d-none d-xl-block text-end me-1">
             <p className={`m-0 fw-bold small lh-1 ${darkMode ? 'text-light' : 'text-dark'}`}>{doctorInfo.name}</p>
-            <p className="m-0 text-muted fw-bold text-uppercase lh-1 mt-1" style={{ fontSize: '0.6rem', letterSpacing: '0.05em' }}>{doctorInfo.specialization}</p>
           </div>
           <div className="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold shadow-sm" style={{ 
-            width: '36px', height: '36px', 
+            width: '34px', height: '34px', 
             background: 'linear-gradient(135deg, #0d6efd, #6610f2)', 
-            fontSize: '0.9rem' 
+            fontSize: '0.85rem' 
           }}>{doctorInfo.avatar}</div>
         </div>
 
         <button 
-          className="btn btn-danger-soft rounded-circle p-2 border-0 shadow-sm flex-shrink-0 ms-1"
+          className="btn btn-danger-soft rounded-circle p-2 border-0 shadow-sm flex-shrink-0 transition-all"
           onClick={() => {
             import('../../utils/auth').then(m => m.logout());
           }}
           title="Logout"
+          style={{ width: '40px', height: '40px' }}
         >
           <LogOut size={20} />
         </button>

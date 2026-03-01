@@ -55,7 +55,7 @@ const AdminLayout = () => {
             </div>
 
             {/* Right: Actions */}
-            <div className="d-flex align-items-center justify-content-end gap-3" style={{ width: '250px' }}>
+            <div className="d-flex align-items-center justify-content-end gap-3" style={{ minWidth: '220px' }}>
                  <div className="d-none d-xl-flex flex-column align-items-end pe-3 border-end border-secondary border-opacity-25 me-1">
                     <span className="fw-black font-monospace lh-1" style={{ fontSize: '0.95rem' }}>
                         {currentTime.toLocaleTimeString([], { hour12: false })}
@@ -66,18 +66,20 @@ const AdminLayout = () => {
                  </div>
 
                  <button 
-                    className={`btn p-2 rounded-circle border-0 ${darkMode ? 'btn-outline-light' : 'btn-outline-dark'}`}
+                    className={`btn p-2 rounded-circle border-0 d-flex align-items-center justify-content-center transition-all ${darkMode ? 'btn-outline-light text-warning' : 'btn-outline-dark text-secondary'}`}
                     onClick={toggleTheme}
+                    title="Toggle Theme"
+                    style={{ width: '40px', height: '40px' }}
                  >
                     {darkMode ? <Sun size={20} /> : <Moon size={20} />}
                  </button>
 
                  <button 
-                  className="btn btn-danger-soft rounded-pill px-3 py-2 fw-bold d-flex align-items-center gap-2 border-0 shadow-sm"
+                  className="btn btn-danger-soft rounded-pill px-3 py-2 fw-bold d-flex align-items-center gap-2 border-0 shadow-sm transition-all"
                   onClick={logout}
                 >
                   <LogOut size={20} />
-                  <span className="d-none d-md-inline">Terminal logout</span>
+                  <span className="d-none d-md-inline">Logout</span>
                 </button>
             </div>
         </div>

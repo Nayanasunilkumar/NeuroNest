@@ -35,20 +35,22 @@ const PatientLayout = () => {
                     </div>
 
                     {/* Right Actions */}
-                    <div className="d-flex align-items-center justify-content-end gap-2 gap-md-3 flex-shrink-0" style={{ width: '220px' }}>
-                        <button className={`btn p-2 rounded-circle border-0 d-none d-sm-flex ${darkMode ? 'btn-outline-light' : 'btn-outline-secondary opacity-75'}`}>
-                            <Bell size={20} />
-                        </button>
-
+                    <div className="d-flex align-items-center justify-content-end gap-2 gap-md-3" style={{ minWidth: '220px' }}>
                         <button 
-                            className={`btn p-2 rounded-circle border-0 ${darkMode ? 'btn-outline-light' : 'btn-outline-secondary opacity-75'}`}
+                            className={`btn p-2 rounded-circle border-0 d-flex align-items-center justify-content-center transition-all ${darkMode ? 'btn-outline-light text-warning' : 'btn-outline-secondary text-secondary opacity-75'}`}
                             onClick={toggleTheme}
+                            title="Toggle Theme"
+                            style={{ width: '40px', height: '40px' }}
                         >
                             {darkMode ? <Sun size={20} /> : <Moon size={20} />}
                         </button>
 
+                        <button className={`btn p-2 rounded-circle border-0 d-none d-sm-flex align-items-center justify-content-center ${darkMode ? 'btn-outline-light' : 'btn-outline-secondary opacity-75'}`} style={{ width: '40px', height: '40px' }}>
+                            <Bell size={20} />
+                        </button>
+
                         <button 
-                            className="btn btn-danger-soft rounded-pill px-3 py-2 fw-bold d-flex align-items-center gap-2 border-0 shadow-sm ms-1"
+                            className="btn btn-danger-soft rounded-pill px-3 py-2 fw-bold d-flex align-items-center gap-2 border-0 shadow-sm transition-all"
                             onClick={logout}
                         >
                             <LogOut size={18} />
