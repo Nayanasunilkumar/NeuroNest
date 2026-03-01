@@ -121,13 +121,13 @@ const Profile = () => {
 
     // --- Sub-component: Basic Info ---
     const renderBasicInfo = () => (
-        <div className="card border-0 shadow-sm rounded-4 mb-4 bg-white">
+        <div className="card shadow-sm border-0 rounded-4 mb-4" style={{ backgroundColor: '#fff', boxShadow: '0 5px 20px rgba(0,0,0,0.03)' }}>
             <div className="card-body p-4 p-md-5">
-                <div className="d-flex align-items-center gap-3 mb-4 pb-3 border-bottom">
-                    <div className="bg-primary bg-opacity-10 text-primary p-2 rounded-3 d-flex align-items-center justify-content-center">
+                <div className="d-flex align-items-center gap-3 mb-4 pb-3 border-bottom border-light">
+                    <div className="bg-primary bg-gradient shadow-sm text-white p-2 rounded-3 d-flex align-items-center justify-content-center">
                         <User size={24} />
                     </div>
-                    <h3 className="h5 fw-bold text-dark mb-0">Basic Information</h3>
+                    <h3 className="h5 fw-bold text-dark mb-0" style={{ letterSpacing: '-0.3px' }}>Basic Information</h3>
                 </div>
                 
                 <div className="row g-4">
@@ -202,13 +202,13 @@ const Profile = () => {
 
     // --- Sub-component: Professional Details ---
     const renderProfessionalDetails = () => (
-        <div className="card border-0 shadow-sm rounded-4 mb-4 bg-white">
+        <div className="card shadow-sm border-0 rounded-4 mb-4" style={{ backgroundColor: '#fff', boxShadow: '0 5px 20px rgba(0,0,0,0.03)' }}>
             <div className="card-body p-4 p-md-5">
-                <div className="d-flex align-items-center gap-3 mb-4 pb-3 border-bottom">
-                    <div className="bg-indigo text-indigo p-2 rounded-3 d-flex align-items-center justify-content-center" style={{ backgroundColor: 'rgba(99, 102, 241, 0.1)', color: '#6366f1' }}>
+                <div className="d-flex align-items-center gap-3 mb-4 pb-3 border-bottom border-light">
+                    <div className="bg-indigo bg-gradient shadow-sm text-white p-2 rounded-3 d-flex align-items-center justify-content-center" style={{ background: 'linear-gradient(135deg, #6366f1, #818cf8)' }}>
                         <Briefcase size={24} />
                     </div>
-                    <h3 className="h5 fw-bold text-dark mb-0">Professional Details</h3>
+                    <h3 className="h5 fw-bold text-dark mb-0" style={{ letterSpacing: '-0.3px' }}>Professional Details</h3>
                 </div>
                 
                 <div className="row g-4">
