@@ -129,7 +129,7 @@ const AvailabilityModal = ({ isOpen, onClose, availability, onUpdate }) => {
     // Portal to body to avoid clipping or stacking context issues
     return ReactDOM.createPortal(
         <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.6)', zIndex: 1050 }} tabIndex="-1" onClick={onClose}>
-            <div className="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable" style={{ maxWidth: '900px', width: '95%' }} onClick={e => e.stopPropagation()}>
+            <div className="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable" style={{ maxWidth: '1000px', width: '95%' }} onClick={e => e.stopPropagation()}>
                 <div className={`modal-content border-0 shadow-lg overflow-hidden ${isDark ? 'bg-dark text-light' : 'bg-white text-dark'}`} style={{ borderRadius: '1rem' }}>
                     
                     {/* Header */}
@@ -147,7 +147,7 @@ const AvailabilityModal = ({ isOpen, onClose, availability, onUpdate }) => {
                     </div>
 
                     <div className="modal-body p-0">
-                        <div className="row m-0" style={{ minHeight: '400px', maxHeight: '65vh' }}>
+                        <div className="row m-0">
                             {/* Left: Time Builder */}
                             <div className={`col-12 col-md-5 col-lg-4 p-4 ${isDark ? 'border-secondary' : 'bg-white border-end'}`} style={{ backgroundColor: isDark ? '#1a1a1a' : '', zIndex: 10 }}>
                                 <h6 className={`fw-bold mb-4 text-uppercase small ${isDark ? 'text-secondary' : 'text-muted'}`} style={{ letterSpacing: '0.8px' }}>Build Time Slot</h6>
@@ -165,24 +165,24 @@ const AvailabilityModal = ({ isOpen, onClose, availability, onUpdate }) => {
                                 </div>
                                 
                                 <div className="row g-3 mb-2">
-                                    <div className="col-12 col-sm-6 col-md-12 col-xl-6">
-                                        <label className="form-label small fw-bold text-secondary mb-2">Start Time</label>
+                                    <div className="col-6">
+                                        <label className="form-label small fw-bold text-secondary mb-2">Start</label>
                                         <input 
                                             type="time" 
-                                            className={`form-control shadow-none py-2 px-3 fw-medium w-100 ${validationMessage ? 'border-danger text-danger' : isDark ? 'bg-dark text-light border-secondary' : 'bg-light border-0'}`}
+                                            className={`form-control shadow-none py-2 px-2 px-sm-3 fw-medium w-100 ${validationMessage ? 'border-danger text-danger' : isDark ? 'bg-dark text-light border-secondary' : 'bg-light border-0'}`}
                                             value={startTime}
                                             onChange={(e) => setStartTime(e.target.value)}
-                                            style={{ borderRadius: '0.5rem' }}
+                                            style={{ borderRadius: '0.5rem', fontSize: '0.9rem' }}
                                         />
                                     </div>
-                                    <div className="col-12 col-sm-6 col-md-12 col-xl-6">
-                                        <label className="form-label small fw-bold text-secondary mb-2">End Time</label>
+                                    <div className="col-6">
+                                        <label className="form-label small fw-bold text-secondary mb-2">End</label>
                                         <input 
                                             type="time" 
-                                            className={`form-control shadow-none py-2 px-3 fw-medium w-100 ${validationMessage ? 'border-danger text-danger' : isDark ? 'bg-dark text-light border-secondary' : 'bg-light border-0'}`}
+                                            className={`form-control shadow-none py-2 px-2 px-sm-3 fw-medium w-100 ${validationMessage ? 'border-danger text-danger' : isDark ? 'bg-dark text-light border-secondary' : 'bg-light border-0'}`}
                                             value={endTime}
                                             onChange={(e) => setEndTime(e.target.value)}
-                                            style={{ borderRadius: '0.5rem' }}
+                                            style={{ borderRadius: '0.5rem', fontSize: '0.9rem' }}
                                         />
                                     </div>
                                 </div>
@@ -219,7 +219,7 @@ const AvailabilityModal = ({ isOpen, onClose, availability, onUpdate }) => {
                             </div>
 
                             {/* Right: Calendar Grid */}
-                            <div className={`col-12 col-md-7 col-lg-8 p-4 overflow-auto ${isDark ? 'bg-dark' : 'bg-light'}`} style={{ backgroundColor: isDark ? '#111' : '#f8f9fa' }}>
+                            <div className={`col-12 col-md-7 col-lg-8 p-4 py-lg-5 ${isDark ? 'bg-dark' : 'bg-light'}`} style={{ backgroundColor: isDark ? '#111' : '#f8f9fa' }}>
                                 <div className="d-flex flex-column gap-3">
                                     {days.map(d => {
                                         const slots = slotsByDay[d].sort((a, b) => (toMinutes(a.start_time) ?? 0) - (toMinutes(b.start_time) ?? 0));
