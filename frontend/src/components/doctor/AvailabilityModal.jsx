@@ -130,102 +130,118 @@ const AvailabilityModal = ({ isOpen, onClose, availability, onUpdate }) => {
     return ReactDOM.createPortal(
         <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.6)', zIndex: 1050 }} tabIndex="-1" onClick={onClose}>
             <div className="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable" onClick={e => e.stopPropagation()}>
-                <div className={`modal-content border-0 shadow-lg rounded-4 overflow-hidden ${isDark ? 'bg-dark text-light' : 'bg-white text-dark'}`}>
+                <div className={`modal-content border-0 shadow-lg overflow-hidden ${isDark ? 'bg-dark text-light' : 'bg-white text-dark'}`} style={{ borderRadius: '1rem' }}>
                     
                     {/* Header */}
-                    <div className={`modal-header px-4 py-3 ${isDark ? 'border-secondary' : 'bg-light border-bottom'}`} style={{ backgroundColor: isDark ? '#1a1a1a' : '' }}>
-                        <div className="modal-title d-flex align-items-center gap-2 fw-bold h5 mb-0">
-                            <Calendar size={20} className="text-primary" /> 
-                            <span className={isDark ? 'text-white' : 'text-dark'}>Manage Weekly Schedule</span>
+                    <div className={`modal-header px-4 px-lg-5 py-4 ${isDark ? 'border-secondary' : 'bg-white border-bottom'}`} style={{ backgroundColor: isDark ? '#1a1a1a' : '' }}>
+                        <div className="modal-title d-flex align-items-center gap-3">
+                            <div className="bg-primary bg-opacity-10 p-2 rounded-2 text-primary">
+                                <Calendar size={20} />
+                            </div>
+                            <div>
+                                <h5 className={`fw-bold mb-0 ${isDark ? 'text-white' : 'text-dark'}`}>Weekly Schedule</h5>
+                                <span className={`small ${isDark ? 'text-secondary' : 'text-muted'}`}>Manage your time blocks and availability</span>
+                            </div>
                         </div>
-                        <button onClick={onClose} className={`btn-close shadow-none ${isDark ? 'btn-close-white' : ''}`}></button>
+                        <button onClick={onClose} className={`btn-close shadow-none opacity-50 hover-opacity-100 transition-all ${isDark ? 'btn-close-white' : ''}`} style={{ fontSize: '12px' }}></button>
                     </div>
 
-                    <div className="modal-body p-0" style={{ minHeight: '500px' }}>
-                        <div className="row m-0 h-100">
-                            {/* Left: Add Availability Form */}
-                            <div className={`col-12 col-md-5 p-4 border-end ${isDark ? 'border-secondary' : 'bg-white'}`} style={{ backgroundColor: isDark ? '#1a1a1a' : '' }}>
-                                <h3 className={`h6 fw-bold mb-4 text-uppercase ${isDark ? 'text-light' : 'text-dark'}`} style={{ letterSpacing: '0.5px' }}>Add Availability</h3>
+                    <div className="modal-body p-0">
+                        <div className="row m-0" style={{ minHeight: '600px', maxHeight: '70vh' }}>
+                            {/* Left: Time Builder */}
+                            <div className={`col-12 col-md-4 p-4 p-lg-5 ${isDark ? 'border-secondary' : 'bg-white border-end'}`} style={{ backgroundColor: isDark ? '#1a1a1a' : '', zIndex: 10 }}>
+                                <h6 className={`fw-bold mb-4 text-uppercase small ${isDark ? 'text-secondary' : 'text-muted'}`} style={{ letterSpacing: '0.8px' }}>Build Time Slot</h6>
                                 
-                                <div className="mb-3">
-                                    <label className="form-label small fw-bold text-secondary text-uppercase mb-1" style={{ letterSpacing: '0.5px' }}>Day</label>
+                                <div className="mb-4">
+                                    <label className="form-label small fw-bold text-secondary mb-2">Select Day</label>
                                     <select 
-                                        className={`form-select border-2 shadow-none rounded-3 py-2 fw-medium ${isDark ? 'bg-dark text-light border-secondary' : ''}`}
+                                        className={`form-select shadow-none py-2 px-3 fw-medium ${isDark ? 'bg-dark text-light border-secondary' : 'bg-light border-0'}`}
                                         value={day}
                                         onChange={(e) => setDay(e.target.value)}
+                                        style={{ borderRadius: '0.5rem' }}
                                     >
                                         {days.map(d => <option key={d} value={d}>{d}</option>)}
                                     </select>
                                 </div>
                                 
-                                <div className="row g-2 mb-4">
+                                <div className="row g-3 mb-2">
                                     <div className="col-6">
-                                        <label className="form-label small fw-bold text-secondary text-uppercase mb-1" style={{ letterSpacing: '0.5px' }}>Start</label>
+                                        <label className="form-label small fw-bold text-secondary mb-2">Start Time</label>
                                         <input 
                                             type="time" 
-                                            className={`form-control border-2 shadow-none rounded-3 py-2 fw-medium ${isDark ? 'bg-dark text-light border-secondary' : ''}`}
+                                            className={`form-control shadow-none py-2 px-3 fw-medium ${validationMessage ? 'border-danger text-danger' : isDark ? 'bg-dark text-light border-secondary' : 'bg-light border-0'}`}
                                             value={startTime}
                                             onChange={(e) => setStartTime(e.target.value)}
+                                            style={{ borderRadius: '0.5rem' }}
                                         />
                                     </div>
                                     <div className="col-6">
-                                        <label className="form-label small fw-bold text-secondary text-uppercase mb-1" style={{ letterSpacing: '0.5px' }}>End</label>
+                                        <label className="form-label small fw-bold text-secondary mb-2">End Time</label>
                                         <input 
                                             type="time" 
-                                            className={`form-control border-2 shadow-none rounded-3 py-2 fw-medium ${isDark ? 'bg-dark text-light border-secondary' : ''}`}
+                                            className={`form-control shadow-none py-2 px-3 fw-medium ${validationMessage ? 'border-danger text-danger' : isDark ? 'bg-dark text-light border-secondary' : 'bg-light border-0'}`}
                                             value={endTime}
                                             onChange={(e) => setEndTime(e.target.value)}
+                                            style={{ borderRadius: '0.5rem' }}
                                         />
                                     </div>
                                 </div>
 
-                                {validationMessage && (
-                                    <div className="alert py-2 px-3 small d-flex align-items-center gap-2 rounded-3 border-0 bg-danger bg-opacity-10 text-danger fw-medium mb-3" role="alert">
-                                        <AlertCircle size={14} className="flex-shrink-0" />
-                                        <span>{validationMessage}</span>
-                                    </div>
-                                )}
-
-                                <div className={`card border shadow-none rounded-4 mb-4 ${isDark ? 'bg-dark border-secondary' : 'bg-light'}`}>
-                                    <div className="card-body p-3">
-                                        <p className="text-secondary small fw-bold text-uppercase mb-1" style={{ letterSpacing: '0.5px' }}>Preview</p>
-                                        <p className={`fw-bold mb-1 fs-6 ${isDark ? 'text-white' : 'text-dark'}`}>
-                                            {estimatedSlots > 0 ? `~${estimatedSlots} appointments` : 'No appointments'}
-                                        </p>
-                                        <p className="text-muted small mb-0 fw-medium">
-                                            {hasInvalidRange ? 'Set a valid time range.' : `${totalHours} hrs at 30+10 cadence`}
-                                        </p>
-                                    </div>
+                                <div style={{ minHeight: '24px' }} className="mb-3 mt-1">
+                                    {validationMessage && (
+                                        <div className="small text-danger fw-medium d-flex align-items-center gap-1 opacity-75">
+                                            <AlertCircle size={14} /> {validationMessage}
+                                        </div>
+                                    )}
                                 </div>
 
                                 <button 
                                     onClick={handleAdd}
                                     disabled={loading || Boolean(validationMessage)}
-                                    className="btn btn-primary w-100 d-flex justify-content-center align-items-center gap-2 py-2 fw-bold rounded-pill text-white shadow-sm"
+                                    className="btn btn-primary w-100 py-2 px-3 fw-medium rounded-3 d-flex align-items-center justify-content-center gap-2 mb-4 shadow-sm"
+                                    style={{ transition: 'all 0.2s' }}
                                 >
-                                    {loading ? <span className="spinner-border spinner-border-sm"></span> : <Plus size={18} />}
-                                    <span>Add Availability</span>
+                                    {loading ? <span className="spinner-border spinner-border-sm"></span> : <Plus size={16} />}
+                                    Add Slot
                                 </button>
+
+                                <div className={`p-3 rounded-3 d-flex align-items-center gap-3 ${isDark ? 'bg-dark border border-secondary' : 'bg-light border-0'}`}>
+                                    <div className={`p-2 rounded-2 ${isDark ? 'bg-secondary bg-opacity-25 text-primary' : 'bg-white shadow-sm text-primary'}`}>
+                                        <Calendar size={18} />
+                                    </div>
+                                    <div>
+                                        <p className="small text-secondary fw-bold text-uppercase mb-0" style={{ fontSize: '0.65rem', letterSpacing: '0.5px' }}>Capacity Preview</p>
+                                        <p className={`fw-bold mb-0 ${hasInvalidRange ? 'text-muted' : isDark ? 'text-white' : 'text-dark'}`} style={{ fontSize: '0.9rem' }}>
+                                            {hasInvalidRange ? '--' : `${estimatedSlots} Appointments`}
+                                        </p>
+                                    </div>
+                                </div>
                             </div>
 
-                            {/* Right: Schedule List */}
-                            <div className={`col-12 col-md-7 p-4 overflow-auto ${isDark ? 'bg-dark' : 'bg-light'}`} style={{ backgroundColor: isDark ? '#111' : '' }}>
-                                {days.map(d => (
-                                    <div key={d} className="mb-4">
-                                        <h4 className={`h6 fw-bold mb-3 d-flex align-items-center gap-2 text-uppercase ${!slotsByDay[d].length ? 'opacity-50 text-secondary' : (isDark ? 'text-light' : 'text-dark')}`} style={{ letterSpacing: '0.5px' }}>
-                                            <span style={{ width: '80px' }}>{d}</span>
-                                            <div className={`flex-grow-1 border-bottom ${isDark ? 'border-secondary' : ''}`} style={{ height: '1px' }}></div>
-                                            {!slotsByDay[d].length && <span className="badge bg-secondary bg-opacity-10 text-secondary border px-2 border-secondary border-opacity-25 rounded-pill" style={{ fontSize: '10px' }}>Off</span>}
-                                        </h4>
-                                        
-                                        {slotsByDay[d].length > 0 && (
-                                            <div className="row g-2">
-                                                {slotsByDay[d]
-                                                    .sort((a, b) => (toMinutes(a.start_time) ?? 0) - (toMinutes(b.start_time) ?? 0))
-                                                    .map(slot => (
-                                                    <div key={slot.id} className="col-12 col-sm-6">
-                                                        <div className={`card border shadow-sm rounded-3 hover-shadow-sm transition-all ${isDark ? 'bg-dark border-secondary' : 'bg-white'}`} style={{ backgroundColor: isDark ? '#222' : '' }}>
-                                                            <div className="card-body p-2 px-3 d-flex justify-content-between align-items-center">
+                            {/* Right: Calendar Grid */}
+                            <div className={`col-12 col-md-8 p-4 p-lg-5 overflow-auto ${isDark ? 'bg-dark' : 'bg-light'}`} style={{ backgroundColor: isDark ? '#111' : '#f8f9fa' }}>
+                                {days.map(d => {
+                                    const slots = slotsByDay[d].sort((a, b) => (toMinutes(a.start_time) ?? 0) - (toMinutes(b.start_time) ?? 0));
+                                    const hasSlots = slots.length > 0;
+                                    
+                                    return (
+                                        <div key={d} className="mb-4 d-flex">
+                                            <div className="me-4" style={{ width: '45px', flexShrink: 0 }}>
+                                                <div className={`fw-bold text-uppercase mb-1 ${hasSlots ? (isDark ? 'text-white' : 'text-dark') : 'text-secondary opacity-50'}`} style={{ fontSize: '0.75rem', letterSpacing: '0.5px' }}>
+                                                    {d.substring(0, 3)}
+                                                </div>
+                                                <div className={`border-start border-2 ${hasSlots ? 'border-primary' : 'border-secondary opacity-25'}`} style={{ height: 'calc(100% - 20px)' }}></div>
+                                            </div>
+                                            
+                                            <div className="flex-grow-1">
+                                                {!hasSlots ? (
+                                                    <div className={`p-2 px-3 fw-medium small rounded-3 d-inline-block ${isDark ? 'bg-secondary bg-opacity-10 text-secondary' : 'bg-white border text-muted'}`}>
+                                                        No availability set
+                                                    </div>
+                                                ) : (
+                                                    <div className="d-flex flex-wrap gap-2">
+                                                        {slots.map(slot => (
+                                                            <div key={slot.id} className={`p-2 px-3 rounded-3 border d-flex align-items-center gap-3 transition-all ${isDark ? 'bg-dark border-secondary hover-bg-secondary' : 'bg-white shadow-sm hover-shadow'}`} style={{ backgroundColor: isDark ? '#222' : '' }}>
                                                                 <div className="d-flex align-items-center gap-2">
                                                                     <Clock size={14} className="text-primary opacity-75" />
                                                                     <span className={`fw-bold ${isDark ? 'text-light' : 'text-dark'}`} style={{ fontSize: '0.85rem' }}>
@@ -234,20 +250,20 @@ const AvailabilityModal = ({ isOpen, onClose, availability, onUpdate }) => {
                                                                 </div>
                                                                 <button 
                                                                     onClick={() => handleDelete(slot.id)}
-                                                                    className={`btn btn-sm border-0 text-danger p-1 rounded hover-bg-danger hover-text-white transition-all ${isDark ? 'btn-dark bg-secondary bg-opacity-25' : 'btn-light'}`}
-                                                                    title="Remove availability"
-                                                                    aria-label="Remove availability"
+                                                                    className="btn btn-sm btn-link text-danger p-1 rounded-circle hover-bg-danger hover-text-white transition-all text-decoration-none d-flex align-items-center justify-content-center"
+                                                                    style={{ width: '24px', height: '24px' }}
+                                                                    title="Remove time slot"
                                                                 >
-                                                                    <Trash2 size={14} />
+                                                                    <Trash2 size={13} />
                                                                 </button>
                                                             </div>
-                                                        </div>
+                                                        ))}
                                                     </div>
-                                                ))}
+                                                )}
                                             </div>
-                                        )}
-                                    </div>
-                                ))}
+                                        </div>
+                                    );
+                                })}
                             </div>
                         </div>
                     </div>
