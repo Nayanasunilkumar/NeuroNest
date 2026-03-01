@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
+import DynamicIslandNav from "../components/DynamicIslandNav";
 import { logout } from "../utils/auth";
 import { useTheme } from "../context/ThemeContext";
-import { Menu, Sun, Moon, LogOut, Search, Bell } from "lucide-react";
+import { Activity, Sun, Moon, LogOut, Search, Bell } from "lucide-react";
 
 const PatientLayout = () => {
     const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -15,31 +16,26 @@ const PatientLayout = () => {
     return (
         <div className={`vh-100 d-flex flex-column overflow-hidden ${darkMode ? 'bg-dark text-light' : 'bg-light text-dark'}`} style={{ transition: 'all 0.3s' }}>
             {/* Navbar */}
-            <header className={`navbar navbar-expand-lg sticky-top ${darkMode ? 'navbar-dark bg-dark border-secondary' : 'navbar-light bg-white'} border-bottom shadow-sm px-3`} style={{ height: '70px', zIndex: 1050 }}>
-                <div className="container-fluid gap-3">
-                    <div className="d-flex align-items-center gap-3">
-                        <button 
-                            className={`btn ${darkMode ? 'btn-outline-secondary text-light' : 'btn-outline-primary'} border-0 rounded-circle p-2`}
-                            onClick={() => setSidebarOpen(!sidebarOpen)}
-                            aria-label="Toggle navigation"
-                        >
-                            <Menu size={24} />
-                        </button>
-                        
+            <header className={`navbar navbar-expand-lg sticky-top ${darkMode ? 'navbar-dark bg-dark border-secondary' : 'navbar-light bg-white'} border-bottom shadow-sm px-3`} style={{ height: '80px', zIndex: 1050 }}>
+                <div className="container-fluid align-items-center">
+                    {/* Logo Area */}
+                    <div className="d-flex align-items-center gap-2 flex-shrink-0" style={{ width: '220px' }}>
+                         <div className="bg-primary p-2 rounded-3 shadow-sm me-1">
+                            <Activity size={24} className="text-white" />
+                        </div>
                         <div className="d-flex flex-column lh-1">
                             <span className="h4 fw-black mb-0 text-primary" style={{ letterSpacing: '-1px' }}>NEURONEST</span>
-                            <span className="small fw-bold text-uppercase opacity-50" style={{ fontSize: '0.65rem', letterSpacing: '2px' }}>Patient Portal</span>
+                            <span className="small fw-bold text-uppercase opacity-50" style={{ fontSize: '0.6rem', letterSpacing: '1px' }}>Patient Portal</span>
                         </div>
                     </div>
 
-                    <div className="d-none d-md-flex flex-grow-1 justify-content-center max-w-400">
-                        <div className="input-group input-group-sm bg-light rounded-pill px-3 py-1 shadow-xs" style={{ maxWidth: '400px', border: darkMode ? '1px solid #444' : '1px solid #eee' }}>
-                            <span className="input-group-text bg-transparent border-0 text-secondary p-0 me-2"><Search size={16} /></span>
-                            <input type="text" className={`form-control bg-transparent border-0 shadow-none py-1 ${darkMode ? 'text-light' : ''}`} placeholder="Search medical records..." style={{ fontSize: '0.85rem' }} />
-                        </div>
+                    {/* Center: Dynamic Island Navigation */}
+                    <div className="flex-grow-1 d-none d-lg-flex justify-content-center">
+                        <DynamicIslandNav role="patient" />
                     </div>
 
-                    <div className="d-flex align-items-center gap-2 gap-md-3">
+                    {/* Right Actions */}
+                    <div className="d-flex align-items-center justify-content-end gap-2 gap-md-3 flex-shrink-0" style={{ width: '220px' }}>
                         <button className={`btn p-2 rounded-circle border-0 d-none d-sm-flex ${darkMode ? 'btn-outline-light' : 'btn-outline-secondary opacity-75'}`}>
                             <Bell size={20} />
                         </button>
@@ -47,15 +43,12 @@ const PatientLayout = () => {
                         <button 
                             className={`btn p-2 rounded-circle border-0 ${darkMode ? 'btn-outline-light' : 'btn-outline-secondary opacity-75'}`}
                             onClick={toggleTheme}
-                            title={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
                         >
                             {darkMode ? <Sun size={20} /> : <Moon size={20} />}
                         </button>
 
-                        <div className="vr d-none d-sm-block mx-1 opacity-10"></div>
-
                         <button 
-                            className="btn btn-danger-soft rounded-pill px-3 py-2 fw-bold d-flex align-items-center gap-2 border-0 shadow-sm"
+                            className="btn btn-danger-soft rounded-pill px-3 py-2 fw-bold d-flex align-items-center gap-2 border-0 shadow-sm ms-1"
                             onClick={logout}
                         >
                             <LogOut size={18} />
@@ -65,21 +58,18 @@ const PatientLayout = () => {
                 </div>
             </header>
 
-            <div className="d-flex flex-grow-1 overflow-hidden" style={{ position: 'relative' }}>
-                {/* Sidebar Component */}
-                <Sidebar 
-                    isOpen={sidebarOpen} 
-                    setIsOpen={setSidebarOpen} 
-                    role="patient" 
-                    title="NeuroNest Patient" 
-                />
+            {/* Mobile Nav (Floating at bottom for better UX) */}
+            <div className="d-lg-none position-fixed bottom-0 start-0 w-100 p-3 mb-2" style={{ zIndex: 1000 }}>
+                <DynamicIslandNav role="patient" />
+            </div>
 
-                {/* Main Content Area */}
+            <div className="d-flex flex-grow-1 overflow-hidden" style={{ position: 'relative' }}>
+                {/* Main Content Area - Full width now */}
                 <main 
-                    className={`flex-grow-1 d-flex flex-column ${isMessagePath ? 'overflow-hidden' : 'overflow-auto'} position-relative ${!sidebarOpen ? 'sidebar-minimized' : ''} ${isMessagePath ? 'p-0' : 'p-3 p-md-4 p-lg-5'}`}
-                    style={{ transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)' }}
+                    className={`flex-grow-1 d-flex flex-column ${isMessagePath ? 'overflow-hidden' : 'overflow-auto'} position-relative ${isMessagePath ? 'p-0' : 'p-3 p-md-4 p-lg-5'}`}
+                    style={{ transition: 'all 0.4s' }}
                 >
-                    <div className={isMessagePath ? 'h-100' : 'container-fluid max-w-1400 mx-auto'}>
+                    <div className={isMessagePath ? 'h-100' : 'container-fluid max-w-1400 mx-auto pb-5 pb-lg-0'}>
                         <Outlet />
                     </div>
                 </main>

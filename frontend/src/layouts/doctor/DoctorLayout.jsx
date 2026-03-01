@@ -1,46 +1,30 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { Outlet, useLocation } from "react-router-dom";
-import DoctorSidebar from "./DoctorSidebar";
 import DoctorNavbar from "./DoctorNavbar";
 import { useTheme } from "../../context/ThemeContext";
 
+import Sidebar from "../../components/Sidebar";
+import DynamicIslandNav from "../../components/DynamicIslandNav";
+
 const DoctorLayout = () => {
-  const [collapsed, setCollapsed] = useState(false);
-  const [mobileOpen, setMobileOpen] = useState(false);
   const { isDark: darkMode, toggleTheme } = useTheme();
   const location = useLocation();
 
-  // Close sidebar when navigating on mobile
-  useEffect(() => {
-    setMobileOpen(false);
-  }, [location.pathname]);
-
-  // Prevent body scroll when mobile sidebar is open
-  useEffect(() => {
-    document.body.style.overflow = mobileOpen ? 'hidden' : '';
-    return () => { document.body.style.overflow = ''; };
-  }, [mobileOpen]);
-
   return (
-    <div className={`d-flex vh-100 vw-100 overflow-hidden ${darkMode ? 'bg-dark text-light' : 'bg-light'}`}>
-      <DoctorSidebar
-        collapsed={collapsed}
-        setCollapsed={setCollapsed}
-        mobileOpen={mobileOpen}
-        setMobileOpen={setMobileOpen}
+    <div className={`vh-100 d-flex flex-column overflow-hidden ${darkMode ? 'bg-dark text-light' : 'bg-light text-dark'}`} style={{ transition: 'all 0.3s' }}>
+      <DoctorNavbar
         darkMode={darkMode}
+        toggleTheme={toggleTheme}
       />
 
-      <div className="d-flex flex-column flex-grow-1 h-100 position-relative" style={{ minWidth: 0 }}>
-        <DoctorNavbar
-          collapsed={collapsed}
-          darkMode={darkMode}
-          toggleTheme={toggleTheme}
-          onMobileMenuClick={() => setMobileOpen(true)}
-        />
-        <div className={`flex-grow-1 d-flex flex-column ${location.pathname.includes('/chat') ? 'overflow-hidden' : 'overflow-auto'} p-3 p-md-4`}>
+      <div className="d-lg-none position-fixed bottom-0 start-0 w-100 p-3 mb-2" style={{ zIndex: 1000 }}>
+         <DynamicIslandNav role="doctor" />
+      </div>
+
+      <div className="d-flex flex-grow-1 overflow-hidden" style={{ position: 'relative' }}>
+        <main className={`flex-grow-1 d-flex flex-column ${location.pathname.includes('/chat') ? 'overflow-hidden' : 'overflow-auto'} p-3 p-md-4 pb-5 pb-lg-4`}>
           <Outlet />
-        </div>
+        </main>
       </div>
     </div>
   );
