@@ -1,9 +1,5 @@
-body {
-    background-color: #0c0c0c;
-}
-
 .dark-profile-page {
-    background-color: #0c0c0c;
+    background-color: transparent;
     min-height: 100vh;
     padding: 2rem 1rem;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
@@ -441,7 +437,7 @@ select.dark-input {
 
 /* --- LIGHT THEME OVERRIDES --- */
 .light-theme.dark-profile-page {
-    background-color: #f8f9fa;
+    background-color: transparent;
     color: #111;
 }
 
