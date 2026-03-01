@@ -19,6 +19,9 @@ const MyAppointments = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterDate, setFilterDate] = useState("");
   const [filterStatus, setFilterStatus] = useState("All");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -78,7 +81,6 @@ const MyAppointments = () => {
     setIsDetailsModalOpen(true);
   };
 
-  // Filter Logic
   const filteredAppointments = appointments.filter((appt) => {
     const matchesSearch = appt.doctor_name
       .toLowerCase()
@@ -89,6 +91,23 @@ const MyAppointments = () => {
 
     return matchesSearch && matchesDate && matchesStatus;
   });
+
+
+  // Pagination Logic
+  const totalPages = Math.ceil(filteredAppointments.length / itemsPerPage);
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentAppointments = filteredAppointments.slice(indexOfFirstItem, indexOfLastItem);
+
+  const handlePageChange = (newPage) => {
+    setCurrentPage(newPage);
+  };
+
+
+  // Reset to first page when filtering
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, filterDate, filterStatus]);
 
   // Calculate quick stats — use case-insensitive match since backend returns lowercase enums
   const upcomingCount  = appointments.filter(a => ['pending', 'approved'].includes(String(a.status).toLowerCase())).length;
@@ -207,6 +226,7 @@ const MyAppointments = () => {
                 <button onClick={fetchAppointments} className="retry-btn">Retry</button>
             </div>
           ) : filteredAppointments.length > 0 ? (
+            <>
             <div className="table-responsive">
                 <table className="premium-table">
                 <thead>
@@ -220,7 +240,7 @@ const MyAppointments = () => {
                     </tr>
                 </thead>
                 <tbody>
-                    {filteredAppointments.map((appt) => (
+                    {currentAppointments.map((appt) => (
                     <tr key={appt.id}>
                         <td>
                              <StatusBadge status={appt.status} />
@@ -304,6 +324,41 @@ const MyAppointments = () => {
                 </tbody>
                 </table>
             </div>
+            {totalPages > 1 && (
+                <div className="pagination-bar-premium">
+                    <div className="pagination-info">
+                        Showing <span>{indexOfFirstItem + 1}</span> to <span>{Math.min(indexOfLastItem, filteredAppointments.length)}</span> of <span>{filteredAppointments.length}</span> appointments
+                    </div>
+                    <div className="pagination-controls">
+                        <button 
+                            className="p-btn" 
+                            disabled={currentPage === 1}
+                            onClick={() => handlePageChange(currentPage - 1)}
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                        </button>
+                        
+                        {[...Array(totalPages)].map((_, idx) => (
+                            <button 
+                                key={idx + 1}
+                                className={`p-number ${currentPage === idx + 1 ? 'active' : ''}`}
+                                onClick={() => handlePageChange(idx + 1)}
+                            >
+                                {idx + 1}
+                            </button>
+                        ))}
+
+                        <button 
+                            className="p-btn" 
+                            disabled={currentPage === totalPages}
+                            onClick={() => handlePageChange(currentPage + 1)}
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                        </button>
+                    </div>
+                </div>
+            )}
+            </>
           ) : (
             <div className="empty-state-premium">
               <div className="empty-icon-ring">

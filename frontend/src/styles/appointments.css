@@ -1582,3 +1582,116 @@ body.dark .appointment-details-modal .pm-close-btn:hover {
 .summary-row .label svg {
   color: #818cf8;
 }
+
+/* Pagination Bar Premium */
+.pagination-bar-premium {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 24px;
+    border-top: 1px solid #f1f5f9;
+    margin-top: 10px;
+}
+
+.pagination-info {
+    font-size: 13px;
+    color: #64748b;
+    font-weight: 500;
+}
+
+.pagination-info span {
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.pagination-controls {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.p-btn {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    color: #64748b;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.p-btn:hover:not(:disabled) {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+    color: #1e293b;
+}
+
+.p-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.p-number {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    color: #64748b;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 13px;
+    transition: all 0.2s;
+}
+
+.p-number:hover {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+    color: #1e293b;
+}
+
+.p-number.active {
+    background: #6366f1;
+    border-color: #6366f1;
+    color: white;
+    box-shadow: 0 4px 10px rgba(99, 102, 241, 0.3);
+}
+
+/* Dark Mode Pagination */
+body.dark .pagination-bar-premium {
+    border-top-color: #334155;
+}
+
+body.dark .pagination-info {
+    color: #94a3b8;
+}
+
+body.dark .pagination-info span {
+    color: #f1f5f9;
+}
+
+body.dark .p-btn, body.dark .p-number {
+    background: #1e293b;
+    border-color: #334155;
+    color: #94a3b8;
+}
+
+body.dark .p-btn:hover:not(:disabled), body.dark .p-number:hover {
+    background: #334155;
+    border-color: #475569;
+    color: white;
+}
+
+body.dark .p-number.active {
+    background: #6366f1;
+    border-color: #6366f1;
+    color: white;
+}
+
