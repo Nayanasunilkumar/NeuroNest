@@ -76,7 +76,7 @@ const PatientLayout = () => {
 
                 {/* Main Content Area */}
                 <main 
-                    className={`flex-grow-1 overflow-auto position-relative ${!sidebarOpen ? 'sidebar-minimized' : ''} ${isMessagePath ? 'p-0' : 'p-3 p-md-4 p-lg-5'}`}
+                    className={`flex-grow-1 d-flex flex-column ${isMessagePath ? 'overflow-hidden' : 'overflow-auto'} position-relative ${!sidebarOpen ? 'sidebar-minimized' : ''} ${isMessagePath ? 'p-0' : 'p-3 p-md-4 p-lg-5'}`}
                     style={{ transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)' }}
                 >
                     <div className={isMessagePath ? 'h-100' : 'container-fluid max-w-1400 mx-auto'}>

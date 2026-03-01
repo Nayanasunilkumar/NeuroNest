@@ -197,7 +197,7 @@ const DoctorChat = ({ isEmbedded = false }) => {
     };
 
     return (
-        <div className="d-flex w-100 overflow-hidden bg-white" style={{ height: 'calc(100vh - 70px)' }}>
+        <div className="d-flex w-100 h-100 overflow-hidden bg-white rounded-4 shadow-sm">
             {/* Column 1: Inbox — hidden when in focused patient mode */}
             {!isEmbedded && !isFocusedMode && (
                 <ConversationList 

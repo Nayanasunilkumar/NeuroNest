@@ -98,9 +98,9 @@ const AdminDashboard = () => {
                                     <div className="bg-primary bg-opacity-10 text-primary p-3 rounded-4">
                                         {getStatIcon(stat.id)}
                                     </div>
-                                    <span className={`badge rounded-pill px-2 py-1 small fw-bold ${stat.trend.startsWith('+') ? 'bg-success bg-opacity-10 text-success' : stat.trend === 'Stable' ? 'bg-light text-secondary' : 'bg-danger bg-opacity-10 text-danger'}`}>
-                                        {stat.trend.startsWith('+') ? <ArrowUpRight size={12} className="me-1" /> : stat.trend.startsWith('-') ? <ArrowDownRight size={12} className="me-1" /> : null}
-                                        {stat.trend}
+                                    <span className={`badge rounded-pill px-2 py-1 small fw-bold ${stat.trend?.startsWith('+') ? 'bg-success bg-opacity-10 text-success' : stat.trend === 'Stable' ? 'bg-light text-secondary' : 'bg-danger bg-opacity-10 text-danger'}`}>
+                                        {stat.trend?.startsWith('+') ? <ArrowUpRight size={12} className="me-1" /> : stat.trend?.startsWith('-') ? <ArrowDownRight size={12} className="me-1" /> : null}
+                                        {stat.trend || 'N/A'}
                                     </span>
                                 </div>
                                 <h3 className="h6 text-secondary fw-bold text-uppercase mb-1" style={{ fontSize: '0.7rem', letterSpacing: '1px' }}>{stat.label}</h3>

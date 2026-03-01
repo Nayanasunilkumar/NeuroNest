@@ -162,7 +162,7 @@ const Chat = () => {
     };
 
     return (
-        <div className="d-flex bg-white shadow-sm overflow-hidden" style={{ height: 'calc(100vh - 100px)', margin: '1rem', borderRadius: '1.25rem', border: '1px solid #eef2f6' }}>
+        <div className="d-flex bg-white h-100 overflow-hidden rounded-4 shadow-sm">
             {/* Sidebar */}
             <ConversationList 
                 conversations={conversations}

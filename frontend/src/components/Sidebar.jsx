@@ -57,6 +57,7 @@ const Sidebar = ({ isOpen, setIsOpen, role = "patient", title = "NeuroNest Panel
                                 <div className="d-flex flex-column gap-1">
                                     {items.map((item) => {
                                         const Icon = item.icon;
+                                        if (!Icon) return null;
                                         return (
                                             <NavLink
                                                 key={item.key}
@@ -70,14 +71,18 @@ const Sidebar = ({ isOpen, setIsOpen, role = "patient", title = "NeuroNest Panel
                                                 onClick={() => window.innerWidth < 1200 && setIsOpen(false)}
                                                 title={!isOpen ? item.label : ''}
                                             >
-                                                <div className="d-flex align-items-center justify-content-center flex-shrink-0" style={{ width: '24px', height: '24px' }}>
-                                                    <Icon size={20} strokeWidth={isActive ? 2.5 : 2} />
-                                                </div>
-                                                {isOpen && (
-                                                    <div className="d-flex align-items-center justify-content-between flex-grow-1 min-w-0">
-                                                        <span className="fw-bold small text-truncate">{item.label}</span>
-                                                        <ChevronRight size={14} className="opacity-25" />
-                                                    </div>
+                                                {({ isActive }) => (
+                                                    <>
+                                                        <div className="d-flex align-items-center justify-content-center flex-shrink-0" style={{ width: '24px', height: '24px' }}>
+                                                            <Icon size={20} strokeWidth={isActive ? 2.5 : 2} />
+                                                        </div>
+                                                        {isOpen && (
+                                                            <div className="d-flex align-items-center justify-content-between flex-grow-1 min-w-0">
+                                                                <span className="fw-bold small text-truncate">{item.label}</span>
+                                                                <ChevronRight size={14} className="opacity-25" />
+                                                            </div>
+                                                        )}
+                                                    </>
                                                 )}
                                             </NavLink>
                                         );

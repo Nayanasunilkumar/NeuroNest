@@ -274,7 +274,7 @@ const ManageDoctors = () => {
                                             <td>
                                                 <div className="d-flex align-items-center gap-3">
                                                     <div className="bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center fw-black" style={{ width: '40px', height: '40px' }}>
-                                                        {doc.full_name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
+                                                        {doc.full_name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || '??'}
                                                     </div>
                                                     <div>
                                                         <div className="fw-black text-dark small mb-0">{doc.full_name}</div>

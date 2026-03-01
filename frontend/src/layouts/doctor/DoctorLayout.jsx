@@ -38,7 +38,7 @@ const DoctorLayout = () => {
           toggleTheme={toggleTheme}
           onMobileMenuClick={() => setMobileOpen(true)}
         />
-        <div className="flex-grow-1 overflow-auto p-3 p-md-4">
+        <div className={`flex-grow-1 d-flex flex-column ${location.pathname.includes('/chat') ? 'overflow-hidden' : 'overflow-auto'} p-3 p-md-4`}>
           <Outlet />
         </div>
       </div>
