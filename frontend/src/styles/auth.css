@@ -11,12 +11,11 @@
   align-items: center;
   justify-content: center;
   font-family: 'Inter', system-ui, sans-serif;
-  background: #080b18;
+  background: linear-gradient(135deg, #ffffff 0%, #f3f5f9 100%);
   position: relative;
   overflow: hidden;
   padding: 2.5rem 1.25rem;
   box-sizing: border-box;
-  color-scheme: dark;
 }
 
 /* ── BACKGROUND DEPTH LAYER ─────────────────────────────── */
@@ -26,9 +25,9 @@
   position: fixed;
   inset: 0;
   background:
-    radial-gradient(ellipse 70% 60% at 50% 40%, rgba(109,40,217,0.13) 0%, transparent 65%),
-    radial-gradient(ellipse 50% 40% at 15% 80%, rgba(6,182,212,0.07) 0%, transparent 60%),
-    radial-gradient(ellipse 40% 35% at 85% 20%, rgba(168,85,247,0.08) 0%, transparent 60%);
+    radial-gradient(ellipse 70% 60% at 50% 40%, rgba(109,40,217,0.06) 0%, transparent 65%),
+    radial-gradient(ellipse 50% 40% at 15% 80%, rgba(6,182,212,0.04) 0%, transparent 60%),
+    radial-gradient(ellipse 40% 35% at 85% 20%, rgba(168,85,247,0.04) 0%, transparent 60%);
   pointer-events: none;
   animation: bg-breathe 12s ease-in-out infinite alternate;
 }
@@ -58,13 +57,13 @@
 .bg-glow-1 {
   width: 560px; height: 560px;
   top: -20%; left: -12%;
-  background: rgba(109,40,217,0.20);
+  background: rgba(109,40,217,0.07);
   animation: orb-1 20s ease-in-out infinite alternate;
 }
 .bg-glow-2 {
   width: 420px; height: 420px;
   bottom: -18%; right: -12%;
-  background: rgba(6,182,212,0.10);
+  background: rgba(6,182,212,0.04);
   animation: orb-2 16s ease-in-out infinite alternate;
 }
 /* Glow directly behind card */
@@ -74,7 +73,7 @@
   top: 50%; left: 50%;
   transform: translate(-50%, -50%);
   border-radius: 50%;
-  background: rgba(124,58,237,0.10);
+  background: rgba(124,58,237,0.07);
   filter: blur(80px);
   pointer-events: none;
   z-index: 0;
