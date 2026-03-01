@@ -43,6 +43,7 @@ const Login = () => {
     }
   };
 
+  return (
         <div className="container-fluid min-vh-100 d-flex align-items-center justify-content-center bg-light" style={{ position: 'relative', overflow: 'hidden' }}>
             {/* Background depth using standard HTML/CSS + Bootstrap bg */}
             <div className="position-absolute top-0 start-0 w-100 h-100 placeholder-wave opacity-25" style={{ background: 'linear-gradient(135deg, rgba(13,110,253,0.05) 0%, rgba(101,44,203,0.05) 100%)', pointerEvents: 'none' }} />
@@ -142,6 +143,7 @@ const Login = () => {
                 </div>
             </div>
         </div>
+    );
 };
 
 export default Login;
