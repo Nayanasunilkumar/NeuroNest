@@ -122,8 +122,8 @@ const DoctorNavbar = ({ darkMode, toggleTheme }) => {
           <span className="text-muted small fw-medium text-uppercase" style={{ letterSpacing: '0.05em', fontSize: '0.6rem' }}>Doctor Console</span>
       </div>
 
-      {/* Center: Dynamic Island Navigation */}
-      <div className="flex-grow-1 d-none d-lg-flex justify-content-center px-4 overflow-hidden">
+      {/* Center: Dynamic Island Navigation (Shifted Left) */}
+      <div className="flex-grow-1 d-none d-lg-flex justify-content-start ps-2 overflow-hidden">
           <DynamicIslandNav role="doctor" />
       </div>
 

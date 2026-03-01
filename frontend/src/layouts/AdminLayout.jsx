@@ -43,8 +43,8 @@ const AdminLayout = () => {
                 <span className="small text-uppercase fw-bold opacity-50 font-monospace" style={{ fontSize: '0.6rem' }}>Admin Console • Core v2.4.0</span>
             </div>
 
-            {/* Center: Dynamic Island Navigation */}
-            <div className="flex-grow-1 d-none d-lg-flex justify-content-center px-4 overflow-hidden">
+            {/* Center: Dynamic Island Navigation (Shifted Left) */}
+            <div className="flex-grow-1 d-none d-lg-flex justify-content-start ps-2 overflow-hidden">
                 <DynamicIslandNav role="admin" />
             </div>
 

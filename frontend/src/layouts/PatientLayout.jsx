@@ -24,8 +24,8 @@ const PatientLayout = () => {
                         <span className="small fw-bold text-uppercase opacity-50" style={{ fontSize: '0.6rem', letterSpacing: '1px' }}>Patient Console</span>
                     </div>
 
-                    {/* Center: Dynamic Island Navigation */}
-                    <div className="flex-grow-1 d-none d-lg-flex justify-content-center px-4 overflow-hidden">
+                    {/* Center: Dynamic Island Navigation (Shifted Left) */}
+                    <div className="flex-grow-1 d-none d-lg-flex justify-content-start ps-2 overflow-hidden">
                         <DynamicIslandNav role="patient" />
                     </div>
 
