@@ -13,7 +13,6 @@ import {
     Check, X, AlertCircle, FileText, Activity, MessageSquare, LayoutGrid, Bell
 } from "lucide-react";
 import { toAssetUrl } from "../../utils/media";
-import "../../styles/doctor-records.css";
 
 const PatientRecords = () => {
     const [searchParams] = useSearchParams();
@@ -70,22 +69,24 @@ const PatientRecords = () => {
     };
 
     if (loading) return (
-        <div className="flex flex-col items-center justify-center h-[80vh] gap-4">
-            <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-            <p className="text-slate-400 font-bold uppercase tracking-widest text-[10px]">Retrieving Clinical Archive...</p>
+        <div className="d-flex flex-column align-items-center justify-content-center min-vh-100 gap-3 bg-light">
+            <div className="spinner-border text-primary border-3" style={{ width: '3rem', height: '3rem' }} role="status">
+                <span className="visually-hidden">Loading...</span>
+            </div>
+            <p className="text-secondary fw-bold text-uppercase" style={{ letterSpacing: '2px', fontSize: '0.75rem' }}>Retrieving Clinical Archive...</p>
         </div>
     );
 
     if (error || !dossier) return (
-        <div className="flex flex-col items-center justify-center h-[80vh] text-center p-6">
-            <div className="w-20 h-20 bg-red-50 dark:bg-red-900/20 text-red-500 rounded-3xl flex items-center justify-center mb-6">
+        <div className="d-flex flex-column align-items-center justify-content-center min-vh-100 text-center p-4 bg-light">
+            <div className="bg-danger bg-opacity-10 text-danger rounded-circle d-flex align-items-center justify-content-center mb-4" style={{ width: '80px', height: '80px' }}>
                 <ShieldAlert size={40} />
             </div>
-            <h2 className="text-2xl font-black text-slate-800 dark:text-white mb-2">Access Restricted</h2>
-            <p className="text-slate-500 max-w-md mx-auto">{error || "Patient not found in your clinical records."}</p>
+            <h2 className="fs-3 fw-bolder text-dark mb-2">Access Restricted</h2>
+            <p className="text-secondary mb-4" style={{ maxWidth: '400px' }}>{error || "Patient not found in your clinical records."}</p>
             <button 
                 onClick={() => navigate(-1)}
-                className="mt-8 px-8 py-3 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-xl font-bold transition-transform active:scale-95"
+                className="btn btn-dark rounded-pill px-5 py-2 fw-bold shadow-sm"
             >
                 Return to Schedule
             </button>
@@ -94,254 +95,212 @@ const PatientRecords = () => {
 
     const { identity, timeline } = dossier;
 
+    const navItems = [
+        { title: "Clinical Timeline", desc: `${timeline.length} Recorded Encounters`, icon: <Calendar size={24} />, route: `/doctor/patient-timeline?patientId=${patientId}`, color: "primary" },
+        { title: "Medical Summary", desc: "Allergies, Meds & Conditions", icon: <FileText size={24} />, route: `/doctor/medical-records?patientId=${patientId}`, color: "info" },
+        { title: "Write Prescription", desc: "Issue high-fidelity scripts", icon: <Edit3 size={24} />, route: `/doctor/write-prescription?patientId=${patientId}`, color: "success" },
+        { title: "Assessment Reports", desc: "Clinical evaluation results", icon: <ShieldAlert size={24} />, route: `/doctor/assessment-reports?patientId=${patientId}`, color: "warning" },
+        { title: "Performance Analytics", desc: "Therapeutic outcome data", icon: <Activity size={24} />, route: `/doctor/performance-analytics?patientId=${patientId}`, color: "indigo", customColor: "#6610f2" },
+        { title: "Patients Chat", desc: "Clinical consultation threads", icon: <MessageSquare size={24} />, route: `/doctor/chat?patientId=${patientId}`, color: "teal", customColor: "#20c997" },
+        { title: "Clinical Archives", desc: "Remark logs & longitudinal history", icon: <Folder size={24} />, route: `/doctor/clinical-archives?patientId=${patientId}`, color: "secondary" },
+        { title: "Alerts", desc: "Clinical triggers & notifications", icon: <Bell size={24} />, route: `/doctor/alerts?patientId=${patientId}`, color: "danger" }
+    ];
+
     return (
-        <div className="opd-dashboard-root">
-            <div className="dossier-premium-root">
-                {/* Header Section */}
-                <div className="dossier-premium-header">
-                    <div className="header-nexus-left">
-                        {/* Highlighted Back Button */}
-                        <button
-                            onClick={() => navigate('/doctor/patients')}
-                            title="Back to My Patients"
-                            style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '8px',
-                                padding: '0 18px',
-                                height: '38px',
-                                borderRadius: '999px',
-                                border: 'none',
-                                background: 'linear-gradient(135deg, #2563EB, #1D4ED8)',
-                                color: '#ffffff',
-                                fontWeight: 700,
-                                fontSize: '13px',
-                                cursor: 'pointer',
-                                boxShadow: '0 4px 12px rgba(37, 99, 235, 0.35)',
-                                transition: 'all 0.2s cubic-bezier(0.4,0,0.2,1)',
-                                flexShrink: 0,
-                                letterSpacing: '0.01em',
-                            }}
-                            onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 6px 18px rgba(37, 99, 235, 0.45)'; }}
-                            onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(37, 99, 235, 0.35)'; }}
-                        >
-                            <ChevronLeft size={16} />
-                            My Patients
-                        </button>
-
-                        <div className="header-title-stack">
-                            <span className="header-breadcrumb-mini">My Patients / Clinical Dossier</span>
-                            <h1 className="dossier-premium-title">Clinical Dossier</h1>
-                        </div>
-                    </div>
-
-                    <div className="header-nexus-right">
-                        <div className="patient-identity-capsule">
-                            <div className="capsule-avatar-mini">
-                                {identity.full_name ? identity.full_name.charAt(0).toUpperCase() : 'P'}
-                            </div>
-                            <div className="capsule-text">
-                                <span className="capsule-name">{identity.full_name}</span>
-                                <span className="capsule-id">#PID-{identity.id}</span>
-                            </div>
-                        </div>
+        <div className="container-fluid py-4 min-vh-100 bg-light" style={{ maxWidth: '1400px' }}>
+            
+            {/* Header Section */}
+            <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4 pb-3 border-bottom border-light" style={{ borderColor: 'rgba(0,0,0,0.05)' }}>
+                <div className="d-flex align-items-center gap-3">
+                    <button
+                        onClick={() => navigate('/doctor/patients')}
+                        className="btn btn-sm btn-primary rounded-pill d-flex align-items-center gap-1 fw-bold shadow-sm px-3"
+                    >
+                        <ChevronLeft size={16} /> My Patients
+                    </button>
+                    <div>
+                        <div className="text-secondary small fw-medium text-uppercase mb-1" style={{ fontSize: '0.65rem', letterSpacing: '1px' }}>My Patients / Clinical Dossier</div>
+                        <h1 className="h4 fw-bolder text-dark mb-0">Clinical Dossier</h1>
                     </div>
                 </div>
 
-                <div className="dossier-premium-grid">
-                    {/* LEFT PANEL: Patient Summary Monolith */}
-                    <div className="patient-sidebar-premium">
-                        <div className="sidebar-avatar-vault">
-                            <div className="avatar-halo">
+                <div className="d-flex align-items-center gap-3 bg-white px-3 py-2 rounded-pill shadow-sm border border-light">
+                    <div className="bg-primary bg-opacity-10 text-primary fw-bold rounded-circle d-flex align-items-center justify-content-center" style={{ width: '36px', height: '36px', fontSize: '1rem' }}>
+                        {identity.full_name ? identity.full_name.charAt(0).toUpperCase() : 'P'}
+                    </div>
+                    <div className="d-flex flex-column">
+                        <span className="fw-bold text-dark text-truncate" style={{ fontSize: '0.9rem', maxWidth: '150px' }}>{identity.full_name}</span>
+                        <span className="text-secondary fw-bold" style={{ fontSize: '0.7rem' }}>#PID-{identity.id}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div className="row g-4">
+                {/* LEFT PANEL: Patient Summary Monolith */}
+                <div className="col-12 col-xl-4">
+                    <div className="card shadow-sm border-0 rounded-4 bg-white h-100 overflow-hidden position-sticky" style={{ top: '2rem' }}>
+                        
+                        {/* Avatar Section */}
+                        <div className="bg-primary bg-opacity-10 p-4 text-center border-bottom border-primary border-opacity-10">
+                            <div className="position-relative d-inline-block rounded-circle overflow-hidden shadow-sm mb-3 bg-white" style={{ width: '120px', height: '120px', border: '4px solid white', padding: '2px' }}>
                                 {identity.profile_image && !imageError ? (
                                     <img 
                                         src={toAssetUrl(identity.profile_image)} 
                                         alt={identity.full_name} 
+                                        className="w-100 h-100 rounded-circle object-fit-cover"
                                         onError={() => setImageError(true)}
                                     />
                                 ) : (
-                                    <span className="text-3xl font-black text-blue-500">
-                                        {identity.full_name.charAt(0)}
-                                    </span>
+                                    <div className="w-100 h-100 rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center">
+                                        <span className="display-4 fw-bolder text-primary">
+                                            {identity.full_name.charAt(0)}
+                                        </span>
+                                    </div>
                                 )}
                             </div>
-                            <div className="sidebar-identity-text">
-                                <h2 className="sidebar-name">{identity.full_name}</h2>
-                                <span className="pid-badge">Patient ID #00{identity.id}</span>
-                            </div>
+                            <h2 className="h4 fw-bolder text-dark mb-1">{identity.full_name}</h2>
+                            <span className="badge bg-white text-primary border border-primary border-opacity-25 rounded-pill px-3 py-1 shadow-sm fw-bold">
+                                Patient ID #00{identity.id}
+                            </span>
                         </div>
 
-                        <div className="sidebar-info-group">
-                            <div className="info-mini-row">
-                                <div className="info-icon-circle"><Mail size={16} /></div>
-                                <div className="info-value-stack">
-                                    <span className="info-mini-label">Email Access</span>
-                                    <span className="info-mini-value truncate max-w-[150px]">{identity.email}</span>
+                        {/* Info List */}
+                        <div className="card-body p-4 p-lg-5">
+                            <div className="d-flex flex-column gap-4 mb-5">
+                                <div className="d-flex align-items-center gap-3">
+                                    <div className="bg-light text-secondary rounded-circle d-flex align-items-center justify-content-center" style={{ width: '40px', height: '40px' }}>
+                                        <Mail size={18} />
+                                    </div>
+                                    <div className="overflow-hidden">
+                                        <div className="text-secondary small fw-bold text-uppercase mb-1" style={{ fontSize: '0.65rem', letterSpacing: '1px' }}>Email Access</div>
+                                        <div className="fw-bold text-dark text-truncate" style={{ fontSize: '0.9rem' }}>{identity.email}</div>
+                                    </div>
+                                </div>
+                                <div className="d-flex align-items-center gap-3">
+                                    <div className="bg-light text-secondary rounded-circle d-flex align-items-center justify-content-center" style={{ width: '40px', height: '40px' }}>
+                                        <Phone size={18} />
+                                    </div>
+                                    <div>
+                                        <div className="text-secondary small fw-bold text-uppercase mb-1" style={{ fontSize: '0.65rem', letterSpacing: '1px' }}>Clinical Contact</div>
+                                        <div className="fw-bold text-dark" style={{ fontSize: '0.9rem' }}>{identity.phone}</div>
+                                    </div>
+                                </div>
+                                <div className="d-flex align-items-center gap-3">
+                                    <div className="bg-light text-secondary rounded-circle d-flex align-items-center justify-content-center" style={{ width: '40px', height: '40px' }}>
+                                        <Calendar size={18} />
+                                    </div>
+                                    <div>
+                                        <div className="text-secondary small fw-bold text-uppercase mb-1" style={{ fontSize: '0.65rem', letterSpacing: '1px' }}>Date of Birth</div>
+                                        <div className="fw-bold text-dark" style={{ fontSize: '0.9rem' }}>{identity.dob}</div>
+                                    </div>
+                                </div>
+                                <div className="d-flex align-items-center gap-3">
+                                    <div className="bg-light text-secondary rounded-circle d-flex align-items-center justify-content-center" style={{ width: '40px', height: '40px' }}>
+                                        <User size={18} />
+                                    </div>
+                                    <div>
+                                        <div className="text-secondary small fw-bold text-uppercase mb-1" style={{ fontSize: '0.65rem', letterSpacing: '1px' }}>Clinical Profile</div>
+                                        <div className="fw-bold text-dark" style={{ fontSize: '0.9rem' }}>{identity.gender} ({identity.blood_group})</div>
+                                    </div>
                                 </div>
                             </div>
-                            <div className="info-mini-row">
-                                <div className="info-icon-circle"><Phone size={16} /></div>
-                                <div className="info-value-stack">
-                                    <span className="info-mini-label">Clinical Contact</span>
-                                    <span className="info-mini-value">{identity.phone}</span>
-                                </div>
-                            </div>
-                            <div className="info-mini-row">
-                                <div className="info-icon-circle"><Calendar size={16} /></div>
-                                <div className="info-value-stack">
-                                    <span className="info-mini-label">Date of Birth</span>
-                                    <span className="info-mini-value">{identity.dob}</span>
-                                </div>
-                            </div>
-                            <div className="info-mini-row">
-                                <div className="info-icon-circle"><User size={16} /></div>
-                                <div className="info-value-stack">
-                                    <span className="info-mini-label">Clinical Profile</span>
-                                    <span className="info-mini-value">{identity.gender} ({identity.blood_group})</span>
-                                </div>
-                            </div>
-                        </div>
 
-                        <div className="sidebar-actions-premium">
                             <button 
                                 onClick={() => setShowRemarkModal(true)}
-                                className="btn-premium-primary"
+                                className="btn btn-primary w-100 d-flex align-items-center justify-content-center gap-2 py-3 rounded-pill fw-bold shadow-sm"
                             >
-                                <Edit3 size={16} />
+                                <Edit3 size={18} />
                                 Add Remark
                             </button>
                         </div>
                     </div>
+                </div>
 
-                    {/* RIGHT PANEL: Clinical Hub Nexus */}
-                    <div className="timeline-premium-axis">
-                        <div className="clinical-hub-nexus fade-in">
-                            <div className="hub-grid">
-                                <button onClick={() => navigate(`/doctor/patient-timeline?patientId=${patientId}`)} className="hub-card timeline">
-                                    <div className="hub-card-icon"><Calendar size={24} /></div>
-                                    <div className="hub-card-content">
-                                        <h4>Clinical Timeline</h4>
-                                        <p>{timeline.length} Recorded Encounters</p>
+                {/* RIGHT PANEL: Clinical Hub Nexus */}
+                <div className="col-12 col-xl-8">
+                    <div className="row g-3 g-md-4">
+                        {navItems.map((item, idx) => (
+                            <div key={idx} className="col-12 col-md-6">
+                                <button 
+                                    onClick={() => navigate(item.route)} 
+                                    className="btn btn-white w-100 text-start border-0 shadow-sm rounded-4 p-4 d-flex align-items-center justify-content-between position-relative overflow-hidden group bg-white hover-bg-light transition-all h-100"
+                                    style={{ borderRadius: '1rem' }}
+                                >
+                                    {/* Action Content */}
+                                    <div className="d-flex align-items-center gap-3 w-100 z-1">
+                                        <div 
+                                            className={`rounded-4 d-flex align-items-center justify-content-center flex-shrink-0 bg-${item.color} bg-opacity-10 text-${item.color}`}
+                                            style={{ 
+                                                width: '56px', height: '56px',
+                                                backgroundColor: item.customColor ? `${item.customColor}1A` : undefined,
+                                                color: item.customColor || undefined
+                                            }}
+                                        >
+                                            {item.icon}
+                                        </div>
+                                        <div className="flex-grow-1 overflow-hidden">
+                                            <h4 className="fw-bold text-dark fs-6 mb-1 text-truncate">{item.title}</h4>
+                                            <p className="text-secondary small fw-medium mb-0 text-truncate">{item.desc}</p>
+                                        </div>
                                     </div>
-                                    <ChevronRight size={18} className="hub-arrow" />
-                                </button>
-
-                                <button onClick={() => navigate(`/doctor/medical-records?patientId=${patientId}`)} className="hub-card medical">
-                                    <div className="hub-card-icon"><FileText size={24} /></div>
-                                    <div className="hub-card-content">
-                                        <h4>Medical Summary</h4>
-                                        <p>Allergies, Meds & Conditions</p>
-                                    </div>
-                                    <ChevronRight size={18} className="hub-arrow" />
-                                </button>
-
-                                <button onClick={() => navigate(`/doctor/write-prescription?patientId=${patientId}`)} className="hub-card prescription">
-                                    <div className="hub-card-icon"><Edit3 size={24} /></div>
-                                    <div className="hub-card-content">
-                                        <h4>Write Prescription</h4>
-                                        <p>Issue high-fidelity scripts</p>
-                                    </div>
-                                    <ChevronRight size={18} className="hub-arrow" />
-                                </button>
-
-                                <button onClick={() => navigate(`/doctor/assessment-reports?patientId=${patientId}`)} className="hub-card assessments">
-                                    <div className="hub-card-icon"><ShieldAlert size={24} /></div>
-                                    <div className="hub-card-content">
-                                        <h4>Assessment Reports</h4>
-                                        <p>Clinical evaluation results</p>
-                                    </div>
-                                    <ChevronRight size={18} className="hub-arrow" />
-                                </button>
-
-                                <button onClick={() => navigate(`/doctor/performance-analytics?patientId=${patientId}`)} className="hub-card analytics">
-                                    <div className="hub-card-icon"><Activity size={24} /></div>
-                                    <div className="hub-card-content">
-                                        <h4>Performance Analytics</h4>
-                                        <p>Therapeutic outcome data</p>
-                                    </div>
-                                    <ChevronRight size={18} className="hub-arrow" />
-                                </button>
-
-                                <button onClick={() => navigate(`/doctor/chat?patientId=${patientId}`)} className="hub-card chat">
-                                    <div className="hub-card-icon"><MessageSquare size={24} /></div>
-                                    <div className="hub-card-content">
-                                        <h4>Patients Chat</h4>
-                                        <p>Clinical consultation threads</p>
-                                    </div>
-                                    <ChevronRight size={18} className="hub-arrow" />
-                                </button>
-
-                                <button onClick={() => navigate(`/doctor/clinical-archives?patientId=${patientId}`)} className="hub-card archives">
-                                    <div className="hub-card-icon"><Folder size={24} /></div>
-                                    <div className="hub-card-content">
-                                        <h4>Clinical Archives</h4>
-                                        <p>Remark logs & longitudinal history</p>
-                                    </div>
-                                    <ChevronRight size={18} className="hub-arrow" />
-                                </button>
-
-                                <button onClick={() => navigate(`/doctor/alerts?patientId=${patientId}`)} className="hub-card alerts">
-                                    <div className="hub-card-icon"><Bell size={24} /></div>
-                                    <div className="hub-card-content">
-                                        <h4>Alerts</h4>
-                                        <p>Clinical triggers & notifications</p>
-                                    </div>
-                                    <ChevronRight size={18} className="hub-arrow" />
+                                    {/* Arrow */}
+                                    <ChevronRight size={20} className="text-secondary opacity-50 z-1" />
+                                    
+                                    {/* Hover effect pseudo-element (achieved with CSS typically, here handled by btn-light hover) */}
                                 </button>
                             </div>
-                        </div>
+                        ))}
                     </div>
                 </div>
             </div>
 
             {/* Clinical Remark Modal */}
             {showRemarkModal && (
-                <div className="modal-premium-overlay" onClick={() => setShowRemarkModal(false)}>
-                    <div className="modal-premium-card" onClick={e => e.stopPropagation()}>
-                        <div className="modal-header-row">
-                            <div>
-                                <h3 className="modal-premium-title">Clinical Remarks</h3>
-                                <p className="text-slate-400 text-sm font-medium mt-1">Internal observations for {identity.full_name}</p>
+                <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1050 }} tabIndex="-1" onClick={() => setShowRemarkModal(false)}>
+                    <div className="modal-dialog modal-dialog-centered" onClick={e => e.stopPropagation()}>
+                        <div className="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+                            <div className="modal-header border-bottom-0 p-4 pb-0 d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h3 className="h5 fw-bolder text-dark mb-1">Clinical Remarks</h3>
+                                    <p className="text-secondary small fw-medium mb-0">Internal observations for {identity.full_name}</p>
+                                </div>
+                                <button 
+                                    onClick={() => setShowRemarkModal(false)}
+                                    className="btn-close shadow-none"
+                                ></button>
                             </div>
-                            <button 
-                                onClick={() => setShowRemarkModal(false)}
-                                className="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100/50 dark:bg-slate-800 text-slate-400 hover:text-red-500 transition-all"
-                            >
-                                <X size={20} />
-                            </button>
-                        </div>
-                        
-                        <div className="modal-divider" />
-
-                        <div className="mb-6">
-                            <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-3">Observations & Notes</label>
-                            <textarea 
-                                value={remarkContent}
-                                onChange={(e) => setRemarkContent(e.target.value)}
-                                className="modal-premium-textarea"
-                                placeholder="Enter clinical observations, behavioral notes, or treatment compliance remarks..."
-                                autoFocus
-                            ></textarea>
-                            <div className="modal-helper-text">
-                                <Info size={14} className="text-blue-500" />
-                                <span>These remarks are internal and not visible to patients.</span>
+                            
+                            <div className="modal-body p-4">
+                                <label className="form-label small fw-bolder text-secondary text-uppercase mb-2" style={{ letterSpacing: '1px' }}>Observations & Notes</label>
+                                <textarea 
+                                    value={remarkContent}
+                                    onChange={(e) => setRemarkContent(e.target.value)}
+                                    className="form-control border-2 shadow-none rounded-3 p-3 fw-medium mb-3"
+                                    placeholder="Enter clinical observations, behavioral notes, or treatment compliance remarks..."
+                                    rows="6"
+                                    autoFocus
+                                ></textarea>
+                                <div className="alert alert-info py-2 px-3 small d-flex align-items-center gap-2 rounded-3 border-0 bg-info bg-opacity-10 text-info fw-medium mb-0" role="alert">
+                                    <Info size={16} className="flex-shrink-0" />
+                                    <span>These remarks are internal and not visible to patients.</span>
+                                </div>
                             </div>
-                        </div>
 
-                        <div className="modal-premium-footer">
-                            <button 
-                                onClick={() => setShowRemarkModal(false)}
-                                className="px-6 py-3 rounded-xl font-bold text-sm text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
-                            >
-                                Cancel
-                            </button>
-                            <button 
-                                onClick={handleSaveRemark}
-                                disabled={savingRemark || !remarkContent.trim()}
-                                className="btn-premium-primary px-10 py-3 rounded-xl"
-                            >
-                                {savingRemark ? "SAVING..." : "SAVE REMARK"}
-                            </button>
+                            <div className="modal-footer border-top-0 p-4 pt-0 d-flex gap-2">
+                                <button 
+                                    onClick={() => setShowRemarkModal(false)}
+                                    className="btn btn-light rounded-pill px-4 fw-bold shadow-sm"
+                                >
+                                    Cancel
+                                </button>
+                                <button 
+                                    onClick={handleSaveRemark}
+                                    disabled={savingRemark || !remarkContent.trim()}
+                                    className="btn btn-primary rounded-pill px-4 fw-bold shadow-sm"
+                                >
+                                    {savingRemark ? "Saving..." : "Save Remark"}
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
