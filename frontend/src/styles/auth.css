@@ -226,11 +226,12 @@
 .field input,
 .pw-wrap input {
   width: 100%;
-  background-color: #12142b; /* Solid hex to fix Safari white box bug */
+  background: #12142b !important; /* Solid hex to fix Safari white box bug */
   border: 1.5px solid rgba(255,255,255,0.10);
   border-radius: 11px;
   padding: 13px 15px;
-  color: #ede8ff;
+  color: #ffffff !important; /* Bright white text so it is never dull */
+  font-weight: 600; /* Bolder text for visibility */
   font-size: 0.94rem;
   font-family: inherit;
   outline: none;
@@ -249,23 +250,24 @@
 .pw-wrap input:-webkit-autofill:hover,
 .pw-wrap input:-webkit-autofill:focus {
   -webkit-box-shadow: 0 0 0 100px #12142b inset !important;
-  -webkit-text-fill-color: #ede8ff !important;
-  caret-color: #ede8ff;
+  -webkit-text-fill-color: #ffffff !important;
+  caret-color: #ffffff;
   border-color: rgba(255,255,255,0.10) !important;
-  background-color: #12142b !important;
+  background: #12142b !important;
   transition: background-color 9999s ease-in-out 0s;
 }
 
 .field input::placeholder,
 .pw-wrap input::placeholder {
-  color: rgba(200,185,255,0.30); /* Made placeholders slightly brighter */
+  color: rgba(200,185,255,0.30) !important; /* Made placeholders slightly brighter */
+  font-weight: 500;
 }
 .field input:focus,
 .pw-wrap input:focus {
-  border-color: #7c3aed;
-  background-color: #1a163a; /* Solid hex for focus state */
-  box-shadow: 0 0 0 4px rgba(124,58,237,0.13);
-  color: #fff;
+  border-color: #7c3aed !important;
+  background: #1a163a !important; /* Solid hex for focus state */
+  box-shadow: 0 0 0 4px rgba(124,58,237,0.13) !important;
+  color: #ffffff !important;
 }
 @media (max-width: 768px) {
   .field input, .pw-wrap input { font-size: 16px; }
