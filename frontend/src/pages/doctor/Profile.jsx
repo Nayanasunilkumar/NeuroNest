@@ -233,7 +233,6 @@ const Profile = () => {
                         
                         <div className="dark-tabs d-flex flex-wrap">
                             <button className={`dark-tab ${activeTab === 'overview' ? 'dark-tab-box' : ''}`} onClick={() => setActiveTab('overview')}>Overview</button>
-                            <button className={`dark-tab ${activeTab === 'manage' ? 'dark-tab-box' : ''}`} onClick={() => setActiveTab('manage')}>Configuration</button>
                             <button className="dark-tab" style={{ marginLeft: 'auto' }} onClick={() => setIsAvailabilityModalOpen(true)}>
                                 <Clock size={16} className="me-2"/> Scheduling
                             </button>
