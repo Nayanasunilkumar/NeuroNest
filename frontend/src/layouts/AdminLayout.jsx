@@ -38,20 +38,20 @@ const AdminLayout = () => {
       >
         <div className="container-fluid align-items-center flex-nowrap">
             {/* Left: Branding */}
-            <div className="d-flex flex-column lh-1 flex-shrink-0 pe-3 border-end" style={{ width: '180px' }}>
-                <span className="h5 fw-black mb-0 mb-1" style={{ letterSpacing: '-0.5px' }}>NEURONEST</span>
-                <span className="small text-uppercase fw-bold opacity-50 font-monospace" style={{ fontSize: '0.6rem' }}>Admin Console • Core v2.4.0</span>
+            <div className="d-flex align-items-center flex-shrink-0 me-3 me-xl-5">
+                <span className={`h4 fw-black mb-0 ${darkMode ? 'text-white' : 'text-primary'}`} style={{ letterSpacing: '-0.05em' }}>NEURONEST</span>
             </div>
 
-            {/* Center: Dynamic Island Navigation (Shifted Left) */}
-            <div className="flex-grow-1 d-none d-lg-flex justify-content-start ps-2 overflow-hidden">
+            {/* Center: Dynamic Island Navigation */}
+            <div className="d-none d-lg-flex overflow-hidden" style={{ minWidth: 0, flexShrink: 1 }}>
                 <DynamicIslandNav role="admin" />
             </div>
 
+            {/* Spacer */}
             <div className="flex-grow-1 d-none d-lg-block"></div>
 
-            {/* Right: Actions */}
-            <div className="d-flex align-items-center justify-content-end gap-3" style={{ minWidth: '220px' }}>
+            {/* Right Actions */}
+            <div className="d-flex align-items-center justify-content-end gap-3 flex-shrink-0 ms-3">
                  <div className="d-none d-xl-flex flex-column align-items-end pe-3 border-end border-secondary border-opacity-25 me-1">
                     <span className="fw-black font-monospace lh-1" style={{ fontSize: '0.95rem' }}>
                         {currentTime.toLocaleTimeString([], { hour12: false })}

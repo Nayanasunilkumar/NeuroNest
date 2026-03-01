@@ -19,20 +19,20 @@ const PatientLayout = () => {
             <header className={`navbar navbar-expand-lg sticky-top ${darkMode ? 'navbar-dark bg-dark border-secondary' : 'navbar-light bg-white'} border-bottom shadow-sm px-3`} style={{ height: '80px', zIndex: 1050 }}>
                 <div className="container-fluid align-items-center flex-nowrap">
                     {/* Left: Branding */}
-                    <div className="d-flex flex-column lh-1 flex-shrink-0" style={{ width: '180px' }}>
-                        <span className={`h4 fw-black mb-0 ${darkMode ? 'text-white' : 'text-primary'}`} style={{ letterSpacing: '-1px' }}>NEURONEST</span>
-                        <span className="small fw-bold text-uppercase opacity-50" style={{ fontSize: '0.6rem', letterSpacing: '1px' }}>Patient Console</span>
+                    <div className="d-flex align-items-center flex-shrink-0 me-3 me-xl-5">
+                        <span className={`h4 fw-black mb-0 ${darkMode ? 'text-white' : 'text-primary'}`} style={{ letterSpacing: '-0.05em' }}>NEURONEST</span>
                     </div>
 
-                    {/* Center: Dynamic Island Navigation (Shifted Left) */}
-                    <div className="flex-grow-1 d-none d-lg-flex justify-content-start ps-2 overflow-hidden">
+                    {/* Center: Dynamic Island Navigation */}
+                    <div className="d-none d-lg-flex overflow-hidden" style={{ minWidth: 0, flexShrink: 1 }}>
                         <DynamicIslandNav role="patient" />
                     </div>
 
+                    {/* Spacer */}
                     <div className="flex-grow-1 d-none d-lg-block"></div>
 
                     {/* Right Actions */}
-                    <div className="d-flex align-items-center justify-content-end gap-2 gap-md-3" style={{ minWidth: '220px' }}>
+                    <div className="d-flex align-items-center justify-content-end gap-2 gap-md-3 flex-shrink-0 ms-3">
                         <button 
                             className={`btn p-2 rounded-circle border-0 d-flex align-items-center justify-content-center transition-all ${darkMode ? 'btn-outline-light text-warning' : 'btn-outline-secondary text-secondary opacity-75'}`}
                             onClick={toggleTheme}
