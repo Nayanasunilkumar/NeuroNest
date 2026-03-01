@@ -128,7 +128,7 @@ const DoctorNavbar = ({ darkMode, toggleTheme }) => {
       </div>
 
       {/* Center: Dynamic Island Navigation */}
-      <div className="flex-grow-1 d-none d-lg-flex justify-content-center">
+      <div className="flex-grow-1 d-none d-lg-flex justify-content-center px-4" style={{ minWidth: 0, overflow: 'hidden' }}>
           <DynamicIslandNav role="doctor" />
       </div>
 

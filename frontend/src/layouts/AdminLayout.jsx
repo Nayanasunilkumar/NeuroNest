@@ -50,7 +50,7 @@ const AdminLayout = () => {
             </div>
 
             {/* Center: Dynamic Island Navigation */}
-            <div className="flex-grow-1 d-none d-lg-flex justify-content-center px-4">
+            <div className="flex-grow-1 d-none d-lg-flex justify-content-center px-4" style={{ minWidth: 0, overflow: 'hidden' }}>
                 <DynamicIslandNav role="admin" />
             </div>
 
