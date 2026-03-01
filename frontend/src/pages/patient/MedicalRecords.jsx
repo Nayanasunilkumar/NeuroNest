@@ -155,11 +155,11 @@ const MedicalRecords = ({ patientId: propPatientId = null }) => {
           medicalRecordService.getConditions(patientId),
           medicalRecordService.getMedications(patientId),
         ]);
-      setRecords(data);
-      setSummary(summaryData);
-      setAllergies(allergyData);
-      setConditions(conditionData);
-      setMedications(medicationData);
+      setRecords(data || []);
+      setSummary(summaryData || {});
+      setAllergies(allergyData || []);
+      setConditions(conditionData || []);
+      setMedications(medicationData || []);
       setError(null);
     } catch (err) {
       console.error("Error fetching medical records:", err);
