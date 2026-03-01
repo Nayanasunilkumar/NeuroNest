@@ -189,18 +189,50 @@ const DoctorNavbar = ({ darkMode, toggleTheme, onMobileMenuClick }) => {
           {showDropdown && (
             <div style={{
               position: 'absolute',
-              top: '110%',
-              right: '0',
-              width: '280px',
-              background: darkMode ? '#1e293b' : '#ffffff',
-              border: darkMode ? '1px solid #334155' : '1px solid #e2e8f0',
-              boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
-              borderRadius: '12px',
-              padding: '8px 0',
-              zIndex: 50
+              top: '120%',
+              right: '-8px',
+              width: '320px',
+              background: darkMode ? 'rgba(30, 41, 59, 0.85)' : 'rgba(255, 255, 255, 0.85)',
+              backdropFilter: 'blur(24px)',
+              WebkitBackdropFilter: 'blur(24px)',
+              border: darkMode ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid rgba(0, 0, 0, 0.06)',
+              boxShadow: darkMode 
+                  ? '0 0 0 1px rgba(0,0,0,0.5), 0 10px 40px rgba(0, 0, 0, 0.5)' 
+                  : '0 0 0 1px rgba(0,0,0,0.02), 0 10px 40px rgba(0, 0, 0, 0.08)',
+              borderRadius: '20px',
+              padding: '6px',
+              zIndex: 50,
+              transformOrigin: 'top right',
+              animation: 'dropdownScale 0.2s cubic-bezier(0.16, 1, 0.3, 1)'
             }}>
-              <div style={{ padding: '8px 16px', borderBottom: darkMode ? '1px solid #334155' : '1px solid #f1f5f9', fontWeight: 600, fontSize: '0.85rem', color: darkMode ? '#f8fafc' : '#0f172a' }}>
-                Notifications
+              <style>{`
+                @keyframes dropdownScale {
+                  from { opacity: 0; transform: scale(0.95); }
+                  to { opacity: 1; transform: scale(1); }
+                }
+              `}</style>
+              <div style={{ 
+                padding: '12px 12px 8px', 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'space-between',
+                marginBottom: '4px' 
+              }}>
+                <span style={{ fontWeight: 800, fontSize: '0.9rem', color: darkMode ? '#f8fafc' : '#0f172a', letterSpacing: '-0.02em' }}>
+                  Notifications
+                </span>
+                {notifications.length > 0 && (
+                  <span style={{ 
+                    fontSize: '10px', 
+                    fontWeight: 800, 
+                    color: '#fff', 
+                    background: '#ef4444', 
+                    padding: '2px 8px', 
+                    borderRadius: '99px' 
+                  }}>
+                    {notifications.length} NEW
+                  </span>
+                )}
               </div>
               {notifications.length > 0 ? (
                 notifications.map(n => (
@@ -208,26 +240,46 @@ const DoctorNavbar = ({ darkMode, toggleTheme, onMobileMenuClick }) => {
                     key={n.id} 
                     onClick={() => { setShowDropdown(false); navigate(n.link); }}
                     style={{
-                      padding: '12px 16px',
+                      padding: '12px',
                       display: 'flex',
-                      gap: '12px',
+                      gap: '14px',
                       cursor: 'pointer',
-                      borderBottom: darkMode ? '1px solid #334155' : '1px solid #f1f5f9',
-                      transition: 'background 0.2s',
+                      borderRadius: '14px',
+                      transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+                      marginBottom: '2px',
                     }}
-                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = darkMode ? '#334155' : '#f8fafc'}
-                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = darkMode ? 'rgba(255,255,255,0.04)' : '#f8fafc';
+                      e.currentTarget.style.transform = 'scale(1.01)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = 'transparent';
+                      e.currentTarget.style.transform = 'scale(1)';
+                    }}
                   >
-                    <div style={{ marginTop: '2px' }}>{n.icon}</div>
-                    <div>
-                       <div style={{ fontSize: '0.85rem', fontWeight: 600, color: darkMode ? '#f8fafc' : '#0f172a' }}>{n.title}</div>
-                       <div style={{ fontSize: '0.75rem', color: darkMode ? '#94a3b8' : '#64748b' }}>{n.desc}</div>
+                    <div style={{ 
+                      flexShrink: 0,
+                      width: '38px', 
+                      height: '38px', 
+                      borderRadius: '10px', 
+                      background: n.type === 'request' ? 'rgba(59, 130, 246, 0.1)' : 
+                                  n.type === 'chat' ? 'rgba(16, 185, 129, 0.1)' : 
+                                  'rgba(245, 158, 11, 0.1)',
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center' 
+                    }}>
+                      {n.icon}
+                    </div>
+                    <div style={{ flex: 1, marginTop: '1px' }}>
+                       <div style={{ fontSize: '0.85rem', fontWeight: 700, color: darkMode ? '#f8fafc' : '#0f172a', marginBottom: '1px', letterSpacing: '-0.01em' }}>{n.title}</div>
+                       <div style={{ fontSize: '0.75rem', fontWeight: 500, color: darkMode ? '#94a3b8' : '#64748b', lineHeight: '1.4' }}>{n.desc}</div>
                     </div>
                   </div>
                 ))
               ) : (
-                <div style={{ padding: '24px 16px', textAlign: 'center', fontSize: '0.8rem', color: darkMode ? '#94a3b8' : '#64748b' }}>
-                  No new notifications
+                <div style={{ padding: '30px 16px', textAlign: 'center', fontSize: '0.8rem', color: darkMode ? '#94a3b8' : '#64748b', fontWeight: 500 }}>
+                  You're all caught up!
                 </div>
               )}
             </div>
