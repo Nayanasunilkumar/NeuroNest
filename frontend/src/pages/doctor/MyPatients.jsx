@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { Users, Search, Filter, Loader2, ArrowUpDown, UserPlus, SlidersHorizontal, UserX } from 'lucide-react';
 import { getPatients } from '../../api/doctor';
 import PatientCard from './PatientCard';
-import '../../styles/doctor-patients.css';
 
 const MyPatients = () => {
     const [patients, setPatients] = useState([]);
