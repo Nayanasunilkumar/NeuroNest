@@ -499,132 +499,178 @@
 
 /* ── V8 LOGIN TRIANGLE DESIGN ───────────────────────────── */
 
+body {
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+}
+
 .login-v8-container {
+  min-height: 100vh;
   min-height: 100dvh;
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #e5e9ed;
+  /* Soft gradient background instead of solid blue */
+  background: radial-gradient(circle at center, #edf2f8 0%, #d4e0eb 100%);
   font-family: 'Inter', system-ui, sans-serif;
   overflow: hidden;
+  position: relative;
 }
 
 .login-v8-wrapper {
   position: relative;
-  width: 600px;
-  height: 500px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  width: 480px;
+  height: 520px;
+  transform: translateX(-30px);
 }
 
-/* Background Dark Blue Triangle */
-.login-v8-bg-triangle {
+/* Base shape: points to the right */
+.login-v8-accent-cyan-wrap,
+.login-v8-bg-dark-wrap,
+.login-v8-fg-wrap {
   position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-40%, -46%);
-  width: 0;
-  height: 0;
-  border-top: 280px solid transparent;
-  border-bottom: 280px solid transparent;
-  border-left: 450px solid #0f1c3f; /* Dark blue color */
+  clip-path: none;
+}
+
+.login-v8-accent-cyan {
+  width: 100%;
+  height: 100%;
+  background-color: #8ce1fd; 
+  clip-path: polygon(0 0, 100% 50%, 0 100%);
+}
+.login-v8-accent-cyan-wrap {
+  top: 0;
+  left: 45px;
+  width: 440px;
+  height: 460px;
+  filter: drop-shadow(-5px 5px 10px rgba(56, 189, 248, 0.2));
   z-index: 1;
-  filter: drop-shadow(0 20px 30px rgba(0,0,0,0.15));
 }
 
-/* 
-  Creating the angled enter area.
-  Since the parent is a triangle made by borders, we use an absolute positioned element
-  to act as the clickable enter button area.
-*/
-.login-v8-enter-area {
+.login-v8-bg-dark {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #0f1c3f, #070e20);
+  clip-path: polygon(0 0, 100% 50%, 0 100%);
+}
+.login-v8-bg-dark-wrap {
+  top: 60px;
+  left: 20px;
+  width: 440px;
+  height: 460px;
+  filter: drop-shadow(15px 15px 25px rgba(0,0,0,0.15));
+  z-index: 2;
+}
+
+/* Small right-facing clip for enter button area to not bleed off */
+.login-v8-enter-btn {
   position: absolute;
-  top: 80px; 
-  left: -200px;
-  color: white;
+  bottom: 80px;
+  right: 140px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  color: #fff;
   cursor: pointer;
-  z-index: 10;
-  transition: transform 0.2s,filter 0.2s;
+  transition: all 0.2s;
 }
-.login-v8-enter-area:hover {
+.login-v8-enter-btn:hover {
+  color: #38bdf8;
   transform: scale(1.05);
-  filter: brightness(1.2);
 }
-
-.login-v8-enter-text {
-  font-size: 0.75rem;
-  letter-spacing: 0.1em;
+.login-v8-enter-btn span {
+  font-size: 0.65rem;
+  letter-spacing: 0.15em;
+  margin-top: 6px;
   font-weight: 500;
-  margin-top: 5px;
 }
 
-/* Foreground White Triangle */
-.login-v8-fg-triangle {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-60%, -50%);
-  width: 0;
-  height: 0;
-  border-top: 250px solid transparent;
-  border-bottom: 250px solid transparent;
-  border-left: 400px solid #ffffff;
-  z-index: 2;
-  filter: drop-shadow(10px 10px 30px rgba(0,0,0,0.1));
+.login-v8-fg-white {
+  width: 100%;
+  height: 100%;
+  background-color: #ffffff;
+  clip-path: polygon(0 0, 100% 50%, 0 100%);
+  position: relative;
+}
+.login-v8-fg-wrap {
+  top: 25px;
+  left: 0;
+  width: 440px;
+  height: 460px;
+  z-index: 3;
+  filter: drop-shadow(5px 10px 25px rgba(0,0,0,0.1));
 }
 
-/* Blue decorative accent lines */
-.login-v8-fg-triangle::before {
+/* Top accent line inside the white triangle */
+.login-v8-fg-white::before {
   content: '';
   position: absolute;
-  top: -240px;
-  left: -390px;
-  width: 0;
-  height: 0;
-  border-top: 240px solid transparent;
-  border-bottom: 240px solid transparent;
-  border-left: 380px solid transparent;
-  border-left-color: #38bdf8; /* Light blue accent */
-  z-index: -1;
-  transform: scale(1.03) translate(10px, -10px);
-  opacity: 0.5;
+  top: 15px;
+  left: 10px;
+  width: 150px;
+  height: 3px;
+  background: linear-gradient(90deg, #38bdf8, transparent);
+  transform-origin: left top;
+  /* Mathematical angle of 100% 50% on 440x460 rect => atan(230/440) = ~27.6deg */
+  transform: rotate(27.6deg);
+  opacity: 0.7;
 }
 
-/* Content wrapper positioned inside the white triangle */
+/* Cyan aesthetic ticks inside */
+.login-v8-tick {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border: 1.5px solid #38bdf8;
+}
+.login-v8-tick.tl {
+  top: 30px;
+  left: 25px;
+  border-right: none;
+  border-bottom: none;
+  opacity: 0.8;
+}
+.login-v8-tick.bl {
+  bottom: 30px;
+  left: 25px;
+  border-right: none;
+  border-top: none;
+  opacity: 0.8;
+}
+
+/* Contents positioned near left base */
 .login-v8-content {
   position: absolute;
-  top: -120px;
-  left: -330px;
-  width: 200px;
+  top: 50%;
+  left: 55px;
+  transform: translateY(-50%);
+  width: 220px;
   display: flex;
   flex-direction: column;
-  gap: 25px;
+  gap: 15px;
 }
 
 .login-v8-header h2 {
   font-weight: 300;
-  font-size: 1.4rem;
-  color: #5c6470;
+  font-size: 1.35rem;
+  color: #475569;
   margin: 0;
-  line-height: 1.3;
-  letter-spacing: 0.05em;
+  line-height: 1.35;
+  letter-spacing: 0.08em;
 }
 
 .login-v8-divider {
-  width: 40px;
+  width: 45px;
   height: 2px;
   background-color: #38bdf8;
-  margin-top: 15px;
+  margin-top: 10px;
+  margin-bottom: 5px;
 }
 
 .login-v8-input-group {
   position: relative;
-  margin-bottom: 20px;
+  margin-bottom: 12px;
 }
 
 .login-v8-input {
@@ -632,19 +678,17 @@
   border: none;
   border-bottom: 1px solid #e2e8f0;
   padding: 8px 0;
-  font-size: 0.8rem;
-  color: #64748b;
+  font-size: 0.75rem;
+  color: #334155;
   background: transparent !important;
   outline: none;
   transition: border-color 0.2s;
   letter-spacing: 0.05em;
 }
-
 .login-v8-input::placeholder {
-  color: #94a3b8;
+  color: #cbd5e1;
   font-weight: 400;
 }
-
 .login-v8-input:focus {
   border-bottom-color: #38bdf8;
 }
@@ -658,25 +702,25 @@
   border: none;
   color: #94a3b8;
   cursor: pointer;
+  padding: 0;
 }
 
 .login-v8-actions {
   display: flex;
-  justify-content: center;
-  margin-top: 10px;
+  justify-content: flex-start;
+  margin-top: -5px;
 }
 
 .login-v8-forgot {
-  font-size: 0.65rem;
+  font-size: 0.58rem;
   color: #94a3b8;
   text-decoration: none;
   border: 1px solid #e2e8f0;
-  padding: 4px 12px;
+  padding: 4px 10px;
   border-radius: 2px;
   letter-spacing: 0.05em;
   transition: all 0.2s;
 }
-
 .login-v8-forgot:hover {
   border-color: #64748b;
   color: #64748b;
@@ -690,12 +734,23 @@
 }
 
 .login-v8-register-link {
-    font-size: 0.7rem;
+    font-size: 0.65rem;
     color: #38bdf8;
     text-decoration: none;
     font-weight: 500;
+    letter-spacing: 0.05em;
 }
 .login-v8-register-link:hover {
     text-decoration: underline;
 }
 
+@media (max-width: 500px) {
+  .login-v8-wrapper {
+    transform: scale(0.8) translateX(-10%);
+  }
+}
+@media (max-width: 380px) {
+  .login-v8-wrapper {
+    transform: scale(0.65) translateX(-15%);
+  }
+}

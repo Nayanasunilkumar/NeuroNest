@@ -46,68 +46,83 @@ const Login = () => {
   return (
         <div className="login-v8-container">
             <div className="login-v8-wrapper">
-                {/* The background triangle (dark blue) */}
-                <div className="login-v8-bg-triangle">
-                    {/* The lock and enter area */}
-                    <div className="login-v8-enter-area" onClick={handleSubmit}>
-                        {loading ? (
-                            <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true" />
-                        ) : (
-                            <>
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mb-2">
-                                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-                                </svg>
-                                <span className="login-v8-enter-text">ENTER</span>
-                            </>
-                        )}
-                    </div>
+                
+                {/* Accent Triangle (Light Blue) */}
+                <div className="login-v8-accent-cyan-wrap">
+                    <div className="login-v8-accent-cyan"></div>
                 </div>
-
-                {/* The foreground triangle (white content area) */}
-                <div className="login-v8-fg-triangle">
-                    <div className="login-v8-content">
-                        <div className="login-v8-header">
-                            <h2>LOG INTO<br/>SYSTEM</h2>
-                            <div className="login-v8-divider"></div>
+                
+                {/* Dark Blue Triangle (Background) */}
+                <div className="login-v8-bg-dark-wrap">
+                    <div className="login-v8-bg-dark">
+                        <div className="login-v8-enter-btn" onClick={handleSubmit}>
+                            {loading ? (
+                                <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true" />
+                            ) : (
+                                <>
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mb-1">
+                                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                                    </svg>
+                                    <span>ENTER</span>
+                                </>
+                            )}
                         </div>
-
-                        {error && <div className="login-v8-error">{error}</div>}
-
-                        <form onSubmit={handleSubmit} className="login-v8-form">
-                            <div className="login-v8-input-group">
-                                <input
-                                    type="email"
-                                    value={email}
-                                    onChange={e => setEmail(e.target.value)}
-                                    placeholder="LOGIN..."
-                                    required
-                                    className="login-v8-input"
-                                />
-                            </div>
-                            <div className="login-v8-input-group">
-                                <input
-                                    type={showPw ? "text" : "password"}
-                                    value={password}
-                                    onChange={e => setPassword(e.target.value)}
-                                    placeholder="PASSWORD..."
-                                    required
-                                    className="login-v8-input pw-input"
-                                />
-                                <button type="button" className="login-v8-eye" onClick={() => setShowPw(!showPw)}>
-                                    <EyeIcon open={showPw} />
-                                </button>
-                            </div>
-
-                            <div className="login-v8-actions">
-                                <Link to="/forgot-password" className="login-v8-forgot">FORGOT PASSWORD?</Link>
-                            </div>
-                             <div className="mt-4 text-center">
-                                <Link to="/register" className="login-v8-register-link">Create Account</Link>
-                            </div>
-                        </form>
                     </div>
                 </div>
+                
+                {/* Main White Triangle */}
+                <div className="login-v8-fg-wrap">
+                    <div className="login-v8-fg-white">
+                        
+                        {/* Decorative Corner Ticks */}
+                        <div className="login-v8-tick tl"></div>
+                        <div className="login-v8-tick bl"></div>
+
+                        <div className="login-v8-content">
+                            <div className="login-v8-header">
+                                <h2>LOG INTO<br/>SYSTEM</h2>
+                                <div className="login-v8-divider"></div>
+                            </div>
+
+                            {error && <div className="login-v8-error">{error}</div>}
+
+                            <form onSubmit={(e) => { e.preventDefault(); handleSubmit(e); }} className="login-v8-form">
+                                <div className="login-v8-input-group">
+                                    <input
+                                        type="email"
+                                        value={email}
+                                        onChange={e => setEmail(e.target.value)}
+                                        placeholder="LOGIN..."
+                                        required
+                                        className="login-v8-input"
+                                    />
+                                </div>
+                                <div className="login-v8-input-group">
+                                    <input
+                                        type={showPw ? "text" : "password"}
+                                        value={password}
+                                        onChange={e => setPassword(e.target.value)}
+                                        placeholder="PASSWORD..."
+                                        required
+                                        className="login-v8-input pw-input"
+                                    />
+                                    <button type="button" className="login-v8-eye" onClick={() => setShowPw(!showPw)}>
+                                        <EyeIcon open={showPw} />
+                                    </button>
+                                </div>
+
+                                <div className="login-v8-actions">
+                                    <Link to="/forgot-password" className="login-v8-forgot">FORGOT PASSWORD?</Link>
+                                </div>
+                                <div className="mt-4 pb-2">
+                                    <Link to="/register" className="login-v8-register-link">Create Account</Link>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div>
     );
