@@ -10,6 +10,8 @@ const MyPatients = () => {
     const [filteredPatients, setFilteredPatients] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
+    const [statusFilter, setStatusFilter] = useState("all");
+    const [sortBy, setSortBy] = useState("recent");
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -29,14 +31,36 @@ const MyPatients = () => {
         }
     };
 
-    // Real-time Search Logic
+    // Real-time Search & Filter Logic
     useEffect(() => {
-        const results = patients.filter(patient =>
+        let results = patients.filter(patient =>
             patient.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
             patient.email.toLowerCase().includes(searchTerm.toLowerCase())
         );
+
+        // Apply Status Filter
+        if (statusFilter !== "all") {
+            results = results.filter(p => p.status?.toLowerCase() === statusFilter.toLowerCase());
+        }
+
+        // Apply Sorting
+        results.sort((a, b) => {
+            if (sortBy === "name") {
+                return a.full_name.localeCompare(b.full_name);
+            } else if (sortBy === "recent") {
+                const dateA = a.last_visit ? new Date(a.last_visit).getTime() : 0;
+                const dateB = b.last_visit ? new Date(b.last_visit).getTime() : 0;
+                return dateB - dateA; // Descending (newest first)
+            } else if (sortBy === "upcoming") {
+                const dateA = a.next_appointment ? new Date(a.next_appointment).getTime() : Infinity;
+                const dateB = b.next_appointment ? new Date(b.next_appointment).getTime() : Infinity;
+                return dateA - dateB; // Ascending (closest first)
+            }
+            return 0;
+        });
+
         setFilteredPatients(results);
-    }, [searchTerm, patients]);
+    }, [searchTerm, statusFilter, sortBy, patients]);
 
     const stats = {
         total: patients.length,
@@ -77,27 +101,55 @@ const MyPatients = () => {
                 </div>
             </div>
 
-            {/* CONTROL BAR (Search & Filters) */}
-            <div className="control-instrument-bar">
-                <div className="flex-1 max-w-md relative">
+            {/* FUNCTIONAL CONTROL BAR */}
+            <div className="control-instrument-bar" style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem', background: 'transparent' }}>
+                <div className="flex-1 min-w-[280px] max-w-md relative">
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
                     <input 
                         type="text"
                         placeholder="Search roster by name or email..."
-                        className="w-full h-11 pl-12 pr-4 bg-slate-50 dark:bg-slate-900 border-none rounded-2xl text-xs font-bold text-slate-700 dark:text-slate-300 outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
+                        className="w-full h-11 pl-12 pr-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl text-[13px] font-bold text-slate-700 dark:text-slate-300 outline-none focus:ring-2 focus:ring-blue-500/20 transition-all shadow-sm"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
                 </div>
                 
-                <div className="flex items-center gap-4">
-                    <button className="flex items-center gap-2 px-4 h-11 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-blue-600 transition-all">
-                        <SlidersHorizontal size={14} />
-                        Advanced Filter
-                    </button>
-                    <button className="flex items-center gap-2 px-4 h-11 bg-blue-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-blue-500/20 hover:scale-105 active:scale-95 transition-all">
+                <div className="flex items-center gap-3 overflow-x-auto pb-1 md:pb-0" style={{ scrollbarWidth: 'none' }}>
+                    
+                    {/* Status Dropdown */}
+                    <div className="flex items-center bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl h-11 px-3 shadow-sm hover:border-blue-500/30 transition-colors shrink-0 cursor-pointer">
+                        <Filter size={14} className="text-slate-400 mr-2" />
+                        <select 
+                            value={statusFilter}
+                            onChange={(e) => setStatusFilter(e.target.value)}
+                            className="bg-transparent border-none text-[11px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300 outline-none cursor-pointer pr-2 appearance-none"
+                            style={{ WebkitAppearance: 'none' }}
+                        >
+                            <option value="all">Every Patient</option>
+                            <option value="active">Active Only</option>
+                            <option value="inactive">Inactive Only</option>
+                        </select>
+                    </div>
+
+                    {/* Sort Dropdown */}
+                    <div className="flex items-center bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl h-11 px-3 shadow-sm hover:border-blue-500/30 transition-colors shrink-0 cursor-pointer">
+                        <ArrowUpDown size={14} className="text-slate-400 mr-2" />
+                        <select 
+                            value={sortBy}
+                            onChange={(e) => setSortBy(e.target.value)}
+                            className="bg-transparent border-none text-[11px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300 outline-none cursor-pointer pr-2 appearance-none"
+                            style={{ WebkitAppearance: 'none' }}
+                        >
+                            <option value="recent">Recent Visit</option>
+                            <option value="upcoming">Upcoming Visit</option>
+                            <option value="name">Alphabetical</option>
+                        </select>
+                    </div>
+
+                    {/* Export Button */}
+                    <button className="flex items-center gap-2 px-5 h-11 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all shrink-0">
                         <Users size={14} />
-                        Export Roster
+                        Export
                     </button>
                 </div>
             </div>
