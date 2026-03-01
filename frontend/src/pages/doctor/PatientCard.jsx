@@ -15,80 +15,79 @@ const PatientCard = ({ patient, onNavigate, onMessage }) => {
     };
 
     return (
-        <article className="group relative bg-white dark:bg-slate-800 rounded-3xl border border-slate-200/80 dark:border-slate-700/60 overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
-            {/* Edge Color Accent */}
-            <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-blue-400 to-blue-600 opacity-80" />
-            
-            <div className="p-5 md:p-6 flex flex-col md:flex-row items-center gap-6">
+        <article className="card border-0 shadow-sm mb-3 rounded-4" style={{ overflow: 'hidden', transition: 'all 0.3s ease' }} onMouseEnter={(e) => e.currentTarget.classList.add('shadow')} onMouseLeave={(e) => e.currentTarget.classList.remove('shadow')}>
+            <div className="card-body p-4 d-flex flex-column flex-md-row align-items-center gap-4">
                 
                 {/* Identity */}
-                <div className="flex items-center gap-4 flex-1 w-full md:w-auto min-w-[280px]">
-                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-100 to-blue-50 dark:from-slate-700 dark:to-slate-600 flex items-center justify-center flex-shrink-0 shadow-inner relative overflow-hidden">
+                <div className="d-flex align-items-center gap-3 flex-grow-1" style={{ minWidth: '250px' }}>
+                    <div className="rounded-3 bg-primary bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0" style={{ width: '60px', height: '60px', overflow: 'hidden' }}>
                         {patient.patient_image && !imageError ? (
                             <img 
                                 src={toAssetUrl(patient.patient_image)} 
                                 alt={patient.full_name} 
-                                className="w-full h-full object-cover"
+                                className="w-100 h-100 object-fit-cover"
                                 crossOrigin="anonymous"
                                 onError={() => setImageError(true)}
                             />
                         ) : (
-                            <span className="text-xl font-black text-blue-600 dark:text-blue-400">
+                            <span className="fs-4 fw-bold text-primary">
                                 {patient.full_name ? patient.full_name.charAt(0).toUpperCase() : 'P'}
                             </span>
                         )}
                     </div>
-                    <div>
-                        <h4 className="text-lg font-black tracking-tight text-slate-800 dark:text-white mb-0.5 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors w-full overflow-hidden text-ellipsis whitespace-nowrap max-w-[200px]">{patient.full_name}</h4>
-                        <div className="flex items-center gap-1.5 text-[0.85rem] font-medium text-slate-500 dark:text-slate-400">
-                            <Mail size={14} className="text-slate-400" />
-                            <span className="truncate max-w-[180px]">{patient.email}</span>
+                    <div className="text-truncate">
+                        <h5 className="fw-bold mb-1 text-dark text-truncate" style={{ maxWidth: '200px' }}>{patient.full_name}</h5>
+                        <div className="d-flex align-items-center gap-2 text-secondary small">
+                            <Mail size={14} />
+                            <span className="text-truncate" style={{ maxWidth: '180px' }}>{patient.email}</span>
                         </div>
                     </div>
                 </div>
 
-                {/* Visits info - Beautiful chips */}
-                <div className="flex flex-row items-center gap-3 flex-1 w-full md:w-auto">
-                    <div className="flex-1 bg-slate-50 dark:bg-slate-900/50 rounded-2xl p-3 border border-slate-100 dark:border-slate-700/50">
-                        <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-widest font-black text-slate-400 mb-1">
+                {/* Visits info */}
+                <div className="d-flex flex-row align-items-center gap-3 flex-grow-1">
+                    <div className="flex-fill bg-light rounded-3 p-3 border">
+                        <div className="d-flex align-items-center gap-2 text-secondary text-uppercase fw-bold mb-1" style={{ fontSize: '0.65rem', letterSpacing: '1px' }}>
                             <History size={12} strokeWidth={2.5} /> Last Visit
                         </div>
-                        <div className="text-sm font-bold text-slate-700 dark:text-slate-300">
+                        <div className="fw-bold text-dark small">
                             {formatDate(patient.last_visit)}
                         </div>
                     </div>
-                    <div className="flex-1 bg-blue-50/50 dark:bg-blue-900/20 rounded-2xl p-3 border border-blue-100 dark:border-blue-800/50">
-                        <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-widest font-black text-blue-500 dark:text-blue-400 mb-1">
+                    <div className="flex-fill bg-primary bg-opacity-10 rounded-3 p-3 border border-primary border-opacity-25">
+                        <div className="d-flex align-items-center gap-2 text-primary text-uppercase fw-bold mb-1" style={{ fontSize: '0.65rem', letterSpacing: '1px' }}>
                             <CalendarClock size={12} strokeWidth={2.5} /> Upcoming
                         </div>
-                        <div className="text-sm font-bold text-blue-700 dark:text-blue-300">
+                        <div className="fw-bold text-primary small">
                             {patient.next_appointment ? formatDate(patient.next_appointment) : 'No schedule'}
                         </div>
                     </div>
                 </div>
 
                 {/* Actions & Status */}
-                <div className="flex items-center justify-between md:justify-end gap-5 w-full md:w-auto mt-2 md:mt-0">
-                    <div className="hidden md:block">
-                        <span className={`px-4 py-1.5 rounded-full text-[11px] font-black tracking-widest uppercase shadow-sm ${isActive ? 'bg-emerald-50 text-emerald-600 border border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20' : 'bg-slate-50 text-slate-500 border border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700'} `}>
+                <div className="d-flex align-items-center gap-4 justify-content-between justify-content-md-end flex-grow-1 mt-3 mt-md-0">
+                    <div className="d-none d-md-block">
+                        <span className={`badge rounded-pill px-3 py-2 text-uppercase ${isActive ? 'bg-success bg-opacity-10 text-success border border-success border-opacity-25' : 'bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25'}`} style={{ letterSpacing: '1px' }}>
                             {isActive ? 'Active' : 'Inactive'}
                         </span>
                     </div>
                     
-                    <div className="flex items-center gap-2 w-full md:w-auto justify-end">
+                    <div className="d-flex align-items-center gap-2 justify-content-end w-100 w-md-auto">
                         <button 
                             onClick={() => onMessage(patient.id)} 
                             title="Message Patient"
-                            className="flex-1 md:flex-none md:w-11 md:h-11 h-10 px-4 md:px-0 rounded-xl bg-blue-50 dark:bg-blue-500/10 hover:bg-blue-600 dark:hover:bg-blue-500 text-blue-600 dark:text-blue-400 hover:text-white flex items-center justify-center transition-all border border-blue-100 dark:border-transparent hover:border-transparent shadow-sm hover:shadow-blue-500/25 group/btn"
+                            className="btn btn-outline-primary rounded-3 d-flex align-items-center justify-content-center flex-fill flex-md-grow-0"
+                            style={{ width: '45px', height: '45px' }}
                         >
-                            <MessageSquare size={18} className="group-hover/btn:scale-110 transition-transform" />
+                            <MessageSquare size={18} />
                         </button>
                         <button 
                             onClick={() => onNavigate(patient.id)} 
                             title="View Clinical Profile"
-                            className="flex-1 md:flex-none md:w-11 md:h-11 h-10 px-4 md:px-0 rounded-xl bg-slate-50 dark:bg-slate-800 hover:bg-slate-900 dark:hover:bg-white text-slate-500 dark:text-slate-400 hover:text-white dark:hover:text-slate-900 flex items-center justify-center transition-all border border-slate-200 dark:border-slate-700 hover:border-transparent shadow-sm hover:shadow-xl group/btn2"
+                            className="btn btn-outline-secondary rounded-3 d-flex align-items-center justify-content-center flex-fill flex-md-grow-0"
+                            style={{ width: '45px', height: '45px' }}
                         >
-                            <ExternalLink size={18} className="group-hover/btn2:scale-110 transition-transform" />
+                            <ExternalLink size={18} />
                         </button>
                     </div>
                 </div>
