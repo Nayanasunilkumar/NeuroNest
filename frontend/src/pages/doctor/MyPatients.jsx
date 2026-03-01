@@ -69,35 +69,49 @@ const MyPatients = () => {
     };
 
     return (
-        <div className="opd-dashboard-root">
-            {/* SUMMARY METRIC GRID */}
-            <div className="summary-metric-grid">
-                <div className="metric-card-pro total">
-                    <div className="metric-icon-circle">
-                        <Users size={20} />
+        <div className="max-w-[1200px] mx-auto flex flex-col h-full mt-4">
+            
+            <div className="mb-6">
+                 <h2 className="text-2xl font-black text-slate-800 dark:text-white tracking-tight">Clinical Roster</h2>
+                 <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mt-1">Manage and access all your patient dossiers and history</p>
+            </div>
+
+            {/* PREMIUM METRIC GRID */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                {/* Total Patients */}
+                <div className="bg-white dark:bg-slate-800 rounded-[24px] p-6 border border-slate-200/60 dark:border-slate-700/50 shadow-sm relative overflow-hidden group hover:shadow-lg transition-all duration-300 hover:-translate-y-1 hover:border-blue-200 dark:hover:border-blue-900/50">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-3xl -mr-10 -mt-10 transition-transform duration-500 group-hover:scale-150" />
+                    <div className="flex items-center justify-between mb-6 relative">
+                        <div className="w-14 h-14 bg-blue-50 dark:bg-blue-500/10 rounded-2xl flex items-center justify-center text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-500/20 shadow-inner">
+                            <Users size={24} strokeWidth={2.5} />
+                        </div>
+                        <span className="text-4xl font-black text-slate-800 dark:text-white tracking-tight">{stats.total}</span>
                     </div>
-                    <div className="metric-info">
-                        <span className="count">{stats.total}</span>
-                        <span className="label">Clinical Roster</span>
-                    </div>
+                    <h3 className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest relative">Total Patients</h3>
                 </div>
-                <div className="metric-card-pro approved">
-                    <div className="metric-icon-circle">
-                        <UserPlus size={20} />
+
+                {/* Active Patients */}
+                <div className="bg-white dark:bg-slate-800 rounded-[24px] p-6 border border-slate-200/60 dark:border-slate-700/50 shadow-sm relative overflow-hidden group hover:shadow-lg transition-all duration-300 hover:-translate-y-1 hover:border-emerald-200 dark:hover:border-emerald-900/50">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl -mr-10 -mt-10 transition-transform duration-500 group-hover:scale-150" />
+                    <div className="flex items-center justify-between mb-6 relative">
+                        <div className="w-14 h-14 bg-emerald-50 dark:bg-emerald-500/10 rounded-2xl flex items-center justify-center text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-500/20 shadow-inner">
+                            <UserPlus size={24} strokeWidth={2.5} />
+                        </div>
+                        <span className="text-4xl font-black text-slate-800 dark:text-white tracking-tight">{stats.active}</span>
                     </div>
-                    <div className="metric-info">
-                        <span className="count">{stats.active}</span>
-                        <span className="label">Active Patients</span>
-                    </div>
+                    <h3 className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest relative">Active Status</h3>
                 </div>
-                <div className="metric-card-pro pending">
-                    <div className="metric-icon-circle">
-                        <UserX size={20} />
+
+                {/* Inactive Patients */}
+                <div className="bg-white dark:bg-slate-800 rounded-[24px] p-6 border border-slate-200/60 dark:border-slate-700/50 shadow-sm relative overflow-hidden group hover:shadow-lg transition-all duration-300 hover:-translate-y-1 hover:border-amber-200 dark:hover:border-amber-900/50">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/10 rounded-full blur-3xl -mr-10 -mt-10 transition-transform duration-500 group-hover:scale-150" />
+                    <div className="flex items-center justify-between mb-6 relative">
+                        <div className="w-14 h-14 bg-amber-50 dark:bg-amber-500/10 rounded-2xl flex items-center justify-center text-amber-600 dark:text-amber-400 border border-amber-100 dark:border-amber-500/20 shadow-inner">
+                            <UserX size={24} strokeWidth={2.5} />
+                        </div>
+                        <span className="text-4xl font-black text-slate-800 dark:text-white tracking-tight">{stats.inactive}</span>
                     </div>
-                    <div className="metric-info">
-                        <span className="count">{stats.inactive}</span>
-                        <span className="label">Inactive</span>
-                    </div>
+                    <h3 className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest relative">Inactive / Archived</h3>
                 </div>
             </div>
 
@@ -159,22 +173,28 @@ const MyPatients = () => {
             </div>
 
             {/* PATIENT LIST AREA */}
-            <div className="mt-8">
+            <div className="mt-4">
                 {loading ? (
-                    <div className="py-32 flex flex-col items-center justify-center">
-                        <Loader2 className="w-12 h-12 text-blue-600 animate-spin mb-4" />
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Compiling Patient Identities...</p>
+                    <div className="py-24 flex flex-col items-center justify-center space-y-5">
+                        <div className="relative w-20 h-20 flex items-center justify-center mb-2">
+                            <div className="absolute inset-0 border-[6px] border-slate-100 dark:border-slate-800 rounded-full"></div>
+                            <div className="absolute inset-0 border-[6px] border-blue-600 rounded-full border-t-transparent animate-spin"></div>
+                            <Users size={24} className="text-blue-600 dark:text-blue-500 animate-pulse" />
+                        </div>
+                        <p className="text-xs font-black text-slate-400 uppercase tracking-widest animate-pulse">Compiling Patient Identities...</p>
                     </div>
                 ) : filteredPatients.length === 0 ? (
-                    <div className="py-32 text-center bg-white dark:bg-slate-800/50 rounded-[32px] border-2 border-dashed border-slate-100 dark:border-slate-800">
-                        <Users size={64} className="mx-auto mb-6 text-slate-200 dark:text-slate-800" />
-                        <h3 className="text-xl font-black text-slate-800 dark:text-slate-200 mb-2">No Clinical Bonds Found</h3>
-                        <p className="text-slate-400 text-xs max-w-xs mx-auto">
-                            Patients will appear here once they have approved or completed appointments with you.
+                    <div className="py-28 flex flex-col items-center justify-center bg-white dark:bg-slate-800/30 rounded-[32px] border-2 border-dashed border-slate-200 dark:border-slate-700/50 shadow-sm">
+                        <div className="w-24 h-24 bg-slate-50 dark:bg-slate-800/80 rounded-full flex items-center justify-center mb-6 shadow-inner">
+                             <Users size={40} className="text-slate-300 dark:text-slate-600" />
+                        </div>
+                        <h3 className="text-2xl font-black text-slate-800 dark:text-slate-200 mb-2 tracking-tight">No Clinical Bonds Found</h3>
+                        <p className="text-slate-500 dark:text-slate-400 text-sm max-w-sm text-center font-medium leading-relaxed">
+                            Patients will automatically populate your roster once they complete appointments or get their requests approved.
                         </p>
                     </div>
                 ) : (
-                    <div className="flex flex-col gap-4">
+                    <div className="flex flex-col gap-5 pb-12">
                         {filteredPatients.map(patient => (
                             <PatientCard 
                                 key={patient.id} 
