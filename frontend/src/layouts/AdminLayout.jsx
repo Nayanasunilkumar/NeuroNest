@@ -30,11 +30,11 @@ const AdminLayout = () => {
   }, []);
 
   return (
-    <div className={`min-vh-100 ${darkMode ? 'bg-dark text-light' : 'bg-light text-dark'}`} style={{ transition: 'all 0.3s ease' }}>
+    <div className={`vh-100 d-flex flex-column overflow-hidden ${darkMode ? 'bg-dark text-light' : 'bg-light text-dark'}`} style={{ transition: 'all 0.3s ease' }}>
       {/* Premium Admin Header */}
       <header 
         className={`navbar sticky-top shadow-sm px-4 ${darkMode ? 'bg-dark border-bottom border-secondary' : 'bg-white'}`}
-        style={{ height: '70px', zIndex: 1040 }}
+        style={{ height: '70px', zIndex: 1050 }}
       >
         <div className="container-fluid gap-3">
           <div className="d-flex align-items-center gap-3">
@@ -115,8 +115,8 @@ const AdminLayout = () => {
 
       {/* Main Execution Flow */}
       <main 
-        className={`pt-4 pb-5 ${!sidebarOpen ? 'sidebar-rail-offset' : 'sidebar-open-offset'}`}
-        style={{ minHeight: 'calc(100vh - 70px)', transition: 'padding 0.3s ease' }}
+        className={`flex-grow-1 overflow-y-auto pt-4 pb-5 ${!sidebarOpen ? 'sidebar-rail-offset' : 'sidebar-open-offset'}`}
+        style={{ transition: 'padding 0.3s ease' }}
       >
         <div className="container-fluid px-4 px-lg-5">
            <Outlet />
