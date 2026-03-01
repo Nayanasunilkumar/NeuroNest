@@ -219,14 +219,6 @@ const Register = () => {
             <Link to="/login" className="auth-link">Sign in</Link>
           </p>
 
-          {/* Trust row — inside card */}
-          <div className="card-trust-row" style={{ marginTop: '1.1rem' }}>
-            <span className="trust-dot" />Free to Join
-            <span className="trust-sep" />
-            <span className="trust-dot" />HIPAA Compliant
-            <span className="trust-sep" />
-            <span className="trust-dot" />Instant Access
-          </div>
         </div>
       </div>
     </div>

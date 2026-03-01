@@ -135,14 +135,6 @@ const Login = () => {
             <Link to="/register" className="auth-link">Create one free</Link>
           </p>
 
-          {/* Trust row — inside card, anchored to footer */}
-          <div className="card-trust-row" style={{ marginTop: '1.1rem' }}>
-            <span className="trust-dot" />HIPAA Compliant
-            <span className="trust-sep" />
-            <span className="trust-dot" />End-to-End Encrypted
-            <span className="trust-sep" />
-            <span className="trust-dot" />99.9% Uptime
-          </div>
         </div>
 
       </div>
