@@ -315,14 +315,14 @@ const Profile = () => {
                                     </p>
                                     <div className="dark-card-pills">
                                         {profile.availability && profile.availability.length > 0 ? (
-                                            Array.from(new Set(profile.availability.map(a => a.day_of_week))).slice(0, 3).map(day => (
-                                                <span key={day} className="dark-card-pill">{day.substring(0, 3)}</span>
+                                            Array.from(new Set(profile.availability.map(a => `${(a.start_time || '').substring(0, 5)} - ${(a.end_time || '').substring(0, 5)}`))).slice(0, 2).map((timeStr, idx) => (
+                                                <span key={idx} className="dark-card-pill">{timeStr}</span>
                                             ))
                                         ) : (
                                             <span className="dark-card-pill">No Schedule Set</span>
                                         )}
-                                        {profile.availability && Array.from(new Set(profile.availability.map(a => a.day_of_week))).length > 3 && (
-                                            <span className="dark-card-pill">+{Array.from(new Set(profile.availability.map(a => a.day_of_week))).length - 3}</span>
+                                        {profile.availability && Array.from(new Set(profile.availability.map(a => `${(a.start_time || '').substring(0, 5)} - ${(a.end_time || '').substring(0, 5)}`))).length > 2 && (
+                                            <span className="dark-card-pill">+{Array.from(new Set(profile.availability.map(a => `${(a.start_time || '').substring(0, 5)} - ${(a.end_time || '').substring(0, 5)}`))).length - 2}</span>
                                         )}
                                         <span 
                                             className="dark-card-pill" 
