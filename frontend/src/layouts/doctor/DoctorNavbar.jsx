@@ -116,13 +116,18 @@ const DoctorNavbar = ({ darkMode, toggleTheme }) => {
 
   return (
     <div className={`d-flex align-items-center justify-content-between px-3 px-md-4 border-bottom shadow-sm ${darkMode ? 'bg-dark border-secondary' : 'bg-white'}`} style={{ height: '80px', zIndex: 1060, flexShrink: 0, flexWrap: 'nowrap' }}>
-      {/* Left Spacer to balance centering */}
-      <div className="d-none d-lg-block" style={{ width: '280px' }}></div>
+      {/* Left: Branding */}
+      <div className="d-flex flex-column lh-1 flex-shrink-0" style={{ width: '180px' }}>
+          <span className={`h4 fw-black mb-0 ${darkMode ? 'text-white' : 'text-primary'}`} style={{ letterSpacing: '-0.02em' }}>NEURONEST</span>
+          <span className="text-muted small fw-medium text-uppercase" style={{ letterSpacing: '0.05em', fontSize: '0.6rem' }}>Doctor Console</span>
+      </div>
 
       {/* Center: Dynamic Island Navigation */}
-      <div className="flex-grow-1 d-none d-lg-flex justify-content-center px-4" style={{ minWidth: 0, overflow: 'hidden' }}>
+      <div className="flex-grow-1 d-none d-lg-flex justify-content-center px-4 overflow-hidden">
           <DynamicIslandNav role="doctor" />
       </div>
+
+      <div className="flex-grow-1 d-none d-lg-block"></div>
 
       {/* Right Actions */}
       <div className="d-flex align-items-center justify-content-end gap-2 gap-md-3" style={{ minWidth: '220px' }}>
