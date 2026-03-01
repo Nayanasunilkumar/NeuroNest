@@ -24,6 +24,7 @@ from routes.doctor_profile import doctor_profile_bp
 from routes.patient_settings_routes import patient_settings_bp
 from routes.announcements import announcements_bp
 from routes.patient_medical_records import patient_medical_bp
+from routes.modules_config import modules_config_bp
 
 
 from extensions.socket import socketio
@@ -54,6 +55,7 @@ def create_app():
     app.register_blueprint(patient_medical_bp)
     app.register_blueprint(prescriptions_bp, url_prefix="/prescriptions")
     app.register_blueprint(announcements_bp, url_prefix="/api/announcements")
+    app.register_blueprint(modules_config_bp, url_prefix="/api/modules")
     
     # New Doctor Profile Route
     app.register_blueprint(doctor_profile_bp, url_prefix="/api/doctor/profile")

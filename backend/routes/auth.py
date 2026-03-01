@@ -28,7 +28,7 @@ def parse_user_agent(ua_string):
     
     return f"{browser} on {os}"
 
-def log_security_event(user_id, event_type, description):
+def log_security_event(user_id, event_type, description, commit=True):
     ua = request.headers.get('User-Agent', '')
     try:
         activity = SecurityActivity(
@@ -39,33 +39,36 @@ def log_security_event(user_id, event_type, description):
             user_agent=ua
         )
         db.session.add(activity)
-        db.session.commit()
+        if commit:
+            db.session.commit()
     except Exception as e:
         print(f"Error logging security event: {e}")
         db.session.rollback()
 
+
+# Cache bootstrap config to speed up failed/dev lookups
+ALLOW_BOOTSTRAP = os.getenv("ALLOW_DEV_DOCTOR_BOOTSTRAP", "false").lower() == "true"
+DEFAULT_DOCTOR_EMAIL = os.getenv("DEFAULT_DOCTOR_EMAIL", "doctor@neuronest.com").strip().lower()
+DEFAULT_DOCTOR_PASSWORD = os.getenv("DEFAULT_DOCTOR_PASSWORD", "123456")
 
 def _maybe_bootstrap_doctor_for_dev(email: str):
     """
     Dev-only fallback:
     If enabled, auto-creates the default doctor account when missing.
     """
-    allow_bootstrap = os.getenv("ALLOW_DEV_DOCTOR_BOOTSTRAP", "false").lower() == "true"
-    default_email = os.getenv("DEFAULT_DOCTOR_EMAIL", "doctor@neuronest.com").strip().lower()
-    default_password = os.getenv("DEFAULT_DOCTOR_PASSWORD", "123456")
-
-    if not allow_bootstrap:
+    if not ALLOW_BOOTSTRAP:
         return None
-    if email.strip().lower() != default_email:
+        
+    email_clean = email.strip().lower()
+    if email_clean != DEFAULT_DOCTOR_EMAIL:
         return None
 
-    existing = User.query.filter_by(email=default_email).first()
-    if existing:
-        return existing
+    # Redundant query avoided: if we are here, 'User.query.filter_by(email=email).first()' 
+    # already returned None in the main login flow for this specific email.
 
     doctor_user = User(
-        email=default_email,
-        password_hash=hash_password(default_password),
+        email=DEFAULT_DOCTOR_EMAIL,
+        password_hash=hash_password(DEFAULT_DOCTOR_PASSWORD),
         role="doctor",
         full_name="Dr. Nayana",
     )
@@ -90,7 +93,7 @@ def _maybe_bootstrap_doctor_for_dev(email: str):
 def register():
     data = request.get_json() or {}
 
-    email = data.get("email")
+    email = (data.get("email") or "").strip().lower()
     password = data.get("password")
     requested_role = data.get("role", "patient")
     full_name = data.get("full_name")
@@ -171,7 +174,8 @@ def login():
 
         ua = request.headers.get('User-Agent', '')
         device_info = parse_user_agent(ua)
-        log_security_event(user.id, "login_success", f"New login from {device_info}")
+        log_security_event(user.id, "login_success", f"New login from {device_info}", commit=False)
+        db.session.commit()
 
         return jsonify({
             "message": "Login successful",
