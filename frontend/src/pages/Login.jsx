@@ -52,16 +52,13 @@ const Login = () => {
 
       <div className="auth-center">
 
-        {/* Wordmark */}
-        <div className="auth-wordmark">
-          <span className="wordmark-dot" />
-          <span>NeuroNest</span>
-        </div>
-
         {/* Card */}
         <div className="auth-card">
           <div className="auth-card-top">
-            <h1 className="auth-title">Welcome back</h1>
+            <h1 className="auth-title">
+              <span className="wordmark-dot" style={{ width: 11, height: 11 }} />
+              NeuroNest
+            </h1>
             <p className="auth-subtitle">Sign in to your account</p>
           </div>
 

@@ -164,6 +164,10 @@
   color: #ede8ff;
   letter-spacing: -0.04em;
   margin: 0 0 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
 }
 .auth-subtitle {
   font-size: 0.855rem;
