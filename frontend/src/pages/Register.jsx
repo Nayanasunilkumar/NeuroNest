@@ -67,6 +67,7 @@ const Register = () => {
     <div className="auth-page">
       <div className="bg-glow bg-glow-1" />
       <div className="bg-glow bg-glow-2" />
+      <div className="bg-glow-card" />
 
       <div className="auth-center">
         {/* Wordmark */}
@@ -201,21 +202,31 @@ const Register = () => {
               {loading ? <span className="btn-spinner" /> : null}
               {loading ? "Creating account…" : "Create Free Account"}
             </button>
+
+            {/* Encryption note */}
+            <div className="encrypt-note">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0110 0v4" />
+              </svg>
+              Your medical data is encrypted and secure
+            </div>
           </form>
+
+          <div className="card-divider" style={{ margin: '1.4rem 0 1.1rem' }} />
 
           <p className="auth-footer-text">
             Already have an account?{" "}
             <Link to="/login" className="auth-link">Sign in</Link>
           </p>
-        </div>
 
-        {/* Trust row */}
-        <div className="auth-trust-row">
-          <span className="trust-dot" />Free to Join
-          <span className="trust-sep" />
-          <span className="trust-dot" />HIPAA Compliant
-          <span className="trust-sep" />
-          <span className="trust-dot" />Instant Access
+          {/* Trust row — inside card */}
+          <div className="card-trust-row" style={{ marginTop: '1.1rem' }}>
+            <span className="trust-dot" />Free to Join
+            <span className="trust-sep" />
+            <span className="trust-dot" />HIPAA Compliant
+            <span className="trust-sep" />
+            <span className="trust-dot" />Instant Access
+          </div>
         </div>
       </div>
     </div>

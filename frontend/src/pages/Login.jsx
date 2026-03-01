@@ -45,11 +45,13 @@ const Login = () => {
 
   return (
     <div className="auth-page">
-      {/* Subtle background glows */}
+      {/* Background depth */}
       <div className="bg-glow bg-glow-1" />
       <div className="bg-glow bg-glow-2" />
+      <div className="bg-glow-card" />
 
       <div className="auth-center">
+
         {/* Wordmark */}
         <div className="auth-wordmark">
           <span className="wordmark-dot" />
@@ -73,6 +75,7 @@ const Login = () => {
           )}
 
           <form onSubmit={handleSubmit} className="auth-form">
+            {/* Email */}
             <div className="field">
               <label htmlFor="login-email">Email</label>
               <input
@@ -86,6 +89,7 @@ const Login = () => {
               />
             </div>
 
+            {/* Password */}
             <div className="field">
               <div className="field-label-row">
                 <label htmlFor="login-pw">Password</label>
@@ -107,26 +111,40 @@ const Login = () => {
               </div>
             </div>
 
+            {/* CTA */}
             <button type="submit" className="sign-in-btn" disabled={loading}>
               {loading ? <span className="btn-spinner" /> : null}
               {loading ? "Signing in…" : "Sign In"}
             </button>
+
+            {/* Encryption note — inside card, right below button */}
+            <div className="encrypt-note">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0110 0v4" />
+              </svg>
+              Your medical data is encrypted and secure
+            </div>
           </form>
 
+          {/* Divider */}
+          <div className="card-divider" style={{ margin: '1.4rem 0 1.1rem' }} />
+
+          {/* Register link */}
           <p className="auth-footer-text">
             Don't have an account?{" "}
             <Link to="/register" className="auth-link">Create one free</Link>
           </p>
+
+          {/* Trust row — inside card, anchored to footer */}
+          <div className="card-trust-row" style={{ marginTop: '1.1rem' }}>
+            <span className="trust-dot" />HIPAA Compliant
+            <span className="trust-sep" />
+            <span className="trust-dot" />End-to-End Encrypted
+            <span className="trust-sep" />
+            <span className="trust-dot" />99.9% Uptime
+          </div>
         </div>
 
-        {/* Trust line */}
-        <div className="auth-trust-row">
-          <span className="trust-dot" />HIPAA Compliant
-          <span className="trust-sep" />
-          <span className="trust-dot" />End-to-End Encrypted
-          <span className="trust-sep" />
-          <span className="trust-dot" />99.9% Uptime
-        </div>
       </div>
     </div>
   );
