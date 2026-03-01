@@ -1,14 +1,13 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { getDoctorProfile, updateDoctorProfile, uploadProfileImage } from '../../services/doctorProfileService';
 import { 
-  User, Briefcase, Shield, Edit2, Save, X, Camera, Award, MapPin, Search, Tag, CalendarClock 
+  User, Briefcase, Shield, Edit2, Save, X, Camera, Award, MapPin, Search, ChevronRight, Activity, Clock, Calendar, Star, CheckCircle, Plus
 } from 'lucide-react';
 import ExpertiseTags from '../../components/doctor/ExpertiseTags';
-import AvailabilityOverview from '../../components/doctor/AvailabilityOverview';
 import AvailabilityModal from '../../components/doctor/AvailabilityModal';
 import { fetchSpecialties } from '../../services/adminDoctorAPI';
 import { toAssetUrl } from '../../utils/media';
-import '../../styles/profile-premium.css';
+import '../../styles/profile-dashboard.css';
 
 const Profile = () => {
     const fileInputRef = useRef(null);
@@ -21,8 +20,7 @@ const Profile = () => {
     const [isAvailabilityModalOpen, setIsAvailabilityModalOpen] = useState(false);
     const [formData, setFormData] = useState({});
     const [specialties, setSpecialties] = useState([]);
-    const [activeTab, setActiveTab] = useState('bio'); // bio, details, schedule
-    const [isHoveringImage, setIsHoveringImage] = useState(false);
+    const [activeTab, setActiveTab] = useState('dashboard');
 
     useEffect(() => {
         fetchProfile();
@@ -144,233 +142,281 @@ const Profile = () => {
 
     if (!profile) return null;
 
-    // Decide which component renders the actual UI body
-    const renderActiveTab = () => {
-        if (activeTab === 'bio') {
-            return (
-                <div className="animation-fade-in text-start">
-                    <p className="text-secondary fw-medium" style={{ lineHeight: '1.8', fontSize: '0.95rem' }}>
-                        {isEditing ? (
-                            <textarea 
-                                name="bio" 
-                                className="form-control premium-input text-secondary" 
-                                value={formData.bio || ''} 
-                                onChange={handleChange} 
-                                rows={5}
-                                placeholder="Describe your professional career..."
-                            />
-                        ) : (
-                            profile.bio || "No professional summary added yet. Click 'Edit' to update."
-                        )}
-                    </p>
-
-                    <div className="mt-4 pt-3 border-top border-light">
-                        <div className="d-flex align-items-center justify-content-between mb-2">
-                             <span className="small fw-semibold text-secondary text-uppercase tracking-wider">Expertise Labels</span>
-                             <span className="badge bg-light text-muted fw-bold">{formData.expertise_tags?.length || 0}</span>
-                        </div>
-                        <ExpertiseTags 
-                            tags={formData.expertise_tags || []} 
-                            isEditing={isEditing}
-                            onAddTag={handleAddTag} 
-                            onRemoveTag={handleRemoveTag}
-                        />
-                    </div>
-                </div>
-            );
-        }
-
-        if (activeTab === 'details') {
-            return (
-                <div className="animation-fade-in row g-4 text-start">
-                    <div className="col-12 col-md-6">
-                        <label className="small fw-semibold text-secondary text-uppercase mb-1">Phone Number</label>
-                        {isEditing ? (
-                            <input name="phone" className="form-control premium-input" value={formData.phone || ''} onChange={handleChange} />
-                        ) : <div className="fw-bolder text-dark" style={{ fontSize: '1rem' }}>{profile.phone || 'Not set'}</div>}
-                    </div>
-                    <div className="col-12 col-md-6">
-                        <label className="small fw-semibold text-secondary text-uppercase mb-1">Date of Birth</label>
-                        {isEditing ? (
-                            <input type="date" name="dob" className="form-control premium-input" value={formData.dob || ''} onChange={handleChange} />
-                        ) : <div className="fw-bolder text-dark" style={{ fontSize: '1rem' }}>{profile.dob || 'Not set'}</div>}
-                    </div>
-                    <div className="col-12 col-md-6">
-                        <label className="small fw-semibold text-secondary text-uppercase mb-1">Gender</label>
-                        {isEditing ? (
-                            <select name="gender" className="form-select premium-input" value={formData.gender || ''} onChange={handleChange}>
-                                <option value="">Select</option>
-                                <option value="Male">Male</option>
-                                <option value="Female">Female</option>
-                            </select>
-                        ) : <div className="fw-bolder text-dark" style={{ fontSize: '1rem' }}>{profile.gender || 'Not set'}</div>}
-                    </div>
-                    
-                    <div className="col-12"><hr className="text-light opacity-50"/></div>
-
-                    <div className="col-12 col-md-6">
-                        <label className="small fw-semibold text-secondary text-uppercase mb-1">License No.</label>
-                        {isEditing ? (
-                            <input name="license_number" className="form-control premium-input" value={formData.license_number || ''} onChange={handleChange} />
-                        ) : <div className="fw-bolder text-dark d-flex align-items-center gap-1"><Shield size={16} className="text-success"/> {profile.license_number}</div>}
-                    </div>
-                    <div className="col-12 col-md-6">
-                        <label className="small fw-semibold text-secondary text-uppercase mb-1">Specialization</label>
-                        {isEditing ? (
-                            <select name="specialization" className="form-select premium-input" value={formData.specialization || ''} onChange={handleChange}>
-                                <option value="">Select Specialization</option>
-                                {specialties.map(spec => (
-                                    <option key={spec} value={spec}>{spec}</option>
-                                ))}
-                            </select>
-                        ) : <div className="fw-bolder text-dark">{profile.specialization}</div>}
-                    </div>
-                    <div className="col-12 col-md-6">
-                        <label className="small fw-semibold text-secondary text-uppercase mb-1">Qualification</label>
-                        {isEditing ? (
-                            <input name="qualification" className="form-control premium-input" value={formData.qualification || ''} onChange={handleChange} />
-                        ) : <div className="fw-bolder text-dark">{profile.qualification}</div>}
-                    </div>
-                    <div className="col-12 col-md-6">
-                        <label className="small fw-semibold text-secondary text-uppercase mb-1">Consultation Mode</label>
-                        {isEditing ? (
-                            <select name="consultation_mode" className="form-select premium-input" value={formData.consultation_mode === 'Both' ? 'Online and Offline' : (formData.consultation_mode || '')} onChange={handleChange}>
-                                <option value="">Select</option>
-                                <option value="Online">Online</option>
-                                <option value="Offline">Offline</option>
-                                <option value="Online and Offline">Online and Offline</option>
-                            </select>
-                        ) : <div className="fw-bolder text-dark">{profile.consultation_mode === 'Both' ? 'Online and Offline' : profile.consultation_mode}</div>}
-                    </div>
-                </div>
-            );
-        }
-
-        if (activeTab === 'schedule') {
-            return (
-                <div className="animation-fade-in text-start">
-                    <p className="text-secondary fw-medium small mw-100">Review your existing schedule and manage your online/offline availability timings.</p>
-                    <AvailabilityOverview 
-                        availability={profile.availability} 
-                        onManage={() => setIsAvailabilityModalOpen(true)}
-                    />
-                </div>
-            );
-        }
-    };
-
     return (
-        <div className="premium-page-bg py-5">
-            <div className="container" style={{ maxWidth: '1280px' }}>
-                <div className="premium-main-card">
-                    {/* Pale blue accent floating shape inside card */}
-                    <div className="premium-left-accent d-none d-lg-block"></div>
-
-                    <div className="row g-0 position-relative z-1 p-3 p-md-5">
-                        
-                        {/* LEFT COLUMN: Main Poster (Image + Title) */}
-                        <div className="col-12 col-lg-5 col-xl-4 text-center d-flex flex-column pt-3">
-                            <h5 className="fw-bold d-none d-lg-block" style={{ color: '#2b3650', letterSpacing: '-0.5px' }}>
-                                NEURO<span className="fw-normal">NEST</span>
-                            </h5>
-
-                            <div 
-                                className="premium-circle-bg mt-4 shadow-sm" 
-                                onMouseEnter={() => setIsHoveringImage(true)}
-                                onMouseLeave={() => setIsHoveringImage(false)}
-                                onClick={handleImageClick}
-                                style={{
-                                    width: '280px', height: '280px', 
-                                    background: isEditing && isHoveringImage ? '#5d4d9b' : '#7b68c2'
-                                }}
-                            >
-                                <img 
-                                    src={toAssetUrl(formData.profile_image) || "https://via.placeholder.com/300"} 
-                                    alt="Doctor Portrait"
-                                    className="w-100 h-100 rounded-circle object-fit-cover shadow"
-                                    style={{ border: '4px solid #fff', transform: 'scale(0.95)' }}
-                                />
-                                {isEditing && (
-                                    <div className="position-absolute d-flex align-items-center justify-content-center top-0 start-0 w-100 h-100 rounded-circle" style={{ backgroundColor: 'rgba(0,0,0,0.5)', opacity: isHoveringImage ? 1 : 0, transition: 'all 0.2s' }}>
-                                        <Camera color="#fff" size={36} />
-                                    </div>
-                                )}
-                                <input type="file" ref={fileInputRef} className="d-none" accept="image/*" onChange={handleFileChange} />
-                            </div>
-
-                            {/* Info below image */}
-                            <div className="mt-4 pt-2">
-                                <h1 className="fw-bolder mb-1 lh-1" style={{ color: '#2b3650', fontSize: '2.5rem', letterSpacing: '-1.5px' }}>
-                                    {formData.full_name || "Dr. Name"}
-                                </h1>
-                                <p className="text-secondary fw-semibold text-uppercase mb-3 mt-2" style={{ fontSize: '0.75rem', letterSpacing: '1px' }}>
-                                    <MapPin size={12} className="me-1 mb-1"/> {formData.hospital_name || "Hospital"} &bull; {formData.specialization || "Specialist"}
-                                </p>
-                            </div>
-                        </div>
-
-                        {/* CENTER COLUMN: Data and Tabs */}
-                        <div className="col-12 col-lg-7 col-xl-6 px-lg-5 pt-5 pt-lg-4 text-center text-lg-start d-flex flex-column justify-content-center">
-                            
-                            {/* Desktop header metadata: Price & Badge */}
-                            <div className="d-flex flex-column flex-md-row align-items-center justify-content-lg-between gap-3 mb-4">
-                                <div>
-                                    <div className="premium-price-tag mb-0">₹{formData.consultation_fee || 0}</div>
-                                </div>
-                                <div>
-                                    <span className="badge bg-light text-dark shadow-sm border px-3 py-2 fw-bold rounded-pill text-uppercase d-inline-flex align-items-center gap-2" style={{ fontSize: '0.75rem', letterSpacing: '1px' }}>
-                                        <Briefcase size={14} className="text-primary"/> {formData.experience_years} Years Exp.
-                                    </span>
-                                </div>
-                            </div>
-                            
-                            {/* Pill Navigation (Bio, Details, Schedule) */}
-                            <div className="premium-pill-nav justify-content-center justify-content-lg-start mt-3">
-                                <button className={activeTab === 'bio' ? 'active' : ''} onClick={() => setActiveTab('bio')}>Professional Info</button>
-                                <button className={activeTab === 'details' ? 'active' : ''} onClick={() => setActiveTab('details')}>Records</button>
-                                <button className={activeTab === 'schedule' ? 'active' : ''} onClick={() => setActiveTab('schedule')}>Schedules</button>
-                            </div>
-
-                            {/* dynamic tab content */}
-                            <div style={{ minHeight: '300px' }}>
-                                {renderActiveTab()}
-                            </div>
-                        </div>
-
-                        {/* RIGHT COLUMN: Floating Vertical Controls */}
-                        <div className="col-12 col-xl-2 py-4 px-3 d-flex flex-row flex-xl-column align-items-center justify-content-center align-items-xl-end pe-xl-5 gap-4">
-                            {!isEditing ? (
-                                <div className="premium-action-bar flex-row flex-xl-column w-100 align-items-center bg-white shadow-sm border border-light">
-                                    <button onClick={() => setIsEditing(true)} className="premium-action-btn w-100 flex-xl-column flex-row gap-2 py-2" style={{ height: 'auto', minHeight: '80px' }}>
-                                        <Edit2 size={20} />
-                                        <span>Edit</span>
-                                    </button>
-                                    <button onClick={() => setIsAvailabilityModalOpen(true)} className="premium-action-btn w-100 flex-xl-column flex-row gap-2 py-2" style={{ height: 'auto', minHeight: '80px' }}>
-                                        <CalendarClock size={20} />
-                                        <span>Manage</span>
-                                    </button>
-                                </div>
-                            ) : (
-                                <div className="premium-action-bar bg-light border border-light w-100 flex-row flex-xl-column align-items-center">
-                                    <button onClick={handleSave} className="premium-action-btn active-main w-100 flex-xl-column flex-row gap-2 py-2" style={{ height: 'auto', minHeight: '80px' }}>
-                                        <Save size={20} />
-                                        <span>Save</span>
-                                    </button>
-                                    <button onClick={cancelEdit} className="premium-action-btn w-100 flex-xl-column flex-row gap-2 py-2" style={{ height: 'auto', minHeight: '80px' }}>
-                                        <X size={20} className="text-danger"/>
-                                        <span className="text-danger">Cancel</span>
-                                    </button>
-                                </div>
-                            )}
-
-                             {/* Little metric card like the mock '6.0 Scores' -> '4.9 Rating' */}
-                            <div className="d-none d-xl-flex flex-column align-items-center justify-content-center mt-auto mb-3" style={{ width: '90px', height: '90px', borderRadius: '50%', border: '2px solid #e2e8f0' }}>
-                                <span className="fw-bolder fs-3 text-dark lh-1">4.9</span>
-                                <span className="small text-secondary fw-semibold mt-1" style={{ fontSize: '0.65rem', letterSpacing: '0.5px' }}>RATING</span>
-                            </div>
-                        </div>
-
+        <div className="dash-page-bg">
+            <div className="dash-container">
+                
+                {/* Header Navigation Area */}
+                <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+                    <div className="dash-header-nav mb-0">
+                        <button className="dash-header-btn active">Dashboard</button>
+                        <button className="dash-header-btn" onClick={() => setIsEditing(!isEditing)}>
+                            {isEditing ? 'Editing Mode' : 'Profile Settings'}
+                        </button>
                     </div>
+                </div>
+
+                <div className="row g-0">
+                    {/* Left Column (Main content area) */}
+                    <div className="col-12 col-xl-9 pe-xl-4 pb-4">
+                        
+                        {/* Title Section */}
+                        <div className="mb-4">
+                            <h1 className="dash-title">Smart online profiles</h1>
+                            <p className="dash-subtitle mb-0">Using technology and expert algorithms, we offer you the opportunity to organize your professional information gracefully.</p>
+                        </div>
+
+                        <div className="row g-4 mb-4">
+                            {/* Biggest Card: Image + Title */}
+                            <div className="col-12 col-lg-7">
+                                <div className="dash-card-white position-relative d-flex flex-column h-100 p-0 overflow-hidden">
+                                    <div className="dash-img-container rounded-0" style={{ height: '320px', backgroundColor: '#f8fafc' }}>
+                                        <img 
+                                            src={toAssetUrl(formData.profile_image) || "https://via.placeholder.com/600x400"} 
+                                            alt="Doctor Profile" 
+                                            className="w-100 h-100 object-fit-cover"
+                                        />
+                                        
+                                        {/* Fake controls to match the reference */}
+                                        <div className="position-absolute top-0 start-0 p-3">
+                                            <div className="bg-white rounded-circle d-flex align-items-center justify-content-center shadow-sm" style={{width: '40px', height: '40px'}}>
+                                                <User size={20} color="#475569" />
+                                            </div>
+                                        </div>
+                                        
+                                        {!isEditing ? (
+                                            <button className="dash-img-overlay-btn" onClick={() => setIsEditing(true)}>
+                                                Edit Profile <ChevronRight size={16} />
+                                            </button>
+                                        ) : (
+                                            <div className="dash-file-input-overlay" onClick={handleImageClick}>
+                                                <Camera color="#fff" size={40} />
+                                            </div>
+                                        )}
+                                        <input type="file" ref={fileInputRef} className="d-none" accept="image/*" onChange={handleFileChange} />
+                                    </div>
+                                    <div className="p-4 bg-white">
+                                        <h3 className="fw-bolder fs-4 mb-1 text-dark">{formData.full_name || "Dr. Name"}</h3>
+                                        <p className="text-secondary fw-medium mb-0 d-flex align-items-center gap-2">
+                                            <MapPin size={14}/> {formData.hospital_name || "Hospital"} &bull; {formData.specialization || "Specialist"}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Top Right: Chart / Bar activity */}
+                            <div className="col-12 col-lg-5">
+                                <div className="dash-card">
+                                    <div className="d-flex justify-content-between align-items-start mb-2">
+                                        <h4 className="fs-6 fw-bold text-dark mb-0 d-flex flex-column">
+                                            Physiological <br /> state of users
+                                        </h4>
+                                        <div className="bg-white rounded-circle d-flex align-items-center justify-content-center shadow-sm" style={{width: '40px', height: '40px'}}>
+                                            <Activity size={20} color="#475569" />
+                                        </div>
+                                    </div>
+                                    
+                                    {/* Mock bar chart mimicking reference */}
+                                    <div className="dash-chart-bars">
+                                        {[40, 70, 50, 60, 45, 65, 55].map((h, i) => (
+                                            <div className="dash-chart-bar-wrap" key={i}>
+                                                <div className={`dash-bar ${i === 1 ? 'active' : ''}`} style={{ height: `${h}%` }}></div>
+                                                <span className="dash-chart-label" style={{ bottom: '-20px' }}>
+                                                    {['Mon','Tue','Wed','Thu','Fri','Sat','Sun'][i]}
+                                                </span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="row g-4">
+                            {/* Smart Lessons box (Bio & Tags) */}
+                            <div className="col-12 col-lg-5">
+                                <div className="dash-card-white h-100">
+                                    <div className="d-flex justify-content-between align-items-center mb-3">
+                                        <h5 className="fs-6 fw-bold text-dark mb-0">Professional Summary #95</h5>
+                                        <span className="badge bg-light text-secondary border rounded-pill">Info</span>
+                                    </div>
+                                    
+                                    {isEditing ? (
+                                        <textarea 
+                                            name="bio" 
+                                            className="dash-input text-secondary mb-3" 
+                                            value={formData.bio || ''} 
+                                            onChange={handleChange} 
+                                            rows={4}
+                                            placeholder="Biography..."
+                                        />
+                                    ) : (
+                                        <p className="small text-secondary fw-medium mb-4" style={{ lineHeight: '1.6' }}>
+                                            {profile.bio || "Let our advanced platform guide you through managing your medical practice online with serenity and focus. No bio set yet."}
+                                        </p>
+                                    )}
+
+                                    <div className="dash-tags-container pb-2">
+                                        {formData.expertise_tags?.slice(0, 4).map((tag, idx) => (
+                                            <span key={idx} className={`dash-tag ${idx === 1 ? 'active' : ''}`}>#{typeof tag === 'string' ? tag : tag.tag_name}</span>
+                                        ))}
+                                        {(!formData.expertise_tags || formData.expertise_tags.length === 0) && (
+                                            <>
+                                                <span className="dash-tag">#health</span>
+                                                <span className="dash-tag active">#online</span>
+                                                <span className="dash-tag">#takecare</span>
+                                                <span className="dash-tag">#medical</span>
+                                            </>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Radial Chart Box */}
+                            <div className="col-12 col-md-6 col-lg-3">
+                                <div className="dash-card h-100 d-flex flex-column align-items-center justify-content-center text-center">
+                                    <div className="dash-radial mb-3 shadow-sm">
+                                        <div className="dash-radial-inner shadow-sm">
+                                            <div className="fw-bolder fs-6 text-dark lh-1 mb-1">28</div>
+                                            <div className="small text-secondary" style={{ fontSize: '0.65rem' }}>Sep</div>
+                                        </div>
+                                    </div>
+                                    <h4 className="fs-3 fw-bolder text-dark mb-0" style={{ letterSpacing: '-1px' }}>%89.2</h4>
+                                    <p className="small text-secondary fw-semibold mb-0">20 Minutes</p>
+                                </div>
+                            </div>
+
+                            {/* Additional Stats Box */}
+                            <div className="col-12 col-md-6 col-lg-4">
+                                <div className="dash-card-white h-100 p-0 overflow-hidden d-flex flex-column justify-content-between pb-3">
+                                    <div className="p-4 d-flex justify-content-between">
+                                        <div>
+                                            <h5 className="fs-6 fw-bold text-dark mb-1">Meditation<br/>Excellence</h5>
+                                            <span className="badge border border-light text-secondary rounded-pill fw-medium" style={{ fontSize: '0.65rem' }}>Pro AI - based Chart</span>
+                                        </div>
+                                        <div className="d-flex flex-column align-items-end">
+                                            <div className="d-flex align-items-center gap-1 text-dark fw-bold mb-1">
+                                                <Star size={14} className="text-primary"/> 4.7
+                                            </div>
+                                            <div className="bg-primary rounded-circle d-flex align-items-center justify-content-center opacity-75" style={{width: '24px', height: '24px'}}>
+                                                <div className="bg-white rounded-circle" style={{width: '6px', height: '6px'}}></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="px-4 mt-auto">
+                                        <svg viewBox="0 0 200 50" width="100%" height="40" className="opacity-75">
+                                            <path d="M0 25 Q 25 5 50 25 T 100 25 T 150 25 T 200 45" fill="none" stroke="#3b82f6" strokeWidth="2" strokeLinecap="round"/>
+                                            <circle cx="100" cy="25" r="3" fill="#3b82f6" />
+                                        </svg>
+                                        <div className="d-flex justify-content-between text-secondary mt-1" style={{ fontSize: '0.6rem', fontWeight: 600 }}>
+                                            <span>24</span><span>25</span><span>26</span><span>27</span>
+                                            <span className="bg-primary text-white rounded px-2">28</span>
+                                            <span>29</span><span>30</span><span>31</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Edit Forms Area (if editing) */}
+                        {isEditing && (
+                            <div className="dash-card-white mt-4 animation-fade-in">
+                                <h4 className="fs-5 fw-bold text-dark mb-4">Edit Core Details</h4>
+                                <div className="row g-4">
+                                    <div className="col-12 col-md-6">
+                                        <label className="dash-label">Phone Number</label>
+                                        <input name="phone" className="dash-input" value={formData.phone || ''} onChange={handleChange} />
+                                    </div>
+                                    <div className="col-12 col-md-6">
+                                        <label className="dash-label">Date of Birth</label>
+                                        <input type="date" name="dob" className="dash-input" value={formData.dob || ''} onChange={handleChange} />
+                                    </div>
+                                    <div className="col-12 col-md-4">
+                                        <label className="dash-label">License No.</label>
+                                        <input name="license_number" className="dash-input" value={formData.license_number || ''} onChange={handleChange} />
+                                    </div>
+                                    <div className="col-12 col-md-4">
+                                        <label className="dash-label">Specialization</label>
+                                        <select name="specialization" className="dash-input" value={formData.specialization || ''} onChange={handleChange}>
+                                            <option value="">Select Specialization</option>
+                                            {specialties.map(spec => (
+                                                <option key={spec} value={spec}>{spec}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div className="col-12 col-md-4">
+                                        <label className="dash-label">Consultation Fee (₹)</label>
+                                        <input type="number" name="consultation_fee" className="dash-input" value={formData.consultation_fee || ''} onChange={handleChange} />
+                                    </div>
+                                </div>
+                                <div className="d-flex justify-content-end gap-3 mt-4 pt-3 border-top border-light">
+                                    <button className="btn btn-light fw-bold px-4 rounded-pill" onClick={cancelEdit}>Cancel</button>
+                                    <button className="dash-btn-primary" style={{ width: 'auto' }} onClick={handleSave}>
+                                        Save Changes <div className="dash-btn-primary-circle"><ChevronRight size={14}/></div>
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Right Side Panel */}
+                    <div className="col-12 col-xl-3">
+                        <div className="dash-right-panel">
+                            {/* Top row actions in panel */}
+                            <div className="d-flex justify-content-end mb-4">
+                                <div className="badge border border-secondary text-secondary rounded-pill px-3 py-2 d-flex align-items-center gap-1 bg-white">
+                                    About Zen State <ChevronRight size={14} />
+                                </div>
+                            </div>
+                            
+                            {/* Meditation Time -> Availability section */}
+                            <div className="bg-white rounded-4 p-4 mb-4 shadow-sm border border-light">
+                                <div className="d-flex justify-content-between align-items-center mb-4">
+                                    <div className="bg-primary rounded-circle d-flex align-items-center justify-content-center text-white" style={{ width: '36px', height: '36px' }}>
+                                        <Clock size={18} />
+                                    </div>
+                                    <span className="small fw-semibold text-secondary text-uppercase" style={{ fontSize: '0.7rem' }}>Free and New Lessons</span>
+                                </div>
+                                
+                                <div className="d-flex justify-content-between align-items-center mb-3">
+                                    <h5 className="fs-6 fw-bold text-dark mb-0">Consultation Time</h5>
+                                    <span className="text-dark fw-bold small">&#8593; 29.5%</span>
+                                </div>
+
+                                <div className="dash-date-pill">
+                                    <span>Friday, Sep 28, 2023</span>
+                                    <span>+</span>
+                                </div>
+
+                                <div className="dash-time-pills">
+                                    <span className="dash-time-pill">07:00 AM</span>
+                                    <span className="dash-time-pill">11:00 AM</span>
+                                </div>
+                                
+                                <button className="dash-btn-primary" onClick={() => setIsAvailabilityModalOpen(true)}>
+                                    Manage Schedule 
+                                    <div className="dash-btn-primary-circle"><Calendar size={14}/></div>
+                                </button>
+                            </div>
+
+                            {/* Try Yoga -> Credentials overview */}
+                            <div className="bg-white rounded-pill p-2 d-flex align-items-center justify-content-between shadow-sm border border-light mb-4">
+                                <div className="bg-primary text-white rounded-pill px-3 py-2 fw-semibold small">
+                                    Credentials
+                                </div>
+                                <span className="small fw-medium text-secondary me-3">Take care and get started</span>
+                                <div className="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-1" style={{ width: '32px', height: '32px', cursor: 'pointer' }}>
+                                    <ChevronRight size={14}/>
+                                </div>
+                            </div>
+
+                            <div className="d-flex justify-content-between align-items-center px-2">
+                                <h6 className="fw-bold fs-6 text-dark mb-0">Level 2</h6>
+                                <span className="small text-secondary fw-semibold">&plusmn; 3.45 h</span>
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
             </div>
 
