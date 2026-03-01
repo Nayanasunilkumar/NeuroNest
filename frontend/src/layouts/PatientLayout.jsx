@@ -17,7 +17,7 @@ const PatientLayout = () => {
         <div className={`vh-100 d-flex flex-column overflow-hidden ${darkMode ? 'bg-dark text-light' : 'bg-light text-dark'}`} style={{ transition: 'all 0.3s' }}>
             {/* Navbar */}
             <header className={`navbar navbar-expand-lg sticky-top ${darkMode ? 'navbar-dark bg-dark border-secondary' : 'navbar-light bg-white'} border-bottom shadow-sm px-3`} style={{ height: '80px', zIndex: 1050 }}>
-                <div className="container-fluid align-items-center">
+                <div className="container-fluid align-items-center flex-nowrap">
                     {/* Logo Area */}
                     <div className="d-flex align-items-center gap-2 flex-shrink-0" style={{ width: '220px' }}>
                          <div className="bg-primary p-2 rounded-3 shadow-sm me-1">

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { BellRing, Moon, Sun, ChevronDown, Calendar, MessageSquare, CalendarCheck, Star, Activity } from 'lucide-react';
+import { BellRing, Moon, Sun, ChevronDown, Calendar, MessageSquare, CalendarCheck, Star, Activity, LogOut } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { getDoctorProfile } from '../../services/doctorProfileService';
 import { getModuleByPathname } from '../../modules/moduleRegistry';
@@ -115,7 +115,7 @@ const DoctorNavbar = ({ darkMode, toggleTheme }) => {
   const hasNotifications = notifications.length > 0;
 
   return (
-    <div className={`d-flex align-items-center justify-content-between px-3 px-md-4 border-bottom shadow-sm ${darkMode ? 'bg-dark border-secondary' : 'bg-white'}`} style={{ height: '80px', zIndex: 1060, flexShrink: 0 }}>
+    <div className={`d-flex align-items-center justify-content-between px-3 px-md-4 border-bottom shadow-sm ${darkMode ? 'bg-dark border-secondary' : 'bg-white'}`} style={{ height: '80px', zIndex: 1060, flexShrink: 0, flexWrap: 'nowrap' }}>
       {/* Left: Branding */}
       <div className="d-flex align-items-center gap-3" style={{ width: '220px' }}>
           <div className="bg-primary p-2 rounded-3 shadow-sm me-1">
@@ -135,7 +135,7 @@ const DoctorNavbar = ({ darkMode, toggleTheme }) => {
       {/* Right Actions */}
       <div className="d-flex align-items-center justify-content-end gap-2 gap-md-3 flex-shrink-0" style={{ width: '220px' }}>
         <button
-          className="btn btn-outline-secondary d-none d-md-flex align-items-center justify-content-center border-0 rounded-circle"
+          className="btn btn-outline-secondary d-none d-md-flex align-items-center justify-content-center border-0 rounded-circle shadow-sm"
           style={{ width: '40px', height: '40px' }}
           onClick={toggleTheme}
         >
@@ -144,7 +144,7 @@ const DoctorNavbar = ({ darkMode, toggleTheme }) => {
 
         <div className="position-relative" ref={dropdownRef}>
           <button 
-            className="btn btn-outline-secondary d-flex align-items-center justify-content-center border-0 rounded-circle position-relative"
+            className="btn btn-outline-secondary d-flex align-items-center justify-content-center border-0 rounded-circle position-relative shadow-sm"
             style={{ width: '40px', height: '40px' }}
             onClick={() => setShowDropdown(!showDropdown)}
           >
@@ -155,40 +155,45 @@ const DoctorNavbar = ({ darkMode, toggleTheme }) => {
           </button>
           
           {showDropdown && (
-            <div className={`position-absolute top-100 end-0 mt-2 shadow bg-white rounded-4 p-2`} style={{ 
+            <div className={`position-absolute top-100 end-0 mt-2 shadow-lg rounded-4 p-2`} style={{ 
               width: '320px', 
               zIndex: 1060,
               background: darkMode ? 'rgba(30, 41, 59, 0.95)' : 'rgba(255, 255, 255, 0.95)',
               backdropFilter: 'blur(24px)',
               border: darkMode ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid rgba(0, 0, 0, 0.1)',
             }}>
-              <div className="d-flex align-items-center justify-content-between p-2 mb-1">
+              <div className="d-flex align-items-center justify-content-between p-2 mb-1 border-bottom border-opacity-10 pb-2">
                 <span className={`fw-bold small ${darkMode ? 'text-light' : 'text-dark'}`}>Notifications</span>
+                {notifications.length > 0 && <span className="badge bg-danger rounded-pill px-2 py-1" style={{ fontSize: '0.6rem' }}>{notifications.length} NEW</span>}
               </div>
-              {notifications.length > 0 ? (
-                notifications.map(n => (
-                  <div key={n.id} onClick={() => { setShowDropdown(false); navigate(n.link); }} className={`d-flex gap-3 p-2 rounded-3 cursor-pointer mb-1 transition-all ${darkMode ? 'text-light hover-bg-dark' : 'text-dark hover-bg-light'}`}>
-                    <div className="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0" style={{ 
-                      width: '38px', height: '38px',
-                      background: n.type === 'request' ? 'rgba(13, 110, 253, 0.1)' : n.type === 'chat' ? 'rgba(25, 135, 84, 0.1)' : 'rgba(255, 193, 7, 0.1)'
-                    }}>{n.icon}</div>
-                    <div className="flex-grow-1">
-                       <div className="fw-bold fs-6 mb-0 lh-sm">{n.title}</div>
-                       <div className={`small fw-medium ${darkMode ? 'text-secondary' : 'text-muted'}`}>{n.desc}</div>
+              <div className="p-1 max-vh-50 overflow-auto">
+                {notifications.length > 0 ? (
+                  notifications.map(n => (
+                    <div key={n.id} onClick={() => { setShowDropdown(false); navigate(n.link); }} className={`d-flex gap-3 p-2 rounded-3 cursor-pointer mb-1 transition-all ${darkMode ? 'text-light hover-bg-light hover-bg-opacity-10' : 'text-dark hover-bg-light'}`}>
+                      <div className="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0 shadow-sm" style={{ 
+                        width: '38px', height: '38px',
+                        background: n.type === 'request' ? 'rgba(13, 110, 253, 0.1)' : n.type === 'chat' ? 'rgba(25, 135, 84, 0.1)' : 'rgba(255, 193, 7, 0.1)'
+                      }}>{n.icon}</div>
+                      <div className="flex-grow-1">
+                         <div className="fw-bold fs-6 mb-0 lh-sm">{n.title}</div>
+                         <div className={`small fw-medium ${darkMode ? 'text-secondary' : 'text-muted'}`}>{n.desc}</div>
+                      </div>
                     </div>
-                  </div>
-                ))
-              ) : (
-                <div className={`p-4 text-center small fw-medium ${darkMode ? 'text-secondary' : 'text-muted'}`}>You're all caught up!</div>
-              )}
+                  ))
+                ) : (
+                  <div className={`p-4 text-center small fw-medium ${darkMode ? 'text-secondary' : 'text-muted'}`}>You're all caught up!</div>
+                )}
+              </div>
             </div>
           )}
         </div>
 
-        <div className={`d-flex align-items-center gap-2 p-1 rounded-3 px-2 transition-all ${darkMode ? 'hover-bg-dark border-secondary' : 'hover-bg-light border-light'}`} style={{ cursor: 'pointer' }}>
-          <div className="d-none d-md-block text-end me-1">
+        <div className="vr mx-1 opacity-10 d-none d-md-block"></div>
+
+        <div className={`d-flex align-items-center gap-2 p-1 rounded-pill ps-2 pe-1 transition-all border ${darkMode ? 'hover-bg-dark border-secondary bg-dark bg-opacity-50' : 'hover-bg-light border-light bg-light bg-opacity-50'}`} style={{ cursor: 'pointer' }} onClick={() => navigate('/doctor/profile')}>
+          <div className="d-none d-xl-block text-end me-1">
             <p className={`m-0 fw-bold small lh-1 ${darkMode ? 'text-light' : 'text-dark'}`}>{doctorInfo.name}</p>
-            <p className="m-0 text-muted fw-bold text-uppercase lh-1 mt-1" style={{ fontSize: '0.65rem' }}>{doctorInfo.specialization}</p>
+            <p className="m-0 text-muted fw-bold text-uppercase lh-1 mt-1" style={{ fontSize: '0.6rem', letterSpacing: '0.05em' }}>{doctorInfo.specialization}</p>
           </div>
           <div className="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold shadow-sm" style={{ 
             width: '36px', height: '36px', 
@@ -196,6 +201,16 @@ const DoctorNavbar = ({ darkMode, toggleTheme }) => {
             fontSize: '0.9rem' 
           }}>{doctorInfo.avatar}</div>
         </div>
+
+        <button 
+          className="btn btn-danger-soft rounded-circle p-2 border-0 shadow-sm flex-shrink-0 ms-1"
+          onClick={() => {
+            import('../../utils/auth').then(m => m.logout());
+          }}
+          title="Logout"
+        >
+          <LogOut size={20} />
+        </button>
       </div>
     </div>
   );

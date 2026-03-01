@@ -36,7 +36,7 @@ const AdminLayout = () => {
         className={`navbar sticky-top shadow-sm px-4 ${darkMode ? 'bg-dark border-bottom border-secondary' : 'bg-white'}`}
         style={{ height: '80px', zIndex: 1050 }}
       >
-        <div className="container-fluid align-items-center">
+        <div className="container-fluid align-items-center flex-nowrap">
             {/* Left: Branding */}
             <div className="d-flex align-items-center gap-3" style={{ width: '250px' }}>
                 <div className="d-flex flex-column lh-1 pe-3 border-end">
