@@ -130,24 +130,24 @@ const DoctorNavbar = ({ darkMode, toggleTheme }) => {
       <div className="flex-grow-1 d-none d-lg-block"></div>
 
       {/* Right Actions */}
-      <div className="d-flex align-items-center justify-content-end gap-2 gap-md-3 flex-shrink-0 ms-3">
+      <div className="d-flex align-items-center justify-content-end gap-3 gap-md-4 flex-shrink-0 ms-3">
         <button
           className="btn btn-outline-secondary d-flex align-items-center justify-content-center border-0 rounded-circle shadow-sm transition-all"
-          style={{ width: '40px', height: '40px' }}
+          style={{ width: '36px', height: '36px' }}
           onClick={toggleTheme}
           title="Toggle Theme"
         >
-          {darkMode ? <Sun size={20} className="text-warning" /> : <Moon size={20} className="text-secondary" />}
+          {darkMode ? <Sun size={18} className="text-warning" /> : <Moon size={18} className="text-secondary" />}
         </button>
 
         <div className="position-relative" ref={dropdownRef}>
           <button 
             className="btn btn-outline-secondary d-flex align-items-center justify-content-center border-0 rounded-circle position-relative shadow-sm transition-all"
-            style={{ width: '40px', height: '40px' }}
+            style={{ width: '36px', height: '36px' }}
             onClick={() => setShowDropdown(!showDropdown)}
             title="Notifications"
           >
-            <BellRing size={20} className={darkMode ? 'text-light' : 'text-secondary'} />
+            <BellRing size={18} className={darkMode ? 'text-light' : 'text-secondary'} />
             {hasNotifications && (
               <span className="position-absolute translate-middle p-1 bg-danger border border-light rounded-circle" style={{ top: '8px', right: '4px' }}></span>
             )}
@@ -187,6 +187,8 @@ const DoctorNavbar = ({ darkMode, toggleTheme }) => {
           )}
         </div>
 
+        <div className={`vr mx-1 ${darkMode ? 'text-light opacity-25' : 'text-secondary opacity-25'}`} style={{ width: '1px', height: '24px' }}></div>
+
         <div className={`d-flex align-items-center gap-2 p-1 rounded-pill ps-2 pe-1 transition-all border ${darkMode ? 'hover-bg-dark border-secondary bg-dark bg-opacity-50' : 'hover-bg-light border-light bg-light bg-opacity-50'}`} style={{ cursor: 'pointer' }} onClick={() => navigate('/doctor/profile')}>
           <div className="d-none d-xl-block text-end me-1">
             <p className={`m-0 fw-bold small lh-1 ${darkMode ? 'text-light' : 'text-dark'}`}>{doctorInfo.name}</p>
@@ -204,9 +206,9 @@ const DoctorNavbar = ({ darkMode, toggleTheme }) => {
             import('../../utils/auth').then(m => m.logout());
           }}
           title="Logout"
-          style={{ width: '40px', height: '40px' }}
+          style={{ width: '36px', height: '36px' }}
         >
-          <LogOut size={20} />
+          <LogOut size={18} />
         </button>
       </div>
     </div>

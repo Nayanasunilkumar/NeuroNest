@@ -137,7 +137,17 @@ const Profile = () => {
     return (
         <div className="dark-profile-page">
             <div className="dark-container">
-                <div className="dark-banner"></div>
+                <div className="dark-banner p-4">
+                    {!isEditing && (
+                        <button 
+                            className="dark-btn-secondary ms-auto d-flex align-items-center gap-2" 
+                            style={{marginTop: 0, width: 'auto'}} 
+                            onClick={() => setIsEditing(true)}
+                        >
+                            <Settings size={14}/> Edit Profile
+                        </button>
+                    )}
+                </div>
                 
                 <div className="dark-content-row">
                     {/* LEFT SIDEBAR */}
@@ -256,7 +266,7 @@ const Profile = () => {
                                     </div>
                                     <div className="dark-card-actions">
                                         <button className="dark-btn-primary" onClick={() => setIsEditing(true)}>Review Info</button>
-                                        <button className="dark-btn-secondary">Message</button>
+                                        <button className="dark-btn-ghost">Message</button>
                                     </div>
                                 </div>
 

@@ -185,11 +185,11 @@ const DynamicIslandNav = ({ role = "patient" }) => {
                     background: #2563eb;
                 }
                 
-                /* Neon Accent Version (inspired by the Salesforce image) */
+                /* Blue Gradient Version */
                 .island-item.active {
-                    background: #a3ff12; /* Neon Lime Green from ref image */
-                    color: #000;
-                    box-shadow: 0 4px 20px rgba(163, 255, 18, 0.4);
+                    background: linear-gradient(90deg, #00d2ff, #0055ff);
+                    color: #fff;
+                    box-shadow: 0 4px 20px rgba(0, 85, 255, 0.4);
                 }
 
                 .island-icon {
