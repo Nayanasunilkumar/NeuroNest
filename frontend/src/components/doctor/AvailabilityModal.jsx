@@ -129,7 +129,7 @@ const AvailabilityModal = ({ isOpen, onClose, availability, onUpdate }) => {
     // Portal to body to avoid clipping or stacking context issues
     return ReactDOM.createPortal(
         <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.6)', zIndex: 1050 }} tabIndex="-1" onClick={onClose}>
-            <div className="modal-dialog modal-dialog-centered modal-dialog-scrollable" style={{ maxWidth: '900px', width: '95%' }} onClick={e => e.stopPropagation()}>
+            <div className="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable" style={{ maxWidth: '900px', width: '95%' }} onClick={e => e.stopPropagation()}>
                 <div className={`modal-content border-0 shadow-lg overflow-hidden ${isDark ? 'bg-dark text-light' : 'bg-white text-dark'}`} style={{ borderRadius: '1rem' }}>
                     
                     {/* Header */}
@@ -147,7 +147,7 @@ const AvailabilityModal = ({ isOpen, onClose, availability, onUpdate }) => {
                     </div>
 
                     <div className="modal-body p-0">
-                        <div className="row m-0" style={{ minHeight: '600px', maxHeight: '70vh' }}>
+                        <div className="row m-0" style={{ minHeight: '400px', maxHeight: '65vh' }}>
                             {/* Left: Time Builder */}
                             <div className={`col-12 col-md-5 col-lg-4 p-4 ${isDark ? 'border-secondary' : 'bg-white border-end'}`} style={{ backgroundColor: isDark ? '#1a1a1a' : '', zIndex: 10 }}>
                                 <h6 className={`fw-bold mb-4 text-uppercase small ${isDark ? 'text-secondary' : 'text-muted'}`} style={{ letterSpacing: '0.8px' }}>Build Time Slot</h6>
