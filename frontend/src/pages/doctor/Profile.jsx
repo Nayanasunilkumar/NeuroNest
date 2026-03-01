@@ -1,22 +1,28 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { getDoctorProfile, updateDoctorProfile, uploadProfileImage } from '../../services/doctorProfileService';
 import { 
-  User, Briefcase, CheckCircle, Shield, Edit2, Loader, Save, X 
+  User, Briefcase, Shield, Edit2, Save, X, Camera, Award, MapPin, Search, Tag, CalendarClock 
 } from 'lucide-react';
 import ExpertiseTags from '../../components/doctor/ExpertiseTags';
 import AvailabilityOverview from '../../components/doctor/AvailabilityOverview';
 import AvailabilityModal from '../../components/doctor/AvailabilityModal';
-import ProfileHeader from '../../components/doctor/ProfileHeader';
 import { fetchSpecialties } from '../../services/adminDoctorAPI';
+import { toAssetUrl } from '../../utils/media';
+import '../../styles/profile-premium.css';
 
 const Profile = () => {
+    const fileInputRef = useRef(null);
     const [profile, setProfile] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    
+    // Core state
     const [isEditing, setIsEditing] = useState(false);
     const [isAvailabilityModalOpen, setIsAvailabilityModalOpen] = useState(false);
     const [formData, setFormData] = useState({});
     const [specialties, setSpecialties] = useState([]);
+    const [activeTab, setActiveTab] = useState('bio'); // bio, details, schedule
+    const [isHoveringImage, setIsHoveringImage] = useState(false);
 
     useEffect(() => {
         fetchProfile();
@@ -72,9 +78,17 @@ const Profile = () => {
     };
 
     // --- Image Upload Handler ---
-    const handleImageUpload = async (file) => {
+    const handleImageClick = () => {
+        if (isEditing && fileInputRef.current) {
+            fileInputRef.current.click();
+        }
+    };
+
+    const handleFileChange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
         try {
-            const response = await uploadProfileImage(file); // Returns { message, image_url }
+            const response = await uploadProfileImage(file); 
             if (response.image_url) {
                 setProfile(prev => ({ ...prev, profile_image: response.image_url }));
                 setFormData(prev => ({ ...prev, profile_image: response.image_url }));
@@ -89,7 +103,6 @@ const Profile = () => {
     // --- Tag Handlers (Local State until Save) ---
     const handleAddTag = (newTag) => {
         if (!formData.expertise_tags) return;
-        // Check if exists
         const exists = formData.expertise_tags.some(t => 
             (typeof t === 'string' ? t : t.tag_name) === newTag
         );
@@ -115,333 +128,252 @@ const Profile = () => {
     const handleAvailabilityUpdate = (updatedProfile) => {
         setProfile(updatedProfile);
         setFormData(updatedProfile);
-        // Modal stays open or closes? Usually nice to keep open to add more slots.
     };
-
-
-    // --- Sub-component: Basic Info ---
-    const renderBasicInfo = () => (
-        <div className="card shadow-sm border-0 rounded-4 mb-4" style={{ backgroundColor: '#fff', boxShadow: '0 5px 20px rgba(0,0,0,0.03)' }}>
-            <div className="card-body p-4 p-md-5">
-                <div className="d-flex align-items-center gap-3 mb-4 pb-3 border-bottom border-light">
-                    <div className="bg-primary bg-gradient shadow-sm text-white p-2 rounded-3 d-flex align-items-center justify-content-center">
-                        <User size={24} />
-                    </div>
-                    <h3 className="h5 fw-bold text-dark mb-0" style={{ letterSpacing: '-0.3px' }}>Basic Information</h3>
-                </div>
-                
-                <div className="row g-4">
-                    <div className="col-12 col-md-4">
-                        <label className="form-label small fw-bold text-secondary text-uppercase mb-1" style={{ letterSpacing: '0.5px' }}>Phone Number</label>
-                        {isEditing ? (
-                            <input 
-                                name="phone" 
-                                className="form-control border-2 shadow-none rounded-3 py-2 fw-medium" 
-                                value={formData.phone || ''} 
-                                onChange={handleChange} 
-                            />
-                        ) : (
-                            <div className="fw-medium text-dark bg-light px-3 py-2 rounded-3 border">{profile.phone || 'Not set'}</div>
-                        )}
-                    </div>
-                    
-                    <div className="col-12 col-md-4">
-                        <label className="form-label small fw-bold text-secondary text-uppercase mb-1" style={{ letterSpacing: '0.5px' }}>Date of Birth</label>
-                        {isEditing ? (
-                            <input 
-                                type="date" 
-                                name="dob" 
-                                className="form-control border-2 shadow-none rounded-3 py-2 fw-medium" 
-                                value={formData.dob || ''} 
-                                onChange={handleChange} 
-                            />
-                        ) : (
-                            <div className="fw-medium text-dark bg-light px-3 py-2 rounded-3 border">{profile.dob || 'Not set'}</div>
-                        )}
-                    </div>
-
-                    <div className="col-12 col-md-4">
-                        <label className="form-label small fw-bold text-secondary text-uppercase mb-1" style={{ letterSpacing: '0.5px' }}>Gender</label>
-                        {isEditing ? (
-                            <select 
-                                name="gender" 
-                                className="form-select border-2 shadow-none rounded-3 py-2 fw-medium" 
-                                value={formData.gender || ''} 
-                                onChange={handleChange}
-                            >
-                                <option value="">Select</option>
-                                <option value="Male">Male</option>
-                                <option value="Female">Female</option>
-                                <option value="Other">Other</option>
-                            </select>
-                        ) : (
-                            <div className="fw-medium text-dark bg-light px-3 py-2 rounded-3 border">{profile.gender || 'Not set'}</div>
-                        )}
-                    </div>
-
-                    <div className="col-12">
-                        <label className="form-label small fw-bold text-secondary text-uppercase mb-1" style={{ letterSpacing: '0.5px' }}>Professional Bio</label>
-                        {isEditing ? (
-                            <textarea 
-                                name="bio" 
-                                className="form-control border-2 shadow-none rounded-3 py-2 fw-medium" 
-                                value={formData.bio || ''} 
-                                onChange={handleChange} 
-                                rows={4}
-                            />
-                        ) : (
-                            <div className="fw-medium text-dark bg-light px-4 py-3 rounded-3 border mb-0 text-wrap text-break" style={{ lineHeight: '1.6' }}>
-                                {profile.bio || 'Click "Edit Profile" to add your bio.'}
-                            </div>
-                        )}
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
-
-    // --- Sub-component: Professional Details ---
-    const renderProfessionalDetails = () => (
-        <div className="card shadow-sm border-0 rounded-4 mb-4" style={{ backgroundColor: '#fff', boxShadow: '0 5px 20px rgba(0,0,0,0.03)' }}>
-            <div className="card-body p-4 p-md-5">
-                <div className="d-flex align-items-center gap-3 mb-4 pb-3 border-bottom border-light">
-                    <div className="bg-indigo bg-gradient shadow-sm text-white p-2 rounded-3 d-flex align-items-center justify-content-center" style={{ background: 'linear-gradient(135deg, #6366f1, #818cf8)' }}>
-                        <Briefcase size={24} />
-                    </div>
-                    <h3 className="h5 fw-bold text-dark mb-0" style={{ letterSpacing: '-0.3px' }}>Professional Details</h3>
-                </div>
-                
-                <div className="row g-4">
-                    <div className="col-12 col-md-6">
-                        <label className="form-label small fw-bold text-secondary text-uppercase mb-1" style={{ letterSpacing: '0.5px' }}>License Number</label>
-                        {isEditing ? (
-                            <input 
-                                name="license_number" 
-                                className="form-control border-2 shadow-none rounded-3 py-2 fw-medium" 
-                                value={formData.license_number || ''} 
-                                onChange={handleChange} 
-                            />
-                        ) : (
-                            <div className="fw-medium text-dark bg-light px-3 py-2 rounded-3 border d-flex align-items-center gap-2">
-                                <Shield size={16} className="text-success" />
-                                {profile.license_number}
-                            </div>
-                        )}
-                    </div>
-
-                    <div className="col-12 col-md-6">
-                        <label className="form-label small fw-bold text-secondary text-uppercase mb-1" style={{ letterSpacing: '0.5px' }}>Specialization</label>
-                        {isEditing ? (
-                            <select 
-                                name="specialization" 
-                                className="form-select border-2 shadow-none rounded-3 py-2 fw-medium" 
-                                value={formData.specialization || ''} 
-                                onChange={handleChange} 
-                            >
-                                <option value="">Select Specialization</option>
-                                {specialties.map(spec => (
-                                    <option key={spec} value={spec}>{spec}</option>
-                                ))}
-                            </select>
-                        ) : (
-                            <div className="fw-medium text-dark bg-light px-3 py-2 rounded-3 border">{profile.specialization}</div>
-                        )}
-                    </div>
-
-                    <div className="col-12 col-md-6">
-                        <label className="form-label small fw-bold text-secondary text-uppercase mb-1" style={{ letterSpacing: '0.5px' }}>Qualification</label>
-                        {isEditing ? (
-                            <input 
-                                name="qualification" 
-                                className="form-control border-2 shadow-none rounded-3 py-2 fw-medium" 
-                                value={formData.qualification || ''} 
-                                onChange={handleChange} 
-                            />
-                        ) : (
-                            <div className="fw-medium text-dark bg-light px-3 py-2 rounded-3 border">{profile.qualification}</div>
-                        )}
-                    </div>
-
-                    <div className="col-12 col-md-6">
-                        <label className="form-label small fw-bold text-secondary text-uppercase mb-1" style={{ letterSpacing: '0.5px' }}>Experience (Years)</label>
-                        {isEditing ? (
-                            <input 
-                                type="number"
-                                name="experience_years" 
-                                className="form-control border-2 shadow-none rounded-3 py-2 fw-medium" 
-                                value={formData.experience_years || ''} 
-                                onChange={handleChange} 
-                            />
-                        ) : (
-                            <div className="fw-medium text-dark bg-light px-3 py-2 rounded-3 border">{profile.experience_years} Years</div>
-                        )}
-                    </div>
-
-                    <div className="col-12 col-md-6">
-                        <label className="form-label small fw-bold text-secondary text-uppercase mb-1" style={{ letterSpacing: '0.5px' }}>Consultation Fee (₹)</label>
-                        {isEditing ? (
-                            <input 
-                                type="number"
-                                name="consultation_fee" 
-                                className="form-control border-2 shadow-none rounded-3 py-2 fw-medium" 
-                                value={formData.consultation_fee || ''} 
-                                onChange={handleChange} 
-                            />
-                        ) : (
-                            <div className="fw-bold text-success bg-light px-3 py-2 rounded-3 border">₹{profile.consultation_fee}</div>
-                        )}
-                    </div>
-
-                    <div className="col-12 col-md-6">
-                        <label className="form-label small fw-bold text-secondary text-uppercase mb-1" style={{ letterSpacing: '0.5px' }}>Hospital</label>
-                        {isEditing ? (
-                            <input 
-                                name="hospital_name" 
-                                className="form-control border-2 shadow-none rounded-3 py-2 fw-medium" 
-                                value={formData.hospital_name || ''} 
-                                onChange={handleChange} 
-                            />
-                        ) : (
-                            <div className="fw-medium text-dark bg-light px-3 py-2 rounded-3 border">{profile.hospital_name}</div>
-                        )}
-                    </div>
-
-                    <div className="col-12 col-md-6">
-                        <label className="form-label small fw-bold text-secondary text-uppercase mb-1" style={{ letterSpacing: '0.5px' }}>Department</label>
-                        {isEditing ? (
-                            <input 
-                                name="department" 
-                                className="form-control border-2 shadow-none rounded-3 py-2 fw-medium" 
-                                value={formData.department || ''} 
-                                onChange={handleChange} 
-                            />
-                        ) : (
-                            <div className="fw-medium text-dark bg-light px-3 py-2 rounded-3 border">{profile.department || 'Not set'}</div>
-                        )}
-                    </div>
-
-                    <div className="col-12 col-md-6">
-                        <label className="form-label small fw-bold text-secondary text-uppercase mb-1" style={{ letterSpacing: '0.5px' }}>Consultation Mode</label>
-                        {isEditing ? (
-                            <select 
-                                name="consultation_mode" 
-                                className="form-select border-2 shadow-none rounded-3 py-2 fw-medium" 
-                                value={formData.consultation_mode === 'Both' ? 'Online and Offline' : (formData.consultation_mode || '')} 
-                                onChange={handleChange}
-                            >
-                                <option value="">Select Mode</option>
-                                <option value="Online">Online</option>
-                                <option value="Offline">Offline</option>
-                                <option value="Online and Offline">Online and Offline</option>
-                            </select>
-                        ) : (
-                            <div className="fw-medium text-dark bg-light px-3 py-2 rounded-3 border">
-                                {profile.consultation_mode === 'Both' ? 'Online and Offline' : (profile.consultation_mode || 'Not set')}
-                            </div>
-                        )}
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
 
     if (loading) return (
         <div className="d-flex align-items-center justify-content-center min-vh-100 bg-light">
-            <div className="spinner-border text-primary border-3" style={{ width: '3rem', height: '3rem' }} role="status">
-                <span className="visually-hidden">Loading...</span>
-            </div>
+            <div className="spinner-border text-primary border-3" style={{ width: '3rem', height: '3rem' }} role="status"></div>
         </div>
     );
     
     if (error) return (
         <div className="d-flex align-items-center justify-content-center min-vh-100 text-danger fw-medium">
-            <AlertCircle size={24} className="me-2" /> {error}
+            Error: {error}
         </div>
     );
 
     if (!profile) return null;
 
-    return (
-        <div className="container-fluid py-4 min-vh-100 position-relative" style={{ paddingBottom: isEditing ? '80px' : '1.5rem' }}>
-            {/* HEAD SECTION */}
-            <ProfileHeader 
-                profile={formData} 
-                onEdit={() => setIsEditing(true)}
-                onImageUpload={handleImageUpload}
-                isEditing={isEditing}
-            />
+    // Decide which component renders the actual UI body
+    const renderActiveTab = () => {
+        if (activeTab === 'bio') {
+            return (
+                <div className="animation-fade-in text-start">
+                    <p className="text-secondary fw-medium" style={{ lineHeight: '1.8', fontSize: '0.95rem' }}>
+                        {isEditing ? (
+                            <textarea 
+                                name="bio" 
+                                className="form-control premium-input text-secondary" 
+                                value={formData.bio || ''} 
+                                onChange={handleChange} 
+                                rows={5}
+                                placeholder="Describe your professional career..."
+                            />
+                        ) : (
+                            profile.bio || "No professional summary added yet. Click 'Edit' to update."
+                        )}
+                    </p>
 
-            {/* BODY SECTION (Grid) */}
-            <div className="row g-4"> 
-                
-                {/* LEFT SIDEBAR (Stats, Tags, Schedule) */}
-                <div className="col-12 col-xl-4 d-flex flex-column gap-4">
-                    <div className="card shadow-sm border-0 rounded-4 bg-white">
-                        <div className="card-body p-4">
-                            <div className="row g-3">
-                                <div className="col-6">
-                                    <div className="bg-light rounded-3 p-3 text-center border">
-                                        <div className="mx-auto rounded-circle bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center mb-2" style={{ width: 40, height: 40 }}>
-                                            <Briefcase size={20} />
-                                        </div>
-                                        <div className="fw-bolder fs-5 text-dark lh-1 mb-1">{profile.experience_years}</div>
-                                        <div className="text-muted small fw-medium text-uppercase tracking-wider" style={{ fontSize: '0.7rem' }}>Years</div>
-                                    </div>
-                                </div>
-                                <div className="col-6">
-                                    <div className="bg-light rounded-3 p-3 text-center border">
-                                        <div className="mx-auto rounded-circle bg-success bg-opacity-10 text-success d-flex align-items-center justify-content-center mb-2" style={{ width: 40, height: 40 }}>
-                                            <CheckCircle size={20} />
-                                        </div>
-                                        <div className="fw-bolder fs-5 text-dark lh-1 mb-1">4.9</div>
-                                        <div className="text-muted small fw-medium text-uppercase tracking-wider" style={{ fontSize: '0.7rem' }}>Rating</div>
-                                    </div>
-                                </div>
-                            </div>
+                    <div className="mt-4 pt-3 border-top border-light">
+                        <div className="d-flex align-items-center justify-content-between mb-2">
+                             <span className="small fw-semibold text-secondary text-uppercase tracking-wider">Expertise Labels</span>
+                             <span className="badge bg-light text-muted fw-bold">{formData.expertise_tags?.length || 0}</span>
                         </div>
+                        <ExpertiseTags 
+                            tags={formData.expertise_tags || []} 
+                            isEditing={isEditing}
+                            onAddTag={handleAddTag} 
+                            onRemoveTag={handleRemoveTag}
+                        />
                     </div>
+                </div>
+            );
+        }
 
-                    {/* ExpertiseTags handles its own title */}
-                    <ExpertiseTags 
-                        tags={formData.expertise_tags || []} 
-                        isEditing={isEditing}
-                        onAddTag={handleAddTag} 
-                        onRemoveTag={handleRemoveTag}
-                    />
+        if (activeTab === 'details') {
+            return (
+                <div className="animation-fade-in row g-4 text-start">
+                    <div className="col-12 col-md-6">
+                        <label className="small fw-semibold text-secondary text-uppercase mb-1">Phone Number</label>
+                        {isEditing ? (
+                            <input name="phone" className="form-control premium-input" value={formData.phone || ''} onChange={handleChange} />
+                        ) : <div className="fw-bolder text-dark" style={{ fontSize: '1rem' }}>{profile.phone || 'Not set'}</div>}
+                    </div>
+                    <div className="col-12 col-md-6">
+                        <label className="small fw-semibold text-secondary text-uppercase mb-1">Date of Birth</label>
+                        {isEditing ? (
+                            <input type="date" name="dob" className="form-control premium-input" value={formData.dob || ''} onChange={handleChange} />
+                        ) : <div className="fw-bolder text-dark" style={{ fontSize: '1rem' }}>{profile.dob || 'Not set'}</div>}
+                    </div>
+                    <div className="col-12 col-md-6">
+                        <label className="small fw-semibold text-secondary text-uppercase mb-1">Gender</label>
+                        {isEditing ? (
+                            <select name="gender" className="form-select premium-input" value={formData.gender || ''} onChange={handleChange}>
+                                <option value="">Select</option>
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                            </select>
+                        ) : <div className="fw-bolder text-dark" style={{ fontSize: '1rem' }}>{profile.gender || 'Not set'}</div>}
+                    </div>
+                    
+                    <div className="col-12"><hr className="text-light opacity-50"/></div>
 
-                    {/* AvailabilityOverview handles its own title */}
+                    <div className="col-12 col-md-6">
+                        <label className="small fw-semibold text-secondary text-uppercase mb-1">License No.</label>
+                        {isEditing ? (
+                            <input name="license_number" className="form-control premium-input" value={formData.license_number || ''} onChange={handleChange} />
+                        ) : <div className="fw-bolder text-dark d-flex align-items-center gap-1"><Shield size={16} className="text-success"/> {profile.license_number}</div>}
+                    </div>
+                    <div className="col-12 col-md-6">
+                        <label className="small fw-semibold text-secondary text-uppercase mb-1">Specialization</label>
+                        {isEditing ? (
+                            <select name="specialization" className="form-select premium-input" value={formData.specialization || ''} onChange={handleChange}>
+                                <option value="">Select Specialization</option>
+                                {specialties.map(spec => (
+                                    <option key={spec} value={spec}>{spec}</option>
+                                ))}
+                            </select>
+                        ) : <div className="fw-bolder text-dark">{profile.specialization}</div>}
+                    </div>
+                    <div className="col-12 col-md-6">
+                        <label className="small fw-semibold text-secondary text-uppercase mb-1">Qualification</label>
+                        {isEditing ? (
+                            <input name="qualification" className="form-control premium-input" value={formData.qualification || ''} onChange={handleChange} />
+                        ) : <div className="fw-bolder text-dark">{profile.qualification}</div>}
+                    </div>
+                    <div className="col-12 col-md-6">
+                        <label className="small fw-semibold text-secondary text-uppercase mb-1">Consultation Mode</label>
+                        {isEditing ? (
+                            <select name="consultation_mode" className="form-select premium-input" value={formData.consultation_mode === 'Both' ? 'Online and Offline' : (formData.consultation_mode || '')} onChange={handleChange}>
+                                <option value="">Select</option>
+                                <option value="Online">Online</option>
+                                <option value="Offline">Offline</option>
+                                <option value="Online and Offline">Online and Offline</option>
+                            </select>
+                        ) : <div className="fw-bolder text-dark">{profile.consultation_mode === 'Both' ? 'Online and Offline' : profile.consultation_mode}</div>}
+                    </div>
+                </div>
+            );
+        }
+
+        if (activeTab === 'schedule') {
+            return (
+                <div className="animation-fade-in text-start">
+                    <p className="text-secondary fw-medium small mw-100">Review your existing schedule and manage your online/offline availability timings.</p>
                     <AvailabilityOverview 
                         availability={profile.availability} 
                         onManage={() => setIsAvailabilityModalOpen(true)}
                     />
                 </div>
+            );
+        }
+    };
 
-                {/* RIGHT CONTENT (Forms) */}
-                <div className="col-12 col-xl-8">
-                    {renderBasicInfo()}
-                    {renderProfessionalDetails()}
-                </div>
+    return (
+        <div className="premium-page-bg py-5">
+            <div className="container" style={{ maxWidth: '1280px' }}>
+                <div className="premium-main-card">
+                    {/* Pale blue accent floating shape inside card */}
+                    <div className="premium-left-accent d-none d-lg-block"></div>
 
-            </div>
-            
-            {/* BOTTOM ACTION BAR (When Editing) */}
-            {isEditing && (
-                <div className="position-fixed bottom-0 start-0 w-100 bg-white border-top shadow-lg p-3 z-3" style={{ animation: 'slideInUp 0.3s ease' }}>
-                    <div className="container-fluid d-flex align-items-center justify-content-between">
-                        <span className="text-muted small fw-medium d-none d-md-block ms-md-4">Unsaved changes...</span>
-                        <div className="d-flex align-items-center gap-3 ms-auto pe-md-4">
-                            <button onClick={cancelEdit} className="btn btn-light border d-flex align-items-center gap-2 px-4 rounded-pill fw-medium">
-                                <X size={18} /> Cancel
-                            </button>
-                            <button onClick={handleSave} className="btn btn-primary d-flex align-items-center gap-2 px-4 rounded-pill fw-bold shadow-sm">
-                                <Save size={18} /> Save Changes
-                            </button>
+                    <div className="row g-0 position-relative z-1 p-3 p-md-5">
+                        
+                        {/* LEFT COLUMN: Main Poster (Image + Title) */}
+                        <div className="col-12 col-lg-5 col-xl-4 text-center d-flex flex-column pt-3">
+                            <h5 className="fw-bold d-none d-lg-block" style={{ color: '#2b3650', letterSpacing: '-0.5px' }}>
+                                NEURO<span className="fw-normal">NEST</span>
+                            </h5>
+
+                            <div 
+                                className="premium-circle-bg mt-4 shadow-sm" 
+                                onMouseEnter={() => setIsHoveringImage(true)}
+                                onMouseLeave={() => setIsHoveringImage(false)}
+                                onClick={handleImageClick}
+                                style={{
+                                    width: '280px', height: '280px', 
+                                    background: isEditing && isHoveringImage ? '#5d4d9b' : '#7b68c2'
+                                }}
+                            >
+                                <img 
+                                    src={toAssetUrl(formData.profile_image) || "https://via.placeholder.com/300"} 
+                                    alt="Doctor Portrait"
+                                    className="w-100 h-100 rounded-circle object-fit-cover shadow"
+                                    style={{ border: '4px solid #fff', transform: 'scale(0.95)' }}
+                                />
+                                {isEditing && (
+                                    <div className="position-absolute d-flex align-items-center justify-content-center top-0 start-0 w-100 h-100 rounded-circle" style={{ backgroundColor: 'rgba(0,0,0,0.5)', opacity: isHoveringImage ? 1 : 0, transition: 'all 0.2s' }}>
+                                        <Camera color="#fff" size={36} />
+                                    </div>
+                                )}
+                                <input type="file" ref={fileInputRef} className="d-none" accept="image/*" onChange={handleFileChange} />
+                            </div>
+
+                            {/* Info below image */}
+                            <div className="mt-4 pt-2">
+                                <h1 className="fw-bolder mb-1 lh-1" style={{ color: '#2b3650', fontSize: '2.5rem', letterSpacing: '-1.5px' }}>
+                                    {formData.full_name || "Dr. Name"}
+                                </h1>
+                                <p className="text-secondary fw-semibold text-uppercase mb-3 mt-2" style={{ fontSize: '0.75rem', letterSpacing: '1px' }}>
+                                    <MapPin size={12} className="me-1 mb-1"/> {formData.hospital_name || "Hospital"} &bull; {formData.specialization || "Specialist"}
+                                </p>
+                            </div>
                         </div>
+
+                        {/* CENTER COLUMN: Data and Tabs */}
+                        <div className="col-12 col-lg-7 col-xl-6 px-lg-5 pt-5 pt-lg-4 text-center text-lg-start d-flex flex-column justify-content-center">
+                            
+                            {/* Desktop header metadata: Price & Badge */}
+                            <div className="d-flex flex-column flex-md-row align-items-center justify-content-lg-between gap-3 mb-4">
+                                <div>
+                                    <div className="premium-price-tag mb-0">₹{formData.consultation_fee || 0}</div>
+                                </div>
+                                <div>
+                                    <span className="badge bg-light text-dark shadow-sm border px-3 py-2 fw-bold rounded-pill text-uppercase d-inline-flex align-items-center gap-2" style={{ fontSize: '0.75rem', letterSpacing: '1px' }}>
+                                        <Briefcase size={14} className="text-primary"/> {formData.experience_years} Years Exp.
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            {/* Pill Navigation (Bio, Details, Schedule) */}
+                            <div className="premium-pill-nav justify-content-center justify-content-lg-start mt-3">
+                                <button className={activeTab === 'bio' ? 'active' : ''} onClick={() => setActiveTab('bio')}>Professional Info</button>
+                                <button className={activeTab === 'details' ? 'active' : ''} onClick={() => setActiveTab('details')}>Records</button>
+                                <button className={activeTab === 'schedule' ? 'active' : ''} onClick={() => setActiveTab('schedule')}>Schedules</button>
+                            </div>
+
+                            {/* dynamic tab content */}
+                            <div style={{ minHeight: '300px' }}>
+                                {renderActiveTab()}
+                            </div>
+                        </div>
+
+                        {/* RIGHT COLUMN: Floating Vertical Controls */}
+                        <div className="col-12 col-xl-2 py-4 px-3 d-flex flex-row flex-xl-column align-items-center justify-content-center align-items-xl-end pe-xl-5 gap-4">
+                            {!isEditing ? (
+                                <div className="premium-action-bar flex-row flex-xl-column w-100 align-items-center bg-white shadow-sm border border-light">
+                                    <button onClick={() => setIsEditing(true)} className="premium-action-btn w-100 flex-xl-column flex-row gap-2 py-2" style={{ height: 'auto', minHeight: '80px' }}>
+                                        <Edit2 size={20} />
+                                        <span>Edit</span>
+                                    </button>
+                                    <button onClick={() => setIsAvailabilityModalOpen(true)} className="premium-action-btn w-100 flex-xl-column flex-row gap-2 py-2" style={{ height: 'auto', minHeight: '80px' }}>
+                                        <CalendarClock size={20} />
+                                        <span>Manage</span>
+                                    </button>
+                                </div>
+                            ) : (
+                                <div className="premium-action-bar bg-light border border-light w-100 flex-row flex-xl-column align-items-center">
+                                    <button onClick={handleSave} className="premium-action-btn active-main w-100 flex-xl-column flex-row gap-2 py-2" style={{ height: 'auto', minHeight: '80px' }}>
+                                        <Save size={20} />
+                                        <span>Save</span>
+                                    </button>
+                                    <button onClick={cancelEdit} className="premium-action-btn w-100 flex-xl-column flex-row gap-2 py-2" style={{ height: 'auto', minHeight: '80px' }}>
+                                        <X size={20} className="text-danger"/>
+                                        <span className="text-danger">Cancel</span>
+                                    </button>
+                                </div>
+                            )}
+
+                             {/* Little metric card like the mock '6.0 Scores' -> '4.9 Rating' */}
+                            <div className="d-none d-xl-flex flex-column align-items-center justify-content-center mt-auto mb-3" style={{ width: '90px', height: '90px', borderRadius: '50%', border: '2px solid #e2e8f0' }}>
+                                <span className="fw-bolder fs-3 text-dark lh-1">4.9</span>
+                                <span className="small text-secondary fw-semibold mt-1" style={{ fontSize: '0.65rem', letterSpacing: '0.5px' }}>RATING</span>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
-            )}
+            </div>
 
-            {/* MODALS */}
             <AvailabilityModal 
                 isOpen={isAvailabilityModalOpen}
                 onClose={() => setIsAvailabilityModalOpen(false)}
