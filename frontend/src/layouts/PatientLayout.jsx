@@ -18,16 +18,8 @@ const PatientLayout = () => {
             {/* Navbar */}
             <header className={`navbar navbar-expand-lg sticky-top ${darkMode ? 'navbar-dark bg-dark border-secondary' : 'navbar-light bg-white'} border-bottom shadow-sm px-3`} style={{ height: '80px', zIndex: 1050 }}>
                 <div className="container-fluid align-items-center flex-nowrap">
-                    {/* Logo Area */}
-                    <div className="d-flex align-items-center gap-2 flex-shrink-0" style={{ width: '220px' }}>
-                         <div className="bg-primary p-2 rounded-3 shadow-sm me-1">
-                            <Activity size={24} className="text-white" />
-                        </div>
-                        <div className="d-flex flex-column lh-1">
-                            <span className="h4 fw-black mb-0 text-primary" style={{ letterSpacing: '-1px' }}>NEURONEST</span>
-                            <span className="small fw-bold text-uppercase opacity-50" style={{ fontSize: '0.6rem', letterSpacing: '1px' }}>Patient Portal</span>
-                        </div>
-                    </div>
+                    {/* Left Spacer to balance centering */}
+                    <div className="d-none d-lg-block" style={{ width: '280px' }}></div>
 
                     {/* Center: Dynamic Island Navigation */}
                     <div className="flex-grow-1 d-none d-lg-flex justify-content-center px-4" style={{ minWidth: 0, overflow: 'hidden' }}>

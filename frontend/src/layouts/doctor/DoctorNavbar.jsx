@@ -116,16 +116,8 @@ const DoctorNavbar = ({ darkMode, toggleTheme }) => {
 
   return (
     <div className={`d-flex align-items-center justify-content-between px-3 px-md-4 border-bottom shadow-sm ${darkMode ? 'bg-dark border-secondary' : 'bg-white'}`} style={{ height: '80px', zIndex: 1060, flexShrink: 0, flexWrap: 'nowrap' }}>
-      {/* Left: Branding */}
-      <div className="d-flex align-items-center gap-3" style={{ width: '220px' }}>
-          <div className="bg-primary p-2 rounded-3 shadow-sm me-1">
-              <Activity size={24} className="text-white" />
-          </div>
-          <div className="d-flex flex-column lh-1">
-              <span className={`h4 fw-black mb-0 ${darkMode ? 'text-white' : 'text-primary'}`} style={{ letterSpacing: '-0.02em' }}>NEURONEST</span>
-              <span className="text-muted small fw-medium text-uppercase" style={{ letterSpacing: '0.05em', fontSize: '0.6rem' }}>Doctor Console</span>
-          </div>
-      </div>
+      {/* Left Spacer to balance centering */}
+      <div className="d-none d-lg-block" style={{ width: '280px' }}></div>
 
       {/* Center: Dynamic Island Navigation */}
       <div className="flex-grow-1 d-none d-lg-flex justify-content-center px-4" style={{ minWidth: 0, overflow: 'hidden' }}>

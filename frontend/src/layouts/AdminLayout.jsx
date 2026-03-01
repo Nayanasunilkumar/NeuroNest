@@ -37,17 +37,8 @@ const AdminLayout = () => {
         style={{ height: '80px', zIndex: 1050 }}
       >
         <div className="container-fluid align-items-center flex-nowrap">
-            {/* Left: Branding */}
-            <div className="d-flex align-items-center gap-3" style={{ width: '250px' }}>
-                <div className="d-flex flex-column lh-1 pe-3 border-end">
-                    <span className="h5 fw-black mb-0 mb-1" style={{ letterSpacing: '-0.5px' }}>NEURONEST</span>
-                    <span className="small text-uppercase fw-bold opacity-50 font-monospace" style={{ fontSize: '0.6rem' }}>Admin Console • Core v2.4.0</span>
-                </div>
-                <div className="d-none d-xl-flex align-items-center bg-primary bg-opacity-10 text-primary px-3 py-1 rounded-pill ms-1 border border-primary border-opacity-25 shadow-sm">
-                    <Activity size={12} className="me-2 pulse-slow" />
-                    <span className="small fw-black font-monospace" style={{ fontSize: '0.8rem' }}>{nodeCount.toLocaleString()} Nodes</span>
-                </div>
-            </div>
+            {/* Left Spacer to balance centering */}
+            <div className="d-none d-lg-block" style={{ width: '280px' }}></div>
 
             {/* Center: Dynamic Island Navigation */}
             <div className="flex-grow-1 d-none d-lg-flex justify-content-center px-4" style={{ minWidth: 0, overflow: 'hidden' }}>
