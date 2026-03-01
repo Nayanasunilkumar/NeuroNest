@@ -298,6 +298,41 @@ const Profile = () => {
                                         <span className="dark-card-pill">Format: {formData.consultation_mode || "Mixed"}</span>
                                     </div>
                                 </div>
+
+                                {/* Card 4: Active Schedule */}
+                                <div className="dark-card">
+                                    <div className="dark-card-header">
+                                        <div className="dark-card-icon" style={{ cursor: 'pointer' }} onClick={() => setIsAvailabilityModalOpen(true)}>
+                                            <Clock size={20} color="#0055ff"/>
+                                        </div>
+                                        <div className="dark-card-title-wrap">
+                                            <span className="dark-card-title">Active Schedule</span>
+                                            <span className="dark-card-sub">Availability Range</span>
+                                        </div>
+                                    </div>
+                                    <p className="dark-card-desc">
+                                        Review your current active engagement window block. You can manage shifts and capacity metrics by launching the scheduling matrix.
+                                    </p>
+                                    <div className="dark-card-pills">
+                                        {profile.availability && profile.availability.length > 0 ? (
+                                            Array.from(new Set(profile.availability.map(a => a.day_of_week))).slice(0, 3).map(day => (
+                                                <span key={day} className="dark-card-pill">{day.substring(0, 3)}</span>
+                                            ))
+                                        ) : (
+                                            <span className="dark-card-pill">No Schedule Set</span>
+                                        )}
+                                        {profile.availability && Array.from(new Set(profile.availability.map(a => a.day_of_week))).length > 3 && (
+                                            <span className="dark-card-pill">+{Array.from(new Set(profile.availability.map(a => a.day_of_week))).length - 3}</span>
+                                        )}
+                                        <span 
+                                            className="dark-card-pill" 
+                                            style={{ backgroundColor: '#0055ff', color: '#fff', cursor: 'pointer' }}
+                                            onClick={() => setIsAvailabilityModalOpen(true)}
+                                        >
+                                            View Matrix
+                                        </span>
+                                    </div>
+                                </div>
                             </div>
                         )}
 
