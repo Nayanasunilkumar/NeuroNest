@@ -72,8 +72,10 @@ const ChatWindow = ({ messages, currentUserId, onSendMessage, loadingMessages, m
             const dayKey = getISTDayKey(msg.created_at);
             if (dayKey && dayKey !== lastDayKey) {
                 blocks.push(
-                    <div className="nexus-day-separator" key={`day-${dayKey}-${index}`}>
-                        <span className="nexus-day-pill">{getRelativeDayLabelIST(msg.created_at)}</span>
+                    <div className="d-flex justify-content-center my-4" key={`day-${dayKey}-${index}`}>
+                        <span className="badge bg-light text-secondary border rounded-pill px-3 py-1 fw-bold" style={{ fontSize: '0.7rem', letterSpacing: '0.05em' }}>
+                            {getRelativeDayLabelIST(msg.created_at)}
+                        </span>
                     </div>
                 );
                 lastDayKey = dayKey;
@@ -92,30 +94,30 @@ const ChatWindow = ({ messages, currentUserId, onSendMessage, loadingMessages, m
     };
 
     return (
-        <div className="nexus-chat-window">
+        <div className="d-flex flex-column flex-grow-1 position-relative bg-white h-100 min-w-0">
             {/* MESSAGES AREA */}
-            <div className="nexus-messages-area custom-scrollbar" ref={messagesContainerRef}>
+            <div className="flex-grow-1 overflow-y-auto p-4 d-flex flex-column gap-3 custom-scrollbar" ref={messagesContainerRef}>
                 {loadingMessages ? (
-                    <div className="nexus-chat-feedback">
-                         <div style={{ width: 32, height: 32, border: '3px solid #e2e8f0', borderTopColor: '#3b82f6', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
-                        <p style={{ fontSize: '13px', fontWeight: 600 }}>Synchronizing secure channel...</p>
+                    <div className="d-flex flex-column align-items-center justify-content-center h-100 text-secondary">
+                         <div className="spinner-border text-primary mb-3" style={{ width: '2rem', height: '2rem', borderWidth: '0.15em' }}></div>
+                        <p className="small fw-bold mb-0">Synchronizing secure channel...</p>
                     </div>
                 ) : messagesLoadError ? (
-                    <div className="nexus-chat-feedback">
-                        <h3 className="nexus-empty-chat-title">Message Sync Issue</h3>
-                        <p className="nexus-empty-chat-subtitle">{messagesLoadError}</p>
+                    <div className="d-flex flex-column align-items-center justify-content-center h-100 text-secondary">
+                        <h3 className="h6 fw-bold text-dark mb-1">Message Sync Issue</h3>
+                        <p className="small mb-0 opacity-75">{messagesLoadError}</p>
                     </div>
                 ) : messages.length === 0 ? (
-                    <div className="nexus-chat-feedback nexus-chat-feedback-empty">
-                        <div className="nexus-empty-chat-emoji">💬</div>
-                        <h3 className="nexus-empty-chat-title">Start a Conversation</h3>
-                        <p className="nexus-empty-chat-subtitle">
+                    <div className="d-flex flex-column align-items-center justify-content-center h-100 text-center px-4">
+                        <div className="fs-1 mb-3 opacity-50">💬</div>
+                        <h3 className="h5 fw-bolder text-dark mb-2">Start a Conversation</h3>
+                        <p className="text-secondary small fw-medium mb-4 mx-auto" style={{ maxWidth: '300px' }}>
                             Connecting with {otherUser?.name || 'your healthcare provider'} is secure and private.
                         </p>
-                        <div className="nexus-empty-chat-pills">
-                            <span className="nexus-empty-chat-pill">Private</span>
-                            <span className="nexus-empty-chat-pill">Encrypted</span>
-                            <span className="nexus-empty-chat-pill">Realtime</span>
+                        <div className="d-flex gap-2 justify-content-center">
+                            <span className="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 rounded-pill px-3 py-1">Private</span>
+                            <span className="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 rounded-pill px-3 py-1">Encrypted</span>
+                            <span className="badge bg-info bg-opacity-10 text-info border border-info border-opacity-25 rounded-pill px-3 py-1">Realtime</span>
                         </div>
                     </div>
                 ) : (
@@ -125,39 +127,43 @@ const ChatWindow = ({ messages, currentUserId, onSendMessage, loadingMessages, m
             </div>
 
             {/* INPUT PANEL */}
-            <div className="nexus-input-area">
-                <div className="nexus-quick-actions-shell">
-                {/* DOCTOR TEMPLATES */}
-                {isDoctor && showTemplates && templates.length > 0 && (
-                    <div className="nexus-template-group">
-                        {templates.map((t, i) => (
-                            <button key={i} className="action-pill" onClick={() => handleTemplateClick(t.text)}>
+            <div className="p-3 p-md-4 border-top border-light bg-white bg-opacity-75" style={{ backdropFilter: 'blur(12px)' }}>
+                {/* QUICK ACTIONS */}
+                <div className="mb-3 d-flex gap-2 overflow-x-auto pb-2 custom-scrollbar">
+                    {/* DOCTOR TEMPLATES */}
+                    {isDoctor && showTemplates && templates.length > 0 && (
+                        templates.map((t, i) => (
+                            <button 
+                                key={i} 
+                                className="btn btn-sm btn-light border rounded-pill fw-bold text-primary text-nowrap px-3 hover-bg-primary hover-text-white transition-all shadow-sm"
+                                style={{ fontSize: '0.75rem' }}
+                                onClick={() => handleTemplateClick(t.text)}
+                            >
                                 {t.label}
                             </button>
-                        ))}
-                    </div>
-                )}
+                        ))
+                    )}
 
-                {/* PATIENT QUICK ACTIONS */}
-                {!isDoctor && (
-                    <div className="nexus-quick-actions custom-scrollbar">
-                        <button className="action-pill" onClick={() => handleTemplateClick("I would like to book an appointment.")}>
-                            📅 Book Appointment
-                        </button>
-                        <button className="action-pill" onClick={() => handleTemplateClick("I am uploading my latest report.")}>
-                            📄 Upload Report
-                        </button>
-                        <button className="action-pill" onClick={() => handleTemplateClick("I have a question about my medication.")}>
-                            💊 Medication Query
-                        </button>
-                        <button className="action-pill" onClick={() => handleTemplateClick("Please call me back when free.")}>
-                            📞 Request Callback
-                        </button>
-                    </div>
-                )}
+                    {/* PATIENT QUICK ACTIONS */}
+                    {!isDoctor && (
+                        <>
+                            <button className="btn btn-sm btn-light border rounded-pill fw-bold text-secondary text-nowrap px-3 hover-bg-primary hover-text-white transition-all shadow-sm" style={{ fontSize: '0.75rem' }} onClick={() => handleTemplateClick("I would like to book an appointment.")}>
+                                📅 Book Appointment
+                            </button>
+                            <button className="btn btn-sm btn-light border rounded-pill fw-bold text-secondary text-nowrap px-3 hover-bg-primary hover-text-white transition-all shadow-sm" style={{ fontSize: '0.75rem' }} onClick={() => handleTemplateClick("I am uploading my latest report.")}>
+                                📄 Upload Report
+                            </button>
+                            <button className="btn btn-sm btn-light border rounded-pill fw-bold text-secondary text-nowrap px-3 hover-bg-primary hover-text-white transition-all shadow-sm" style={{ fontSize: '0.75rem' }} onClick={() => handleTemplateClick("I have a question about my medication.")}>
+                                💊 Medication Query
+                            </button>
+                            <button className="btn btn-sm btn-light border rounded-pill fw-bold text-secondary text-nowrap px-3 hover-bg-primary hover-text-white transition-all shadow-sm" style={{ fontSize: '0.75rem' }} onClick={() => handleTemplateClick("Please call me back when free.")}>
+                                📞 Request Callback
+                            </button>
+                        </>
+                    )}
                 </div>
                 
-                <div className="nexus-input-wrapper">
+                <div className="d-flex align-items-center gap-2">
                     <input 
                         type="file" 
                         ref={fileInputRef} 
@@ -165,44 +171,55 @@ const ChatWindow = ({ messages, currentUserId, onSendMessage, loadingMessages, m
                         onChange={handleFileSelect}
                     />
                     <button 
-                        className="attach-btn" 
+                        className="btn btn-light rounded-circle d-flex align-items-center justify-content-center text-secondary border hover-bg-light transition-all shadow-sm flex-shrink-0" 
                         title="Attach Files"
+                        style={{ width: '40px', height: '40px' }}
                         disabled={isUploading}
                         onClick={() => fileInputRef.current?.click()}
                     >
-                        <Paperclip size={20} />
+                        <Paperclip size={18} />
                     </button>
                     
                     {isDoctor && (
                         <button 
-                            className="attach-btn"
+                            className={`btn btn-light rounded-circle d-flex align-items-center justify-content-center border hover-bg-light transition-all shadow-sm flex-shrink-0 ${showTemplates ? 'text-primary bg-primary bg-opacity-10 border-primary' : 'text-secondary'}`}
                             onClick={() => setShowTemplates(!showTemplates)}
                             title="Quick Templates"
-                            style={showTemplates ? { color: '#3b82f6' } : {}}
+                            style={{ width: '40px', height: '40px' }}
                         >
-                            <Zap size={20} />
+                            <Zap size={18} />
                         </button>
                     )}
 
                     <textarea 
-                        className="nexus-text-input custom-scrollbar" 
+                        className="form-control bg-light border-light rounded-pill px-4 py-2 shadow-sm text-dark fw-medium custom-scrollbar flex-grow-1" 
                         placeholder={isDoctor ? "Type clinical note or message..." : "Type your message here..."}
                         value={newMessage}
                         onChange={(e) => setNewMessage(e.target.value)}
                         onKeyDown={handleKeyDown}
                         rows={1}
-                        style={{ resize: 'none', overflowY: 'auto' }}
+                        style={{ resize: 'none', overflowY: 'auto', maxHeight: '100px', fontSize: '0.875rem', lineHeight: '1.5', paddingRight: '46px' }}
                     />
                     
                     <button 
-                        className="send-btn-round"
+                        className={`btn rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 shadow-sm transition-all ${!newMessage.trim() || isUploading ? 'btn-light text-secondary disabled' : 'btn-primary text-white'}`}
                         onClick={handleSend}
                         disabled={!newMessage.trim() || isUploading}
+                        style={{ width: '40px', height: '40px', marginLeft: '-48px', zIndex: 5 }}
                     >
-                        {isUploading ? "..." : <Send size={18} />}
+                        {isUploading ? <span className="spinner-border spinner-border-sm" /> : <Send size={16} />}
                     </button>
                 </div>
             </div>
+
+            <style>{`
+                .hover-bg-primary:hover { background-color: var(--bs-primary) !important; color: white !important; border-color: var(--bs-primary) !important; }
+                .hover-bg-light:hover { background-color: rgba(0,0,0,0.05) !important; }
+                .min-w-0 { min-width: 0; }
+                .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
+                .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+                .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+            `}</style>
         </div>
     );
 };

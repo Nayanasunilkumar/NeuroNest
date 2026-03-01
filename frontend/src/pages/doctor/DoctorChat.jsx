@@ -9,7 +9,6 @@ import PatientInfoPanel from '../../components/chat/PatientInfoPanel';
 import { ChevronLeft } from 'lucide-react';
 import { getUser } from '../../utils/auth';
 import { toEpochMs } from '../../utils/time';
-import '../../styles/doctor-chat.css';
 
 const DOCTOR_TEMPLATES = [
     { label: "Follow-up", text: "Please book a follow-up appointment through your dashboard for further evaluation." },
@@ -198,7 +197,7 @@ const DoctorChat = ({ isEmbedded = false }) => {
     };
 
     return (
-        <div className="doctor-chat-nexus">
+        <div className="d-flex w-100 overflow-hidden bg-white" style={{ height: 'calc(100vh - 70px)' }}>
             {/* Column 1: Inbox — hidden when in focused patient mode */}
             {!isEmbedded && !isFocusedMode && (
                 <ConversationList 
@@ -211,35 +210,21 @@ const DoctorChat = ({ isEmbedded = false }) => {
             )}
 
             {/* Column 2: Chat Nexus */}
-            <div className="nexus-hub" style={isFocusedMode ? { borderRadius: '20px', overflow: 'hidden' } : {}}>
+            <div className={`d-flex flex-column flex-grow-1 position-relative bg-white ${isFocusedMode ? 'overflow-hidden' : ''}`} style={isFocusedMode ? { borderRadius: '20px' } : { minWidth: 0 }}>
                 {/* Focused-mode top bar with back navigation */}
                 {isFocusedMode && selectedConv && (
-                    <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '12px',
-                        padding: '10px 20px',
-                        borderBottom: '1px solid #F1F5F9',
-                        background: 'rgba(255,255,255,0.8)',
-                        backdropFilter: 'blur(10px)',
-                    }}>
+                    <div className="d-flex align-items-center gap-3 px-4 py-2 border-bottom bg-white bg-opacity-75" style={{ backdropFilter: 'blur(10px)' }}>
                         <button
                             onClick={() => navigate(`/doctor/patient-records?patientId=${patientIdParam}`)}
                             title="Back to Clinical Dossier"
-                            style={{
-                                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                width: '32px', height: '32px', borderRadius: '50%',
-                                border: '1px solid #E2E8F0', background: '#F8FAFC',
-                                color: '#64748B', cursor: 'pointer', flexShrink: 0, transition: 'all 0.2s',
-                            }}
-                            onMouseEnter={e => { e.currentTarget.style.background = '#EFF6FF'; e.currentTarget.style.borderColor = '#2563EB'; e.currentTarget.style.color = '#2563EB'; }}
-                            onMouseLeave={e => { e.currentTarget.style.background = '#F8FAFC'; e.currentTarget.style.borderColor = '#E2E8F0'; e.currentTarget.style.color = '#64748B'; }}
+                            className="btn btn-light rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 border p-0 shadow-sm transition-all hover-btn-back"
+                            style={{ width: '32px', height: '32px' }}
                         >
                             <ChevronLeft size={16} />
                         </button>
                         <div>
-                            <div style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#94A3B8' }}>Clinical Dossier / Chat</div>
-                            <div style={{ fontSize: '14px', fontWeight: 700, color: '#0F172A', lineHeight: 1.2 }}>
+                            <div className="text-secondary fw-bolder text-uppercase" style={{ fontSize: '0.65rem', letterSpacing: '0.08em' }}>Clinical Dossier / Chat</div>
+                            <div className="fw-bolder text-dark" style={{ fontSize: '0.875rem', lineHeight: 1.2 }}>
                                 {selectedConv.other_user?.full_name || selectedConv.other_user?.name || 'Patient'}
                             </div>
                         </div>
@@ -267,19 +252,19 @@ const DoctorChat = ({ isEmbedded = false }) => {
                         />
                     </>
                 ) : (
-                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '48px', textAlign: 'center' }}>
+                    <div className="d-flex flex-column align-items-center justify-content-center h-100 p-5 text-center">
                         {isFocusedMode ? (
                             <>
-                                <div style={{ width: 48, height: 48, border: '4px solid #E2E8F0', borderTop: '4px solid #2563EB', borderRadius: '50%', animation: 'spin 1s linear infinite', marginBottom: '20px' }}></div>
-                                <p style={{ color: '#64748B', fontWeight: 600, fontSize: '14px' }}>Connecting to patient thread…</p>
+                                <div className="spinner-border text-primary border-4 mb-4" style={{ width: '3rem', height: '3rem' }}></div>
+                                <p className="text-secondary fw-bold" style={{ fontSize: '0.875rem' }}>Connecting to patient thread…</p>
                             </>
                         ) : (
                             <>
-                                <div className="nexus-panel-avatar" style={{ width: '80px', height: '80px', marginBottom: '24px' }}>
-                                    <span style={{ fontSize: '2rem' }}>💬</span>
+                                <div className="d-flex align-items-center justify-content-center bg-primary bg-opacity-10 text-primary border border-2 border-white rounded-4 shadow-sm mb-4" style={{ width: '80px', height: '80px', fontSize: '2rem' }}>
+                                    💬
                                 </div>
-                                <h2 className="nexus-panel-name">Clinical Communication Panel</h2>
-                                <p className="nexus-status-text" style={{ maxWidth: '320px', lineHeight: '1.6' }}>
+                                <h2 className="h4 fw-bolder text-dark mb-3">Clinical Communication Panel</h2>
+                                <p className="text-secondary fw-medium mx-auto" style={{ maxWidth: '320px', lineHeight: '1.6', fontSize: '0.875rem' }}>
                                     Select a patient thread from your clinical inbox to begin high-fidelity consultation or triage.
                                 </p>
                             </>
@@ -295,6 +280,9 @@ const DoctorChat = ({ isEmbedded = false }) => {
                     loading={loadingContext} 
                 />
             )}
+            <style>{`
+                .hover-btn-back:hover { background-color: #eff6ff !important; border-color: #2563eb !important; color: #2563eb !important; }
+            `}</style>
         </div>
     );
 };

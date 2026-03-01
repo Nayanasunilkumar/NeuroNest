@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { Check, CheckCheck, Download, Paperclip, Video } from 'lucide-react';
 import { resolveApiUrl } from '../../config/env';
 import { formatTimeIST } from '../../utils/time';
-import '../../styles/patient-chat.css';
 
 const URL_PATTERN = /(https?:\/\/[^\s]+|\/api\/chat\/uploads\/[^\s]+|\/uploads\/[^\s]+)/i;
 
@@ -33,52 +32,71 @@ const MessageBubble = ({ message, isMe }) => {
     const fileName = fileUrl ? extractFileName(fileUrl) : null;
 
     return (
-        <div className={`nexus-msg-row ${isMe ? 'sent' : 'received'}`}>
-            <div className="nexus-bubble">
+        <div className={`d-flex flex-column mb-3 ${isMe ? 'align-items-end' : 'align-items-start'}`}>
+            <div 
+                className={`p-3 rounded-4 shadow-sm mb-1 position-relative ${isMe ? 'bg-primary text-white text-end' : 'bg-light text-dark text-start border'}`}
+                style={{ 
+                    maxWidth: '75%', 
+                    borderBottomRightRadius: isMe ? '4px' : '16px',
+                    borderBottomLeftRadius: !isMe ? '4px' : '16px'
+                }}
+            >
                 {message?.type === 'call_request' ? (
-                    <div className="nexus-call-card">
-                        <div className="nexus-call-header">
+                    <div className={`rounded-3 p-3 ${isMe ? 'bg-white bg-opacity-25' : 'bg-white border'}`}>
+                        <div className="d-flex align-items-center gap-2 mb-2 fw-bold text-uppercase" style={{ fontSize: '0.75rem', letterSpacing: '0.05em' }}>
                             <Video size={16} />
                             <span>Video Consultation</span>
                         </div>
-                        <p className="nexus-call-desc">{content}</p>
-                        <button className="nexus-call-join-btn" onClick={() => navigate(`/consultation/${message.conversation_id}`)}>
+                        <p className={`mb-3 small fw-medium ${isMe ? 'text-white text-opacity-75' : 'text-secondary'}`}>{content}</p>
+                        <button 
+                            className={`btn btn-sm fw-bold w-100 rounded-pill shadow-sm transition-all hover-scale ${isMe ? 'btn-light text-primary' : 'btn-primary text-white'}`}
+                            onClick={() => navigate(`/consultation/${message.conversation_id}`)}
+                        >
                             Join Consult
                         </button>
                     </div>
                 ) : isFileMessage && fileUrl ? (
-                    <div className="nexus-file-card">
-                        <div className="nexus-file-topline">
+                    <div className={`rounded-3 p-3 text-start ${isMe ? 'bg-white bg-opacity-25' : 'bg-white border'}`}>
+                        <div className="d-flex align-items-center gap-2 mb-1 fw-bold text-uppercase" style={{ fontSize: '0.65rem', letterSpacing: '0.05em', opacity: isMe ? 0.8 : 0.6 }}>
                             <Paperclip size={14} />
-                            <span className="nexus-file-title">Uploaded File</span>
+                            <span>Uploaded File</span>
                         </div>
-                        <span className="nexus-file-name" title={fileName}>{truncateMiddle(fileName)}</span>
+                        <div className={`fw-bold text-truncate mb-2 ${isMe ? 'text-white' : 'text-dark'}`} style={{ fontSize: '0.85rem' }} title={fileName}>
+                            {truncateMiddle(fileName)}
+                        </div>
                         <a
-                            className="nexus-file-link"
+                            className={`btn btn-sm d-inline-flex align-items-center gap-2 rounded-pill fw-bold text-decoration-none shadow-sm transition-all hover-scale ${isMe ? 'bg-white text-primary hover-bg-light' : 'bg-primary text-white hover-bg-primary-dark'}`}
                             href={fileUrl}
                             target="_blank"
                             rel="noopener noreferrer"
                             title={fileUrl}
+                            style={{ fontSize: '0.75rem', padding: '0.3rem 0.75rem' }}
                         >
                             <Download size={14} />
                             <span>Download</span>
                         </a>
                     </div>
                 ) : (
-                    <span className="nexus-bubble-text">{content}</span>
+                    <div className="text-break lh-sm fw-medium" style={{ fontSize: '0.9rem' }}>{content}</div>
                 )}
             </div>
 
-            <span className="nexus-msg-meta">
-                <span className="nexus-msg-time">
+            <div className={`d-flex align-items-center gap-1 ${isMe ? 'text-end' : 'text-start'}`}>
+                <span className="small text-secondary fw-bold" style={{ fontSize: '0.65rem' }}>
                     {formatTimeIST(message.created_at)}
                 </span>
                 {isMe && (
-                    <span className="nexus-read-ticks">
+                    <span className={message.is_read ? 'text-primary' : 'text-secondary opacity-50'}>
                         {message.is_read ? <CheckCheck size={14} /> : <Check size={14} />}
                     </span>
                 )}
-            </span>
+            </div>
+
+            <style>{`
+                .hover-scale:hover { transform: scale(1.02); }
+                .hover-bg-light:hover { background-color: #f8f9fa !important; }
+                .hover-bg-primary-dark:hover { background-color: #0b5ed7 !important; color: white !important; }
+            `}</style>
         </div>
     );
 };
