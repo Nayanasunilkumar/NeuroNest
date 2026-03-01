@@ -19,7 +19,7 @@ const PatientLayout = () => {
                 <div className="container-fluid gap-3">
                     <div className="d-flex align-items-center gap-3">
                         <button 
-                            className={`btn ${darkMode ? 'btn-outline-secondary text-light' : 'btn-outline-primary'} border-0 rounded-circle p-2 d-xl-none`}
+                            className={`btn ${darkMode ? 'btn-outline-secondary text-light' : 'btn-outline-primary'} border-0 rounded-circle p-2`}
                             onClick={() => setSidebarOpen(!sidebarOpen)}
                             aria-label="Toggle navigation"
                         >

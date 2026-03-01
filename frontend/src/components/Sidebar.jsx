@@ -37,6 +37,17 @@ const Sidebar = ({ isOpen, setIsOpen, role = "patient", title = "NeuroNest Panel
                     transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)'
                 }}
             >
+                {/* Header Toggle (Desktop) */}
+                <div className={`d-none d-xl-flex ${isOpen ? 'justify-content-end px-3' : 'justify-content-center'} py-3`}>
+                    <button 
+                        className={`btn btn-link p-2 text-decoration-none ${darkMode ? 'text-light opacity-50' : 'text-secondary opacity-75'} hover-opacity-100`}
+                        onClick={() => setIsOpen(!isOpen)}
+                        title={isOpen ? "Collapse Sidebar" : "Expand Sidebar"}
+                    >
+                        <ChevronRight size={20} className={`transition-all ${isOpen ? 'rotate-180' : ''}`} />
+                    </button>
+                </div>
+
                 {/* Mobile Close Button */}
                 <div className="d-flex d-xl-none justify-content-end p-3 position-absolute top-0 end-0">
                     <button className={`btn rounded-circle p-2 ${darkMode ? 'btn-outline-light' : 'btn-outline-dark'}`} onClick={() => setIsOpen(false)}>
@@ -129,6 +140,9 @@ const Sidebar = ({ isOpen, setIsOpen, role = "patient", title = "NeuroNest Panel
                 .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 10px; }
                 
                 .fw-black { font-weight: 950; }
+                .rotate-180 { transform: rotate(180deg); }
+                .hover-opacity-100:hover { opacity: 1 !important; }
+                .transition-all { transition: all 0.3s ease !important; }
             `}</style>
         </>
     );
