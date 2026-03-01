@@ -144,6 +144,7 @@ const Profile = () => {
                     <div className="dark-sidebar">
                         <div className="dark-profile-img-wrap" onClick={handleImageClick}>
                             <img src={toAssetUrl(formData.profile_image) || "https://via.placeholder.com/300"} alt="Avatar" />
+                            <span className="dark-verified-badge">&#10003;</span>
                             {isEditing && (
                                 <div className="editing-overlay">
                                     <Camera color="#fff" size={24} />
@@ -370,7 +371,7 @@ const Profile = () => {
                                             <option value="">Routing Mode</option>
                                             <option value="Online">Online Payload</option>
                                             <option value="Offline">Offline Payload</option>
-                                            <option value="Online and Offline">Dual Stack</option>
+                                            <option value="Both">Dual Stack</option>
                                         </select>
                                     </div>
                                 </div>
