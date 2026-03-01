@@ -7,7 +7,6 @@ import {
 import { 
     Calendar, ChevronLeft, StickyNote, FileText, Clock
 } from "lucide-react";
-import "../../styles/doctor-records.css";
 
 const ClinicalArchivesPage = () => {
     const [searchParams] = useSearchParams();
@@ -52,19 +51,24 @@ const ClinicalArchivesPage = () => {
     };
 
     if (loading) return (
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '60vh', flexDirection: 'column', gap: '16px', color: '#64748B' }}>
-            <div style={{ width: 40, height: 40, border: '4px solid #E2E8F0', borderTop: '4px solid #2563EB', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
-            <span style={{ fontWeight: 600, fontSize: '14px' }}>Decrypting Clinical Stream…</span>
+        <div className="d-flex flex-column align-items-center justify-content-center min-vh-100 gap-3 bg-light">
+            <div className="spinner-border text-primary border-3" style={{ width: '3rem', height: '3rem' }} role="status">
+                <span className="visually-hidden">Loading...</span>
+            </div>
+            <p className="text-secondary fw-bold text-uppercase" style={{ letterSpacing: '2px', fontSize: '0.75rem' }}>Decrypting Clinical Stream...</p>
         </div>
     );
     
     if (error || !dossier) return (
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '60vh', flexDirection: 'column', gap: '16px' }}>
-            <h2 style={{ color: '#EF4444', fontWeight: 800 }}>Access Restricted</h2>
-            <p style={{ color: '#64748B' }}>{error}</p>
+        <div className="d-flex flex-column align-items-center justify-content-center min-vh-100 text-center p-4 bg-light">
+            <div className="bg-danger bg-opacity-10 text-danger rounded-circle d-flex align-items-center justify-content-center mb-4" style={{ width: '80px', height: '80px' }}>
+                <StickyNote size={40} />
+            </div>
+            <h2 className="fs-3 fw-bolder text-dark mb-2">Access Restricted</h2>
+            <p className="text-secondary mb-4">{error}</p>
             <button 
                 onClick={() => navigate(-1)} 
-                style={{ padding: '10px 24px', background: '#0F172A', color: 'white', borderRadius: '10px', border: 'none', fontWeight: 700, cursor: 'pointer' }}
+                className="btn btn-dark rounded-pill px-5 py-2 fw-bold shadow-sm"
             >
                 Return
             </button>
@@ -74,154 +78,111 @@ const ClinicalArchivesPage = () => {
     const { identity } = dossier;
 
     return (
-        <div className="opd-dashboard-root">
-            <div className="dossier-premium-root">
-
-                {/* Header */}
-                <div className="dossier-premium-header">
-                    <div className="header-nexus-left">
-                        <button onClick={handleBack} className="btn-back-circle">
-                            <ChevronLeft size={20} />
-                        </button>
-                        <div className="header-title-stack">
-                            <span className="header-breadcrumb-mini">Clinical Dossier / Archives</span>
-                            <h1 className="dossier-premium-title">Clinical Archives</h1>
-                        </div>
-                    </div>
-                    <div className="header-nexus-right">
-                        <div className="patient-identity-capsule">
-                            <div className="capsule-avatar-mini">
-                                {identity.full_name ? identity.full_name.charAt(0).toUpperCase() : 'P'}
-                            </div>
-                            <div className="capsule-text">
-                                <span className="capsule-name">{identity.full_name}</span>
-                                <span className="capsule-id">#PID-{identity.id}</span>
-                            </div>
-                        </div>
+        <div className="container-fluid py-4 min-vh-100 bg-light" style={{ maxWidth: '1000px' }}>
+            {/* Header */}
+            <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-5 pb-3 border-bottom border-light" style={{ borderColor: 'rgba(0,0,0,0.05)' }}>
+                <div className="d-flex align-items-center gap-3">
+                    <button
+                        onClick={handleBack}
+                        className="btn btn-sm btn-white bg-white border-0 shadow-sm rounded-circle d-flex align-items-center justify-content-center"
+                        style={{ width: '40px', height: '40px' }}
+                    >
+                        <ChevronLeft size={20} className="text-dark" />
+                    </button>
+                    <div>
+                        <div className="text-secondary small fw-medium text-uppercase mb-1" style={{ fontSize: '0.65rem', letterSpacing: '1px' }}>Clinical Dossier / Archives</div>
+                        <h1 className="h4 fw-bolder text-dark mb-0">Clinical Archives</h1>
                     </div>
                 </div>
 
-                {/* Content */}
-                <div className="dossier-premium-grid-single">
-                    <div className="timeline-premium-axis custom-scrollbar">
-                        <div style={{ padding: '24px' }}>
-
-                            {/* Count Bar */}
-                            {remarksList.length > 0 && (
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '24px' }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#EFF6FF', borderRadius: '999px', padding: '6px 14px', border: '1px solid #DBEAFE' }}>
-                                        <FileText size={14} style={{ color: '#2563EB' }} />
-                                        <span style={{ fontSize: '13px', fontWeight: 700, color: '#2563EB' }}>
-                                            {remarksList.length} Clinical {remarksList.length === 1 ? 'Remark' : 'Remarks'}
-                                        </span>
-                                    </div>
-                                </div>
-                            )}
-
-                            {remarksList.length === 0 ? (
-                                <div style={{
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    padding: '80px 40px',
-                                    background: '#F8FAFC',
-                                    borderRadius: '24px',
-                                    border: '1px dashed #E2E8F0',
-                                    gap: '16px',
-                                    color: '#94A3B8'
-                                }}>
-                                    <div style={{ width: 72, height: 72, borderRadius: '20px', background: '#F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                        <StickyNote size={36} style={{ opacity: 0.4 }} />
-                                    </div>
-                                    <div style={{ textAlign: 'center' }}>
-                                        <h4 style={{ margin: '0 0 6px', fontWeight: 800, color: '#1E293B', fontSize: '1.1rem' }}>Archives Empty</h4>
-                                        <p style={{ margin: 0, fontSize: '13px', color: '#94A3B8' }}>No internalized clinical remarks have been recorded for this patient.</p>
-                                    </div>
-                                </div>
-                            ) : (
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                                    {remarksList.map((remark, idx) => (
-                                        <div 
-                                            key={remark.id} 
-                                            className="fade-in"
-                                            style={{
-                                                background: '#FFFFFF',
-                                                borderRadius: '20px',
-                                                border: '1px solid #E2E8F0',
-                                                padding: '24px 28px',
-                                                boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
-                                                position: 'relative',
-                                                overflow: 'hidden',
-                                                transition: 'box-shadow 0.2s, transform 0.2s',
-                                                borderLeft: '4px solid #2563EB',
-                                            }}
-                                            onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.08)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
-                                            onMouseLeave={e => { e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.03)'; e.currentTarget.style.transform = 'translateY(0)'; }}
-                                        >
-                                            {/* Card Header */}
-                                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                                    <div style={{ width: 36, height: 36, borderRadius: '10px', background: '#EFF6FF', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#2563EB' }}>
-                                                        <StickyNote size={18} />
-                                                    </div>
-                                                    <div>
-                                                        <div style={{ fontSize: '11px', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                                                            Clinical Remark
-                                                        </div>
-                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#2563EB', fontSize: '13px', fontWeight: 700 }}>
-                                                            <Calendar size={12} />
-                                                            {new Date(remark.created_at).toLocaleDateString('en-US', { 
-                                                                month: 'long', day: 'numeric', year: 'numeric' 
-                                                            })}
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                    <span style={{ 
-                                                        fontSize: '11px', 
-                                                        fontWeight: 700, 
-                                                        color: '#94A3B8',
-                                                        background: '#F8FAFC',
-                                                        border: '1px solid #E2E8F0',
-                                                        borderRadius: '8px',
-                                                        padding: '4px 10px',
-                                                        letterSpacing: '0.05em'
-                                                    }}>
-                                                        Ref #{String(remark.id).padStart(4, '0')}
-                                                    </span>
-                                                </div>
-                                            </div>
-
-                                            {/* Remark Content */}
-                                            <div style={{
-                                                background: '#F8FAFC',
-                                                borderRadius: '12px',
-                                                padding: '16px 20px',
-                                                color: '#374151',
-                                                fontSize: '15px',
-                                                lineHeight: '1.7',
-                                                fontWeight: 500,
-                                                letterSpacing: '0.01em',
-                                            }}>
-                                                {remark.content}
-                                            </div>
-
-                                            {/* Footer */}
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '12px', color: '#94A3B8', fontSize: '12px', fontWeight: 600 }}>
-                                                <Clock size={12} />
-                                                {new Date(remark.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
-                                                <span style={{ margin: '0 4px' }}>·</span>
-                                                Recorded by Dr. {identity.full_name ? identity.full_name.split(' ')[0] : 'Physician'}
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
+                <div className="d-flex align-items-center gap-3 bg-white px-3 py-2 rounded-pill shadow-sm border border-light">
+                    <div className="bg-primary bg-opacity-10 text-primary fw-bold rounded-circle d-flex align-items-center justify-content-center" style={{ width: '36px', height: '36px', fontSize: '1rem' }}>
+                        {identity.full_name ? identity.full_name.charAt(0).toUpperCase() : 'P'}
+                    </div>
+                    <div className="d-flex flex-column">
+                        <span className="fw-bold text-dark text-truncate" style={{ fontSize: '0.9rem', maxWidth: '150px' }}>{identity.full_name}</span>
+                        <span className="text-secondary fw-bold" style={{ fontSize: '0.7rem' }}>#PID-{identity.id}</span>
                     </div>
                 </div>
             </div>
+
+            {/* Content */}
+            <div className="bg-white rounded-5 shadow-sm border-0 p-4 p-md-5 mb-5">
+                
+                {/* Count Bar */}
+                {remarksList.length > 0 && (
+                    <div className="d-flex align-items-center mb-4">
+                        <div className="d-flex align-items-center gap-2 bg-primary bg-opacity-10 rounded-pill px-3 py-2 border border-primary border-opacity-25">
+                            <FileText size={16} className="text-primary" />
+                            <span className="small fw-bold text-primary">
+                                {remarksList.length} Clinical {remarksList.length === 1 ? 'Remark' : 'Remarks'}
+                            </span>
+                        </div>
+                    </div>
+                )}
+
+                {remarksList.length === 0 ? (
+                    <div className="d-flex flex-column align-items-center justify-content-center py-5 my-4 bg-light rounded-4 border border-dashed border-2 text-secondary text-center">
+                        <div className="bg-white rounded-4 d-flex align-items-center justify-content-center mb-3 shadow-sm" style={{ width: '80px', height: '80px' }}>
+                            <StickyNote size={36} className="text-secondary opacity-50" />
+                        </div>
+                        <h4 className="h5 fw-bolder text-dark mb-2">Archives Empty</h4>
+                        <p className="small text-secondary mb-0">No internalized clinical remarks have been recorded for this patient.</p>
+                    </div>
+                ) : (
+                    <div className="d-flex flex-column gap-4">
+                        {remarksList.map((remark, idx) => (
+                            <div 
+                                key={remark.id} 
+                                className="card border-0 shadow-sm rounded-4 overflow-hidden position-relative hover-shadow-lg transition-all"
+                                style={{ borderLeft: '4px solid #0d6efd' }} /* primary color */
+                            >
+                                <div className="card-body p-4 p-md-5">
+                                    {/* Card Header */}
+                                    <div className="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4 border-bottom border-light pb-3">
+                                        <div className="d-flex align-items-center gap-3">
+                                            <div className="bg-primary bg-opacity-10 text-primary rounded-3 d-flex align-items-center justify-content-center border border-primary border-opacity-10 flex-shrink-0" style={{ width: '45px', height: '45px' }}>
+                                                <StickyNote size={20} />
+                                            </div>
+                                            <div>
+                                                <div className="text-secondary small fw-bolder text-uppercase mb-1" style={{ fontSize: '0.65rem', letterSpacing: '1px' }}>
+                                                    Clinical Remark
+                                                </div>
+                                                <div className="d-flex align-items-center gap-2 text-primary fw-bolder small">
+                                                    <Calendar size={14} />
+                                                    {new Date(remark.created_at).toLocaleDateString('en-US', { 
+                                                        month: 'long', day: 'numeric', year: 'numeric' 
+                                                    })}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <span className="badge bg-light text-secondary border fw-bold px-3 py-2 rounded-pill" style={{ letterSpacing: '1px' }}>
+                                            Ref #{String(remark.id).padStart(4, '0')}
+                                        </span>
+                                    </div>
+
+                                    {/* Remark Content */}
+                                    <div className="bg-light bg-opacity-50 text-dark p-4 rounded-4 border fw-medium lh-lg mb-4" style={{ fontSize: '0.95rem' }}>
+                                        {remark.content}
+                                    </div>
+
+                                    {/* Footer */}
+                                    <div className="d-flex align-items-center gap-2 text-secondary small fw-bold mt-2">
+                                        <Clock size={14} />
+                                        <span>{new Date(remark.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</span>
+                                        <span className="mx-2 opacity-50">•</span>
+                                        <span>Recorded by Dr. {identity.full_name ? identity.full_name.split(' ')[0] : 'Physician'}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
+            <style>{`
+                .hover-shadow-lg { transition: all 0.3s ease; }
+                .hover-shadow-lg:hover { transform: translateY(-3px); box-shadow: 0 .5rem 1rem rgba(0,0,0,.08)!important; }
+            `}</style>
         </div>
     );
 };
