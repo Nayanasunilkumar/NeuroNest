@@ -1,16 +1,19 @@
-import { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { 
     getPatientDossier, 
     completeAppointment,
     cancelAppointment,
-    markNoShow,
-    saveClinicalRemark
+    markNoShow
 } from "../../api/doctor";
 import { 
     Calendar, User, Mail, Phone, Clock, Bookmark, 
-    ShieldAlert, ChevronLeft, Check, X, AlertCircle, Edit3
+    ShieldAlert, ChevronLeft, Check, X, AlertCircle, 
+    Activity, Heart, Thermometer, Wind, Pill, 
+    FlaskConical, AlertTriangle, Fingerprint, Layers,
+    ChevronDown, Plus, Download, Filter
 } from "lucide-react";
+import '../../styles/dashboard.css';
 
 const PatientTimelinePage = () => {
     const [searchParams] = useSearchParams();
@@ -20,7 +23,6 @@ const PatientTimelinePage = () => {
     const [dossier, setDossier] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [imageError, setImageError] = useState(false);
 
     const fetchDossier = useCallback(async () => {
         try {
@@ -44,145 +46,178 @@ const PatientTimelinePage = () => {
         }
     }, [patientId, fetchDossier]);
 
-    const handleAction = async (id, type) => {
-        try {
-            if (type === 'complete') await completeAppointment(id);
-            if (type === 'cancel') await cancelAppointment(id);
-            if (type === 'no-show') await markNoShow(id);
-            fetchDossier();
-        } catch (err) {
-            alert(`Process failed: ${type}`);
-        }
-    };
-
     if (loading) return (
-        <div className="d-flex flex-column align-items-center justify-content-center min-vh-100 gap-3 bg-light">
-            <div className="spinner-border text-primary border-3" style={{ width: '3rem', height: '3rem' }} role="status">
+        <div className="d-flex flex-column align-items-center justify-content-center min-vh-100 gap-3 premium-dashboard-bg">
+            <div className="spinner-grow text-primary" role="status">
                 <span className="visually-hidden">Loading...</span>
             </div>
-            <p className="text-secondary fw-bold text-uppercase" style={{ letterSpacing: '2px', fontSize: '0.75rem' }}>Decrypting Clinical Stream...</p>
+            <p className="text-secondary fw-black text-uppercase" style={{ letterSpacing: '2px', fontSize: '0.75rem' }}>Accessing Secure Dossier...</p>
         </div>
     );
     
     if (error || !dossier) return (
-        <div className="d-flex flex-column align-items-center justify-content-center min-vh-100 text-center p-4 bg-light">
+        <div className="d-flex flex-column align-items-center justify-content-center min-vh-100 text-center p-4 premium-dashboard-bg">
             <div className="bg-danger bg-opacity-10 text-danger rounded-circle d-flex align-items-center justify-content-center mb-4" style={{ width: '80px', height: '80px' }}>
                 <ShieldAlert size={40} />
             </div>
-            <h2 className="fs-3 fw-bolder text-dark mb-2">Access Restricted</h2>
-            <button 
-                onClick={() => navigate(-1)}
-                className="btn btn-dark rounded-pill px-5 py-2 fw-bold shadow-sm mt-3"
-            >
-                Return
-            </button>
+            <h2 className="fs-3 fw-black text-dark mb-2">Access Denied</h2>
+            <button onClick={() => navigate(-1)} className="btn btn-dark rounded-pill px-5 py-2 fw-bold shadow-sm mt-3">Return to Safety</button>
         </div>
     );
 
     const { identity, timeline } = dossier;
 
-    const getStatusColor = (status) => {
-        const s = status.toLowerCase();
-        if (s.includes('approve') || s.includes('confirm')) return 'success';
-        if (s.includes('pend')) return 'warning';
-        if (s.includes('cancel') || s.includes('reject') || s.includes('fail')) return 'danger';
-        if (s.includes('complete')) return 'primary';
-        return 'secondary';
-    };
-
     return (
-        <div className="container-fluid py-4 min-vh-100 bg-light" style={{ maxWidth: '1000px' }}>
-            
-            {/* Header Section */}
-            <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-5 pb-3 border-bottom border-light" style={{ borderColor: 'rgba(0,0,0,0.05)' }}>
+        <div className="premium-dashboard-bg py-4 px-4 px-lg-5">
+            {/* Ultra Premium Header - Image 2 Style */}
+            <div className="d-flex flex-wrap align-items-center justify-content-between gap-4 mb-5 pt-2">
                 <div className="d-flex align-items-center gap-3">
-                    <button
-                        onClick={() => navigate(-1)}
-                        className="btn btn-sm btn-white bg-white border-0 shadow-sm rounded-circle d-flex align-items-center justify-content-center"
-                        style={{ width: '40px', height: '40px' }}
-                    >
-                        <ChevronLeft size={20} className="text-dark" />
+                    <button onClick={() => navigate(-1)} className="btn btn-white shadow-sm rounded-circle p-2 border-0">
+                        <ChevronLeft size={20} />
                     </button>
                     <div>
-                        <div className="text-secondary small fw-medium text-uppercase mb-1" style={{ fontSize: '0.65rem', letterSpacing: '1px' }}>Clinical Dossier / Timeline</div>
-                        <h1 className="h4 fw-bolder text-dark mb-0">Clinical Timeline</h1>
+                        <h4 className="fw-black mb-0">Patient Dossier</h4>
+                        <div className="small fw-bold text-muted opacity-75">Neurology Specialized View</div>
                     </div>
                 </div>
 
-                <div className="d-flex align-items-center gap-3 bg-white px-3 py-2 rounded-pill shadow-sm border border-light">
-                    <div className="bg-primary bg-opacity-10 text-primary fw-bold rounded-circle d-flex align-items-center justify-content-center" style={{ width: '36px', height: '36px', fontSize: '1rem' }}>
-                        {identity.full_name ? identity.full_name.charAt(0).toUpperCase() : 'P'}
-                    </div>
-                    <div className="d-flex flex-column">
-                        <span className="fw-bold text-dark text-truncate" style={{ fontSize: '0.9rem', maxWidth: '150px' }}>{identity.full_name}</span>
-                        <span className="text-secondary fw-bold" style={{ fontSize: '0.7rem' }}>#PID-{identity.id}</span>
-                    </div>
+                <div className="d-none d-xl-flex align-items-center gap-2 bg-white p-2 rounded-pill shadow-sm">
+                    <button className="action-pill-nav active"><Layers size={16} /> Dynamics</button>
+                    <button className="action-pill-nav"><Calendar size={16} /> Visits</button>
+                    <button className="action-pill-nav"><Pill size={16} /> Meds</button>
+                    <button className="action-pill-nav"><FlaskConical size={16} /> Labs</button>
+                    <button className="action-pill-nav"><AlertTriangle size={16} /> Allergies</button>
+                    <button className="action-pill-nav"><Fingerprint size={16} /> Genetics</button>
+                </div>
+
+                <div className="d-flex align-items-center gap-2">
+                    <button className="btn btn-white shadow-sm rounded-pill px-3 py-2 fw-bold small d-flex align-items-center gap-2 border-0">
+                        <Download size={16} /> Export
+                    </button>
+                    <button className="btn btn-dark shadow-sm rounded-pill px-3 py-2 fw-bold small d-flex align-items-center gap-2 border-0">
+                        <Plus size={16} /> New Record
+                    </button>
                 </div>
             </div>
 
-            {/* Timeline */}
-            <div className="position-relative ms-3 ps-4 border-start border-2 border-primary border-opacity-25 py-2">
-                {timeline.length === 0 ? (
-                    <div className="text-center py-5 text-secondary fw-bold small">No clinical history recorded.</div>
-                ) : (
-                    timeline.map((event, index) => (
-                        <div key={event.id} className="position-relative mb-5 last-mb-0">
-                            {/* Timeline Dot */}
-                            <div 
-                                className={`position-absolute rounded-circle bg-${getStatusColor(event.status)} bg-opacity-25 d-flex align-items-center justify-content-center`}
-                                style={{ width: '24px', height: '24px', left: '-37px', top: '0', zIndex: 1 }}
-                            >
-                                <div className={`rounded-circle bg-${getStatusColor(event.status)} shadow-sm`} style={{ width: '12px', height: '12px' }}></div>
-                            </div>
-                            
-                            {/* Card Content */}
-                            <div className="card border-0 shadow-sm rounded-4 bg-white hover-shadow transition-all overflow-hidden">
-                                <div className="card-body p-4">
-                                    <div className="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
-                                        <span className={`badge bg-${getStatusColor(event.status)} bg-opacity-10 text-${getStatusColor(event.status)} border border-${getStatusColor(event.status)} border-opacity-25 rounded-pill px-3 py-2 text-uppercase fw-bold`} style={{ letterSpacing: '1px' }}>
-                                            {event.status}
-                                        </span>
-                                        <div className="d-flex align-items-center gap-2 text-secondary fw-bold small bg-light px-3 py-2 rounded-pill">
-                                            <Clock size={14} className="text-primary" />
-                                            {new Date(event.appointment_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })} • {event.appointment_time.substring(0, 5)}
-                                        </div>
-                                    </div>
-                                    
-                                    <h4 className="h5 fw-bolder text-dark mb-3">{event.reason || "Routine Clinical Assessment"}</h4>
-                                    
-                                    <div className="bg-light bg-opacity-50 text-secondary p-3 rounded-3 border fw-medium small mb-0 lh-base">
-                                        {event.notes || "No additional clinical notes recorded for this encounter."}
-                                    </div>
-                                    
-                                    {event.status.toLowerCase() === 'approved' && (
-                                        <div className="d-flex gap-2 mt-4 pt-3 border-top border-light">
-                                            <button 
-                                                onClick={() => handleAction(event.id, 'complete')} 
-                                                className="btn btn-sm btn-success rounded-pill d-flex align-items-center gap-1 shadow-sm px-3 fw-bold bg-opacity-10 text-success border-success border-opacity-25 hover-bg-success hover-text-white transition-all"
-                                            >
-                                                <Check size={14} strokeWidth={3} /> Complete
-                                            </button>
-                                            <button 
-                                                onClick={() => handleAction(event.id, 'cancel')} 
-                                                className="btn btn-sm btn-danger rounded-pill d-flex align-items-center gap-1 shadow-sm px-3 fw-bold bg-opacity-10 text-danger border-danger border-opacity-25 hover-bg-danger hover-text-white transition-all"
-                                            >
-                                                <X size={14} strokeWidth={3} /> Cancel
-                                            </button>
-                                        </div>
-                                    )}
-                                </div>
+            {/* Profile & Vitals Bar - Inspired by Image 2 */}
+            <div className="card-premium p-4 mb-5 bg-white border">
+                <div className="row g-4 align-items-center">
+                    <div className="col-12 col-md-4 col-lg-3">
+                        <div className="d-flex align-items-center gap-3 bg-light p-3 rounded-4 border">
+                            <img 
+                                src={`https://i.pravatar.cc/150?u=${identity.id}`} 
+                                className="rounded-4 shadow-sm border" 
+                                style={{ width: '80px', height: '80px', objectFit: 'cover' }} 
+                                alt="patient" 
+                            />
+                            <div>
+                                <h5 className="fw-black mb-1">{identity.full_name}</h5>
+                                <div className="text-secondary small fw-bold">Female, 24y</div>
+                                <div className="badge bg-primary bg-opacity-10 text-primary rounded-pill small mt-1">#PID-{identity.id}</div>
                             </div>
                         </div>
-                    ))
-                )}
+                    </div>
+
+                    <div className="col-12 col-md-8 col-lg-9">
+                        <div className="d-flex flex-wrap justify-content-between gap-4 px-lg-4">
+                            {[
+                                { label: 'Blood Pressure', value: '120/80', unit: 'mmHg', icon: <Heart className="text-danger" size={18} /> },
+                                { label: 'Heart Rate', value: '72', unit: 'bpm', icon: <Activity className="text-primary" size={18} /> },
+                                { label: 'SpO2', value: '98', unit: '%', icon: <Wind className="text-success" size={18} /> },
+                                { label: 'Temperature', value: '36.8', unit: '°C', icon: <Thermometer className="text-warning" size={18} /> },
+                                { label: 'Weight', value: '62', unit: 'kg', icon: <User className="text-secondary" size={18} /> }
+                            ].map((v, i) => (
+                                <div key={i} className="text-center">
+                                    <div className="d-flex align-items-center justify-content-center gap-2 mb-1">
+                                        {v.icon}
+                                        <span className="small fw-bold text-muted opacity-75 text-uppercase" style={{ letterSpacing: '0.05em', fontSize: '0.6rem' }}>{v.label}</span>
+                                    </div>
+                                    <div className="d-flex align-items-baseline justify-content-center gap-1">
+                                        <span className="fw-black fs-4">{v.value}</span>
+                                        <span className="small fw-bold text-muted">{v.unit}</span>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
             </div>
-            
+
+            {/* Content Tabs & Actions */}
+            <div className="d-flex align-items-center justify-content-between mb-4">
+                <h5 className="fw-black mb-0">Medical Timeline History</h5>
+                <div className="d-flex gap-2">
+                    <button className="btn btn-light rounded-pill px-3 py-1 fw-bold small border d-flex align-items-center gap-2">
+                        <Filter size={14} /> Filter
+                    </button>
+                    <div className="btn-group rounded-pill border overflow-hidden shadow-sm">
+                        <button className="btn btn-white btn-sm px-3 fw-bold active">Timeline</button>
+                        <button className="btn btn-white btn-sm px-3 fw-bold">List</button>
+                        <button className="btn btn-white btn-sm px-3 fw-bold">Grid</button>
+                    </div>
+                </div>
+            </div>
+
+            {/* Experimental Premium Timeline View */}
+            <div className="row g-4">
+                {timeline.map((event, index) => (
+                    <div key={event.id} className="col-12 col-xl-6">
+                        <div className="card-premium p-4 h-100 bg-white border border-opacity-10 position-relative overflow-visible">
+                            <div className="position-absolute top-50 start-0 translate-middle-x ms-n2 d-none d-xl-block">
+                                <div className="bg-primary rounded-circle border border-white border-4" style={{ width: '16px', height: '16px' }}></div>
+                            </div>
+
+                            <div className="d-flex justify-content-between align-items-start mb-4">
+                                <div>
+                                    <div className="d-flex align-items-center gap-2 mb-2">
+                                        <div className="bg-light p-2 rounded-circle border">
+                                            <Calendar size={16} className="text-primary" />
+                                        </div>
+                                        <span className="small fw-black text-muted text-uppercase" style={{ letterSpacing: '1px' }}>
+                                            {new Date(event.appointment_date).toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' })}
+                                        </span>
+                                    </div>
+                                    <h5 className="fw-black mb-0">{event.reason || "Routine Clinical Assessment"}</h5>
+                                </div>
+                                <div className={`badge rounded-pill px-3 py-2 fw-black text-uppercase shadow-sm border
+                                    ${event.status === 'Completed' ? 'bg-success bg-opacity-10 text-success border-success' : 
+                                      event.status === 'Pending' ? 'bg-warning bg-opacity-10 text-warning border-warning' : 
+                                      'bg-primary bg-opacity-10 text-primary border-primary'}`} 
+                                    style={{ fontSize: '0.65rem' }}>
+                                    {event.status}
+                                </div>
+                            </div>
+
+                            <div className="p-3 bg-light rounded-4 border mb-4 fw-medium text-secondary small" style={{ minHeight: '80px' }}>
+                                <div className="d-flex gap-2 mb-2 opacity-50">
+                                    <AlertCircle size={14} />
+                                    <span className="fw-black text-uppercase" style={{ fontSize: '0.6rem' }}>Clinical Observations</span>
+                                </div>
+                                {event.notes || "No additional clinical notes recorded for this encounter."}
+                            </div>
+
+                            <div className="d-flex align-items-center justify-content-between">
+                                <div className="d-flex align-items-center gap-3">
+                                    <div className="avatar-stack">
+                                        <div className="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold small border border-white" style={{ width: '32px', height: '32px' }}>D</div>
+                                        <div className="bg-light text-muted rounded-circle d-flex align-items-center justify-content-center fw-bold small border border-white ms-n2" style={{ width: '32px', height: '32px' }}>+3</div>
+                                    </div>
+                                    <div className="small fw-bold text-muted">Consulting Team</div>
+                                </div>
+                                <button className="btn btn-outline-dark rounded-pill px-4 py-2 small fw-bold d-flex align-items-center gap-2 border-2">
+                                    Full Report <ChevronDown size={14} />
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                ))}
+            </div>
+
             <style>{`
+                .fw-black { font-weight: 950; }
+                .ms-n2 { margin-left: -0.5rem; }
                 .last-mb-0:last-child { margin-bottom: 0 !important; }
-                .hover-shadow { transition: box-shadow 0.3s ease; }
-                .hover-shadow:hover { box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1) !important; }
-                .hover-bg-success:hover { background-color: var(--bs-success) !important; color: white !important; }
-                .hover-bg-danger:hover { background-color: var(--bs-danger) !important; color: white !important; }
             `}</style>
         </div>
     );
