@@ -7,7 +7,6 @@ import ChatWindow from '../../components/chat/ChatWindow';
 import ChatHeader from '../../components/chat/ChatHeader';
 import { getUser } from '../../utils/auth';
 import { formatDateTimeIST, toEpochMs } from '../../utils/time';
-import '../../styles/patient-chat.css';
 
 const Chat = () => {
     const navigate = useNavigate();
@@ -55,8 +54,6 @@ const Chat = () => {
             const normalized = Array.isArray(data) ? data : [];
 
             if (normalized.length === 0 && conv.last_message?.content) {
-                // Fallback: keep the visible conversation preview as minimal history
-                // when server returns empty list for an existing thread.
                 setMessages([{
                     id: `fallback-${conv.id}`,
                     conversation_id: conv.id,
@@ -84,8 +81,6 @@ const Chat = () => {
     };
 
     const handleNewMessage = useCallback((msg) => {
-        // If message belongs to current conversation, add it
-        // Only if we are viewing THAT conversation
         setSelectedConv((current) => {
             if (current?.id === msg.conversation_id) {
                 setMessages((prev) => {
@@ -96,7 +91,6 @@ const Chat = () => {
             return current;
         });
 
-        // Update conversation list last message
         setConversations(prev => (
             prev
                 .map(c => {
@@ -122,24 +116,15 @@ const Chat = () => {
     }, [currentUser?.id, selectedConv?.id]);
 
     useEffect(() => {
-        // 1. Get User
         const user = getUser();
         if (user) setCurrentUser(user);
 
-        // 2. Init Socket
         const socket = initSocket();
-
-        // 3. Fetch Conversations
         fetchConversations();
 
-        // 4. Socket Listeners
         if (socket) {
             socket.on("new_message", (msg) => {
                 handleNewMessage(msg);
-            });
-            
-            socket.on("status", (data) => {
-                console.log("Socket Status:", data);
             });
         }
 
@@ -177,7 +162,7 @@ const Chat = () => {
     };
 
     return (
-        <div className="patient-chat-nexus">
+        <div className="d-flex bg-white shadow-sm overflow-hidden" style={{ height: 'calc(100vh - 100px)', margin: '1rem', borderRadius: '1.25rem', border: '1px solid #eef2f6' }}>
             {/* Sidebar */}
             <ConversationList 
                 conversations={conversations}
@@ -188,79 +173,74 @@ const Chat = () => {
 
             {/* Chat Area */}
             {selectedConv ? (
-                <div className="nexus-chat-pane">
+                <div className="d-flex flex-column flex-grow-1 min-w-0 bg-white position-relative">
                     <ChatHeader 
                         otherUser={selectedConv.other_user}
-                        isDoctor={false} // This is patient view
+                        isDoctor={false}
                         showSidebar={showInfoPanel}
                         onToggleSidebar={() => setShowInfoPanel((prev) => !prev)}
                         onVideoCall={handleVideoCall}
                     />
-                    <ChatWindow 
-                        messages={messages}
-                        currentUserId={currentUser?.id}
-                        onSendMessage={handleSendMessage}
-                        loadingMessages={loadingMessages}
-                        messagesLoadError={messagesLoadError}
-                        isDoctor={false}
-                        otherUser={selectedConv.other_user}
-                    />
-                    {showInfoPanel && (
-                        <>
-                            <div
-                                className="nexus-info-popover-backdrop"
-                                onClick={() => setShowInfoPanel(false)}
-                                aria-hidden="true"
-                            />
-                            <aside className="nexus-info-popover custom-scrollbar" role="dialog" aria-label="Conversation details">
-                                <div className="nexus-conversation-info-header">
-                                    <h4>Doctor Details</h4>
-                                    <p>Care provider profile</p>
+                    <div className="d-flex flex-grow-1 overflow-hidden">
+                        <ChatWindow 
+                            messages={messages}
+                            currentUserId={currentUser?.id}
+                            onSendMessage={handleSendMessage}
+                            loadingMessages={loadingMessages}
+                            messagesLoadError={messagesLoadError}
+                            isDoctor={false}
+                            otherUser={selectedConv.other_user}
+                        />
+                        
+                        {showInfoPanel && (
+                            <aside className="border-start bg-light overflow-y-auto custom-scrollbar" style={{ width: '320px', flexShrink: 0 }}>
+                                <div className="p-4 border-bottom bg-white sticky-top">
+                                    <div className="d-flex justify-content-between align-items-center mb-1">
+                                        <h4 className="fw-bolder text-dark mb-0" style={{ fontSize: '1.1rem' }}>Doctor Details</h4>
+                                        <button className="btn-close shadow-none d-lg-none" onClick={() => setShowInfoPanel(false)}></button>
+                                    </div>
+                                    <p className="text-secondary small fw-medium mb-0">Care provider profile</p>
                                 </div>
-                                <div className="nexus-conversation-info-grid">
-                                    <div className="nexus-info-row">
-                                        <span>Doctor Name</span>
-                                        <strong>{selectedConv.other_user?.name || 'Unknown'}</strong>
-                                    </div>
-                                    <div className="nexus-info-row">
-                                        <span>Email</span>
-                                        <strong>{selectedConv.other_user?.email || 'N/A'}</strong>
-                                    </div>
-                                    <div className="nexus-info-row">
-                                        <span>Role</span>
-                                        <strong>{selectedConv.other_user?.role || 'doctor'}</strong>
-                                    </div>
-                                    <div className="nexus-info-row">
-                                        <span>Status</span>
-                                        <strong>{selectedConv.other_user?.is_online ? 'Online' : 'Last seen recently'}</strong>
-                                    </div>
-                                    <div className="nexus-info-row">
-                                        <span>Last Interaction</span>
-                                        <strong>
-                                            {selectedConv.last_message?.created_at
-                                                ? formatDateTimeIST(selectedConv.last_message.created_at)
-                                                : 'N/A'}
-                                        </strong>
-                                    </div>
+                                <div className="p-4 d-flex flex-column gap-3">
+                                    {[
+                                        { label: 'Doctor Name', value: selectedConv.other_user?.name || 'Unknown' },
+                                        { label: 'Email', value: selectedConv.other_user?.email || 'N/A' },
+                                        { label: 'Role', value: selectedConv.other_user?.role || 'doctor' },
+                                        { label: 'Status', value: selectedConv.other_user?.is_online ? 'Online' : 'Last seen recently' },
+                                        { label: 'Last Interaction', value: selectedConv.last_message?.created_at ? formatDateTimeIST(selectedConv.last_message.created_at) : 'N/A' }
+                                    ].map((info, idx) => (
+                                        <div key={idx} className="bg-white p-3 rounded-4 border shadow-sm">
+                                            <span className="d-block text-secondary text-uppercase fw-bold mb-1" style={{ fontSize: '0.65rem', letterSpacing: '0.05em' }}>{info.label}</span>
+                                            <div className="fw-bolder text-dark" style={{ fontSize: '0.85rem', wordBreak: 'break-word' }}>{info.value}</div>
+                                        </div>
+                                    ))}
                                 </div>
                             </aside>
-                        </>
-                    )}
+                        )}
+                    </div>
                 </div>
             ) : (
-                <div className="nexus-chat-pane empty-chat-state">
-                    <div className="nexus-empty-pane">
-                        <div className="nexus-empty-icon">💬</div>
-                        <h2 className="nexus-empty-title">Clinical Support Portal</h2>
-                        <p className="nexus-empty-subtitle">Connecting you with your care team.</p>
-                        <div className="nexus-empty-hints">
-                            <span className="nexus-empty-hint">Secure Messaging</span>
-                            <span className="nexus-empty-hint">File Sharing</span>
-                            <span className="nexus-empty-hint">Care Coordination</span>
+                <div className="d-flex flex-grow-1 align-items-center justify-content-center bg-light bg-opacity-50">
+                    <div className="text-center p-5">
+                        <div className="display-1 mb-4 opacity-25">💬</div>
+                        <h2 className="fw-bolder text-dark mb-2">Clinical Support Portal</h2>
+                        <p className="text-secondary mb-4 mx-auto" style={{ maxWidth: '300px' }}>Connecting you with your care team in a secure, encrypted environment.</p>
+                        <div className="d-flex flex-wrap justify-content-center gap-2">
+                            {['Secure Messaging', 'File Sharing', 'Care Coordination'].map((hint, i) => (
+                                <span key={i} className="badge bg-white text-secondary border rounded-pill px-3 py-2 fw-bold shadow-sm">
+                                    {hint}
+                                </span>
+                            ))}
                         </div>
                     </div>
                 </div>
             )}
+            
+            <style>{`
+                .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+                .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+                .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+            `}</style>
         </div>
     );
 };

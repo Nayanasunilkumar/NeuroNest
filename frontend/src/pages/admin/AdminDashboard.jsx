@@ -1,224 +1,237 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { adminDashboardApi } from '../../api/adminDashboardApi';
-import '../../styles/admin-dashboard.css';
-
-const IconPatients = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-);
-
-const IconDoctors = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4.8 2.1l.2.2c1.1 1.1 2.4 2.1 4 2.1h4c1.6 0 2.9-1 4-2.1l.2-.2"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M15.8 11.3c.2.4.2.8.2 1.2 0 1-.5 1.8-1.2 2.1"/><path d="M8 11.3c-.2.4-.2.8-.2 1.2 0 1 .5 1.8 1.2 2.1"/><path d="M12 15v2"/><path d="M12 9v2"/><path d="M9 21h6"/></svg>
-);
-
-const IconAppointments = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-);
-
-const IconRevenue = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-);
-
-const IconAssessments = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg>
-);
-
-const IconPayments = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-);
-
-const IconReviews = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-);
+import { Users, UserPlus, Calendar, DollarSign, FileText, CreditCard, Star, Radio, Activity, AlertCircle, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 
 const AdminDashboard = () => {
-  const [data, setData] = useState({
-    stats: [],
-    activities: [],
-    tasks: [],
-    chartData: []
-  });
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+    const [data, setData] = useState({
+        stats: [],
+        activities: [],
+        tasks: [],
+        chartData: []
+    });
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
-  useEffect(() => {
-    fetchDashboardData();
-  }, []);
+    useEffect(() => {
+        fetchDashboardData();
+    }, []);
 
-  const fetchDashboardData = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await adminDashboardApi.getDashboardSummary();
-      
-      // Map API stats to React components
-      const iconMap = {
-        'patients': <IconPatients />,
-        'doctors': <IconDoctors />,
-        'load': <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>,
-        'revenue': <IconRevenue />
-      };
+    const fetchDashboardData = async () => {
+        setLoading(true);
+        setError(null);
+        try {
+            const response = await adminDashboardApi.getDashboardSummary();
+            setData({
+                stats: response.stats || [],
+                activities: response.activities || [],
+                tasks: response.tasks || [],
+                chartData: response.chartData || []
+            });
+        } catch (err) {
+            console.error("Failed to load dashboard data:", err);
+            setError("Failed to load dashboard data. Please try again later.");
+        } finally {
+            setLoading(false);
+        }
+    };
 
-      const mappedStats = (response.stats || []).map(stat => ({
-        ...stat,
-        icon: iconMap[stat.id] || <IconPatients />
-      }));
+    const getStatIcon = (id) => {
+        switch (id) {
+            case 'patients': return <Users size={24} />;
+            case 'doctors': return <UserPlus size={24} />;
+            case 'load': return <Activity size={24} />;
+            case 'revenue': return <DollarSign size={24} />;
+            default: return <Activity size={24} />;
+        }
+    };
 
-      setData({
-        stats: mappedStats,
-        activities: response.activities || [],
-        tasks: response.tasks || [],
-        chartData: response.chartData || []
-      });
-    } catch (err) {
-      console.error("Failed to load dashboard data:", err);
-      setError("Failed to load dashboard data. Please try again later.");
-    } finally {
-      setLoading(false);
-    }
-  };
+    const modules = [
+        { title: 'Manage Patients', desc: 'Securely access and update patient health records.', icon: <Users size={20} />, path: '/admin/manage-patients', color: 'primary' },
+        { title: 'Manage Doctors', desc: 'Manage medical staff profiles and credentials.', icon: <UserPlus size={20} />, path: '/admin/manage-doctors', color: 'success' },
+        { title: 'Appointments', desc: 'Oversee scheduling across all departments.', icon: <Calendar size={20} />, path: '/admin/appointment-management', color: 'info' },
+        { title: 'Assessments', desc: 'Analyze clinical outcomes and test results.', icon: <FileText size={20} />, path: '/admin/assessment-management', color: 'warning' },
+        { title: 'Payments', desc: 'Automated billing and financial reconciliation.', icon: <CreditCard size={20} />, path: '/admin/payment-management', color: 'danger' },
+        { title: 'Reviews', desc: 'Monitor and respond to patient feedback.', icon: <Star size={20} />, path: '/admin/review-management', color: 'secondary' },
+    ];
 
-  const modules = [
-    { title: 'Manage Patients', desc: 'Securely access and update patient health records.', icon: <IconPatients />, path: '/admin/manage-patients' },
-    { title: 'Manage Doctors', desc: 'Manage medical staff profiles and credentials.', icon: <IconDoctors />, path: '/admin/manage-doctors' },
-    { title: 'Appointments', desc: 'Oversee scheduling across all departments.', icon: <IconAppointments />, path: '/admin/appointment-management' },
-    { title: 'Assessments', desc: 'Analyze clinical outcomes and test results.', icon: <IconAssessments />, path: '/admin/assessment-management' },
-    { title: 'Payments', desc: 'Automated billing and financial reconciliation.', icon: <IconPayments />, path: '/admin/payment-management' },
-    { title: 'Reviews', desc: 'Monitor and respond to patient feedback.', icon: <IconReviews />, path: '/admin/review-management' },
-  ];
-
-  if (loading) {
-    return (
-      <div className="admin-dashboard-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-        <p style={{ color: 'var(--admin-text-light)', fontWeight: 600 }}>Loading operations nexus...</p>
-      </div>
+    if (loading) return (
+        <div className="d-flex flex-column align-items-center justify-content-center min-vh-100 bg-light">
+            <div className="spinner-border text-primary border-4 mb-3" style={{ width: '3rem', height: '3rem' }} role="status">
+                <span className="visually-hidden">Loading...</span>
+            </div>
+            <p className="text-secondary fw-bold text-uppercase small" style={{ letterSpacing: '2px' }}>Initializing Operations Nexus...</p>
+        </div>
     );
-  }
 
-  if (error) {
-    return (
-      <div className="admin-dashboard-container" style={{ padding: '2rem' }}>
-        <div style={{ background: '#FEE2E2', color: '#991B1B', padding: '1rem', borderRadius: '8px' }}>
-          <strong>Error:</strong> {error}
+    if (error) return (
+        <div className="container py-5 text-center">
+            <div className="alert alert-danger d-inline-block px-5 py-4 rounded-4 shadow-sm">
+                <AlertCircle size={40} className="mb-3" />
+                <h4 className="fw-bolder">System Integrity Issue</h4>
+                <p className="mb-4">{error}</p>
+                <button onClick={fetchDashboardData} className="btn btn-danger rounded-pill px-4 fw-bold shadow-sm">Retry Connection</button>
+            </div>
         </div>
-        <button onClick={fetchDashboardData} className="admin-btn admin-btn-primary" style={{ marginTop: '1rem' }}>Retry</button>
-      </div>
     );
-  }
 
-  return (
-    <div className="admin-dashboard-container">
-      {/* Header */}
-      <header className="admin-welcome-header">
-        <div className="admin-welcome-text">
-          <h1>System Overview</h1>
-          <p>NeuroNest Enterprise Operations Console</p>
-        </div>
-        <div className="admin-header-actions">
-          <button className="admin-btn admin-btn-primary">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-            Internal Broadcast
-          </button>
-        </div>
-      </header>
-
-      {/* Stats Overview */}
-      <div className="admin-stats-grid">
-        {data.stats.map((stat, index) => (
-          <div key={index} className="stat-card">
-            <div className="stat-info">
-              <span className="stat-label">{stat.label}</span>
-              <span className="stat-value">{stat.value}</span>
+    return (
+        <div className="container-fluid py-4 min-vh-100 bg-light px-lg-4">
+            {/* Header */}
+            <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-5">
+                <div>
+                    <div className="text-secondary small fw-bold text-uppercase mb-1" style={{ letterSpacing: '1px' }}>Admin Console / Dashboard</div>
+                    <h1 className="h3 fw-black text-dark mb-0">System Overview</h1>
+                </div>
+                <button className="btn btn-primary rounded-pill px-4 py-2 fw-bold shadow-sm d-flex align-items-center gap-2 border-0" style={{ background: 'linear-gradient(135deg, #0d6efd, #6610f2)' }}>
+                    <Radio size={18} /> Internal Broadcast
+                </button>
             </div>
-            <div className={`stat-trend ${stat.trend.startsWith('+') ? 'trend-up' : stat.trend === 'Stable' ? '' : 'trend-down'}`} style={{fontSize: '0.75rem', fontWeight: 600, fontFamily: 'monospace'}}>
-              {stat.trend}
+
+            {/* Stats Grid */}
+            <div className="row g-4 mb-5">
+                {data.stats.map((stat, index) => (
+                    <div key={index} className="col-12 col-sm-6 col-xl-3">
+                        <div className="card border-0 shadow-sm rounded-4 h-100 transition-all hover-translate-y">
+                            <div className="card-body p-4">
+                                <div className="d-flex justify-content-between align-items-start mb-3">
+                                    <div className="bg-primary bg-opacity-10 text-primary p-3 rounded-4">
+                                        {getStatIcon(stat.id)}
+                                    </div>
+                                    <span className={`badge rounded-pill px-2 py-1 small fw-bold ${stat.trend.startsWith('+') ? 'bg-success bg-opacity-10 text-success' : stat.trend === 'Stable' ? 'bg-light text-secondary' : 'bg-danger bg-opacity-10 text-danger'}`}>
+                                        {stat.trend.startsWith('+') ? <ArrowUpRight size={12} className="me-1" /> : stat.trend.startsWith('-') ? <ArrowDownRight size={12} className="me-1" /> : null}
+                                        {stat.trend}
+                                    </span>
+                                </div>
+                                <h3 className="h6 text-secondary fw-bold text-uppercase mb-1" style={{ fontSize: '0.7rem', letterSpacing: '1px' }}>{stat.label}</h3>
+                                <div className="h2 fw-black text-dark mb-0">{stat.value}</div>
+                            </div>
+                        </div>
+                    </div>
+                ))}
             </div>
-          </div>
-        ))}
-      </div>
 
-      <div className="admin-main-section" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', marginBottom: '1rem', gap: '1rem' }}>
-        <div className="chart-card" style={{ border: '1px solid var(--console-border)', borderRadius: '4px' }}>
-          <div className="chart-header">
-            <h3 style={{ fontSize: '0.9rem', fontWeight: 800, textTransform: 'uppercase' }}>Engagement Metrics</h3>
-            <div className="chart-legend">
-              <div className="legend-item"><span className="dot" style={{ background: 'var(--admin-accent)' }}></span> Intake</div>
-              <div className="legend-item"><span className="dot" style={{ background: 'var(--admin-secondary)' }}></span> Outflow</div>
+            <div className="row g-4 mb-5">
+                {/* Metrics Chart */}
+                <div className="col-12 col-lg-8">
+                    <div className="card border-0 shadow-sm rounded-4 h-100">
+                        <div className="card-header bg-transparent border-0 p-4 pb-0">
+                            <div className="d-flex justify-content-between align-items-center">
+                                <h2 className="h6 fw-bolder text-dark mb-0 text-uppercase" style={{ letterSpacing: '1px' }}>Engagement Metrics</h2>
+                                <div className="d-flex gap-3">
+                                    <div className="d-flex align-items-center gap-2 small fw-bold text-secondary">
+                                        <div className="rounded-circle" style={{ width: '8px', height: '8px', background: '#0d6efd' }}></div> Intake
+                                    </div>
+                                    <div className="d-flex align-items-center gap-2 small fw-bold text-secondary">
+                                        <div className="rounded-circle" style={{ width: '8px', height: '8px', background: '#6610f2' }}></div> Outflow
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="card-body p-4 pt-5">
+                            <div className="d-flex align-items-end justify-content-between h-100" style={{ minHeight: '300px' }}>
+                                {data.chartData.map((d, i) => (
+                                    <div key={i} className="d-flex flex-column align-items-center gap-3 flex-grow-1">
+                                        <div className="d-flex gap-1 align-items-end w-100 justify-content-center" style={{ height: '200px' }}>
+                                            <div className="rounded-top shadow-sm transition-all" style={{ width: '12px', height: `${d.p}%`, background: 'linear-gradient(to top, #0d6efd, #3d8bfd)' }} title={`Intake: ${d.p}`}></div>
+                                            <div className="rounded-top shadow-sm transition-all" style={{ width: '12px', height: `${d.s}%`, background: 'linear-gradient(to top, #6610f2, #8f50f7)' }} title={`Outflow: ${d.s}`}></div>
+                                        </div>
+                                        <span className="text-secondary small fw-bold text-uppercase" style={{ fontSize: '0.65rem' }}>{d.day}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Tasks List */}
+                <div className="col-12 col-lg-4">
+                    <div className="card border-0 shadow-sm rounded-4 h-100">
+                        <div className="card-header bg-transparent border-0 p-4 pb-0">
+                            <h2 className="h6 fw-bolder text-dark mb-0 text-uppercase" style={{ letterSpacing: '1px' }}>Active Tasks</h2>
+                        </div>
+                        <div className="card-body p-4 pt-4">
+                            <div className="d-flex flex-column gap-3">
+                                {data.tasks.map((task, i) => (
+                                    <div key={i} className="bg-light p-3 rounded-4 border-start border-4 border-primary shadow-xs transition-all hover-translate-x">
+                                        <div className="d-flex justify-content-between align-items-start mb-1">
+                                            <h4 className="h6 fw-bolder text-dark mb-0" style={{ fontSize: '0.9rem' }}>{task.title}</h4>
+                                            <span className={`badge rounded-pill px-2 py-1 small fw-bold ${task.priority === 'High' ? 'bg-danger bg-opacity-10 text-danger' : task.priority === 'Medium' ? 'bg-warning bg-opacity-10 text-warning' : 'bg-info bg-opacity-10 text-info'}`}>
+                                                {task.priority}
+                                            </span>
+                                        </div>
+                                        <p className="text-secondary small mb-0 fw-medium">{task.desc}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-          </div>
-          <div className="bar-chart-mock">
-            {data.chartData.map((d, i) => (
-              <div key={i} className="chart-bar-group">
-                <div className="bar-wrapper">
-                  <div className="bar" style={{ height: `${d.p}%`, background: 'var(--admin-accent)' }} data-value={d.p}></div>
-                  <div className="bar" style={{ height: `${d.s}%`, background: 'var(--admin-secondary)' }} data-value={d.s}></div>
-                </div>
-                <span className="bar-label" style={{fontFamily: 'monospace'}}>{d.day}</span>
-              </div>
-            ))}
-          </div>
-        </div>
 
-        <div className="task-card" style={{ border: '1px solid var(--console-border)', borderRadius: '4px' }}>
-          <h3 style={{ fontSize: '0.9rem', fontWeight: 800, textTransform: 'uppercase', marginBottom: '1rem' }}>Active Tasks</h3>
-          <div className="task-list">
-            {data.tasks.map((task, i) => (
-              <div key={i} className="task-item">
-                <div className="task-info">
-                  <div className="task-text">
-                    <h4 style={{fontSize: '0.85rem'}}>{task.title}</h4>
-                    <p style={{fontSize: '0.75rem'}}>{task.desc}</p>
-                  </div>
+            {/* Operations Nexus & System Logs */}
+            <div className="row g-4">
+                <div className="col-12 col-xl-8">
+                    <div className="mb-4">
+                        <h2 className="h5 fw-black text-dark mb-4">Operations Nexus</h2>
+                        <div className="row g-3">
+                            {modules.map((mod, index) => (
+                                <div key={index} className="col-12 col-md-6">
+                                    <Link to={mod.path} className="card border-0 shadow-sm rounded-4 text-decoration-none h-100 transition-all hover-translate-y">
+                                        <div className="card-body p-4 d-flex align-items-center gap-4">
+                                            <div className={`bg-${mod.color} bg-opacity-10 text-${mod.color} p-3 rounded-4 flex-shrink-0`}>
+                                                {mod.icon}
+                                            </div>
+                                            <div className="min-w-0">
+                                                <h3 className="h6 fw-bolder text-dark mb-1">{mod.title}</h3>
+                                                <p className="text-secondary small mb-0 fw-medium text-truncate">{mod.desc}</p>
+                                            </div>
+                                        </div>
+                                    </Link>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
                 </div>
-                <span className={`priority-tag priority-${task.priority.toLowerCase()}`} style={{borderRadius: '2px', fontSize: '0.65rem'}}>
-                  {task.priority}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
 
-      <div className="admin-main-section" style={{gap: '1rem'}}>
-        <div className="modules-section">
-          <h2 className="section-title">Operations Nexus</h2>
-          <div className="module-grid" style={{gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))'}}>
-            {modules.map((mod, index) => (
-              <Link to={mod.path} key={index} className="module-card">
-                <div className="module-icon-wrap" style={{background: 'var(--admin-bg)', color: 'var(--admin-primary)'}}>
-                  {mod.icon}
+                <div className="col-12 col-xl-4">
+                    <h2 className="h5 fw-black text-dark mb-4">System Logs</h2>
+                    <div className="card border-0 shadow-sm rounded-4">
+                        <div className="card-body p-4 d-flex flex-column gap-3">
+                            <div className="activity-list overflow-y-auto custom-scrollbar pe-2" style={{ maxHeight: '380px' }}>
+                                {data.activities.map((act, index) => (
+                                    <div key={index} className="border-bottom border-light pb-3 mb-3 last-mb-0 last-pb-0">
+                                        <div className="d-flex align-items-center gap-2 mb-1">
+                                            <div className={`rounded-circle ${act.type === 'error' ? 'bg-danger' : 'bg-success'}`} style={{ width: '6px', height: '6px' }}></div>
+                                            <span className="text-secondary small fw-bold" style={{ fontSize: '0.65rem', fontFamily: 'monospace' }}>[{act.time}]</span>
+                                        </div>
+                                        <p className={`small mb-0 fw-medium ${act.type === 'error' ? 'text-danger' : 'text-dark'}`} style={{ fontSize: '0.8rem', lineHeight: '1.4' }}>
+                                            {act.text}
+                                        </p>
+                                    </div>
+                                ))}
+                            </div>
+                            <button className="btn btn-outline-secondary btn-sm rounded-pill py-2 fw-bold text-uppercase mt-2" style={{ fontSize: '0.65rem', letterSpacing: '1px' }}>
+                                Access Full Audit Trail
+                            </button>
+                        </div>
+                    </div>
                 </div>
-                <div className="module-content">
-                  <h3>{mod.title}</h3>
-                  <p>{mod.desc}</p>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </div>
-
-        <div className="activity-section">
-          <h2 className="section-title">System Logs</h2>
-          <div className="activity-card" style={{ border: '1px solid var(--console-border)', borderRadius: '4px' }}>
-            <div className="activity-list">
-              {data.activities.map((act, index) => (
-                <div key={index} className="activity-item" style={{borderBottom: '1px solid #f1f5f9', paddingBottom: '0.75rem'}}>
-                  <div className="activity-details">
-                    <p style={{ fontSize: '0.8rem', fontFamily: 'monospace', color: act.type === 'error' ? 'var(--admin-danger)' : 'var(--admin-text-main)' }}>
-                      [{act.time}] {act.text}
-                    </p>
-                  </div>
-                </div>
-              ))}
             </div>
-            <button className="admin-btn" style={{width: '100%', justifyContent: 'center', marginTop: '1rem', background: 'transparent', fontSize: '0.75rem'}}>
-              ACCESS FULL AUDIT
-            </button>
-          </div>
+
+            <style>{`
+                .fw-black { font-weight: 900; }
+                .hover-translate-y:hover { transform: translateY(-5px); box-shadow: 0 0.5rem 1.5rem rgba(0,0,0,0.1) !important; }
+                .hover-translate-x:hover { transform: translateX(5px); }
+                .shadow-xs { box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+                .last-mb-0:last-child { margin-bottom: 0 !important; }
+                .last-pb-0:last-child { padding-bottom: 0 !important; border-bottom: 0 !important; }
+                .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+                .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+                .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+            `}</style>
         </div>
-      </div>
-    </div>
-  );
+    );
 };
 
 export default AdminDashboard;

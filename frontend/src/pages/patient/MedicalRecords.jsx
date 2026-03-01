@@ -334,265 +334,45 @@ const MedicalRecords = ({ patientId: propPatientId = null }) => {
     }
   };
 
-  const renderClinicalContent = () => (
-    <>
-      {summary && (summary.severe_allergy_count ?? 0) > 0 && (
-        <div className="critical-allergy-banner-premium">
-          <div className="banner-icon-ring">
-            <Flame size={20} className="text-red-600" />
-          </div>
-          <div className="banner-text-stack">
-            <span className="banner-headline">Critical Safety Alert</span>
-            <p className="banner-subline">
-              {summary.severe_allergy_count} severe{" "}
-              {summary.severe_allergy_count === 1 ? "allergy" : "allergies"}{" "}
-              recorded. Ensure clinical data is cross-referenced during treatment.
-            </p>
-          </div>
-        </div>
-      )}
+  const renderClinicalContent = () => {
+    const activeMedsCount = (medications || []).filter(m => m.status === 'active').length;
+    const pastMedsCount = (medications || []).filter(m => m.status !== 'active').length;
 
-      {summary && (
-        <div className="clinical-summary-grid-premium">
-          <div className="clinical-summary-card-prm allergies">
-            <div className="card-prm-icon"><Flame size={20} /></div>
-            <div className="card-prm-content">
-              <p>Severe Allergies</p>
-              <h3>{summary.severe_allergy_count ?? 0}</h3>
+    return (
+      <>
+        {summary && (summary.severe_allergy_count ?? 0) > 0 && (
+          <div className="critical-allergy-banner-premium">
+            <div className="banner-icon-ring">
+              <Flame size={20} className="text-red-600" />
+            </div>
+            <div className="banner-text-stack">
+              <span className="banner-headline">Critical Safety Alert</span>
+              <p className="banner-subline">
+                {summary.severe_allergy_count} severe{" "}
+                {summary.severe_allergy_count === 1 ? "allergy" : "allergies"}{" "}
+                recorded. Ensure clinical data is cross-referenced during treatment.
+              </p>
             </div>
           </div>
-          <div className="clinical-summary-card-prm conditions">
-            <div className="card-prm-icon"><Activity size={20} /></div>
-            <div className="card-prm-content">
-              <p>Active Conditions</p>
-              <h3>{summary.active_condition_count ?? 0}</h3>
-            </div>
-          </div>
-          <div className="clinical-summary-card-prm medications">
-            <div className="card-prm-icon"><Pill size={20} /></div>
-            <div className="card-prm-content">
-              <p>Medications</p>
-              <h3>{summary.active_medication_count ?? 0}</h3>
-            </div>
-          </div>
-          <div className="clinical-summary-card-prm records">
-            <div className="card-prm-icon"><FileText size={20} /></div>
-            <div className="card-prm-content">
-              <p>Total Records</p>
-              <h3>{summary.total_records_uploaded ?? 0}</h3>
-            </div>
-          </div>
-        </div>
-      )}
+        )}
 
-      <div className="structured-medical-grid">
-        <div className="structured-card-premium allergies-card">
-          <div className="card-premium-header">
-            <div className="header-text">
-              <h3>Severe Allergies</h3>
-              <p>{allergies.length} {allergies.length === 1 ? "Allergy" : "Allergies"} ({severeAllergyCount} Severe)</p>
-            </div>
-            <button className="card-action-btn-prm" onClick={() => setAllergyFormOpen(true)}>
-              <Plus size={16} />
-            </button>
-          </div>
-          <div className="structured-list-premium custom-scrollbar">
-            {allergies.length === 0 && (
-              <div className="structured-empty-prm">
-                <p>No allergy entries yet. Add details for clinical safety checks.</p>
+        {summary && (
+          <div className="clinical-summary-grid-premium">
+            <div className="clinical-summary-card-prm allergies">
+              <div className="card-prm-icon"><Flame size={20} /></div>
+              <div className="card-prm-content">
+                <p>Severe Allergies</p>
+                <h3>{summary.severe_allergy_count ?? 0}</h3>
               </div>
-            )}
-            {Array.isArray(allergies) && allergies.map((item) => (
-              <div key={item.id} className="structured-item-premium">
-                <div className="item-premium-body">
-                  <div className="item-premium-main">
-                    <p className="item-title-prm">{item.allergy_name}</p>
-                    <span className={`pill-badge prm-severity-${(item.severity || "severe").toLowerCase()}`}>
-                      {severityLabel(item.severity)}
-                    </span>
-                  </div>
-                  <div className="item-premium-meta-grid">
-                    <div className="meta-cell">
-                      <span className="meta-label">Reaction</span>
-                      <span className="meta-value">{item.reaction || "Not set"}</span>
-                    </div>
-                    <div className="meta-cell">
-                      <span className="meta-label">Diagnosed</span>
-                      <span className="meta-value">{formatDate(item.diagnosed_date)}</span>
-                    </div>
-                  </div>
-
-                  {/* Doctor attribution row */}
-                  {item.added_by_name && (
-                    <div style={{
-                      marginTop: '10px',
-                      paddingTop: '10px',
-                      borderTop: '1px dashed #E2E8F0',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                    }}>
-                      {/* Avatar initial */}
-                      <div style={{
-                        width: 26, height: 26, borderRadius: '50%', flexShrink: 0,
-                        background: item.added_by_role === 'doctor' ? '#EFF6FF' : '#F0FDF4',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontSize: '11px', fontWeight: 800,
-                        color: item.added_by_role === 'doctor' ? '#2563EB' : '#16A34A',
-                      }}>
-                        {item.added_by_name.charAt(0).toUpperCase()}
-                      </div>
-
-                      <div style={{ minWidth: 0, display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-                        {/* Name */}
-                        <span style={{ fontSize: '12px', fontWeight: 700, color: '#1E293B' }}>
-                          {item.added_by_role === 'doctor' && !item.added_by_name?.toLowerCase().startsWith('dr.')
-                            ? 'Dr. ' : ''}{item.added_by_name}
-                        </span>
-
-                        {/* Specialization pill */}
-                        {item.added_by_specialization && (
-                          <span style={{
-                            fontSize: '11px', fontWeight: 600, color: '#2563EB',
-                            background: '#EFF6FF', padding: '2px 8px', borderRadius: '999px',
-                            border: '1px solid #BFDBFE',
-                          }}>
-                            {item.added_by_specialization}
-                          </span>
-                        )}
-
-                        {/* Self-reported label */}
-                        {!item.added_by_specialization && item.added_by_role !== 'doctor' && (
-                          <span style={{ fontSize: '11px', color: '#94A3B8', fontWeight: 600 }}>
-                            Self-reported
-                          </span>
-                        )}
-
-                        {/* Verified by doctor badge */}
-                        {item.added_by_role === 'doctor' && (
-                          <span style={{
-                            fontSize: '10px', fontWeight: 700, letterSpacing: '0.04em',
-                            color: '#059669', background: '#ECFDF5', padding: '2px 7px',
-                            borderRadius: '999px', border: '1px solid #A7F3D0',
-                            textTransform: 'uppercase',
-                          }}>
-                            ✓ Clinically Verified
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </div>
-                <div className="item-premium-actions">
-                  <button onClick={() => medicalRecordService.deleteAllergy(item.id, patientId).then(fetchRecords)} className="btn-icon-tiny">
-                    <X size={14} />
-                  </button>
-                </div>
-              </div>
-            ))}
-
-          </div>
-        </div>
-
-        <div className="structured-card-premium conditions-card">
-          <div className="card-premium-header">
-            <div className="header-text">
-              <h3>Active Conditions</h3>
-              <p>{conditions.length} Active {conditions.length === 1 ? "Condition" : "Conditions"}</p>
             </div>
-            {patientId && (
-              <button className="card-action-btn-prm" onClick={() => setConditionFormOpen(true)}>
-                <Plus size={16} />
-              </button>
-            )}
-          </div>
-          <div className="structured-list-premium custom-scrollbar">
-            {conditions.length === 0 && (
-              <div className="structured-empty-prm">
-                <p>{patientId ? "No active conditions recorded. You can add one above." : "No active conditions listed. Conditions are managed by your doctor."}</p>
+            <div className="clinical-summary-card-prm conditions">
+              <div className="card-prm-icon"><Activity size={20} /></div>
+              <div className="card-prm-content">
+                <p>Active Conditions</p>
+                <h3>{summary.active_condition_count ?? 0}</h3>
               </div>
-            )}
-            {Array.isArray(conditions) && conditions.map((item) => (
-              <div key={item.id} className="structured-item-premium">
-                <div className="item-premium-body">
-                  <div className="item-premium-main">
-                    <p className="item-title-prm">{item.condition_name}</p>
-                    {item.under_treatment && <span className="pill-badge prm-status-active">Under Tx</span>}
-                  </div>
-                  <div className="item-premium-meta-grid">
-                    <div className="meta-cell">
-                      <span className="meta-label">Status</span>
-                      <span className="meta-value">{toLabel(item.status)}</span>
-                    </div>
-                    <div className="meta-cell">
-                      <span className="meta-label">Last Review</span>
-                      <span className="meta-value">{formatDate(item.last_reviewed)}</span>
-                    </div>
-                    {item.diagnosed_date && (
-                      <div className="meta-cell">
-                        <span className="meta-label">Diagnosed</span>
-                        <span className="meta-value">{formatDate(item.diagnosed_date)}</span>
-                      </div>
-                    )}
-                  </div>
+            </div>
 
-                  {/* Attribution row */}
-                  {item.added_by_name && (
-                    <div style={{
-                      marginTop: '10px',
-                      paddingTop: '10px',
-                      borderTop: '1px dashed #E2E8F0',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                    }}>
-                      <div style={{
-                        width: 26, height: 26, borderRadius: '50%',
-                        background: item.added_by_role === 'doctor' ? '#EFF6FF' : '#F0FDF4',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontSize: '11px', fontWeight: 800,
-                        color: item.added_by_role === 'doctor' ? '#2563EB' : '#16A34A',
-                        flexShrink: 0,
-                      }}>
-                        {item.added_by_name.charAt(0).toUpperCase()}
-                      </div>
-                      <div style={{ minWidth: 0 }}>
-                        <span style={{ fontSize: '12px', fontWeight: 700, color: '#1E293B' }}>
-                          {item.added_by_role === 'doctor' && !item.added_by_name?.toLowerCase().startsWith('dr.') ? 'Dr. ' : ''}{item.added_by_name}
-                        </span>
-                        {item.added_by_specialization && (
-                          <span style={{
-                            marginLeft: '6px',
-                            fontSize: '11px', fontWeight: 600,
-                            color: '#64748B',
-                            background: '#F1F5F9',
-                            padding: '1px 7px',
-                            borderRadius: '999px',
-                          }}>
-                            {item.added_by_specialization}
-                          </span>
-                        )}
-                        {!item.added_by_specialization && item.added_by_role === 'patient' && (
-                          <span style={{ marginLeft: '6px', fontSize: '11px', color: '#94A3B8', fontWeight: 600 }}>
-                            Self-reported
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))}
-
-          </div>
-        </div>
-        
-        {(() => {
-          const otherMeds = Array.isArray(medications) ? medications.filter(m => medicationSourceLabel(m) !== "Past (Other Hospital)") : [];
-          const pastMedsCount = Array.isArray(medications) ? medications.filter(m => medicationSourceLabel(m) === "Past (Other Hospital)").length : 0;
-          const activeMedsCount = otherMeds.filter(m => m.status === 'active').length;
-          
-          return (
             <div className="structured-card-premium medications-card">
               <div className="card-premium-header">
                 <div className="header-text">
@@ -642,11 +422,10 @@ const MedicalRecords = ({ patientId: propPatientId = null }) => {
                 ))}
               </div>
             </div>
-          );
-        })()}
-      </div>
+          </div>
+        )}
 
-      <div className="medical-archive-section-premium">
+        <div className="medical-archive-section-premium">
         <div className="archive-header-prm">
           <div className="archive-title-stack">
             <h2>Medical Records Archive</h2>
@@ -1106,7 +885,7 @@ const MedicalRecords = ({ patientId: propPatientId = null }) => {
       )}
     </>
   );
-
+};
   return (
     <div 
       className={patientId ? "opd-dashboard-root" : "medical-records-container fade-in"}

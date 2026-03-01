@@ -2,12 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { 
     Search, UserPlus, ShieldCheck, Mail, MapPin, 
     MoreVertical, RefreshCw, CheckCircle, AlertTriangle, 
-    User, ShieldAlert, X, Clock, Activity, Download, FileText, ChevronRight
+    User, ShieldAlert, X, Clock, Activity, Download, FileText, ChevronRight,
+    Users, Verified, ShieldQuestion, UserCheck
 } from 'lucide-react';
 import { fetchDoctors, createDoctor, verifyDoctor, updateDoctorStatus, deleteDoctor } from '../../services/adminDoctorAPI';
 import AddDoctorModal from '../../components/admin/AddDoctorModal';
 import DoctorDrawer from '../../components/admin/DoctorDrawer';
-import '../../styles/admin-manage-doctors.css';
 
 const ManageDoctors = () => {
     const [doctors, setDoctors] = useState([]);
@@ -45,7 +45,7 @@ const ManageDoctors = () => {
             setDoctors(data.doctors);
             setTotalPages(data.pages);
             if (data.stats) setStats(data.stats);
-            setSelectedDoctors([]); // Reset selection on reload/page change
+            setSelectedDoctors([]); 
             setOpenMenuId(null);
         } catch (err) {
             console.error('Failed to load doctors', err);
@@ -55,7 +55,7 @@ const ManageDoctors = () => {
     };
 
     const toggleSelectAll = () => {
-        if (selectedDoctors.length === doctors.length) {
+        if (selectedDoctors.length === doctors.length && doctors.length > 0) {
             setSelectedDoctors([]);
         } else {
             setSelectedDoctors(doctors.map(d => d.id));
@@ -70,18 +70,12 @@ const ManageDoctors = () => {
 
     const handleBulkVerify = async () => {
         if (selectedDoctors.length === 0) return;
-
-        if (window.confirm(`Authorize/Refresh clinical credentials for ${selectedDoctors.length} selected specialists?`)) {
+        if (window.confirm(`Authorize clinical credentials for ${selectedDoctors.length} specialists?`)) {
             try {
                 setLoading(true);
-                // We now allow proactive re-verification to ensure administrative intent is always synchronized
                 await Promise.all(selectedDoctors.map(id => verifyDoctor(id)));
-                alert(`SUCCESS: Institutional credentials authorized for ${selectedDoctors.length} providers.`);
                 loadDoctors();
                 setSelectedDoctors([]);
-            } catch (err) {
-                console.error('Credentialing Failure:', err);
-                alert('ERROR: Technical failure during institutional credentialing.');
             } finally {
                 setLoading(false);
             }
@@ -90,17 +84,12 @@ const ManageDoctors = () => {
 
     const handleBulkActivate = async () => {
         if (selectedDoctors.length === 0) return;
-
-        if (window.confirm(`Restore active status for ${selectedDoctors.length} selected specialists?`)) {
+        if (window.confirm(`Restore active status for ${selectedDoctors.length} specialists?`)) {
             try {
                 setLoading(true);
-                await Promise.all(selectedDoctors.map(id => updateDoctorStatus(id, { status: 'active', reason: 'Bulk restoration by Senior Admin' })));
-                alert(`SUCCESS: Active roster status restored for ${selectedDoctors.length} specialists.`);
+                await Promise.all(selectedDoctors.map(id => updateDoctorStatus(id, { status: 'active', reason: 'Mass activation' })));
                 loadDoctors();
                 setSelectedDoctors([]);
-            } catch (err) {
-                console.error('Reactivation Failure:', err);
-                alert('ERROR: Technical failure during roster reactivation.');
             } finally {
                 setLoading(false);
             }
@@ -110,20 +99,19 @@ const ManageDoctors = () => {
     const handleBulkSuspend = async () => {
         const reason = prompt(`Reason for mass suspension of ${selectedDoctors.length} providers:`);
         if (!reason) return;
-        await Promise.all(selectedDoctors.map(id => updateDoctorStatus(id, { status: 'suspended', reason })));
-        loadDoctors();
-    };
-
-    const handleSearch = (e) => {
-        if (e.key === 'Enter') {
-            setPage(1);
-            if (page === 1) loadDoctors(); // If already on page 1, trigger manually
+        try {
+            setLoading(true);
+            await Promise.all(selectedDoctors.map(id => updateDoctorStatus(id, { status: 'suspended', reason })));
+            loadDoctors();
+            setSelectedDoctors([]);
+        } finally {
+            setLoading(false);
         }
     };
 
     const triggerSearch = () => {
         setPage(1);
-        if (page === 1) loadDoctors();
+        loadDoctors();
     };
 
     const handleExport = () => {
@@ -135,11 +123,10 @@ const ManageDoctors = () => {
         const encodedUri = encodeURI(csvContent);
         const link = document.createElement("a");
         link.setAttribute("href", encodedUri);
-        link.setAttribute("download", `NeuroNest_Specialist_Export_${new Date().toISOString().slice(0,10)}.csv`);
+        link.setAttribute("download", `NeuroNest_Specialists_${new Date().toISOString().slice(0,10)}.csv`);
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        alert(`SUCCESS: Export manifest generated for ${selectedDoctors.length} specialists.`);
     };
 
     const handleOnboard = async (formData) => {
@@ -148,34 +135,23 @@ const ManageDoctors = () => {
     };
 
     const handleVerify = async (id) => {
-        if (window.confirm('Confirm clinical credential verification for this provider?')) {
+        if (window.confirm('Confirm clinical credential verification?')) {
             await verifyDoctor(id);
             loadDoctors();
         }
     };
 
     const handleRevoke = async (id) => {
-        if (window.confirm('WARNING: You are about to revoke all clinical credentials for this specialist. Continue?')) {
+        if (window.confirm('Revoke clinical credentials for this specialist?')) {
             await verifyDoctor(id, false);
             loadDoctors();
         }
     };
 
     const handleTerminate = async (id) => {
-        const confirmTerm = window.confirm('DANGER: This action permanently removes the record from the clinical database, including all audit logs and prescriptions. Are you absolutely sure?');
-        if (confirmTerm) {
-            try {
-                setLoading(true);
-                await deleteDoctor(id);
-                alert('SUCCESS: Specialist record and all clinical dependencies have been purged from the institutional roster.');
-                loadDoctors();
-                setOpenMenuId(null);
-            } catch (err) {
-                console.error('Record Decommissioning Failure:', err);
-                alert(`ERROR: Technical failure while purging record. This may be due to active institutional dependencies. Details: ${err.response?.data?.error || err.message}`);
-            } finally {
-                setLoading(false);
-            }
+        if (window.confirm('DANGER: Permanently delete this provider record?')) {
+            await deleteDoctor(id);
+            loadDoctors();
         }
     };
 
@@ -183,318 +159,222 @@ const ManageDoctors = () => {
         const newStatus = currentStatus === 'active' ? 'suspended' : 'active';
         const reason = prompt(`Reason for changing status to ${newStatus}:`);
         if (!reason) return;
-
         await updateDoctorStatus(id, { status: newStatus, reason });
         loadDoctors();
     };
 
     return (
-        <div className="manage-doctors-page">
-            <header className="manage-header">
-                <div className="title-group">
-                    <h1>Medical Roster</h1>
-                    <p>Clinical Governance & Credentialing</p>
+        <div className="py-2">
+            <header className="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-5">
+                <div>
+                    <h1 className="h3 fw-black text-dark mb-1">Medical Roster</h1>
+                    <p className="text-secondary fw-medium mb-0">Clinical Governance & Credentialing Intelligence</p>
                 </div>
-                <div className="header-actions">
-                    <button className="onboard-btn" onClick={() => setIsModalOpen(true)}>
-                        <UserPlus size={18} />
-                        Onboard Specialist
-                    </button>
-                    <button className="refresh-btn" onClick={loadDoctors}>
+                <div className="d-flex gap-2">
+                    <button className="btn btn-outline-secondary rounded-pill p-2" onClick={loadDoctors}>
                         <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
+                    </button>
+                    <button 
+                        className="btn btn-primary rounded-pill px-4 py-2 fw-bold d-flex align-items-center gap-2 border-0 shadow-sm"
+                        style={{ background: 'linear-gradient(135deg, #0d6efd, #6610f2)' }}
+                        onClick={() => setIsModalOpen(true)}
+                    >
+                        <UserPlus size={18} /> Onboard Specialist
                     </button>
                 </div>
             </header>
 
-            <div className="doctors-stats-banner">
-                <div className="stat-metric-card">
-                    <span className="label">Total Providers</span>
-                    <div className="value">{stats.total}</div>
-                </div>
-                <div className="stat-metric-card">
-                    <span className="label">Verified Specialists</span>
-                    <div className="value" style={{color: 'var(--admin-secondary)'}}>
-                        {stats.verified}
+            <div className="row g-4 mb-5">
+                {[
+                    { label: "Total Providers", value: stats.total, color: "primary", icon: <Users size={20} /> },
+                    { label: "Verified Specialists", value: stats.verified, color: "success", icon: <Verified size={20} /> },
+                    { label: "Pending Review", value: stats.pending, color: "warning", icon: <ShieldQuestion size={20} /> },
+                    { label: "Active Roster", value: stats.active, color: "info", icon: <UserCheck size={20} /> },
+                ].map((stat, i) => (
+                    <div key={i} className="col-6 col-lg-3">
+                        <div className="card border-0 shadow-sm rounded-4 h-100 overflow-hidden position-relative">
+                            <div className="card-body p-4">
+                                <div className={`bg-${stat.color} bg-opacity-10 text-${stat.color} p-2 rounded-3 d-inline-flex mb-3`}>
+                                    {stat.icon}
+                                </div>
+                                <div className="small fw-bold text-uppercase text-secondary mb-1" style={{ fontSize: '0.65rem', letterSpacing: '1px' }}>{stat.label}</div>
+                                <div className={`h2 fw-black text-dark mb-0`}>{stat.value}</div>
+                            </div>
+                        </div>
                     </div>
-                </div>
-                <div className="stat-metric-card highlight">
-                    <span className="label">Pending Review</span>
-                    <div className="value" style={{color: '#f59e0b'}}>
-                        {stats.pending}
-                    </div>
-                </div>
-                <div className="stat-metric-card">
-                    <span className="label">Active Roster</span>
-                    <div className="value" style={{color: 'var(--admin-success)'}}>
-                        {stats.active}
-                    </div>
-                </div>
+                ))}
             </div>
 
-            <div className="filters-bar">
-                <div className="search-input-wrap">
-                    <Search size={18} style={{position: 'absolute', left: '0.85rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--admin-text-muted)'}} />
-                    <input 
-                        type="text" 
-                        placeholder="Search by name, license or specialty..."
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                        onKeyDown={handleSearch}
-                    />
-                    <button className="search-trigger-btn" onClick={triggerSearch}>
-                        <ChevronRight size={18} />
-                    </button>
-                </div>
-                <select 
-                    className="status-select"
-                    value={statusFilter}
-                    onChange={(e) => setStatusFilter(e.target.value)}
-                >
-                    <option value="">ALL STATUS</option>
-                    <option value="active">ACTIVE ONLY</option>
-                    <option value="suspended">SUSPENDED</option>
-                </select>
-                <select 
-                    className="status-select"
-                    value={sectorFilter}
-                    onChange={(e) => setSectorFilter(e.target.value)}
-                >
-                    <option value="">ALL REGIONS</option>
-                    <option value="North Sector">NORTH SECTOR</option>
-                    <option value="South Sector">SOUTH SECTOR</option>
-                    <option value="East Sector">EAST SECTOR</option>
-                    <option value="West Sector">WEST SECTOR</option>
-                </select>
-            </div>
-
-            <div className="doctor-table-container">
-                <table className="doctor-table">
-                    <thead>
-                        <tr>
-                            <th style={{width: '40px'}}>
+            <div className="card border-0 shadow-sm rounded-4 overflow-hidden mb-5">
+                <div className="card-header bg-white border-0 p-4 pb-0">
+                    <div className="row g-3">
+                        <div className="col-12 col-md-6 col-lg-4">
+                            <div className="input-group">
+                                <span className="input-group-text bg-light border-0"><Search size={16} /></span>
                                 <input 
-                                    type="checkbox" 
-                                    className="bulk-checkbox" 
-                                    checked={doctors.length > 0 && selectedDoctors.length === doctors.length}
-                                    onChange={toggleSelectAll}
+                                    type="text" 
+                                    className="form-control bg-light border-0" 
+                                    placeholder="Search by name, license..."
+                                    value={search}
+                                    onChange={(e) => setSearch(e.target.value)}
+                                    onKeyDown={(e) => e.key === 'Enter' && triggerSearch()}
                                 />
-                            </th>
-                            <th>Member Identity</th>
-                            <th style={{width: '180px'}}>Specialization</th>
-                            <th style={{width: '150px'}}>License #</th>
-                            <th style={{width: '150px'}}>Credentialing</th>
-                            <th style={{width: '110px'}}>Status</th>
-                            <th style={{width: '130px'}}>Onboarded</th>
-                            <th style={{width: '80px', textAlign: 'center'}}>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {loading && doctors.length === 0 ? (
-                            <tr><td colSpan="8" style={{textAlign: 'center', padding: '5rem', color: 'var(--admin-accent)', fontFamily: 'monospace'}}>INITIALIZING PROVIDER DATA...</td></tr>
-                        ) : doctors.length === 0 ? (
-                            <tr><td colSpan="8" style={{textAlign: 'center', padding: '5rem', color: 'var(--admin-text-muted)'}}>NO PROVIDERS FOUND IN THIS SECTOR</td></tr>
-                        ) : (
-                            doctors.map((doc) => {
-                                const initials = doc.full_name
-                                    .split(' ')
-                                    .map(n => n[0])
-                                    .join('')
-                                    .slice(0, 2);
-                                
-                                let displayStatus = doc.account_status;
-                                if (!doc.is_verified) displayStatus = 'restricted';
-                                if (doc.account_status === 'suspended') displayStatus = 'suspended';
-
-                                const riskClass = doc.account_status === 'suspended' ? 'risk-danger' : (!doc.is_verified ? 'risk-warn' : 'risk-safe');
-                                
-                                return (
-                                    <tr key={doc.id} className={`doctor-row ${selectedDoctors.includes(doc.id) ? 'selected' : ''}`}>
-                                        <td>
-                                            <input 
-                                                type="checkbox" 
-                                                className="bulk-checkbox" 
-                                                checked={selectedDoctors.includes(doc.id)}
-                                                onChange={() => toggleSelectDoctor(doc.id)}
-                                            />
-                                        </td>
-                                        <td>
-                                            <div className="doctor-info-cell">
-                                                <span className={`risk-indicator ${riskClass}`} title={`Risk Factor: ${riskClass.replace('risk-', '')}`} />
-                                                <div className="doctor-avatar">
-                                                    {initials}
-                                                </div>
-                                                <div className="doctor-identity-nexus">
-                                                    <div className="doctor-name">{doc.full_name}</div>
-                                                    <div className="doctor-email">{doc.email}</div>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td style={{fontWeight: 700, color: 'var(--admin-text-main)'}}>
-                                            {doc.specialization || '—'}
-                                        </td>
-                                        <td className="license-cell">
-                                            {doc.license_number || '—'}
-                                        </td>
-                                        <td>
-                                            {doc.is_verified ? (
-                                                <span className="verif-badge verif-done">
-                                                    <ShieldCheck size={12} />
-                                                    Verified
-                                                </span>
-                                            ) : (
-                                                <button className="verif-badge verif-pending" style={{border: 'none', cursor: 'pointer'}} onClick={() => handleVerify(doc.id)}>
-                                                    <AlertTriangle size={12} />
-                                                    Pending Review
-                                                </button>
-                                            )}
-                                        </td>
-                                        <td>
-                                            <span className={`status-pill status-${displayStatus}`}>
-                                                {displayStatus}
-                                            </span>
-                                        </td>
-                                        <td style={{color: 'var(--admin-text-muted)', fontSize: '0.75rem'}}>
-                                            {doc.created_at ? new Date(doc.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'}
-                                        </td>
-                                        <td className="actions-cell">
-                                            <button 
-                                                className="action-trigger-btn"
-                                                onClick={() => setOpenMenuId(openMenuId === doc.id ? null : doc.id)}
-                                                title="Operator Actions"
-                                            >
-                                                <MoreVertical size={16} />
-                                            </button>
-
-                                            {openMenuId === doc.id && (
-                                                <div className="action-menu-dropdown">
-                                                    <button 
-                                                        className="action-menu-item"
-                                                        onClick={() => {
-                                                            setSelectedDoctorId(doc.id);
-                                                            setIsDrawerOpen(true);
-                                                            setOpenMenuId(null);
-                                                        }}
-                                                    >
-                                                        <User size={14} />
-                                                        View Profile
-                                                    </button>
-                                                    <button 
-                                                        className="action-menu-item"
-                                                        onClick={() => {
-                                                            window.open(`mailto:${doc.email}?subject=NeuroNest Clinical Governance - Institutional Notice`, '_self');
-                                                            setOpenMenuId(null);
-                                                        }}
-                                                    >
-                                                        <Mail size={14} />
-                                                        Contact Specialist
-                                                    </button>
-                                                    <div className="action-menu-divider" />
-                                                    {!doc.is_verified ? (
-                                                        <button 
-                                                            className="action-menu-item" 
-                                                            onClick={() => handleVerify(doc.id)}
-                                                            style={{color: 'var(--admin-accent)'}}
-                                                        >
-                                                            <ShieldCheck size={14} />
-                                                            Apply Verification
-                                                        </button>
-                                                    ) : (
-                                                        <button 
-                                                            className="action-menu-item"
-                                                            style={{color: '#f59e0b'}}
-                                                            onClick={() => handleRevoke(doc.id)}
-                                                        >
-                                                            <ShieldAlert size={14} />
-                                                            Revoke Access
-                                                        </button>
-                                                    )}
-                                                    
-                                                    <button className="action-menu-item" onClick={() => handleStatusToggle(doc.id, doc.account_status)}>
-                                                        {doc.account_status === 'active' ? (
-                                                            <>
-                                                                <AlertTriangle size={14} style={{color: '#ef4444'}} />
-                                                                Suspend Member
-                                                            </>
-                                                        ) : (
-                                                            <>
-                                                                <CheckCircle size={14} style={{color: '#10b981'}} />
-                                                                Reactivate
-                                                            </>
-                                                        )}
-                                                    </button>
-                                                    <div className="action-menu-divider" />
-                                                    <button className="action-menu-item danger" onClick={() => handleTerminate(doc.id)}>
-                                                        <X size={14} />
-                                                        Terminate Record
-                                                    </button>
-                                                </div>
-                                            )}
-                                        </td>
-                                    </tr>
-                                );
-                            })
-                        )}
-                    </tbody>
-                </table>
-
-                <div className="pagination">
-                    <span style={{fontSize: '0.65rem', fontWeight: 900, color: 'var(--admin-text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em'}}>
-                        Viewing Profile Range {((page-1)*10)+1} – {Math.min(page*10, doctors.length)} of {doctors.length}
-                    </span>
-                    <div className="pagination-controls" style={{display: 'flex', gap: '4px'}}>
-                        <button disabled={page === 1} onClick={() => setPage(page-1)} className="page-btn">PREVIOUS</button>
-                        <button className="page-btn active">{page}</button>
-                        <button className="page-btn" onClick={() => setPage(page+1)} disabled={page === totalPages}>NEXT</button>
+                                <button className="btn btn-light border-0" onClick={triggerSearch}><ChevronRight size={16} /></button>
+                            </div>
+                        </div>
+                        <div className="col-6 col-md-3 col-lg-2">
+                            <select className="form-select bg-light border-0" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+                                <option value="">ALL STATUS</option>
+                                <option value="active">ACTIVE</option>
+                                <option value="suspended">SUSPENDED</option>
+                            </select>
+                        </div>
+                        <div className="col-6 col-md-3 col-lg-2">
+                            <select className="form-select bg-light border-0" value={sectorFilter} onChange={(e) => setSectorFilter(e.target.value)}>
+                                <option value="">ALL REGIONS</option>
+                                <option value="North Sector">NORTH</option>
+                                <option value="South Sector">SOUTH</option>
+                                <option value="East Sector">EAST</option>
+                                <option value="West Sector">WEST</option>
+                            </select>
+                        </div>
                     </div>
+                </div>
+
+                <div className="card-body p-0 mt-4">
+                    <div className="table-responsive">
+                        <table className="table table-hover align-middle mb-0">
+                            <thead className="bg-light bg-opacity-50">
+                                <tr>
+                                    <th className="px-4 py-3 border-0" style={{ width: '40px' }}>
+                                        <div className="form-check">
+                                            <input className="form-check-input" type="checkbox" checked={doctors.length > 0 && selectedDoctors.length === doctors.length} onChange={toggleSelectAll} />
+                                        </div>
+                                    </th>
+                                    <th className="py-3 border-0 small fw-black text-uppercase opacity-50">Specialist</th>
+                                    <th className="py-3 border-0 small fw-black text-uppercase opacity-50">Credentials</th>
+                                    <th className="py-3 border-0 small fw-black text-uppercase opacity-50 text-center">Verification</th>
+                                    <th className="py-3 border-0 small fw-black text-uppercase opacity-50 text-center">Account</th>
+                                    <th className="py-3 border-0 small fw-black text-uppercase opacity-50 text-end px-4">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {loading && doctors.length === 0 ? (
+                                    <tr><td colSpan="6" className="text-center py-5 opacity-50 fw-bold">INITIALIZING CLINICAL DATA...</td></tr>
+                                ) : doctors.length === 0 ? (
+                                    <tr><td colSpan="6" className="text-center py-5 opacity-50 fw-bold">NO RECORDS FOUND</td></tr>
+                                ) : (
+                                    doctors.map((doc) => (
+                                        <tr key={doc.id} className={selectedDoctors.includes(doc.id) ? 'table-primary bg-opacity-10' : ''}>
+                                            <td className="px-4">
+                                                <div className="form-check">
+                                                    <input className="form-check-input" type="checkbox" checked={selectedDoctors.includes(doc.id)} onChange={() => toggleSelectDoctor(doc.id)} />
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div className="d-flex align-items-center gap-3">
+                                                    <div className="bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center fw-black" style={{ width: '40px', height: '40px' }}>
+                                                        {doc.full_name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
+                                                    </div>
+                                                    <div>
+                                                        <div className="fw-black text-dark small mb-0">{doc.full_name}</div>
+                                                        <div className="text-secondary" style={{ fontSize: '0.75rem' }}>{doc.email}</div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div className="fw-bold small text-dark">{doc.specialization || 'General'}</div>
+                                                <div className="text-secondary" style={{ fontSize: '0.75rem' }}>Lic: {doc.license_number || 'PENDING'}</div>
+                                            </td>
+                                            <td className="text-center">
+                                                {doc.is_verified ? (
+                                                    <span className="badge rounded-pill bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-3 py-2">
+                                                        <ShieldCheck size={12} className="me-1 mb-1" /> Verified
+                                                    </span>
+                                                ) : (
+                                                    <span className="badge rounded-pill bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 px-3 py-2 cursor-pointer" onClick={() => handleVerify(doc.id)}>
+                                                        <AlertTriangle size={12} className="me-1 mb-1" /> Pending
+                                                    </span>
+                                                )}
+                                            </td>
+                                            <td className="text-center">
+                                                <span className={`badge rounded-pill px-3 py-2 ${doc.account_status === 'active' ? 'bg-info bg-opacity-10 text-info border-info' : 'bg-danger bg-opacity-10 text-danger border-danger'} border border-opacity-25`}>
+                                                    {doc.account_status.toUpperCase()}
+                                                </span>
+                                            </td>
+                                            <td className="text-end px-4 actions-cell position-relative">
+                                                <button className="btn btn-light btn-sm rounded-circle p-2 border-0" onClick={() => setOpenMenuId(openMenuId === doc.id ? null : doc.id)}>
+                                                    <MoreVertical size={18} />
+                                                </button>
+                                                
+                                                {openMenuId === doc.id && (
+                                                    <div className="dropdown-menu show shadow-lg border-light rounded-4 p-2 end-0 translate-middle-y mt-2" style={{ zIndex: 1000, right: '50px' }}>
+                                                        <button className="dropdown-item rounded-3 d-flex align-items-center gap-2 py-2" onClick={() => { setSelectedDoctorId(doc.id); setIsDrawerOpen(true); setOpenMenuId(null); }}>
+                                                            <User size={14} /> Profile
+                                                        </button>
+                                                        <button className="dropdown-item rounded-3 d-flex align-items-center gap-2 py-2" onClick={() => { window.open(`mailto:${doc.email}`, '_self'); setOpenMenuId(null); }}>
+                                                            <Mail size={14} /> Contact
+                                                        </button>
+                                                        <div className="dropdown-divider mx-2"></div>
+                                                        <button className="dropdown-item rounded-3 d-flex align-items-center gap-2 py-2" onClick={() => handleStatusToggle(doc.id, doc.account_status)}>
+                                                            {doc.account_status === 'active' ? <AlertTriangle size={14} className="text-danger" /> : <CheckCircle size={14} className="text-success" />}
+                                                            {doc.account_status === 'active' ? 'Suspend' : 'Activate'}
+                                                        </button>
+                                                        <button className="dropdown-item rounded-3 d-flex align-items-center gap-2 py-2 text-danger" onClick={() => handleTerminate(doc.id)}>
+                                                            <X size={14} /> Terminate
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </td>
+                                        </tr>
+                                    ))
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div className="card-footer bg-white border-0 p-4 d-flex justify-content-between align-items-center">
+                    <div className="small fw-black text-uppercase opacity-50" style={{ letterSpacing: '1px', fontSize: '0.65rem' }}>
+                        Page {page} of {totalPages}
+                    </div>
+                    <nav className="d-flex gap-1">
+                        <button className="btn btn-outline-secondary btn-sm rounded-pill px-3" disabled={page === 1} onClick={() => setPage(page-1)}>Prev</button>
+                        <button className="btn btn-primary btn-sm rounded-pill px-3 fw-bold">{page}</button>
+                        <button className="btn btn-outline-secondary btn-sm rounded-pill px-3" disabled={page === totalPages} onClick={() => setPage(page+1)}>Next</button>
+                    </nav>
                 </div>
             </div>
 
-            {/* Nexus Selection Bar - Floating Analytics & Governance */}
+            {/* Bulk Actions Floating Bar */}
             {selectedDoctors.length > 0 && (
-                <div className="bulk-action-bar">
-                    <div className="selection-info">
-                        <span className="selection-count">{selectedDoctors.length}</span>
-                        <span className="selection-label">Specialists Selected</span>
+                <div className="fixed-bottom p-4 d-flex justify-content-center" style={{ zIndex: 2000 }}>
+                    <div className="bg-dark text-white rounded-pill px-5 py-3 shadow-lg d-flex align-items-center gap-4 border border-secondary">
+                        <div className="d-flex align-items-center gap-2">
+                            <span className="badge bg-primary rounded-pill px-2">{selectedDoctors.length}</span>
+                            <span className="small fw-black text-uppercase border-end border-secondary pe-4 me-1">Specialists Selected</span>
+                        </div>
+                        <div className="d-flex gap-2">
+                            <button className="btn btn-sm btn-outline-light rounded-pill px-3 fw-bold border-0" onClick={handleBulkVerify}><ShieldCheck size={14} className="me-2" /> Verify</button>
+                            <button className="btn btn-sm btn-outline-light rounded-pill px-3 fw-bold border-0" onClick={handleBulkActivate}><CheckCircle size={14} className="me-2" /> Activate</button>
+                            <button className="btn btn-sm btn-outline-danger-soft rounded-pill px-3 fw-bold border-0" onClick={handleBulkSuspend}><AlertTriangle size={14} className="me-2" /> Suspend</button>
+                            <button className="btn btn-sm btn-link text-light text-decoration-none fw-black small px-3" onClick={() => setSelectedDoctors([])}>Cancel</button>
+                        </div>
                     </div>
-                    <div className="bulk-btn-group">
-                        <button className="bulk-btn primary" onClick={handleBulkVerify} disabled={loading}>
-                            <ShieldCheck size={14} />
-                            {loading ? 'Authorizing...' : 'Verify Licenses'}
-                        </button>
-                        <button className="bulk-btn success" onClick={handleBulkActivate} disabled={loading} style={{background: 'rgba(16, 185, 129, 0.1)', color: '#10b981', border: '1px solid rgba(16, 185, 129, 0.3)'}}>
-                            <CheckCircle size={14} />
-                            {loading ? 'Activating...' : 'Activate Selected'}
-                        </button>
-                        <button className="bulk-btn danger" onClick={handleBulkSuspend} disabled={loading}>
-                            <AlertTriangle size={14} />
-                            {loading ? 'Suspending...' : 'Suspend Selected'}
-                        </button>
-                        <button className="bulk-btn secondary" onClick={handleExport} disabled={loading}>
-                            <Download size={14} />
-                            {loading ? 'Preparing...' : 'Export CSV'}
-                        </button>
-                    </div>
-                    <button 
-                        className="refresh-btn" 
-                        style={{border: 'none', background: 'none', color: 'var(--admin-text-muted)'}}
-                        onClick={() => setSelectedDoctors([])}
-                    >
-                        Cancel
-                    </button>
                 </div>
             )}
 
-            <AddDoctorModal 
-                isOpen={isModalOpen} 
-                onClose={() => setIsModalOpen(false)} 
-                onAdd={handleOnboard}
-            />
+            <AddDoctorModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onAdd={handleOnboard} />
+            <DoctorDrawer doctorId={selectedDoctorId} isOpen={isDrawerOpen} onClose={() => setIsDrawerOpen(false)} />
 
-            <DoctorDrawer 
-                doctorId={selectedDoctorId} 
-                isOpen={isDrawerOpen} 
-                onClose={() => setIsDrawerOpen(false)} 
-            />
+            <style>{`
+                .fw-black { font-weight: 950; }
+                .animate-spin { animation: spin 1s linear infinite; }
+                @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+                .btn-outline-danger-soft { color: #ff6b6b; }
+                .btn-outline-danger-soft:hover { background: #ff6b6b; color: white; }
+                .dropdown-item:active { background-color: var(--bs-primary); }
+            `}</style>
         </div>
     );
 };
