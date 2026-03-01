@@ -1,8 +1,5 @@
 import React from 'react';
-import '../../styles/doctor-profile-premium.css';
-import { 
-    Calendar, Edit2
-} from 'lucide-react';
+import { Calendar, Edit2, Clock } from 'lucide-react';
 
 const toMinutes = (value = '') => {
     if (!value) return null;
@@ -40,40 +37,46 @@ const AvailabilityOverview = ({ availability, onManage }) => {
     const sortedDays = Object.keys(slotsByDay).sort((a,b) => dayOrder[a] - dayOrder[b]);
 
     return (
-        <div className="availability-mini-card">
-            <div className="card-heading">
-                <span>Weekly Schedule</span>
-                <button 
-                    onClick={onManage}
-                    className="btn-ghost flex items-center gap-1 text-sm font-medium"
-                >
-                    <Edit2 size={14} /> Manage
-                </button>
-            </div>
+        <div className="card border-0 shadow-sm rounded-4 bg-white">
+            <div className="card-body p-4">
+                <div className="d-flex justify-content-between align-items-center mb-4">
+                    <h3 className="h5 fw-bold text-dark mb-0 d-flex align-items-center gap-2">
+                        Weekly Schedule
+                    </h3>
+                    <button 
+                        onClick={onManage}
+                        className="btn btn-link text-decoration-none p-0 d-flex align-items-center gap-1 text-primary fw-bold"
+                        style={{ fontSize: '0.875rem' }}
+                    >
+                        <Edit2 size={14} /> Manage
+                    </button>
+                </div>
 
-            {sortedDays.length > 0 ? (
-                <div className="schedule-list">
-                    {sortedDays.map(day => (
-                        <div key={day} className="overview-day-row">
-                            <span className="overview-day-name">{day}</span>
-                            <div className="overview-slots-col">
-                                {slotsByDay[day]
-                                    .sort((a, b) => (toMinutes(a.start_time) ?? 0) - (toMinutes(b.start_time) ?? 0))
-                                    .map((slot, idx) => (
-                                    <span key={idx} className="overview-slot-text">
-                                        {formatTimeLabel(slot.start_time)} - {formatTimeLabel(slot.end_time)}
-                                    </span>
-                                ))}
+                {sortedDays.length > 0 ? (
+                    <div className="d-flex flex-column gap-3">
+                        {sortedDays.map(day => (
+                            <div key={day} className="d-flex flex-column flex-sm-row align-items-sm-start gap-2 gap-sm-4 pb-3 border-bottom border-light last-border-0">
+                                <span className="fw-bolder text-dark" style={{ width: '100px', flexShrink: 0 }}>{day}</span>
+                                <div className="d-flex flex-wrap gap-2">
+                                    {slotsByDay[day]
+                                        .sort((a, b) => (toMinutes(a.start_time) ?? 0) - (toMinutes(b.start_time) ?? 0))
+                                        .map((slot, idx) => (
+                                        <span key={idx} className="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-2 py-1 rounded d-flex align-items-center gap-1 fw-medium" style={{ fontSize: '0.8rem' }}>
+                                            <Clock size={12} />
+                                            {formatTimeLabel(slot.start_time)} - {formatTimeLabel(slot.end_time)}
+                                        </span>
+                                    ))}
+                                </div>
                             </div>
-                        </div>
-                    ))}
-                </div>
-            ) : (
-                <div className="text-center py-8 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-dashed border-slate-200 dark:border-slate-700">
-                    <Calendar size={32} className="text-slate-300 mx-auto mb-2" />
-                    <p className="text-sm text-slate-400">No schedule set yet.</p>
-                </div>
-            )}
+                        ))}
+                    </div>
+                ) : (
+                    <div className="text-center py-5 bg-light rounded-4 border border-dashed text-muted">
+                        <Calendar size={32} className="opacity-50 mx-auto mb-2" />
+                        <p className="small mb-0 fw-medium">No schedule set yet.</p>
+                    </div>
+                )}
+            </div>
         </div>
     );
 };

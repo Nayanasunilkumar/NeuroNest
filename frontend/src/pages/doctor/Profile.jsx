@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { getDoctorProfile, updateDoctorProfile, uploadProfileImage } from '../../services/doctorProfileService';
-import '../../styles/doctor-profile-premium.css';
 import { 
   User, Briefcase, CheckCircle, Shield, Edit2, Loader, Save, X 
 } from 'lucide-react';
@@ -122,77 +121,80 @@ const Profile = () => {
 
     // --- Sub-component: Basic Info ---
     const renderBasicInfo = () => (
-        <div className="content-section">
-            <div className="section-top-bar">
-                <h3 className="section-title-large">
-                    <User size={24} className="text-blue-500 bg-blue-50 p-1 rounded-lg" />
-                    Basic Information
-                </h3>
-            </div>
-            
-            <div className="premium-form-grid">
-                <div className="input-group">
-                    <label className="input-label">Phone Number</label>
-                    {isEditing ? (
-                        <input 
-                            name="phone" 
-                            className="premium-input" 
-                            value={formData.phone || ''} 
-                            onChange={handleChange} 
-                        />
-                    ) : (
-                        <div className="read-only-value">{profile.phone || 'Not set'}</div>
-                    )}
+        <div className="card border-0 shadow-sm rounded-4 mb-4 bg-white">
+            <div className="card-body p-4 p-md-5">
+                <div className="d-flex align-items-center gap-3 mb-4 pb-3 border-bottom">
+                    <div className="bg-primary bg-opacity-10 text-primary p-2 rounded-3 d-flex align-items-center justify-content-center">
+                        <User size={24} />
+                    </div>
+                    <h3 className="h5 fw-bold text-dark mb-0">Basic Information</h3>
                 </div>
                 
-                <div className="input-group">
-                    <label className="input-label">Date of Birth</label>
-                    {isEditing ? (
-                        <input 
-                            type="date" 
-                            name="dob" 
-                            className="premium-input" 
-                            value={formData.dob || ''} 
-                            onChange={handleChange} 
-                        />
-                    ) : (
-                        <div className="read-only-value">{profile.dob || 'Not set'}</div>
-                    )}
-                </div>
+                <div className="row g-4">
+                    <div className="col-12 col-md-4">
+                        <label className="form-label small fw-bold text-secondary text-uppercase mb-1" style={{ letterSpacing: '0.5px' }}>Phone Number</label>
+                        {isEditing ? (
+                            <input 
+                                name="phone" 
+                                className="form-control border-2 shadow-none rounded-3 py-2 fw-medium" 
+                                value={formData.phone || ''} 
+                                onChange={handleChange} 
+                            />
+                        ) : (
+                            <div className="fw-medium text-dark bg-light px-3 py-2 rounded-3 border">{profile.phone || 'Not set'}</div>
+                        )}
+                    </div>
+                    
+                    <div className="col-12 col-md-4">
+                        <label className="form-label small fw-bold text-secondary text-uppercase mb-1" style={{ letterSpacing: '0.5px' }}>Date of Birth</label>
+                        {isEditing ? (
+                            <input 
+                                type="date" 
+                                name="dob" 
+                                className="form-control border-2 shadow-none rounded-3 py-2 fw-medium" 
+                                value={formData.dob || ''} 
+                                onChange={handleChange} 
+                            />
+                        ) : (
+                            <div className="fw-medium text-dark bg-light px-3 py-2 rounded-3 border">{profile.dob || 'Not set'}</div>
+                        )}
+                    </div>
 
-                <div className="input-group">
-                    <label className="input-label">Gender</label>
-                    {isEditing ? (
-                        <select 
-                            name="gender" 
-                            className="premium-input" 
-                            value={formData.gender || ''} 
-                            onChange={handleChange}
-                        >
-                            <option value="">Select</option>
-                            <option value="Male">Male</option>
-                            <option value="Female">Female</option>
-                            <option value="Other">Other</option>
-                        </select>
-                    ) : (
-                        <div className="read-only-value">{profile.gender || 'Not set'}</div>
-                    )}
-                </div>
+                    <div className="col-12 col-md-4">
+                        <label className="form-label small fw-bold text-secondary text-uppercase mb-1" style={{ letterSpacing: '0.5px' }}>Gender</label>
+                        {isEditing ? (
+                            <select 
+                                name="gender" 
+                                className="form-select border-2 shadow-none rounded-3 py-2 fw-medium" 
+                                value={formData.gender || ''} 
+                                onChange={handleChange}
+                            >
+                                <option value="">Select</option>
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        ) : (
+                            <div className="fw-medium text-dark bg-light px-3 py-2 rounded-3 border">{profile.gender || 'Not set'}</div>
+                        )}
+                    </div>
 
-                <div className="input-group col-span-full">
-                    <label className="input-label">Professional Bio</label>
-                    {isEditing ? (
-                        <textarea 
-                            name="bio" 
-                            className="premium-input" 
-                            value={formData.bio || ''} 
-                            onChange={handleChange} 
-                        />
-                    ) : (
-                        <div className="read-only-value leading-relaxed text-slate-600 dark:text-slate-300">
-                            {profile.bio || 'Click "Edit Profile" to add your bio.'}
-                        </div>
-                    )}
+                    <div className="col-12">
+                        <label className="form-label small fw-bold text-secondary text-uppercase mb-1" style={{ letterSpacing: '0.5px' }}>Professional Bio</label>
+                        {isEditing ? (
+                            <textarea 
+                                name="bio" 
+                                className="form-control border-2 shadow-none rounded-3 py-2 fw-medium" 
+                                value={formData.bio || ''} 
+                                onChange={handleChange} 
+                                rows={4}
+                            />
+                        ) : (
+                            <div className="fw-medium text-dark bg-light px-4 py-3 rounded-3 border mb-0 text-wrap text-break" style={{ lineHeight: '1.6' }}>
+                                {profile.bio || 'Click "Edit Profile" to add your bio.'}
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
         </div>
@@ -200,226 +202,242 @@ const Profile = () => {
 
     // --- Sub-component: Professional Details ---
     const renderProfessionalDetails = () => (
-        <div className="content-section">
-            <div className="section-top-bar">
-                <h3 className="section-title-large">
-                    <Briefcase size={24} className="text-indigo-500 bg-indigo-50 p-1 rounded-lg" />
-                    Professional Details
-                </h3>
-            </div>
-            
-            <div className="premium-form-grid">
-                <div className="input-group">
-                    <label className="input-label">License Number</label>
-                    {isEditing ? (
-                        <input 
-                            name="license_number" 
-                            className="premium-input" 
-                            value={formData.license_number || ''} 
-                            onChange={handleChange} 
-                        />
-                    ) : (
-                        <div className="read-only-value flex items-center gap-2">
-                            <Shield size={14} className="text-green-500" />
-                            {profile.license_number}
-                        </div>
-                    )}
+        <div className="card border-0 shadow-sm rounded-4 mb-4 bg-white">
+            <div className="card-body p-4 p-md-5">
+                <div className="d-flex align-items-center gap-3 mb-4 pb-3 border-bottom">
+                    <div className="bg-indigo text-indigo p-2 rounded-3 d-flex align-items-center justify-content-center" style={{ backgroundColor: 'rgba(99, 102, 241, 0.1)', color: '#6366f1' }}>
+                        <Briefcase size={24} />
+                    </div>
+                    <h3 className="h5 fw-bold text-dark mb-0">Professional Details</h3>
                 </div>
+                
+                <div className="row g-4">
+                    <div className="col-12 col-md-6">
+                        <label className="form-label small fw-bold text-secondary text-uppercase mb-1" style={{ letterSpacing: '0.5px' }}>License Number</label>
+                        {isEditing ? (
+                            <input 
+                                name="license_number" 
+                                className="form-control border-2 shadow-none rounded-3 py-2 fw-medium" 
+                                value={formData.license_number || ''} 
+                                onChange={handleChange} 
+                            />
+                        ) : (
+                            <div className="fw-medium text-dark bg-light px-3 py-2 rounded-3 border d-flex align-items-center gap-2">
+                                <Shield size={16} className="text-success" />
+                                {profile.license_number}
+                            </div>
+                        )}
+                    </div>
 
-                <div className="input-group">
-                    <label className="input-label">Specialization</label>
-                    {isEditing ? (
-                        <select 
-                            name="specialization" 
-                            className="premium-input" 
-                            value={formData.specialization || ''} 
-                            onChange={handleChange} 
-                        >
-                            <option value="">Select Specialization</option>
-                            {specialties.map(spec => (
-                                <option key={spec} value={spec}>{spec}</option>
-                            ))}
-                        </select>
-                    ) : (
-                        <div className="read-only-value">{profile.specialization}</div>
-                    )}
-                </div>
+                    <div className="col-12 col-md-6">
+                        <label className="form-label small fw-bold text-secondary text-uppercase mb-1" style={{ letterSpacing: '0.5px' }}>Specialization</label>
+                        {isEditing ? (
+                            <select 
+                                name="specialization" 
+                                className="form-select border-2 shadow-none rounded-3 py-2 fw-medium" 
+                                value={formData.specialization || ''} 
+                                onChange={handleChange} 
+                            >
+                                <option value="">Select Specialization</option>
+                                {specialties.map(spec => (
+                                    <option key={spec} value={spec}>{spec}</option>
+                                ))}
+                            </select>
+                        ) : (
+                            <div className="fw-medium text-dark bg-light px-3 py-2 rounded-3 border">{profile.specialization}</div>
+                        )}
+                    </div>
 
-                <div className="input-group">
-                    <label className="input-label">Qualification</label>
-                    {isEditing ? (
-                        <input 
-                            name="qualification" 
-                            className="premium-input" 
-                            value={formData.qualification || ''} 
-                            onChange={handleChange} 
-                        />
-                    ) : (
-                        <div className="read-only-value">{profile.qualification}</div>
-                    )}
-                </div>
+                    <div className="col-12 col-md-6">
+                        <label className="form-label small fw-bold text-secondary text-uppercase mb-1" style={{ letterSpacing: '0.5px' }}>Qualification</label>
+                        {isEditing ? (
+                            <input 
+                                name="qualification" 
+                                className="form-control border-2 shadow-none rounded-3 py-2 fw-medium" 
+                                value={formData.qualification || ''} 
+                                onChange={handleChange} 
+                            />
+                        ) : (
+                            <div className="fw-medium text-dark bg-light px-3 py-2 rounded-3 border">{profile.qualification}</div>
+                        )}
+                    </div>
 
-                <div className="input-group">
-                    <label className="input-label">Experience (Years)</label>
-                    {isEditing ? (
-                        <input 
-                            type="number"
-                            name="experience_years" 
-                            className="premium-input" 
-                            value={formData.experience_years || ''} 
-                            onChange={handleChange} 
-                        />
-                    ) : (
-                        <div className="read-only-value">{profile.experience_years} Years</div>
-                    )}
-                </div>
+                    <div className="col-12 col-md-6">
+                        <label className="form-label small fw-bold text-secondary text-uppercase mb-1" style={{ letterSpacing: '0.5px' }}>Experience (Years)</label>
+                        {isEditing ? (
+                            <input 
+                                type="number"
+                                name="experience_years" 
+                                className="form-control border-2 shadow-none rounded-3 py-2 fw-medium" 
+                                value={formData.experience_years || ''} 
+                                onChange={handleChange} 
+                            />
+                        ) : (
+                            <div className="fw-medium text-dark bg-light px-3 py-2 rounded-3 border">{profile.experience_years} Years</div>
+                        )}
+                    </div>
 
-                <div className="input-group">
-                    <label className="input-label">Consultation Fee (₹)</label>
-                    {isEditing ? (
-                        <input 
-                            type="number"
-                            name="consultation_fee" 
-                            className="premium-input" 
-                            value={formData.consultation_fee || ''} 
-                            onChange={handleChange} 
-                        />
-                    ) : (
-                        <div className="read-only-value font-bold text-green-600">₹{profile.consultation_fee}</div>
-                    )}
-                </div>
+                    <div className="col-12 col-md-6">
+                        <label className="form-label small fw-bold text-secondary text-uppercase mb-1" style={{ letterSpacing: '0.5px' }}>Consultation Fee (₹)</label>
+                        {isEditing ? (
+                            <input 
+                                type="number"
+                                name="consultation_fee" 
+                                className="form-control border-2 shadow-none rounded-3 py-2 fw-medium" 
+                                value={formData.consultation_fee || ''} 
+                                onChange={handleChange} 
+                            />
+                        ) : (
+                            <div className="fw-bold text-success bg-light px-3 py-2 rounded-3 border">₹{profile.consultation_fee}</div>
+                        )}
+                    </div>
 
-                <div className="input-group">
-                    <label className="input-label">Hospital</label>
-                    {isEditing ? (
-                        <input 
-                            name="hospital_name" 
-                            className="premium-input" 
-                            value={formData.hospital_name || ''} 
-                            onChange={handleChange} 
-                        />
-                    ) : (
-                        <div className="read-only-value">{profile.hospital_name}</div>
-                    )}
-                </div>
+                    <div className="col-12 col-md-6">
+                        <label className="form-label small fw-bold text-secondary text-uppercase mb-1" style={{ letterSpacing: '0.5px' }}>Hospital</label>
+                        {isEditing ? (
+                            <input 
+                                name="hospital_name" 
+                                className="form-control border-2 shadow-none rounded-3 py-2 fw-medium" 
+                                value={formData.hospital_name || ''} 
+                                onChange={handleChange} 
+                            />
+                        ) : (
+                            <div className="fw-medium text-dark bg-light px-3 py-2 rounded-3 border">{profile.hospital_name}</div>
+                        )}
+                    </div>
 
-                <div className="input-group">
-                    <label className="input-label">Department</label>
-                    {isEditing ? (
-                        <input 
-                            name="department" 
-                            className="premium-input" 
-                            value={formData.department || ''} 
-                            onChange={handleChange} 
-                        />
-                    ) : (
-                        <div className="read-only-value">{profile.department || 'Not set'}</div>
-                    )}
-                </div>
+                    <div className="col-12 col-md-6">
+                        <label className="form-label small fw-bold text-secondary text-uppercase mb-1" style={{ letterSpacing: '0.5px' }}>Department</label>
+                        {isEditing ? (
+                            <input 
+                                name="department" 
+                                className="form-control border-2 shadow-none rounded-3 py-2 fw-medium" 
+                                value={formData.department || ''} 
+                                onChange={handleChange} 
+                            />
+                        ) : (
+                            <div className="fw-medium text-dark bg-light px-3 py-2 rounded-3 border">{profile.department || 'Not set'}</div>
+                        )}
+                    </div>
 
-                <div className="input-group">
-                    <label className="input-label">Consultation Mode</label>
-                    {isEditing ? (
-                        <select 
-                            name="consultation_mode" 
-                            className="premium-input" 
-                            value={formData.consultation_mode === 'Both' ? 'Online and Offline' : (formData.consultation_mode || '')} 
-                            onChange={handleChange}
-                        >
-                            <option value="">Select Mode</option>
-                            <option value="Online">Online</option>
-                            <option value="Offline">Offline</option>
-                            <option value="Online and Offline">Online and Offline</option>
-                        </select>
-                    ) : (
-                        <div className="read-only-value">
-                            {profile.consultation_mode === 'Both' ? 'Online and Offline' : (profile.consultation_mode || 'Not set')}
-                        </div>
-                    )}
+                    <div className="col-12 col-md-6">
+                        <label className="form-label small fw-bold text-secondary text-uppercase mb-1" style={{ letterSpacing: '0.5px' }}>Consultation Mode</label>
+                        {isEditing ? (
+                            <select 
+                                name="consultation_mode" 
+                                className="form-select border-2 shadow-none rounded-3 py-2 fw-medium" 
+                                value={formData.consultation_mode === 'Both' ? 'Online and Offline' : (formData.consultation_mode || '')} 
+                                onChange={handleChange}
+                            >
+                                <option value="">Select Mode</option>
+                                <option value="Online">Online</option>
+                                <option value="Offline">Offline</option>
+                                <option value="Online and Offline">Online and Offline</option>
+                            </select>
+                        ) : (
+                            <div className="fw-medium text-dark bg-light px-3 py-2 rounded-3 border">
+                                {profile.consultation_mode === 'Both' ? 'Online and Offline' : (profile.consultation_mode || 'Not set')}
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
         </div>
     );
 
     if (loading) return (
-        <div className="flex items-center justify-center h-full bg-slate-50">
-            <Loader className="animate-spin text-blue-600" size={48} />
+        <div className="d-flex align-items-center justify-content-center min-vh-100 bg-light">
+            <div className="spinner-border text-primary border-3" style={{ width: '3rem', height: '3rem' }} role="status">
+                <span className="visually-hidden">Loading...</span>
+            </div>
         </div>
     );
     
     if (error) return (
-        <div className="flex items-center justify-center h-full text-red-500">
-            {error}
+        <div className="d-flex align-items-center justify-content-center min-vh-100 text-danger fw-medium">
+            <AlertCircle size={24} className="me-2" /> {error}
         </div>
     );
 
     if (!profile) return null;
 
     return (
-        <div className="doctor-profile-container">
-            {/* SINGLE CARD CONTAINER */}
-            <div className="single-card-frame">
-                {/* HEAD SECTION */}
-                <ProfileHeader 
-                    profile={formData} 
-                    onEdit={() => setIsEditing(true)}
-                    onImageUpload={handleImageUpload}
-                    isEditing={isEditing}
-                />
+        <div className="container-fluid py-4 min-vh-100 position-relative" style={{ paddingBottom: isEditing ? '80px' : '1.5rem' }}>
+            {/* HEAD SECTION */}
+            <ProfileHeader 
+                profile={formData} 
+                onEdit={() => setIsEditing(true)}
+                onImageUpload={handleImageUpload}
+                isEditing={isEditing}
+            />
 
-                {/* BODY SECTION (Grid) */}
-                <div className="profile-grid-layout pb-0"> 
-                    
-                    {/* LEFT SIDEBAR (Stats, Tags, Schedule) */}
-                    <div className="left-col-stack">
-                        <div className="stat-card-row">
-                            <div className="mini-stat">
-                                <div className="mini-stat-icon"><Briefcase size={20} /></div>
-                                <div className="mini-stat-val">{profile.experience_years}</div>
-                                <div className="mini-stat-label">Years</div>
-                            </div>
-                            <div className="mini-stat">
-                                <div className="mini-stat-icon"><CheckCircle size={20} /></div>
-                                <div className="mini-stat-val">4.9</div>
-                                <div className="mini-stat-label">Rating</div>
+            {/* BODY SECTION (Grid) */}
+            <div className="row g-4"> 
+                
+                {/* LEFT SIDEBAR (Stats, Tags, Schedule) */}
+                <div className="col-12 col-xl-4 d-flex flex-column gap-4">
+                    <div className="card shadow-sm border-0 rounded-4 bg-white">
+                        <div className="card-body p-4">
+                            <div className="row g-3">
+                                <div className="col-6">
+                                    <div className="bg-light rounded-3 p-3 text-center border">
+                                        <div className="mx-auto rounded-circle bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center mb-2" style={{ width: 40, height: 40 }}>
+                                            <Briefcase size={20} />
+                                        </div>
+                                        <div className="fw-bolder fs-5 text-dark lh-1 mb-1">{profile.experience_years}</div>
+                                        <div className="text-muted small fw-medium text-uppercase tracking-wider" style={{ fontSize: '0.7rem' }}>Years</div>
+                                    </div>
+                                </div>
+                                <div className="col-6">
+                                    <div className="bg-light rounded-3 p-3 text-center border">
+                                        <div className="mx-auto rounded-circle bg-success bg-opacity-10 text-success d-flex align-items-center justify-content-center mb-2" style={{ width: 40, height: 40 }}>
+                                            <CheckCircle size={20} />
+                                        </div>
+                                        <div className="fw-bolder fs-5 text-dark lh-1 mb-1">4.9</div>
+                                        <div className="text-muted small fw-medium text-uppercase tracking-wider" style={{ fontSize: '0.7rem' }}>Rating</div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-
-                        {/* ExpertiseTags handles its own title */}
-                        <ExpertiseTags 
-                            tags={formData.expertise_tags || []} 
-                            isEditing={isEditing}
-                            onAddTag={handleAddTag} 
-                            onRemoveTag={handleRemoveTag}
-                        />
-
-                        {/* AvailabilityOverview handles its own title */}
-                        <AvailabilityOverview 
-                            availability={profile.availability} 
-                            onManage={() => setIsAvailabilityModalOpen(true)}
-                        />
                     </div>
 
-                    {/* RIGHT CONTENT (Forms) */}
-                    <div className="right-col-stack">
-                        {renderBasicInfo()}
-                        <div className="h-px bg-slate-100 dark:bg-slate-700 my-2"></div>
-                        {renderProfessionalDetails()}
-                    </div>
+                    {/* ExpertiseTags handles its own title */}
+                    <ExpertiseTags 
+                        tags={formData.expertise_tags || []} 
+                        isEditing={isEditing}
+                        onAddTag={handleAddTag} 
+                        onRemoveTag={handleRemoveTag}
+                    />
 
+                    {/* AvailabilityOverview handles its own title */}
+                    <AvailabilityOverview 
+                        availability={profile.availability} 
+                        onManage={() => setIsAvailabilityModalOpen(true)}
+                    />
                 </div>
+
+                {/* RIGHT CONTENT (Forms) */}
+                <div className="col-12 col-xl-8">
+                    {renderBasicInfo()}
+                    {renderProfessionalDetails()}
+                </div>
+
             </div>
             
             {/* BOTTOM ACTION BAR (When Editing) */}
             {isEditing && (
-                <div className="bottom-action-bar slide-in-from-bottom-4">
-                    <span className="text-sm font-medium text-slate-500 mr-auto pl-4">Unsaved changes...</span>
-                    <button onClick={cancelEdit} className="btn-secondary flex items-center gap-2">
-                        <X size={16} /> Cancel
-                    </button>
-                    <button onClick={handleSave} className="btn-primary flex items-center gap-2">
-                        <Save size={16} /> Save Changes
-                    </button>
+                <div className="position-fixed bottom-0 start-0 w-100 bg-white border-top shadow-lg p-3 z-3" style={{ animation: 'slideInUp 0.3s ease' }}>
+                    <div className="container-fluid d-flex align-items-center justify-content-between">
+                        <span className="text-muted small fw-medium d-none d-md-block ms-md-4">Unsaved changes...</span>
+                        <div className="d-flex align-items-center gap-3 ms-auto pe-md-4">
+                            <button onClick={cancelEdit} className="btn btn-light border d-flex align-items-center gap-2 px-4 rounded-pill fw-medium">
+                                <X size={18} /> Cancel
+                            </button>
+                            <button onClick={handleSave} className="btn btn-primary d-flex align-items-center gap-2 px-4 rounded-pill fw-bold shadow-sm">
+                                <Save size={18} /> Save Changes
+                            </button>
+                        </div>
+                    </div>
                 </div>
             )}
 

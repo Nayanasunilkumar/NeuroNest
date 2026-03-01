@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import ReactDOM from 'react-dom';
-import { X, Plus, Trash2, Calendar, Clock } from 'lucide-react';
+import { X, Plus, Trash2, Calendar, Clock, AlertCircle } from 'lucide-react';
 import { addAvailabilitySlot, deleteAvailabilitySlot } from '../../services/doctorProfileService';
-import '../../styles/doctor-profile-premium.css';
 
 const toMinutes = (value = '') => {
     if (!value) return null;
@@ -127,113 +126,120 @@ const AvailabilityModal = ({ isOpen, onClose, availability, onUpdate }) => {
 
     // Portal to body to avoid clipping or stacking context issues
     return ReactDOM.createPortal(
-        <div className="modal-overlay availability-modal-overlay" onClick={onClose}>
-            <div className="modal-content" onClick={e => e.stopPropagation()}>
-                
-                {/* Header */}
-                <div className="modal-header">
-                    <div className="modal-title">
-                        <Calendar size={20} className="text-blue-600" /> 
-                        <span>Manage Weekly Schedule</span>
+        <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1050 }} tabIndex="-1" onClick={onClose}>
+            <div className="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable" onClick={e => e.stopPropagation()}>
+                <div className="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+                    
+                    {/* Header */}
+                    <div className="modal-header border-bottom px-4 py-3 bg-light">
+                        <div className="modal-title d-flex align-items-center gap-2 fw-bold text-dark h5 mb-0">
+                            <Calendar size={20} className="text-primary" /> 
+                            <span>Manage Weekly Schedule</span>
+                        </div>
+                        <button onClick={onClose} className="btn-close shadow-none"></button>
                     </div>
-                    <button onClick={onClose} className="btn-icon-ghost">
-                        <X size={20} />
-                    </button>
-                </div>
 
-                <div className="modal-body">
+                    <div className="modal-body p-0 d-flex flex-column flex-lg-row min-h-100" style={{ minHeight: '500px' }}>
+                        
                         {/* Left: Add Availability Form */}
-                    <div className="modal-sidebar">
-                        <h3 className="modal-sidebar-title">Add Availability Range</h3>
-                        
-                        <div className="modal-form-group">
-                            <label className="modal-label">Day</label>
-                            <select 
-                                className="modal-select"
-                                value={day}
-                                onChange={(e) => setDay(e.target.value)}
+                        <div className="col-12 col-lg-5 p-4 bg-white border-end-lg">
+                            <h3 className="h6 fw-bold text-dark mb-4 text-uppercase" style={{ letterSpacing: '0.5px' }}>Add Availability Range</h3>
+                            
+                            <div className="mb-3">
+                                <label className="form-label small fw-bold text-secondary text-uppercase mb-1" style={{ letterSpacing: '0.5px' }}>Day</label>
+                                <select 
+                                    className="form-select border-2 shadow-none rounded-3 py-2 fw-medium"
+                                    value={day}
+                                    onChange={(e) => setDay(e.target.value)}
+                                >
+                                    {days.map(d => <option key={d} value={d}>{d}</option>)}
+                                </select>
+                            </div>
+                            
+                            <div className="row g-2 mb-4">
+                                <div className="col-6">
+                                    <label className="form-label small fw-bold text-secondary text-uppercase mb-1" style={{ letterSpacing: '0.5px' }}>Start</label>
+                                    <input 
+                                        type="time" 
+                                        className="form-control border-2 shadow-none rounded-3 py-2 fw-medium"
+                                        value={startTime}
+                                        onChange={(e) => setStartTime(e.target.value)}
+                                    />
+                                </div>
+                                <div className="col-6">
+                                    <label className="form-label small fw-bold text-secondary text-uppercase mb-1" style={{ letterSpacing: '0.5px' }}>End</label>
+                                    <input 
+                                        type="time" 
+                                        className="form-control border-2 shadow-none rounded-3 py-2 fw-medium"
+                                        value={endTime}
+                                        onChange={(e) => setEndTime(e.target.value)}
+                                    />
+                                </div>
+                            </div>
+
+                            {validationMessage && (
+                                <div className="alert alert-danger py-2 px-3 small d-flex align-items-center gap-2 rounded-3 border-0 bg-danger bg-opacity-10 text-danger fw-medium" role="alert">
+                                    <AlertCircle size={14} className="flex-shrink-0" />
+                                    <span>{validationMessage}</span>
+                                </div>
+                            )}
+
+                            <div className="card border bg-light shadow-none rounded-4 mb-4">
+                                <div className="card-body p-3">
+                                    <p className="text-secondary small fw-bold text-uppercase mb-1" style={{ letterSpacing: '0.5px' }}>Preview</p>
+                                    <p className="fw-bold text-dark mb-1 fs-6">
+                                        {estimatedSlots > 0 ? `~${estimatedSlots} appointments` : 'No appointments'} for this range
+                                    </p>
+                                    <p className="text-muted small mb-0 fw-medium">
+                                        {hasInvalidRange ? 'Set a valid time range to preview impact.' : `${totalHours} hours total at 30+10 cadence`}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <button 
+                                onClick={handleAdd}
+                                disabled={loading || Boolean(validationMessage)}
+                                className="btn btn-primary w-100 d-flex justify-content-center align-items-center gap-2 py-2 fw-bold rounded-pill text-white shadow-sm"
                             >
-                                {days.map(d => <option key={d} value={d}>{d}</option>)}
-                            </select>
-                        </div>
-                        
-                        <div className="modal-form-group time-row">
-                            <div>
-                                <label className="modal-label">Start</label>
-                                <input 
-                                    type="time" 
-                                    className="modal-time-input"
-                                    value={startTime}
-                                    onChange={(e) => setStartTime(e.target.value)}
-                                />
-                            </div>
-                            <div>
-                                <label className="modal-label">End</label>
-                                <input 
-                                    type="time" 
-                                    className="modal-time-input"
-                                    value={endTime}
-                                    onChange={(e) => setEndTime(e.target.value)}
-                                />
-                            </div>
+                                {loading ? <span className="spinner-border spinner-border-sm"></span> : <Plus size={18} />}
+                                <span>Add Availability</span>
+                            </button>
                         </div>
 
-                        {validationMessage && (
-                            <p className="modal-validation-text" role="alert">
-                                {validationMessage}
-                            </p>
-                        )}
-
-                        <div className="availability-preview-card">
-                            <p className="availability-preview-title">Preview</p>
-                            <p className="availability-preview-value">
-                                {estimatedSlots > 0 ? `~${estimatedSlots} appointments` : 'No appointments'} for this range
-                            </p>
-                            <p className="availability-preview-meta">
-                                {hasInvalidRange ? 'Set a valid time range to preview impact.' : `${totalHours} hours total at 30+10 cadence`}
-                            </p>
-                        </div>
-
-                        <button 
-                            onClick={handleAdd}
-                            disabled={loading || Boolean(validationMessage)}
-                            className="btn-add-slot"
-                        >
-                            {loading ? <span className="loading-spinner"></span> : <Plus size={18} />}
-                            <span>Add Availability</span>
-                        </button>
-                    </div>
-
-                    {/* Right: Schedule List */}
-                    <div className="modal-main">
-                        <div className="modal-main-scroll">
+                        {/* Right: Schedule List */}
+                        <div className="col-12 col-lg-7 p-4 bg-light overflow-auto">
                             {days.map(d => (
-                                <div key={d} className="slot-day-group">
-                                    <h4 className={`slot-day-header ${!slotsByDay[d].length ? 'opacity-50' : ''}`}>
-                                        {d}
-                                        {!slotsByDay[d].length && <span className="empty-day-badge">Off</span>}
+                                <div key={d} className="mb-4">
+                                    <h4 className={`h6 fw-bold mb-3 d-flex align-items-center gap-2 text-uppercase ${!slotsByDay[d].length ? 'opacity-50 text-secondary' : 'text-dark'}`} style={{ letterSpacing: '0.5px' }}>
+                                        <span style={{ width: '80px' }}>{d}</span>
+                                        <div className="flex-grow-1 border-bottom" style={{ height: '1px' }}></div>
+                                        {!slotsByDay[d].length && <span className="badge bg-secondary bg-opacity-10 text-secondary border px-2 border-secondary border-opacity-25 rounded-pill" style={{ fontSize: '10px' }}>Off</span>}
                                     </h4>
                                     
                                     {slotsByDay[d].length > 0 && (
-                                        <div className="slot-grid">
+                                        <div className="row g-2">
                                             {slotsByDay[d]
                                                 .sort((a, b) => (toMinutes(a.start_time) ?? 0) - (toMinutes(b.start_time) ?? 0))
                                                 .map(slot => (
-                                                <div key={slot.id} className="time-slot-card">
-                                                    <div className="flex items-center gap-3">
-                                                        <Clock size={14} className="text-slate-400" />
-                                                        <span className="slot-time-text">
-                                                            {formatTimeCompact(slot.start_time)} - {formatTimeCompact(slot.end_time)}
-                                                        </span>
+                                                <div key={slot.id} className="col-12 col-sm-6">
+                                                    <div className="card border bg-white shadow-sm rounded-3 hover-shadow-sm transition-all">
+                                                        <div className="card-body p-2 px-3 d-flex justify-content-between align-items-center">
+                                                            <div className="d-flex align-items-center gap-2">
+                                                                <Clock size={14} className="text-primary opacity-75" />
+                                                                <span className="fw-bold text-dark" style={{ fontSize: '0.85rem' }}>
+                                                                    {formatTimeCompact(slot.start_time)} - {formatTimeCompact(slot.end_time)}
+                                                                </span>
+                                                            </div>
+                                                            <button 
+                                                                onClick={() => handleDelete(slot.id)}
+                                                                className="btn btn-sm btn-light border-0 text-danger p-1 rounded hover-bg-danger hover-text-white transition-all"
+                                                                title="Remove availability"
+                                                                aria-label="Remove availability"
+                                                            >
+                                                                <Trash2 size={14} />
+                                                            </button>
+                                                        </div>
                                                     </div>
-                                                    <button 
-                                                        onClick={() => handleDelete(slot.id)}
-                                                        className="btn-delete-slot"
-                                                        title="Remove availability"
-                                                        aria-label="Remove availability"
-                                                    >
-                                                        <Trash2 size={14} />
-                                                    </button>
                                                 </div>
                                             ))}
                                         </div>

@@ -1,7 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Camera, Edit2, MapPin, Briefcase, Award } from 'lucide-react';
 import { toAssetUrl } from '../../utils/media';
-import '../../styles/doctor-profile-premium.css';
 
 const ProfileHeader = ({ profile, onEdit, onImageUpload, isEditing }) => {
     const fileInputRef = useRef(null);
@@ -21,82 +20,103 @@ const ProfileHeader = ({ profile, onEdit, onImageUpload, isEditing }) => {
     };
 
     return (
-        <div className="profile-banner-card">
-            {/* Profile Image with Hover Overlay */}
-            <div 
-                className="premium-avatar-wrapper"
-                onMouseEnter={() => setIsHovering(true)}
-                onMouseLeave={() => setIsHovering(false)}
-                onClick={handleImageClick}
-                style={{ cursor: isEditing ? 'pointer' : 'default' }}
-            >
-                <img 
-                    src={toAssetUrl(profile.profile_image) || "https://via.placeholder.com/150"} 
-                    alt="Dr. Profile" 
-                    className="premium-avatar"
-                />
-                
-                {/* Only show overlay if editing */}
-                {isEditing && (
-                    <div 
-                        className="avatar-upload-overlay" 
-                        style={{ opacity: isHovering ? 1 : 0 }}
-                    >
-                        <Camera size={24} />
+        <div className="card shadow-sm border-0 rounded-4 overflow-hidden mb-4 bg-white position-relative">
+            <div className="card-body p-4 p-md-5">
+                <div className="row g-4 align-items-center">
+                    
+                    {/* Profile Image Column */}
+                    <div className="col-auto">
+                        <div 
+                            className="position-relative d-inline-block rounded-circle overflow-hidden shadow"
+                            onMouseEnter={() => setIsHovering(true)}
+                            onMouseLeave={() => setIsHovering(false)}
+                            onClick={handleImageClick}
+                            style={{ 
+                                width: '130px', 
+                                height: '130px', 
+                                cursor: isEditing ? 'pointer' : 'default',
+                                padding: '4px',
+                                background: 'linear-gradient(135deg, #0d6efd, #6610f2)'
+                            }}
+                        >
+                            <img 
+                                src={toAssetUrl(profile.profile_image) || "https://via.placeholder.com/150"} 
+                                alt="Dr. Profile" 
+                                className="w-100 h-100 rounded-circle object-fit-cover bg-white"
+                                style={{ border: '3px solid white' }}
+                            />
+                            
+                            {/* Overlay if editing */}
+                            {isEditing && (
+                                <div 
+                                    className="position-absolute py-2 top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center bg-dark text-white rounded-circle transition-all" 
+                                    style={{ 
+                                        opacity: isHovering ? 0.7 : 0,
+                                        transition: 'all 0.2s ease',
+                                        margin: '4px', // account for outer padding
+                                        width: 'calc(100% - 8px)',
+                                        height: 'calc(100% - 8px)'
+                                    }}
+                                >
+                                    <Camera size={26} />
+                                </div>
+                            )}
+                            
+                            {/* Hidden Input */}
+                            <input 
+                                type="file" 
+                                ref={fileInputRef} 
+                                className="d-none"
+                                accept="image/*"
+                                onChange={handleFileChange}
+                                disabled={!isEditing}
+                            />
+                        </div>
                     </div>
-                )}
-                
-                {/* Hidden Input */}
-                <input 
-                    type="file" 
-                    ref={fileInputRef} 
-                    style={{ display: 'none' }}
-                    accept="image/*"
-                    onChange={handleFileChange}
-                    disabled={!isEditing}
-                />
+
+                    {/* Info Column */}
+                    <div className="col text-center text-sm-start">
+                        <div className="mb-3">
+                            <h1 className="fw-bolder text-dark mb-1" style={{ fontSize: '1.8rem', letterSpacing: '-0.02em' }}>
+                                {profile.full_name || "Dr. Name"}
+                            </h1>
+                            <span className="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-2 py-1 rounded-pill fw-bold text-uppercase d-inline-flex align-items-center gap-1" style={{ fontSize: '0.75rem', letterSpacing: '0.5px' }}>
+                                <Briefcase size={12} /> {profile.experience_years || 0} Years Exp.
+                            </span>
+                        </div>
+
+                        {/* Badges Row */}
+                        <div className="d-flex flex-wrap gap-2 justify-content-center justify-content-md-start mb-3">
+                            <span className="badge bg-light text-dark fw-medium border px-3 py-2 rounded-pill d-flex align-items-center gap-1">
+                                <Award size={14} className="text-warning" /> {profile.specialization || "Specialization"}
+                            </span>
+                            <span className="badge bg-light text-dark fw-medium border px-3 py-2 rounded-pill d-flex align-items-center gap-1">
+                                <MapPin size={14} className="text-secondary" /> {profile.hospital_name || "Hospital Name"}
+                            </span>
+                            <span className="badge bg-success bg-opacity-10 text-success fw-bold border border-success border-opacity-25 px-3 py-2 rounded-pill d-flex align-items-center gap-1">
+                                ₹{profile.consultation_fee || 0} / Visit
+                            </span>
+                        </div>
+
+                        {/* Bio */}
+                        <p className="text-secondary mb-0 fw-medium" style={{ lineHeight: '1.6', maxWidth: '800px' }}>
+                            {profile.bio || "No bio added yet. Click 'Edit Profile' to add a professional summary."}
+                        </p>
+                    </div>
+
+                    {/* Action Column */}
+                    {!isEditing && (
+                        <div className="col-12 col-md-auto text-end position-absolute top-0 end-0 p-4">
+                            <button 
+                                onClick={onEdit} 
+                                className="btn btn-primary d-flex align-items-center gap-2 rounded-pill px-4 fw-bold shadow-sm"
+                            >
+                                <Edit2 size={16} /> <span>Edit Profile</span>
+                            </button>
+                        </div>
+                    )}
+                </div>
             </div>
-
-            {/* Info Section */}
-            <div className="profile-header-info">
-                {/* Name & Experience Group */}
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '8px' }}>
-                    <h1 className="profile-name-large">{profile.full_name || "Dr. Name"}</h1>
-                    <span className="badge-primary badge-pill" style={{ display: 'inline-flex', width: 'auto' }}>
-                        <Briefcase size={16} /> <span className="ml-2">{profile.experience_years || 0} Years Exp.</span>
-                    </span>
-                </div>
-
-                {/* Badges Row */}
-                <div className="profile-badges">
-                    <span className="badge-secondary badge-pill">
-                        <Award size={16} /> <span className="ml-2">{profile.specialization || "Specialization"}</span>
-                    </span>
-                    <span className="badge-secondary badge-pill">
-                        <MapPin size={16} /> <span className="ml-2">{profile.hospital_name || "Hospital Name"}</span>
-                    </span>
-                    <span className="badge-success badge-pill">
-                        <span className="font-bold">₹{profile.consultation_fee || 0} / Visit</span>
-                    </span>
-                </div>
-
-                {/* Bio */}
-                <p style={{ marginTop: '16px', lineHeight: '1.6', color: 'var(--text-secondary)' }}>
-                    {profile.bio || "No bio added yet. Click 'Edit Profile' to add a professional summary."}
-                </p>
-            </div>
-
-            {/* Action Buttons - Hide if already editing */}
-            {!isEditing && (
-                <div className="banner-actions">
-                    <button 
-                        onClick={onEdit} 
-                        className="btn-outline-primary"
-                    >
-                        <Edit2 size={16} /> <span>Edit Profile</span>
-                    </button>
-                </div>
-            )}
         </div>
     );
 };
