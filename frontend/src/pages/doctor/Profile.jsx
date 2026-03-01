@@ -7,9 +7,11 @@ import ExpertiseTags from '../../components/doctor/ExpertiseTags';
 import AvailabilityModal from '../../components/doctor/AvailabilityModal';
 import { fetchSpecialties } from '../../services/adminDoctorAPI';
 import { toAssetUrl } from '../../utils/media';
+import { useTheme } from '../../context/ThemeContext';
 import '../../styles/profile-dark.css';
 
 const Profile = () => {
+    const { isDark } = useTheme();
     const fileInputRef = useRef(null);
     const [profile, setProfile] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -135,7 +137,7 @@ const Profile = () => {
     if (!profile) return null;
 
     return (
-        <div className="dark-profile-page">
+        <div className={`dark-profile-page ${!isDark ? 'light-theme' : ''}`}>
             <div className="dark-container">
                 <div className="dark-banner p-4">
                     {!isEditing && (
@@ -258,9 +260,6 @@ const Profile = () => {
                                         <span className="dark-card-pill">Min. {formData.experience_years || 0} Years</span>
                                         <span className="dark-card-pill">{formData.department || "Medical"}</span>
                                     </div>
-                                    <div className="dark-card-actions">
-                                        <button className="dark-btn-primary" onClick={() => setIsEditing(true)}>Review Info</button>
-                                    </div>
                                 </div>
 
                                 {/* Card 2: Regulatory Identity */}
@@ -280,9 +279,6 @@ const Profile = () => {
                                         <span className="dark-card-pill">DOB: {formData.dob || "XX-XX"}</span>
                                         <span className="dark-card-pill">{formData.gender || "Gender"}</span>
                                     </div>
-                                    <div className="dark-card-actions">
-                                        <button className="dark-btn-primary" onClick={() => setIsEditing(true)}>Update Profile</button>
-                                    </div>
                                 </div>
 
                                 {/* Card 3: Consultation Format */}
@@ -300,9 +296,6 @@ const Profile = () => {
                                     <div className="dark-card-pills">
                                         <span className="dark-card-pill">Fee: ₹{formData.consultation_fee || 0}</span>
                                         <span className="dark-card-pill">Format: {formData.consultation_mode || "Mixed"}</span>
-                                    </div>
-                                    <div className="dark-card-actions">
-                                        <button className="dark-btn-primary" onClick={() => setIsEditing(true)}>Edit Pricing</button>
                                     </div>
                                 </div>
                             </div>
