@@ -102,8 +102,8 @@ const MyPatients = () => {
             </div>
 
             {/* FUNCTIONAL CONTROL BAR */}
-            <div className="control-instrument-bar" style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem', background: 'transparent' }}>
-                <div className="flex-1 min-w-[280px] max-w-md relative">
+            <div className="flex flex-col md:flex-row gap-4 items-center justify-between mb-6">
+                <div className="w-full md:flex-1 md:max-w-md relative">
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
                     <input 
                         type="text"
@@ -114,40 +114,44 @@ const MyPatients = () => {
                     />
                 </div>
                 
-                <div className="flex items-center gap-3 overflow-x-auto pb-1 md:pb-0" style={{ scrollbarWidth: 'none' }}>
+                <div className="w-full md:w-auto flex flex-nowrap items-center gap-3 overflow-x-auto pb-2 md:pb-0 no-scrollbar">
                     
                     {/* Status Dropdown */}
-                    <div className="flex items-center bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl h-11 px-3 shadow-sm hover:border-blue-500/30 transition-colors shrink-0 cursor-pointer">
-                        <Filter size={14} className="text-slate-400 mr-2" />
+                    <div className="relative flex items-center bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl h-11 px-3 shadow-sm hover:border-blue-500/30 transition-colors shrink-0">
+                        <Filter size={14} className="text-slate-400 mr-2 pointer-events-none" />
                         <select 
                             value={statusFilter}
                             onChange={(e) => setStatusFilter(e.target.value)}
-                            className="bg-transparent border-none text-[11px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300 outline-none cursor-pointer pr-2 appearance-none"
-                            style={{ WebkitAppearance: 'none' }}
+                            className="bg-transparent border-none text-[12px] font-bold text-slate-600 dark:text-slate-300 outline-none cursor-pointer appearance-none pr-4"
                         >
                             <option value="all">Every Patient</option>
                             <option value="active">Active Only</option>
                             <option value="inactive">Inactive Only</option>
                         </select>
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                            <span className="text-[10px] text-slate-400">▼</span>
+                        </div>
                     </div>
 
                     {/* Sort Dropdown */}
-                    <div className="flex items-center bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl h-11 px-3 shadow-sm hover:border-blue-500/30 transition-colors shrink-0 cursor-pointer">
-                        <ArrowUpDown size={14} className="text-slate-400 mr-2" />
+                    <div className="relative flex items-center bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl h-11 px-3 shadow-sm hover:border-blue-500/30 transition-colors shrink-0">
+                        <ArrowUpDown size={14} className="text-slate-400 mr-2 pointer-events-none" />
                         <select 
                             value={sortBy}
                             onChange={(e) => setSortBy(e.target.value)}
-                            className="bg-transparent border-none text-[11px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300 outline-none cursor-pointer pr-2 appearance-none"
-                            style={{ WebkitAppearance: 'none' }}
+                            className="bg-transparent border-none text-[12px] font-bold text-slate-600 dark:text-slate-300 outline-none cursor-pointer appearance-none pr-4"
                         >
                             <option value="recent">Recent Visit</option>
                             <option value="upcoming">Upcoming Visit</option>
                             <option value="name">Alphabetical</option>
                         </select>
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                            <span className="text-[10px] text-slate-400">▼</span>
+                        </div>
                     </div>
 
                     {/* Export Button */}
-                    <button className="flex items-center gap-2 px-5 h-11 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all shrink-0">
+                    <button className="flex items-center gap-2 px-5 h-11 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 rounded-xl text-[12px] font-bold shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all shrink-0">
                         <Users size={14} />
                         Export
                     </button>
