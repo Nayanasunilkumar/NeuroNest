@@ -33,21 +33,10 @@ const Sidebar = ({ isOpen, setIsOpen, role = "patient", title = "NeuroNest Panel
                 style={{ 
                     zIndex: 1045, 
                     width: isOpen ? '280px' : '80px',
-                    paddingTop: '70px',
+                    paddingTop: '86px',
                     transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)'
                 }}
             >
-                {/* Header Toggle (Desktop) */}
-                <div className={`d-none d-xl-flex ${isOpen ? 'justify-content-end px-3' : 'justify-content-center'} py-3`}>
-                    <button 
-                        className={`btn btn-link p-2 text-decoration-none ${darkMode ? 'text-light opacity-50' : 'text-secondary opacity-75'} hover-opacity-100`}
-                        onClick={() => setIsOpen(!isOpen)}
-                        title={isOpen ? "Collapse Sidebar" : "Expand Sidebar"}
-                    >
-                        <ChevronRight size={20} className={`transition-all ${isOpen ? 'rotate-180' : ''}`} />
-                    </button>
-                </div>
-
                 {/* Mobile Close Button */}
                 <div className="d-flex d-xl-none justify-content-end p-3 position-absolute top-0 end-0">
                     <button className={`btn rounded-circle p-2 ${darkMode ? 'btn-outline-light' : 'btn-outline-dark'}`} onClick={() => setIsOpen(false)}>
@@ -55,61 +44,50 @@ const Sidebar = ({ isOpen, setIsOpen, role = "patient", title = "NeuroNest Panel
                     </button>
                 </div>
 
-                <div className="d-flex flex-column h-100 py-4 overflow-hidden">
-                    {/* Menu Sections */}
-                    <div className="flex-grow-1 overflow-y-auto px-3 custom-scrollbar">
-                        {Object.entries(groupedItems).map(([groupName, items]) => (
-                            <div key={groupName} className="mb-4">
-                                {isOpen && (
-                                    <div className={`small fw-black text-uppercase mb-3 px-3 opacity-50 ${darkMode ? 'text-light' : 'text-secondary'}`} style={{ fontSize: '0.65rem', letterSpacing: '1.5px' }}>
-                                        {groupName}
-                                    </div>
-                                )}
-                                <div className="d-flex flex-column gap-1">
-                                    {items.map((item) => {
-                                        const Icon = item.icon;
-                                        if (!Icon) return null;
-                                        return (
-                                            <NavLink
-                                                key={item.key}
-                                                to={getModulePathForRole(item, role)}
-                                                className={({ isActive }) => `
-                                                    d-flex align-items-center gap-3 px-3 py-2 rounded-3 text-decoration-none transition-all
-                                                    ${isActive 
-                                                        ? 'bg-primary text-white shadow-sm' 
-                                                        : darkMode ? 'text-light-emphasis hover-bg-dark' : 'text-secondary hover-bg-light'}
-                                                `}
-                                                onClick={() => window.innerWidth < 1200 && setIsOpen(false)}
-                                                title={!isOpen ? item.label : ''}
-                                            >
-                                                {({ isActive }) => (
-                                                    <>
-                                                        <div className="d-flex align-items-center justify-content-center flex-shrink-0" style={{ width: '24px', height: '24px' }}>
-                                                            <Icon size={20} strokeWidth={isActive ? 2.5 : 2} />
-                                                        </div>
-                                                        {isOpen && (
-                                                            <div className="d-flex align-items-center justify-content-between flex-grow-1 min-w-0">
-                                                                <span className="fw-bold small text-truncate">{item.label}</span>
-                                                                <ChevronRight size={14} className="opacity-25" />
-                                                            </div>
-                                                        )}
-                                                    </>
-                                                )}
-                                            </NavLink>
-                                        );
-                                    })}
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-
-                    {/* Footer / Logout */}
-                    <div className="px-3 mt-auto pt-4 border-top border-light border-opacity-10">
+                <div className="d-flex flex-column h-100 py-0 overflow-hidden">
+                    {/* Flat Menu List for Uniform Spacing */}
+                    <div className="flex-grow-1 overflow-y-auto px-3 py-3 custom-scrollbar d-flex flex-column gap-3">
+                        {menuItems.map((item) => {
+                            const Icon = item.icon;
+                            if (!Icon) return null;
+                            return (
+                                <NavLink
+                                    key={item.key}
+                                    to={getModulePathForRole(item, role)}
+                                    className={({ isActive }) => `
+                                        d-flex align-items-center gap-3 px-3 py-2 rounded-3 text-decoration-none transition-all
+                                        ${isActive 
+                                            ? 'bg-primary text-white shadow-sm' 
+                                            : darkMode ? 'text-light-emphasis hover-bg-dark' : 'text-secondary hover-bg-light'}
+                                    `}
+                                    onClick={() => window.innerWidth < 1200 && setIsOpen(false)}
+                                    title={!isOpen ? item.label : ''}
+                                >
+                                    {({ isActive }) => (
+                                        <>
+                                            <div className="d-flex align-items-center justify-content-center flex-shrink-0" style={{ width: '24px', height: '24px' }}>
+                                                <Icon size={20} strokeWidth={isActive ? 2.5 : 2} />
+                                            </div>
+                                            {isOpen && (
+                                                <div className="d-flex align-items-center justify-content-between flex-grow-1 min-w-0">
+                                                    <span className="fw-bold small text-truncate">{item.label}</span>
+                                                    <ChevronRight size={14} className="opacity-25" />
+                                                </div>
+                                            )}
+                                        </>
+                                    )}
+                                </NavLink>
+                            );
+                        })}
+                        
+                        {/* Logout in the same gap sequence */}
                         <button 
-                            className={`btn w-100 d-flex align-items-center gap-3 px-3 py-3 rounded-3 border-0 transition-all ${darkMode ? 'text-danger-emphasis bg-danger bg-opacity-10' : 'text-danger bg-danger bg-opacity-10'} hover-bg-danger`}
+                            className={`btn w-100 d-flex align-items-center gap-3 px-3 py-2 rounded-3 border-0 transition-all ${darkMode ? 'text-danger-emphasis bg-danger bg-opacity-10' : 'text-danger bg-danger bg-opacity-10'} hover-bg-danger`}
                             onClick={logout}
                         >
-                            <LogOut size={20} />
+                            <div className="d-flex align-items-center justify-content-center flex-shrink-0" style={{ width: '24px', height: '24px' }}>
+                                <LogOut size={20} />
+                            </div>
                             {isOpen && <span className="fw-black small text-uppercase" style={{ letterSpacing: '1px' }}>Disconnect</span>}
                         </button>
                     </div>
@@ -140,7 +118,6 @@ const Sidebar = ({ isOpen, setIsOpen, role = "patient", title = "NeuroNest Panel
                 .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 10px; }
                 
                 .fw-black { font-weight: 950; }
-                .rotate-180 { transform: rotate(180deg); }
                 .hover-opacity-100:hover { opacity: 1 !important; }
                 .transition-all { transition: all 0.3s ease !important; }
             `}</style>
