@@ -44,64 +44,103 @@ const Login = () => {
   };
 
   return (
-        <div className="glass-ultra-container">
-            <div className="glass-flex-center">
-                
-                <div className="glass-shadow-wrapper">
+        <div className="container-fluid min-vh-100 d-flex align-items-center justify-content-center bg-light" style={{ position: 'relative', overflow: 'hidden' }}>
+            {/* Background depth using standard HTML/CSS + Bootstrap bg */}
+            <div className="position-absolute top-0 start-0 w-100 h-100 placeholder-wave opacity-25" style={{ background: 'linear-gradient(135deg, rgba(13,110,253,0.05) 0%, rgba(101,44,203,0.05) 100%)', pointerEvents: 'none' }} />
+            
+            <div className="row w-100 justify-content-center position-relative" style={{ zIndex: 1, maxWidth: '500px' }}>
+                <div className="col-12 px-3 px-sm-0">
                     
-                    {/* The main cutout glass pane */}
-                    <div className="glass-main-card">
-                        <h1 className="glass-title">Neuro<br/><span className="glass-title-accent">Nest</span></h1>
+                    <div className="card border-0 shadow-lg rounded-4 p-4 p-sm-5 bg-white backdrop-blur">
+                        <div className="text-center mb-4">
+                            <h2 className="fw-bolder text-dark mb-2 d-flex align-items-center justify-content-center gap-2" style={{ letterSpacing: '-0.5px' }}>
+                                <div className="rounded-circle shadow-sm" style={{ width: '12px', height: '12px', background: 'linear-gradient(135deg, #0d6efd, #6610f2)' }} />
+                                NeuroNest
+                            </h2>
+                            <p className="text-secondary small fw-medium text-uppercase tracking-wide">Sign in to your account</p>
+                        </div>
 
-                        <div className="glass-body">
-                            {error && <div className="glass-error-msg">{error}</div>}
-                            
-                            <form onSubmit={(e) => { e.preventDefault(); handleSubmit(e); }} className="w-100">
-                                <div className="glass-input-wrapper">
-                                    <input
-                                        type="email"
-                                        value={email}
-                                        onChange={e => setEmail(e.target.value)}
-                                        placeholder="Email Address"
-                                        required
-                                        className="glass-input"
-                                    />
+                        {error && (
+                            <div className="alert alert-danger d-flex align-items-center fw-bold small p-3 rounded-3 shadow-sm border-0 mb-4" role="alert">
+                                <svg width="16" height="16" className="me-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                                    <circle cx="12" cy="12" r="10" /><line x1="15" y1="9" x2="9" y2="15" /><line x1="9" y1="9" x2="15" y2="15" />
+                                </svg>
+                                {error}
+                            </div>
+                        )}
+
+                        <form onSubmit={handleSubmit} className="d-flex flex-column gap-3">
+                            {/* Email */}
+                            <div className="form-group mb-2">
+                                <label htmlFor="login-email" className="form-label small fw-bold text-secondary text-uppercase" style={{ letterSpacing: '1px' }}>Email</label>
+                                <input
+                                    id="login-email"
+                                    type="email"
+                                    className="form-control form-control-lg bg-light border-0 shadow-sm"
+                                    value={email}
+                                    onChange={e => setEmail(e.target.value)}
+                                    placeholder="you@example.com"
+                                    required
+                                    autoComplete="email"
+                                    style={{ fontSize: '0.95rem' }}
+                                />
+                            </div>
+
+                            {/* Password */}
+                            <div className="form-group mb-3">
+                                <div className="d-flex justify-content-between align-items-center mb-2">
+                                    <label htmlFor="login-pw" className="form-label small fw-bold text-secondary text-uppercase mb-0" style={{ letterSpacing: '1px' }}>Password</label>
+                                    <Link to="/forgot-password" className="text-decoration-none fw-bold small text-primary">Forgot?</Link>
                                 </div>
-                                <div className="glass-input-wrapper mb-2">
+                                <div className="input-group shadow-sm bg-light rounded overflow-hidden">
                                     <input
+                                        id="login-pw"
                                         type={showPw ? "text" : "password"}
+                                        className="form-control form-control-lg bg-light border-0"
                                         value={password}
                                         onChange={e => setPassword(e.target.value)}
-                                        placeholder="Password"
+                                        placeholder="••••••••"
                                         required
-                                        className="glass-input"
+                                        autoComplete="current-password"
+                                        style={{ fontSize: '0.95rem' }}
                                     />
-                                    <button type="button" className="glass-eye-btn" onClick={() => setShowPw(!showPw)}>
+                                    <button 
+                                        type="button" 
+                                        className="btn btn-light border-0 text-secondary px-3" 
+                                        onClick={() => setShowPw(!showPw)} 
+                                        aria-label="Toggle password"
+                                        style={{ backgroundColor: '#f8f9fa' }}
+                                    >
                                         <EyeIcon open={showPw} />
                                     </button>
                                 </div>
-                            </form>
-                        </div>
+                            </div>
 
-                        <div className="glass-footer">
-                            <Link to="/forgot-password" className="glass-link opacity-75 fw-normal">Forgot Password?</Link>
-                            <span className="mt-1">
-                                Don't have an account? <Link to="/register" className="glass-link">Register</Link>
-                            </span>
-                        </div>
+                            {/* CTA */}
+                            <button type="submit" className="btn btn-primary btn-lg w-100 fw-bold shadow-sm d-flex justify-content-center align-items-center gap-2 rounded-3" disabled={loading} style={{ background: 'linear-gradient(135deg, #0d6efd, #6610f2)', border: 'none' }}>
+                                {loading && <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true" />}
+                                {loading ? "Signing in…" : "Sign In"}
+                            </button>
+
+                            {/* Encryption note */}
+                            <div className="d-flex align-items-center justify-content-center mt-2 text-muted fw-bold" style={{ fontSize: '0.75rem' }}>
+                                <svg width="12" height="12" className="me-1 opacity-75" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                                    <rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0110 0v4" />
+                                </svg>
+                                Your medical data is encrypted and secure
+                            </div>
+                        </form>
+
+                        <hr className="my-4 text-muted opacity-25" />
+
+                        {/* Register link */}
+                        <p className="text-center mb-0 fw-medium text-secondary" style={{ fontSize: '0.85rem' }}>
+                            Don't have an account?{" "}
+                            <Link to="/register" className="text-primary fw-bold text-decoration-none ms-1">Create one free</Link>
+                        </p>
+
                     </div>
-
-                    {/* The small pill nested in the cutout */}
-                    <button className="glass-pill-button" onClick={handleSubmit} disabled={loading}>
-                        {loading ? (
-                            <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true" />
-                        ) : (
-                            "ENTER"
-                        )}
-                    </button>
-
                 </div>
-
             </div>
         </div>
     );
