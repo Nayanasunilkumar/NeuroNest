@@ -5,68 +5,96 @@ import { logout } from '../../utils/auth';
 import { useModuleConfig } from '../../hooks/useModuleConfig';
 import { getModulePathForRole, getModulesForRole } from '../../modules/moduleRegistry';
 
-const DoctorSidebar = ({ collapsed, setCollapsed, mobileOpen, setMobileOpen }) => {
+const DoctorSidebar = ({ collapsed, setCollapsed, mobileOpen, setMobileOpen, darkMode }) => {
   const { enabledMap } = useModuleConfig();
   const menuItems = getModulesForRole('doctor', { enabledMap, sidebarOnly: true });
 
+  const sidebarWidth = collapsed ? '80px' : '260px';
+
   return (
-    <div className={`doctor-sidebar ${collapsed ? 'collapsed' : ''} ${mobileOpen ? 'mobile-open' : ''}`}>
-      {/* Sidebar Header */}
-      <div className={`doc-sidebar-header flex items-center py-6 mb-2 ${collapsed ? 'justify-center' : 'justify-between px-4'}`}>
-        {/* Desktop collapse toggle */}
-        <button
-          className="doc-sidebar-toggle-btn hide-on-mobile"
-          onClick={() => setCollapsed(!collapsed)}
-          title={collapsed ? "Expand Sidebar" : "Collapse Sidebar"}
-        >
-          <AlignLeft size={22} strokeWidth={2.5} />
-        </button>
-
-        {/* Mobile close button */}
-        <button
-          className="doc-sidebar-toggle-btn show-on-mobile"
+    <>
+      {/* Mobile Backdrop */}
+      {mobileOpen && (
+        <div 
+          className="position-fixed top-0 start-0 w-100 h-100 bg-dark bg-opacity-50" 
           onClick={() => setMobileOpen(false)}
-          title="Close menu"
-          aria-label="Close navigation menu"
-        >
-          <X size={22} strokeWidth={2.5} />
-        </button>
+          style={{ zIndex: 1040 }}
+        />
+      )}
+      
+      {/* Sidebar */}
+      <div 
+        className={`d-flex flex-column h-100 shadow-sm ${darkMode ? 'bg-dark border-secondary' : 'bg-white border-end'} ${mobileOpen ? 'position-fixed start-0 top-0 bottom-0' : 'd-none d-md-flex'}`}
+        style={{ 
+          width: sidebarWidth, 
+          minWidth: sidebarWidth, 
+          transition: 'width 0.3s ease',
+          zIndex: 1050,
+          transform: mobileOpen ? 'translateX(0)' : 'none'
+        }}
+      >
+        {/* Header */}
+        <div className={`d-flex align-items-center py-4 ${collapsed ? 'justify-content-center' : 'justify-content-between px-4'} border-bottom ${darkMode ? 'border-secondary' : ''}`} style={{ height: '80px' }}>
+          <button
+            className="btn btn-link text-decoration-none p-0 d-none d-md-flex align-items-center text-secondary"
+            onClick={() => setCollapsed(!collapsed)}
+            title={collapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+          >
+            <AlignLeft size={22} strokeWidth={2.5} />
+          </button>
 
-        {!collapsed && (
-          <span className="ml-3 font-bold text-base tracking-tight text-slate-800 dark:text-white whitespace-nowrap">
-            Doctor's Panel
-          </span>
-        )}
-      </div>
+          <button
+            className="btn btn-link text-decoration-none p-0 d-flex d-md-none align-items-center text-secondary"
+            onClick={() => setMobileOpen(false)}
+            title="Close menu"
+          >
+            <X size={22} strokeWidth={2.5} />
+          </button>
 
-      <nav className="sidebar-nav">
-        {menuItems.map((item) => {
-          const Icon = item.icon;
-          return (
-            <NavLink
-              key={item.key}
-              to={getModulePathForRole(item, 'doctor')}
-              className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
-              title={collapsed ? item.label : ''}
-            >
-              <Icon size={20} />
-              <span>{item.label}</span>
-            </NavLink>
-          );
-        })}
-      </nav>
+          {!collapsed && (
+            <span className={`ms-3 fw-bold text-truncate ${darkMode ? 'text-white' : 'text-dark'}`} style={{ fontSize: '1.05rem', letterSpacing: '-0.02em' }}>
+              Doctor's Panel
+            </span>
+          )}
+        </div>
 
-      <div className="p-4 border-t border-slate-200 dark:border-slate-800 mt-auto">
-        <div
-          className="nav-item text-slate-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors cursor-pointer"
-          onClick={logout}
-          title="Logout"
-        >
-          <LogOut size={20} />
-          <span>Logout</span>
+        {/* Nav */}
+        <nav className="flex-grow-1 overflow-auto d-flex flex-column p-3 gap-2">
+          {menuItems.map((item) => {
+            const Icon = item.icon;
+            return (
+              <NavLink
+                key={item.key}
+                to={getModulePathForRole(item, 'doctor')}
+                className={({ isActive }) => 
+                  `d-flex align-items-center rounded-3 py-2 ${collapsed ? 'justify-content-center px-0' : 'px-3 gap-3'} text-decoration-none fw-medium transition-all ` + 
+                  (isActive 
+                    ? `bg-primary bg-opacity-10 text-primary fw-bold` 
+                    : `${darkMode ? 'text-light' : 'text-secondary'} hover-bg-light`)
+                }
+                title={collapsed ? item.label : ''}
+              >
+                <Icon size={20} className="flex-shrink-0" />
+                {!collapsed && <span className="text-truncate">{item.label}</span>}
+              </NavLink>
+            );
+          })}
+        </nav>
+
+        {/* Footer */}
+        <div className={`p-3 border-top ${darkMode ? 'border-secondary' : ''} mt-auto`}>
+          <div
+            className={`d-flex align-items-center rounded-3 py-2 ${collapsed ? 'justify-content-center px-0' : 'px-3 gap-3'} text-danger text-decoration-none fw-medium transition-all`}
+            onClick={logout}
+            style={{ cursor: 'pointer' }}
+            title="Logout"
+          >
+            <LogOut size={20} className="flex-shrink-0" />
+            {!collapsed && <span>Logout</span>}
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 

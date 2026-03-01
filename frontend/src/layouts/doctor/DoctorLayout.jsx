@@ -3,8 +3,6 @@ import { Outlet, useLocation } from "react-router-dom";
 import DoctorSidebar from "./DoctorSidebar";
 import DoctorNavbar from "./DoctorNavbar";
 import { useTheme } from "../../context/ThemeContext";
-import "../../styles/doctor.css";
-import "../../styles/responsive.css";
 
 const DoctorLayout = () => {
   const [collapsed, setCollapsed] = useState(false);
@@ -23,32 +21,24 @@ const DoctorLayout = () => {
     return () => { document.body.style.overflow = ''; };
   }, [mobileOpen]);
 
-  const isChatRoute = location.pathname === '/doctor/chat';
-
   return (
-    <div className={`doctor-layout ${darkMode ? 'dark' : ''}`}>
-      {/* Mobile backdrop overlay */}
-      <div
-        className={`sidebar-mobile-overlay ${mobileOpen ? 'active' : ''}`}
-        onClick={() => setMobileOpen(false)}
-        aria-hidden="true"
-      />
-
+    <div className={`d-flex vh-100 vw-100 overflow-hidden ${darkMode ? 'bg-dark text-light' : 'bg-light'}`}>
       <DoctorSidebar
         collapsed={collapsed}
         setCollapsed={setCollapsed}
         mobileOpen={mobileOpen}
         setMobileOpen={setMobileOpen}
+        darkMode={darkMode}
       />
 
-      <div className="doctor-main">
+      <div className="d-flex flex-column flex-grow-1 h-100 position-relative" style={{ minWidth: 0 }}>
         <DoctorNavbar
           collapsed={collapsed}
           darkMode={darkMode}
           toggleTheme={toggleTheme}
           onMobileMenuClick={() => setMobileOpen(true)}
         />
-        <div className={`doctor-content ${isChatRoute ? 'no-padding' : ''}`}>
+        <div className="flex-grow-1 overflow-auto p-3 p-md-4">
           <Outlet />
         </div>
       </div>
