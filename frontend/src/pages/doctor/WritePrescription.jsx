@@ -6,8 +6,6 @@ import MedicineRow from '../../components/prescription/MedicineRow';
 import PrescriptionList from '../../components/prescription/PrescriptionList';
 import Avatar from '../../components/shared/Avatar';
 import { Plus, Save, FileText, Calendar, AlertCircle, User, Clock, ShieldAlert, Activity, ChevronDown, ChevronLeft, CheckCircle, X } from 'lucide-react';
-import '../../styles/doctor.css';
-import '../../styles/doctor-prescription-pro.css';
 
 const WritePrescription = ({ isEmbedded = false }) => {
     const [searchParams] = useSearchParams();
@@ -157,108 +155,54 @@ const WritePrescription = ({ isEmbedded = false }) => {
     const activeProfile = patientDossier?.identity || selectedPatient;
 
     return (
-        <div className="opd-dashboard-root custom-scrollbar" style={{ 
-            display: 'flex', 
-            flexDirection: 'row',
-            padding: '0 24px 24px 24px', 
-            gap: '24px', 
-            height: 'calc(100vh - 120px)',
-            overflow: 'hidden',
-        }}>
+        <div className={`d-flex flex-column flex-lg-row custom-scrollbar ${isEmbedded ? '' : 'px-4 pb-4'}`} style={{ gap: '24px', height: isEmbedded ? '100%' : 'calc(100vh - 120px)', minHeight: isEmbedded ? '500px' : 'auto' }}>
             {/* LEFT PANEL: FORM (70%) */}
-            <div className="prescription-form-panel" style={{ 
-                flex: 7, 
-                display: 'flex', 
-                flexDirection: 'column', 
-                height: '100%',
-                background: '#FFFFFF',
-                borderRadius: '24px',
-                boxShadow: 'var(--doc-shadow-card)',
-                overflow: 'hidden',
-                position: 'relative'
-            }}>
+            <div className="d-flex flex-column bg-white rounded-5 shadow-sm overflow-hidden position-relative" style={{ flex: 7 }}>
                 {/* 1. Header Area - Slim Sub-header */}
                 {!isEmbedded && (
-                    <div className="dossier-premium-header" style={{ 
-                        padding: '10px 32px', 
-                        marginBottom: 0, 
-                        borderRadius: 0, 
-                        border: 'none', 
-                        borderBottom: '1px solid #F1F5F9',
-                        minHeight: 'auto',
-                        background: '#FFFFFF'
-                    }}>
-                        <div className="header-nexus-left">
+                    <div className="d-flex align-items-center justify-content-between p-3 px-4 border-bottom border-light bg-white">
+                        <div className="d-flex align-items-center gap-3">
                             <button
                                 onClick={() => selectedPatient 
                                     ? navigate(`/doctor/patient-records?patientId=${selectedPatient.id}`) 
                                     : navigate(-1)
                                 }
                                 title="Back to Clinical Dossier"
-                                style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    width: '34px',
-                                    height: '34px',
-                                    borderRadius: '50%',
-                                    border: '1px solid #E2E8F0',
-                                    background: '#F8FAFC',
-                                    color: '#64748B',
-                                    cursor: 'pointer',
-                                    flexShrink: 0,
-                                    transition: 'all 0.2s',
-                                }}
-                                onMouseEnter={e => { e.currentTarget.style.background = '#EFF6FF'; e.currentTarget.style.borderColor = '#2563EB'; e.currentTarget.style.color = '#2563EB'; }}
-                                onMouseLeave={e => { e.currentTarget.style.background = '#F8FAFC'; e.currentTarget.style.borderColor = '#E2E8F0'; e.currentTarget.style.color = '#64748B'; }}
+                                className="btn btn-sm btn-light rounded-circle d-flex align-items-center justify-content-center border"
+                                style={{ width: '36px', height: '36px' }}
                             >
-                                <ChevronLeft size={18} />
+                                <ChevronLeft size={16} className="text-secondary" />
                             </button>
-                            <div className="header-title-stack">
-                                <span className="header-breadcrumb-mini" style={{ fontSize: '11px' }}>WORKSPACE / CLINICAL SCRIPTING</span>
-                                <h2 style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: '#64748B' }}>Secure Prescription Interface</h2>
+                            <div>
+                                <span className="text-secondary small fw-bolder text-uppercase" style={{ fontSize: '0.65rem', letterSpacing: '0.5px' }}>WORKSPACE / CLINICAL SCRIPTING</span>
+                                <h2 className="h6 fw-bolder mb-0 text-dark">Secure Prescription Interface</h2>
                             </div>
                         </div>
 
-                        <div className="header-nexus-right">
-                            <div style={{ position: 'relative', minWidth: '240px' }}>
-                                <select 
-                                    className="pro-input" 
-                                    style={{ 
-                                        height: '36px', 
-                                        paddingLeft: '16px', 
-                                        paddingRight: '36px',
-                                        fontSize: '13px', 
-                                        fontWeight: 600, 
-                                        background: '#F8FAFC', 
-                                        borderRadius: '30px', 
-                                        border: '1px solid #E2E8F0',
-                                        appearance: 'none',
-                                        cursor: 'pointer',
-                                        color: '#1E293B',
-                                        width: '100%',
-                                    }}
-                                    value={selectedPatient?.id || ''}
-                                    onChange={(e) => {
-                                        const p = patients.find(pat => pat.id === parseInt(e.target.value));
-                                        setSelectedPatient(p);
-                                    }}
-                                >
-                                    <option value="" disabled>— Select Patient —</option>
-                                    {patients.map(p => (
-                                        <option key={p.id} value={p.id}>
-                                            {p.full_name || p.name || `Patient #${p.id}`}
-                                        </option>
-                                    ))}
-                                </select>
-                                <ChevronDown size={14} style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', color: '#64748B', pointerEvents: 'none' }} />
-                            </div>
+                        <div className="position-relative" style={{ minWidth: '260px' }}>
+                            <select 
+                                className="form-select form-select-sm rounded-pill bg-light border-light shadow-none fw-bold text-dark px-3 py-2"
+                                style={{ paddingRight: '36px', appearance: 'none', cursor: 'pointer' }}
+                                value={selectedPatient?.id || ''}
+                                onChange={(e) => {
+                                    const p = patients.find(pat => pat.id === parseInt(e.target.value));
+                                    setSelectedPatient(p);
+                                }}
+                            >
+                                <option value="" disabled>— Select Patient —</option>
+                                {patients.map(p => (
+                                    <option key={p.id} value={p.id}>
+                                        {p.full_name || p.name || `Patient #${p.id}`}
+                                    </option>
+                                ))}
+                            </select>
+                            <ChevronDown size={14} className="position-absolute text-secondary" style={{ right: '14px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
                         </div>
                     </div>
                 )}
 
                 {/* 2. Scrollable Content Area */}
-                <div className="scroll-content" style={{ flex: 1, overflowY: 'auto', padding: '32px 32px 100px 32px' }}>
+                <div className="flex-grow-1 overflow-y-auto p-4 custom-scrollbar" style={{ paddingBottom: '100px' }}>
                     
                     {selectedPatient && activeProfile && (() => {
                         const age = getAge(activeProfile.dob);
@@ -270,56 +214,56 @@ const WritePrescription = ({ isEmbedded = false }) => {
                             ? new Date(lastVisitRaw).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
                             : null;
 
-                        const Chip = ({ icon, label, color = '#64748B', bg = '#F1F5F9' }) => (
-                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', background: bg, color, padding: '4px 10px', borderRadius: '999px', fontSize: '12px', fontWeight: 600, whiteSpace: 'nowrap' }}>
+                        const Chip = ({ icon, label, bgClass = 'bg-light text-secondary', borderClass = 'border-light' }) => (
+                            <span className={`badge rounded-pill d-inline-flex align-items-center gap-1 border ${bgClass} ${borderClass} px-3 py-1 fw-bold`} style={{ fontSize: '0.75rem', letterSpacing: '0.5px' }}>
                                 {icon}{label}
                             </span>
                         );
 
                         return (
-                        <div className="patient-context-card fade-in" style={{ marginBottom: '24px', background: 'linear-gradient(105deg, #ffffff 60%, #f0f7ff)', borderLeft: '5px solid #2563EB', padding: '18px 24px' }}>
-                            <div className="patient-info-grid">
+                        <div className="patient-context-card rounded-4 mb-4" style={{ background: 'linear-gradient(105deg, #ffffff 60%, rgba(13, 110, 253, 0.05))', borderLeft: '5px solid var(--bs-primary)' }}>
+                            <div className="d-flex flex-column flex-md-row gap-4 p-4 align-items-md-center">
                                 {/* Avatar */}
-                                <div style={{ position: 'relative', flexShrink: 0 }}>
+                                <div className="position-relative flex-shrink-0">
                                     <Avatar 
                                         src={activeProfile.profile_image} 
                                         alt={activeProfile.full_name} 
-                                        style={{ width: 64, height: 64, borderRadius: '18px', boxShadow: '0 6px 12px rgba(0,0,0,0.08)' }} 
+                                        style={{ width: 72, height: 72, borderRadius: '20px', boxShadow: '0 6px 12px rgba(0,0,0,0.08)' }} 
                                     />
-                                    <div style={{ position: 'absolute', bottom: 0, right: 0, width: 14, height: 14, background: '#22C55E', border: '2.5px solid #fff', borderRadius: '50%' }}></div>
+                                    <div className="position-absolute bg-success border border-white border-3 rounded-circle" style={{ bottom: '-4px', right: '-4px', width: '20px', height: '20px' }}></div>
                                 </div>
 
                                 {/* Info */}
-                                <div style={{ flex: 1, minWidth: 0 }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px', flexWrap: 'wrap' }}>
-                                        <h3 style={{ margin: 0, fontSize: '1.35rem', fontWeight: 800, color: '#0F172A', letterSpacing: '-0.02em', lineHeight: 1 }}>
+                                <div className="flex-grow-1">
+                                    <div className="d-flex align-items-center gap-2 mb-2">
+                                        <h3 className="fw-bolder text-dark mb-0 fs-4 lh-1">
                                             {activeProfile.full_name}
                                         </h3>
-                                        <span className="capsule-id" style={{ fontSize: '11px' }}>#PID-{activeProfile.id}</span>
+                                        <span className="badge bg-light text-secondary border border-light rounded-pill px-2" style={{ fontSize: '0.7rem' }}>#PID-{activeProfile.id}</span>
                                     </div>
-                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                                    <div className="d-flex flex-wrap gap-2">
                                         {activeProfile.gender && (
-                                            <Chip icon={<User size={11} />} label={activeProfile.gender} />
+                                            <Chip icon={<User size={12} />} label={activeProfile.gender} />
                                         )}
                                         {ageLabel && (
-                                            <Chip icon={<Clock size={11} />} label={ageLabel} />
+                                            <Chip icon={<Clock size={12} />} label={ageLabel} />
                                         )}
                                         {lastVisit && (
-                                            <Chip icon={<Calendar size={11} />} label={`Last visit: ${lastVisit}`} bg="#EFF6FF" color="#2563EB" />
+                                            <Chip icon={<Calendar size={12} className="text-primary" />} label={`Last visit: ${lastVisit}`} bgClass="bg-primary bg-opacity-10 text-primary" borderClass="border-primary border-opacity-25" />
                                         )}
                                     </div>
                                 </div>
 
                                 {/* Alert Badges */}
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'flex-end', flexShrink: 0 }}>
+                                <div className="d-flex flex-column gap-2 flex-shrink-0 align-items-md-end">
                                     {activeProfile.allergies && activeProfile.allergies !== 'None' && (
-                                        <div className="badge-allergy" style={{ borderRadius: '10px', fontSize: '12px', padding: '5px 12px' }}>
-                                            <ShieldAlert size={12} /> {activeProfile.allergies}
+                                        <div className="badge bg-danger bg-opacity-10 border border-danger border-opacity-25 text-danger rounded-pill px-3 py-2 fw-bold d-flex align-items-center gap-2">
+                                            <ShieldAlert size={14} /> {activeProfile.allergies}
                                         </div>
                                     )}
                                     {activeProfile.chronic_conditions && activeProfile.chronic_conditions !== 'None' && (
-                                        <div className="badge-chronic" style={{ borderRadius: '10px', fontSize: '12px', padding: '5px 12px' }}>
-                                            <Activity size={12} /> {activeProfile.chronic_conditions}
+                                        <div className="badge bg-warning bg-opacity-10 border border-warning border-opacity-25 text-warning rounded-pill px-3 py-2 fw-bold d-flex align-items-center gap-2 text-dark">
+                                            <Activity size={14} /> {activeProfile.chronic_conditions}
                                         </div>
                                     )}
                                 </div>
@@ -329,49 +273,48 @@ const WritePrescription = ({ isEmbedded = false }) => {
                     })()}
 
                     {selectedPatient ? (
-                        <form onSubmit={(e) => e.preventDefault()} style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+                        <form onSubmit={(e) => e.preventDefault()} className="d-flex flex-column gap-4">
                             
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px', alignItems: 'start' }}>
-                                <div className="input-field-premium">
-                                    <label className="pro-label">Clinical Diagnosis <span style={{color: '#EF4444'}}>*</span></label>
-                                    <div style={{ position: 'relative' }}>
+                            <div className="row g-4">
+                                <div className="col-12 col-md-6">
+                                    <label className="form-label text-dark fw-bold mb-2 small">Clinical Diagnosis <span className="text-danger">*</span></label>
+                                    <div className="position-relative">
                                         <input 
                                             type="text" 
-                                            className="pro-input-lg" 
+                                            className="form-control form-control-lg bg-light border-light shadow-sm rounded-4 text-dark fw-medium fs-6" 
                                             placeholder="Enter primary condition..."
                                             value={diagnosis}
                                             onChange={(e) => setDiagnosis(e.target.value)}
                                             style={{ paddingLeft: '48px' }}
                                             autoFocus
                                         />
-                                        <Activity size={20} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: '#94A3B8' }} />
+                                        <Activity size={20} className="position-absolute text-secondary" style={{ left: '16px', top: '50%', transform: 'translateY(-50%)' }} />
                                     </div>
                                 </div>
-                                <div className="input-field-premium">
-                                    <label className="pro-label">Prescription Validity</label>
-                                    <div style={{ position: 'relative' }}>
+                                <div className="col-12 col-md-6">
+                                    <label className="form-label text-dark fw-bold mb-2 small">Prescription Validity</label>
+                                    <div className="position-relative">
                                         <input 
                                             type="date" 
-                                            className="pro-input-lg" 
+                                            className="form-control form-control-lg bg-light border-light shadow-sm rounded-4 text-dark fw-medium fs-6" 
                                             value={validUntil}
                                             onChange={(e) => setValidUntil(e.target.value)}
-                                            style={{ paddingLeft: '48px', height: '56px' }}
+                                            style={{ paddingLeft: '48px', height: '100%' }}
                                         />
-                                        <Calendar size={20} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: '#94A3B8' }} />
+                                        <Calendar size={20} className="position-absolute text-secondary" style={{ left: '16px', top: '50%', transform: 'translateY(-50%)' }} />
                                     </div>
                                 </div>
                             </div>
 
                             <div>
-                                <label className="pro-label" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                    <Calendar size={14} /> Link Appointment
+                                <label className="form-label text-dark fw-bold mb-2 small d-flex align-items-center gap-2">
+                                    <Calendar size={14} className="text-secondary" /> Link Appointment
                                 </label>
-                                <div style={{ position: 'relative' }}>
+                                <div className="position-relative">
                                     <select 
-                                        className="pro-input" 
+                                        className="form-select bg-light border-light shadow-sm rounded-4 fw-medium text-dark px-3 py-2" 
                                         value={selectedAppointment}
                                         onChange={(e) => setSelectedAppointment(e.target.value)}
-                                        style={{ appearance: 'none' }}
                                     >
                                         <option value="">-- General Prescription --</option>
                                         {appointments.map(appt => (
@@ -380,112 +323,114 @@ const WritePrescription = ({ isEmbedded = false }) => {
                                             </option>
                                         ))}
                                     </select>
-                                    <ChevronDown size={16} style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', color: '#94A3B8', pointerEvents: 'none' }} />
                                 </div>
                             </div>
 
-                            <div style={{ height: '1px', background: '#F1F5F9', margin: '10px 0' }}></div>
+                            <hr className="my-2 border-light opacity-100" />
 
                             <div>
-                            <div style={{ padding: '32px', background: '#F8FAFC', borderRadius: '24px', border: '1px solid #E2E8F0', borderStyle: 'dashed' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-                                    <div>
-                                        <h3 className="pro-section-title" style={{ fontSize: '1.25rem', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                            <div style={{ width: 32, height: 32, borderRadius: '8px', background: '#2563EB', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                                <ShieldAlert size={18} />
-                                            </div>
-                                            Medication Regimen
-                                        </h3>
-                                        <p style={{ margin: '4px 0 0 42px', fontSize: '0.85rem', color: '#64748B', fontWeight: 500 }}>Specify drugs, dosages, and administration intervals.</p>
+                                <div className="bg-light bg-opacity-50 p-4 p-md-5 rounded-5 border border-dashed border-2 border-primary border-opacity-25">
+                                    <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+                                        <div>
+                                            <h3 className="h5 fw-bolder text-dark mb-1 d-flex align-items-center gap-2 lh-1">
+                                                <div className="bg-primary text-white rounded-3 d-flex align-items-center justify-content-center" style={{ width: '32px', height: '32px' }}>
+                                                    <ShieldAlert size={18} />
+                                                </div>
+                                                Medication Regimen
+                                            </h3>
+                                            <p className="text-secondary small fw-medium mb-0 ms-md-5 ps-md-1">Specify drugs, dosages, and administration intervals.</p>
+                                        </div>
+                                        <button 
+                                            type="button" 
+                                            className="btn btn-dark rounded-pill px-4 fw-bold shadow-sm d-flex align-items-center gap-2" 
+                                            onClick={handleAddItem} 
+                                            style={{ fontSize: '0.85rem' }}
+                                        >
+                                            <Plus size={16} /> Add Medication
+                                        </button>
                                     </div>
-                                    <button 
-                                        type="button" 
-                                        className="upload-btn-premium" 
-                                        onClick={handleAddItem} 
-                                        style={{ padding: '0 20px', height: '42px', fontSize: '0.85rem', background: '#0F172A' }}
-                                    >
-                                        <Plus size={16} /> Add Medication
-                                    </button>
-                                </div>
 
-                                <div className="medicine-list">
-                                    {items.map((item, idx) => (
-                                        <MedicineRow 
-                                            key={idx} 
-                                            index={idx} 
-                                            item={item} 
-                                            onChange={handleItemChange} 
-                                            onRemove={handleRemoveItem} 
-                                        />
-                                    ))}
-                                </div>
+                                    <div className="d-flex flex-column">
+                                        {items.map((item, idx) => (
+                                            <MedicineRow 
+                                                key={idx} 
+                                                index={idx} 
+                                                item={item} 
+                                                onChange={handleItemChange} 
+                                                onRemove={handleRemoveItem} 
+                                            />
+                                        ))}
+                                    </div>
                                 </div>
                             </div>
 
-                            <div className="clinical-notes-area" style={{ marginTop: '10px' }}>
-                                <label className="pro-label" style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#1E293B' }}>
-                                    <FileText size={16} /> Extended Clinical Notes
+                            <div className="mt-2">
+                                <label className="form-label text-dark fw-bold mb-2 small d-flex align-items-center gap-2">
+                                    <FileText size={16} className="text-secondary" /> Extended Clinical Notes
                                 </label>
                                 <textarea 
-                                    className="pro-input" 
+                                    className={`form-control bg-light border-light shadow-sm rounded-4 text-dark px-4 py-3 pb-4 ${!notes ? 'fst-italic fw-medium text-secondary' : 'fw-medium'}`}
                                     rows="4"
                                     placeholder="Briefly document findings, patient instructions, or special observations..."
                                     value={notes}
                                     onChange={(e) => setNotes(e.target.value)}
-                                    style={{ height: 'auto', padding: '20px', lineHeight: '1.6', borderRadius: '16px', background: '#F8FAFC', border: '1px solid #E2E8F0', fontStyle: notes ? 'normal' : 'italic' }}
+                                    style={{ lineHeight: '1.6', resize: 'vertical' }}
                                 />
                             </div>
 
                         </form>
                     ) : (
-                        <div className="empty-state-card fade-in" style={{ marginTop: '100px', textAlign: 'center', padding: '40px' }}>
-                            <div style={{ position: 'relative', width: 140, height: 140, margin: '0 auto 32px' }}>
-                                <div style={{ position: 'absolute', inset: 0, background: '#EFF6FF', borderRadius: '50%', animation: 'pulse 2s infinite' }}></div>
-                                <div style={{ position: 'absolute', inset: 20, background: '#2563EB', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', boxShadow: '0 10px 20px rgba(37, 99, 235, 0.3)' }}>
-                                    <User size={50} />
+                        <div className="d-flex flex-column align-items-center justify-content-center h-100 py-5 my-5 text-center">
+                            <div className="position-relative mb-4" style={{ width: '120px', height: '120px' }}>
+                                <div className="position-absolute top-0 bottom-0 start-0 end-0 bg-primary bg-opacity-10 rounded-circle pulse-animation"></div>
+                                <div className="position-absolute top-50 start-50 translate-middle bg-primary text-white rounded-circle d-flex align-items-center justify-content-center shadow-lg" style={{ width: '80px', height: '80px' }}>
+                                    <User size={36} />
                                 </div>
                             </div>
-                            <h2 style={{ color: '#0F172A', fontWeight: 800, fontSize: '1.8rem', marginBottom: '12px' }}>Clinical Session Idle</h2>
-                            <p style={{ color: '#64748B', maxWidth: '300px', margin: '0 auto', lineHeight: '1.6', fontWeight: 500 }}>Select a patient from the search nexus above to initiate a new prescription script.</p>
+                            <h2 className="fs-3 fw-bolder text-dark mb-2">Clinical Session Idle</h2>
+                            <p className="text-secondary fw-medium mx-auto" style={{ maxWidth: '300px', lineHeight: '1.6' }}>Select a patient from the search nexus above to initiate a new prescription script.</p>
                         </div>
                     )}
                 </div>
 
                 {/* 3. Sticky Action Footer */}
                 {selectedPatient && (
-                    <div className="sticky-footer-bar">
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                    <div className="position-absolute bottom-0 start-0 end-0 bg-white border-top border-light p-3 px-4 d-flex align-items-center justify-content-between z-3 shadow-sm">
+                        <div className="d-flex align-items-center gap-3">
                             {success && (
-                                <span className="fade-in" style={{ color: '#059669', fontSize: '0.9rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                    <CheckCircle size={18} /> Saved!
+                                <span className="text-success small fw-bolder d-flex align-items-center gap-1 fade-in">
+                                    <CheckCircle size={16} /> Saved!
                                 </span>
                             )}
                              {error && (
-                                <span className="fade-in" style={{ color: '#DC2626', fontSize: '0.9rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                    <AlertCircle size={18} /> {error}
+                                <span className="text-danger small fw-bolder d-flex align-items-center gap-1 fade-in">
+                                    <AlertCircle size={16} /> {error}
                                 </span>
                             )}
                         </div>
                         
-                        <div style={{ display: 'flex', gap: '16px' }}>
+                        <div className="d-flex gap-3">
                             <button 
                                 type="button" 
-                                className="btn-retry-prm"
+                                className="btn btn-outline-secondary rounded-pill px-4 fw-bold shadow-sm bg-white"
                                 onClick={() => initiateSubmit('Draft')}
                                 disabled={loading}
-                                style={{ padding: '0 24px', height: '48px', borderRadius: '14px' }}
                             >
                                 Save Draft
                             </button>
 
                             <button 
                                 type="button" 
-                                className="upload-btn-premium" 
+                                className="btn btn-primary rounded-pill px-4 fw-bold shadow-sm" 
                                 onClick={() => initiateSubmit('Active')}
                                 disabled={loading} 
-                                style={{ height: '48px', padding: '0 32px', border: 'none' }}
                             >
-                                {loading ? 'Processing...' : 'Issue Prescription'}
+                                {loading ? (
+                                    <>
+                                        <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                        Processing...
+                                    </>
+                                ) : 'Issue Prescription'}
                             </button>
                         </div>
                     </div>
@@ -493,24 +438,14 @@ const WritePrescription = ({ isEmbedded = false }) => {
             </div>
 
             {/* RIGHT PANEL */}
-            <div className="prescription-history-panel" style={{ 
-                flex: 3, 
-                display: 'flex', 
-                flexDirection: 'column',
-                height: '100%',
-                background: '#FFFFFF',
-                borderRadius: '24px',
-                boxShadow: 'var(--doc-shadow-card)',
-                overflow: 'hidden',
-                border: '1px solid #E2E8F0'
-            }}>
-                <div style={{ padding: '16px 24px', borderBottom: '1px solid #F1F5F9', background: '#F8FAFC' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <Clock size={16} className="text-gray-400" />
-                        <h3 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 700, color: '#1E293B', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Script History</h3>
+            <div className="d-flex flex-column bg-white rounded-5 shadow-sm overflow-hidden position-relative border border-light" style={{ flex: 3 }}>
+                <div className="p-3 px-4 border-bottom border-light bg-light">
+                    <div className="d-flex align-items-center gap-2">
+                        <Clock size={16} className="text-secondary" />
+                        <h3 className="mb-0 text-dark fw-bolder text-uppercase" style={{ fontSize: '0.85rem', letterSpacing: '0.05em' }}>Script History</h3>
                     </div>
                 </div>
-                <div style={{ flex: 1, overflow: 'hidden' }}>
+                <div className="flex-grow-1 overflow-hidden">
                     <PrescriptionList 
                         patientId={selectedPatient?.id} 
                         refreshTrigger={historyRefreshTrigger}
@@ -520,28 +455,24 @@ const WritePrescription = ({ isEmbedded = false }) => {
 
             {/* CONFIRMATION MODAL */}
             {showConfirmModal && (
-                <div className="pro-modal-overlay">
-                    <div className="pro-modal-content">
-                        <h3 style={{ marginTop: 0, fontSize: '1.4rem', fontWeight: 700, color: '#1E293B' }}>Issue Prescription?</h3>
-                        <p style={{ color: '#64748B', lineHeight: '1.6' }}>
+                <div className="position-fixed top-0 bottom-0 start-0 end-0 bg-dark bg-opacity-50 z-3 d-flex align-items-center justify-content-center p-4">
+                    <div className="bg-white rounded-4 shadow-lg p-4 p-md-5 w-100 fade-in" style={{ maxWidth: '500px' }}>
+                        <h3 className="h4 fw-bolder text-dark mb-3">Issue Prescription?</h3>
+                        <p className="text-secondary fw-medium mb-4" style={{ lineHeight: '1.6' }}>
                             This will finalize the prescription and make it visible to the patient. 
                             Are you sure the diagnosis and medicines are correct?
                         </p>
                         
-                        <div style={{ marginTop: '32px', display: 'flex', justifyContent: 'flex-end', gap: '16px' }}>
+                        <div className="d-flex justify-content-end gap-3">
                             <button 
                                 onClick={() => setShowConfirmModal(false)}
-                                style={{ background: 'transparent', border: 'none', color: '#64748B', fontWeight: 600, cursor: 'pointer', fontSize: '1rem' }}
+                                className="btn btn-light rounded-pill px-4 fw-bold text-secondary border border-light"
                             >
                                 Cancel
                             </button>
                             <button 
                                 onClick={(e) => handleSubmit(e, 'Active')}
-                                style={{ 
-                                    background: '#2563EB', color: 'white', border: 'none', padding: '12px 24px', 
-                                    borderRadius: '10px', fontWeight: 700, fontSize: '1rem', cursor: 'pointer',
-                                    boxShadow: '0 4px 12px rgba(37, 99, 235, 0.3)'
-                                }}
+                                className="btn btn-primary rounded-pill px-4 fw-bold shadow-sm"
                             >
                                 Confirm & Issue
                             </button>
@@ -549,6 +480,17 @@ const WritePrescription = ({ isEmbedded = false }) => {
                     </div>
                 </div>
             )}
+            
+            <style>{`
+                .pulse-animation { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+                @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
+                .fade-in { animation: fadeIn 0.3s ease-in-out; }
+                @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+                .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+                .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+                .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+                .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #cbd5e1; }
+            `}</style>
         </div>
     );
 };

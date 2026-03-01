@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { Trash2, Sun, Moon, Sunset, Coffee, Clock, X } from 'lucide-react';
-import '../../styles/doctor-prescription-pro.css';
 
 const MedicineRow = ({ item, index, onChange, onRemove }) => {
     // Parsing helpers
@@ -61,19 +60,21 @@ const MedicineRow = ({ item, index, onChange, onRemove }) => {
     const instructionPresets = ['After Food', 'Before Food', 'With Water', 'Bedtime'];
 
     return (
-        <div className="medicine-block fade-in">
+        <div className="bg-white rounded-4 border border-light shadow-sm p-4 mb-4 position-relative hover-shadow transition-all">
             {/* 1. Header: Number, Name, Delete */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '20px' }}>
-                <div className="row-number-badge">{index + 1}</div>
+            <div className="d-flex align-items-center gap-3 mb-4">
+                <div className="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center fw-bolder shadow-sm flex-shrink-0" style={{ width: '36px', height: '36px', fontSize: '1rem' }}>
+                    {index + 1}
+                </div>
                 
-                <div style={{ flex: 1, position: 'relative' }}>
+                <div className="flex-grow-1 position-relative">
                     <input 
                         type="text" 
                         placeholder="Drug Name (e.g. Paracetamol)"
                         value={item.medicine_name}
                         onChange={(e) => onChange(index, 'medicine_name', e.target.value)}
-                        className="pro-input"
-                        style={{ fontSize: '1.2rem', fontWeight: 800, border: 'none', background: 'transparent', padding: '0 0 4px 0', borderBottom: '2px solid #F1F5F9', borderRadius: 0, height: 'auto', color: '#1E293B' }}
+                        className="form-control form-control-lg border-0 border-bottom border-2 rounded-0 shadow-none px-0 py-1 bg-transparent text-dark fw-bolder"
+                        style={{ fontSize: '1.25rem' }}
                         required
                     />
                 </div>
@@ -81,30 +82,31 @@ const MedicineRow = ({ item, index, onChange, onRemove }) => {
                 <button 
                     type="button" 
                     onClick={() => onRemove(index)} 
-                    className="btn-icon-tiny"
-                    style={{ width: 36, height: 36, background: '#FEF2F2' }}
+                    className="btn btn-sm btn-danger bg-opacity-10 text-danger border-0 rounded-3 d-flex align-items-center justify-content-center flex-shrink-0 hover-bg-danger hover-text-white transition-all"
+                    style={{ width: '36px', height: '36px' }}
                     title="Remove"
                 >
-                    <X size={18} />
+                    <X size={18} strokeWidth={2.5} />
                 </button>
             </div>
 
             {/* 2. Structured Inputs Grid */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(140px, 1fr) 2fr minmax(140px, 1fr)', gap: '20px', alignItems: 'end', marginBottom: '20px' }}>
+            <div className="row g-3 align-items-end mb-4">
                 
                 {/* DOSE */}
-                <div className="input-group-col">
-                    <label className="pro-label-subtle">Dosage</label>
-                    <div className="input-group-row">
+                <div className="col-12 col-md-3">
+                    <label className="form-label text-secondary small fw-bold text-uppercase mb-2" style={{ letterSpacing: '0.5px', fontSize: '0.7rem' }}>Dosage</label>
+                    <div className="input-group input-group-sm shadow-sm rounded-3 overflow-hidden border border-light">
                         <input 
                             type="number" 
-                            className="input-group-field" 
+                            className="form-control border-0 shadow-none bg-light fw-bold text-dark px-3 py-2" 
                             placeholder="500"
                             value={dose.val}
                             onChange={(e) => handleDoseChange(e.target.value, null)}
                         />
                         <select 
-                            className="input-group-addon"
+                            className="form-select border-0 shadow-none bg-light fw-bold text-secondary ps-2 pe-4 py-2 text-center"
+                            style={{ maxWidth: '80px', borderLeft: '1px solid rgba(0,0,0,0.05)' }}
                             value={dose.unit}
                             onChange={(e) => handleDoseChange(null, e.target.value)}
                         >
@@ -118,37 +120,40 @@ const MedicineRow = ({ item, index, onChange, onRemove }) => {
                 </div>
 
                 {/* FREQUENCY (TOGGLES) */}
-                <div className="input-group-col">
-                    <label className="pro-label-subtle">Frequency ({freq.map(b=>b?'1':'0').join('-')})</label>
-                    <div style={{ display: 'flex', gap: '8px', background: '#F8FAFC', padding: '4px', borderRadius: '12px', border: '1px solid #E2E8F0' }}>
+                <div className="col-12 col-md-6">
+                    <label className="form-label text-secondary small fw-bold text-uppercase mb-2 d-flex justify-content-between" style={{ letterSpacing: '0.5px', fontSize: '0.7rem' }}>
+                        <span>Frequency</span>
+                        <span className="text-primary">{freq.map(b=>b?'1':'0').join('-')}</span>
+                    </label>
+                    <div className="d-flex gap-2 p-1 bg-light rounded-3 border border-light shadow-sm">
                         {freqConfig.map((conf, i) => (
                             <button
                                 key={i}
                                 type="button"
                                 onClick={() => handleFreqToggle(i)}
-                                className={`freq-toggle-btn ${freq[i] ? 'active' : ''}`}
-                                style={{ flex: 1, padding: '10px 0' }}
+                                className={`btn flex-grow-1 d-flex flex-column align-items-center justify-content-center py-2 rounded-2 border-0 transition-all ${freq[i] ? 'bg-white shadow-sm' : 'bg-transparent'}`}
                             >
-                                <conf.icon size={16} color={freq[i] ? conf.color : '#94A3B8'} />
-                                <span className="freq-label" style={{ color: freq[i] ? '#1E293B' : '#94A3B8' }}>{conf.label}</span>
+                                <conf.icon size={16} color={freq[i] ? conf.color : '#94A3B8'} className="mb-1" />
+                                <span className="small fw-bolder" style={{ fontSize: '0.7rem', color: freq[i] ? '#1E293B' : '#94A3B8' }}>{conf.label}</span>
                             </button>
                         ))}
                     </div>
                 </div>
 
                 {/* DURATION */}
-                <div className="input-group-col">
-                    <label className="pro-label-subtle">Duration</label>
-                    <div className="input-group-row">
+                <div className="col-12 col-md-3">
+                    <label className="form-label text-secondary small fw-bold text-uppercase mb-2" style={{ letterSpacing: '0.5px', fontSize: '0.7rem' }}>Duration</label>
+                    <div className="input-group input-group-sm shadow-sm rounded-3 overflow-hidden border border-light">
                         <input 
                             type="number" 
-                            className="input-group-field" 
+                            className="form-control border-0 shadow-none bg-light fw-bold text-dark px-3 py-2" 
                             placeholder="5"
                             value={dur.val}
                             onChange={(e) => handleDurChange(e.target.value, null)}
                         />
                         <select 
-                            className="input-group-addon"
+                            className="form-select border-0 shadow-none bg-light fw-bold text-secondary ps-2 pe-4 py-2 text-center"
+                            style={{ maxWidth: '85px', borderLeft: '1px solid rgba(0,0,0,0.05)' }}
                             value={dur.unit}
                             onChange={(e) => handleDurChange(null, e.target.value)}
                         >
@@ -162,15 +167,16 @@ const MedicineRow = ({ item, index, onChange, onRemove }) => {
 
             {/* 3. Instructions */}
             <div>
-                <label className="pro-label-subtle">Instructions</label>
+                <label className="form-label text-secondary small fw-bold text-uppercase mb-2" style={{ letterSpacing: '0.5px', fontSize: '0.7rem' }}>Instructions</label>
                 
                 {/* Chips */}
-                <div className="instruction-chips">
+                <div className="d-flex flex-wrap gap-2 mb-3">
                     {instructionPresets.map(preset => (
                         <button 
                             key={preset} 
                             type="button" 
-                            className="chip-btn"
+                            className="btn btn-sm btn-light rounded-pill border fw-bold text-secondary hover-bg-primary hover-text-white transition-all px-3 py-1"
+                            style={{ fontSize: '0.75rem' }}
                             onClick={() => addInstruction(preset)}
                         >
                             + {preset}
@@ -179,14 +185,22 @@ const MedicineRow = ({ item, index, onChange, onRemove }) => {
                 </div>
 
                 <textarea 
-                    className="pro-input"
-                    rows="1"
+                    className="form-control bg-light border-light shadow-sm rounded-3 fw-medium text-dark px-3 py-2"
+                    rows="2"
                     placeholder="Add custom instructions..."
                     value={item.instructions || ''}
                     onChange={(e) => onChange(index, 'instructions', e.target.value)}
-                    style={{ height: 'auto', minHeight: '42px', resize: 'none' }}
+                    style={{ resize: 'none' }}
                 />
             </div>
+            
+            <style>{`
+                .hover-shadow { transition: box-shadow 0.3s ease; }
+                .hover-shadow:hover { box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.08) !important; }
+                .hover-bg-danger:hover { background-color: var(--bs-danger) !important; color: white !important; }
+                .hover-bg-primary:hover { background-color: var(--bs-primary) !important; color: white !important; border-color: var(--bs-primary) !important; }
+                .form-control:focus, .form-select:focus { border-color: #86b7fe !important; outline: 0; box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25) !important; }
+            `}</style>
         </div>
     );
 };
