@@ -44,83 +44,62 @@ const Login = () => {
   };
 
   return (
-        <div className="login-v8-container">
-            <div className="login-v8-wrapper">
+        <div className="glass-ultra-container">
+            <div className="glass-flex-center">
                 
-                {/* Accent Triangle (Light Blue) */}
-                <div className="login-v8-accent-cyan-wrap">
-                    <div className="login-v8-accent-cyan"></div>
-                </div>
-                
-                {/* Dark Blue Triangle (Background) */}
-                <div className="login-v8-bg-dark-wrap">
-                    <div className="login-v8-bg-dark">
-                        <div className="login-v8-enter-btn" onClick={handleSubmit}>
-                            {loading ? (
-                                <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true" />
-                            ) : (
-                                <>
-                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mb-1">
-                                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                                        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-                                    </svg>
-                                    <span>ENTER</span>
-                                </>
-                            )}
-                        </div>
-                    </div>
-                </div>
-                
-                {/* Main White Triangle */}
-                <div className="login-v8-fg-wrap">
-                    <div className="login-v8-fg-white">
-                        
-                        {/* Decorative Corner Ticks */}
-                        <div className="login-v8-tick tl"></div>
-                        <div className="login-v8-tick bl"></div>
+                <div className="glass-shadow-wrapper">
+                    
+                    {/* The main cutout glass pane */}
+                    <div className="glass-main-card">
+                        <h1 className="glass-title">Neuro<br/><span className="glass-title-accent">Nest</span></h1>
 
-                        <div className="login-v8-content">
-                            <div className="login-v8-header">
-                                <h2>LOG INTO<br/>SYSTEM</h2>
-                                <div className="login-v8-divider"></div>
-                            </div>
-
-                            {error && <div className="login-v8-error">{error}</div>}
-
-                            <form onSubmit={(e) => { e.preventDefault(); handleSubmit(e); }} className="login-v8-form">
-                                <div className="login-v8-input-group">
+                        <div className="glass-body">
+                            {error && <div className="glass-error-msg">{error}</div>}
+                            
+                            <form onSubmit={(e) => { e.preventDefault(); handleSubmit(e); }} className="w-100">
+                                <div className="glass-input-wrapper">
                                     <input
                                         type="email"
                                         value={email}
                                         onChange={e => setEmail(e.target.value)}
-                                        placeholder="LOGIN..."
+                                        placeholder="Email Address"
                                         required
-                                        className="login-v8-input"
+                                        className="glass-input"
                                     />
                                 </div>
-                                <div className="login-v8-input-group">
+                                <div className="glass-input-wrapper mb-2">
                                     <input
                                         type={showPw ? "text" : "password"}
                                         value={password}
                                         onChange={e => setPassword(e.target.value)}
-                                        placeholder="PASSWORD..."
+                                        placeholder="Password"
                                         required
-                                        className="login-v8-input pw-input"
+                                        className="glass-input"
                                     />
-                                    <button type="button" className="login-v8-eye" onClick={() => setShowPw(!showPw)}>
+                                    <button type="button" className="glass-eye-btn" onClick={() => setShowPw(!showPw)}>
                                         <EyeIcon open={showPw} />
                                     </button>
                                 </div>
-
-                                <div className="login-v8-actions">
-                                    <Link to="/forgot-password" className="login-v8-forgot">FORGOT PASSWORD?</Link>
-                                </div>
-                                <div className="mt-4 pb-2">
-                                    <Link to="/register" className="login-v8-register-link">Create Account</Link>
-                                </div>
                             </form>
                         </div>
+
+                        <div className="glass-footer">
+                            <Link to="/forgot-password" className="glass-link opacity-75 fw-normal">Forgot Password?</Link>
+                            <span className="mt-1">
+                                Don't have an account? <Link to="/register" className="glass-link">Register</Link>
+                            </span>
+                        </div>
                     </div>
+
+                    {/* The small pill nested in the cutout */}
+                    <button className="glass-pill-button" onClick={handleSubmit} disabled={loading}>
+                        {loading ? (
+                            <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true" />
+                        ) : (
+                            "ENTER"
+                        )}
+                    </button>
+
                 </div>
 
             </div>
