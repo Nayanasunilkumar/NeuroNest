@@ -119,16 +119,16 @@
 /* ── CARD ───────────────────────────────────────────────── */
 .auth-card {
   width: 100%;
-  background: rgba(13, 15, 35, 0.92);
-  border: 1px solid rgba(255,255,255,0.11);
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(0, 0, 0, 0.06);
   border-radius: 22px;
   padding: 2.2rem 2rem 1.8rem;
-  /* Boosted elevation */
+  /* Light theme elevation */
   box-shadow:
-    0 0 0 1px rgba(124,58,237,0.13) inset,
-    0 2px 4px rgba(0,0,0,0.4),
-    0 20px 60px rgba(0,0,0,0.55),
-    0 0 80px rgba(124,58,237,0.09);
+    0 0 0 1px rgba(124,58,237,0.04) inset,
+    0 4px 12px rgba(0,0,0,0.03),
+    0 24px 60px rgba(0,0,0,0.06),
+    0 0 80px rgba(124,58,237,0.04);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
   animation: rise 0.5s cubic-bezier(0.16,1,0.3,1) both;
@@ -160,7 +160,7 @@
 .auth-title {
   font-size: 1.65rem;
   font-weight: 800;
-  color: #ede8ff;
+  color: #0d1124;
   letter-spacing: -0.04em;
   margin: 0 0 5px;
   display: flex;
@@ -170,7 +170,7 @@
 }
 .auth-subtitle {
   font-size: 0.855rem;
-  color: rgba(200,185,255,0.38);
+  color: #64748b;
   margin: 0;
   font-weight: 500;
 }
@@ -210,11 +210,11 @@
 }
 
 .field label {
-  font-size: 0.7rem;
+  font-size: 0.72rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.10em;
-  color: rgba(200,185,255,0.40);
+  color: #64748b;
   display: flex;
   align-items: center;
 }
@@ -229,11 +229,11 @@
 .field input,
 .pw-wrap input {
   width: 100%;
-  background: #12142b !important; /* Solid hex to fix Safari white box bug */
-  border: 1.5px solid rgba(255,255,255,0.10);
+  background: #f8fafc !important; /* Light hex background */
+  border: 1.5px solid rgba(0,0,0,0.08); /* Dark subtle border */
   border-radius: 11px;
   padding: 13px 15px;
-  color: #ffffff !important; /* Bright white text so it is never dull */
+  color: #0f172a !important; /* Dark text */
   font-weight: 600; /* Bolder text for visibility */
   font-size: 0.94rem;
   font-family: inherit;
@@ -252,25 +252,25 @@
 .pw-wrap input:-webkit-autofill,
 .pw-wrap input:-webkit-autofill:hover,
 .pw-wrap input:-webkit-autofill:focus {
-  -webkit-box-shadow: 0 0 0 100px #12142b inset !important;
-  -webkit-text-fill-color: #ffffff !important;
-  caret-color: #ffffff;
-  border-color: rgba(255,255,255,0.10) !important;
-  background: #12142b !important;
+  -webkit-box-shadow: 0 0 0 100px #f8fafc inset !important;
+  -webkit-text-fill-color: #0f172a !important;
+  caret-color: #0f172a;
+  border-color: rgba(0,0,0,0.08) !important;
+  background: #f8fafc !important;
   transition: background-color 9999s ease-in-out 0s;
 }
 
 .field input::placeholder,
 .pw-wrap input::placeholder {
-  color: rgba(200,185,255,0.30) !important; /* Made placeholders slightly brighter */
+  color: #94a3b8 !important; /* Made placeholders slightly brighter */
   font-weight: 500;
 }
 .field input:focus,
 .pw-wrap input:focus {
   border-color: #7c3aed !important;
-  background: #1a163a !important; /* Solid hex for focus state */
-  box-shadow: 0 0 0 4px rgba(124,58,237,0.13) !important;
-  color: #ffffff !important;
+  background: #ffffff !important; /* Solid hex for focus state */
+  box-shadow: 0 0 0 4px rgba(124,58,237,0.1) !important;
+  color: #0f172a !important;
 }
 @media (max-width: 768px) {
   .field input, .pw-wrap input { font-size: 16px; }
@@ -287,18 +287,18 @@
   position: absolute; right: 12px; top: 50%;
   transform: translateY(-50%);
   background: none; border: none;
-  color: rgba(200,185,255,0.28);
+  color: #94a3b8;
   cursor: pointer; padding: 5px;
   display: flex; align-items: center;
   border-radius: 6px; transition: color 0.18s;
 }
-.eye-btn:hover { color: rgba(167,139,250,0.85); }
+.eye-btn:hover { color: #6d28d9; }
 
 /* Forgot link — fix: right-aligned, better contrast */
 .forgot-link {
   font-size: 0.74rem;
   font-weight: 600;
-  color: rgba(167,139,250,0.5); /* Slightly brighter than before */
+  color: #7c3aed; /* Slightly brighter than before */
   text-decoration: none;
   transition: color 0.18s;
   position: relative;
@@ -308,11 +308,11 @@
   position: absolute;
   bottom: -1px; left: 0; right: 0;
   height: 1px;
-  background: rgba(167,139,250,0.4);
+  background: #7c3aed;
   transform: scaleX(0);
   transition: transform 0.2s;
 }
-.forgot-link:hover { color: #a78bfa; }
+.forgot-link:hover { color: #5b21b6; }
 .forgot-link:hover::after { transform: scaleX(1); }
 
 /* ── SIGN IN BUTTON ─────────────────────────────────────── */
@@ -382,7 +382,7 @@
   gap: 5px;
   font-size: 0.70rem;
   font-weight: 500;
-  color: rgba(200,185,255,0.28);
+  color: #64748b;
   margin-top: -4px;
 }
 .encrypt-note svg { opacity: 0.6; flex-shrink: 0; }
@@ -390,7 +390,7 @@
 /* ── CARD DIVIDER ───────────────────────────────────────── */
 .card-divider {
   height: 1px;
-  background: rgba(255,255,255,0.06);
+  background: rgba(0,0,0,0.06);
   margin: 0.25rem 0;
 }
 
@@ -398,18 +398,18 @@
 .auth-footer-text {
   text-align: center;
   font-size: 0.84rem;
-  color: rgba(200,185,255,0.32);
+  color: #64748b;
   margin: 0;
   font-weight: 500;
   padding-top: 0.1rem;
 }
 .auth-link {
-  color: #a78bfa;
+  color: #7c3aed;
   font-weight: 700;
   text-decoration: none;
   transition: color 0.18s;
 }
-.auth-link:hover { color: #c4b5fd; }
+.auth-link:hover { color: #5b21b6; }
 
 /* ── TRUST ROW — now inside card footer ─────────────────── */
 .card-trust-row {
@@ -446,7 +446,7 @@
 }
 .strength-bar {
   height: 3px;
-  background: rgba(255,255,255,0.07);
+  background: rgba(0,0,0,0.06);
   border-radius: 99px;
   overflow: hidden;
   margin-top: 3px;
@@ -467,9 +467,9 @@
   font-weight: 600;
   padding: 3px 9px;
   border-radius: 999px;
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.08);
-  color: rgba(200,185,255,0.28);
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  color: #64748b;
   transition: all 0.3s;
 }
 .rule-chip.valid {
