@@ -320,13 +320,6 @@ const Profile = () => {
                                         ) : (
                                             <span className="dark-card-pill">No Schedule Set</span>
                                         )}
-                                        <span 
-                                            className="dark-card-pill" 
-                                            style={{ backgroundColor: '#0055ff', color: '#fff', cursor: 'pointer' }}
-                                            onClick={() => setIsAvailabilityModalOpen(true)}
-                                        >
-                                            View Matrix
-                                        </span>
                                     </div>
                                 </div>
                             </div>
