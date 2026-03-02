@@ -262,11 +262,19 @@ const AvailabilityModal = ({ isOpen, onClose, availability, onUpdate }) => {
                             </div>
 
                             {/* Right: Calendar Grid */}
-                            <div className="col-12 col-md-7 col-lg-8 p-4 py-lg-5" style={{ 
-                                background: isDark ? 'linear-gradient(145deg, #111827 0%, #1f2937 100%)' : 'linear-gradient(145deg, #e0e7ff 0%, #bfdbfe 100%)',
-                                position: 'relative'
-                            }}>
-                                {/* Inner Title matching the reference aesthetic */}
+                            <div className="col-12 col-md-7 col-lg-8 p-3 p-md-4 py-lg-4" style={{ backgroundColor: isDark ? '#111' : '#f8f9fa' }}>
+                                {/* Fully enclosed glass container */}
+                                <div 
+                                    className="p-4 p-xl-5 d-flex flex-column h-100"
+                                    style={{ 
+                                        background: isDark ? 'linear-gradient(145deg, #111827 0%, #1f2937 100%)' : 'linear-gradient(145deg, #e0e7ff 0%, #bfdbfe 100%)',
+                                        position: 'relative',
+                                        borderRadius: '1.5rem',
+                                        border: isDark ? '1px solid rgba(255,255,255,0.05)' : '1px solid rgba(255,255,255,0.4)',
+                                        boxShadow: isDark ? '0 10px 40px -10px rgba(0,0,0,0.5)' : '0px 10px 40px -10px rgba(0,0,0,0.1)'
+                                    }}
+                                >
+                                    {/* Inner Title matching the reference aesthetic */}
                                 <div className="mb-4 ps-2">
                                     <h3 className={`fw-bolder mb-1 ${isDark ? 'text-white' : 'text-dark'}`} style={{ letterSpacing: '-0.5px' }}>Consultation Schedule</h3>
                                 </div>
@@ -354,6 +362,7 @@ const AvailabilityModal = ({ isOpen, onClose, availability, onUpdate }) => {
                                             );
                                         })}
                                     </div>
+                                </div>
                                 </div>
                             </div>
                         </div>
