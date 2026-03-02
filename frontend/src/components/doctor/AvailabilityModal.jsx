@@ -291,18 +291,18 @@ const AvailabilityModal = ({ isOpen, onClose, availability, onUpdate }) => {
                                 <div className="position-relative py-2 ps-3">
                                     {/* Continuous vertical timeline line */}
                                     <div
-    className="position-absolute"
-    style={{
-        left: '32px',
-        top: '20px',
-        bottom: '20px',
-        width: '2px',
-        backgroundColor: isDark
-            ? 'rgba(255,255,255,0.08)'
-            : 'rgba(0,0,0,0.08)',
-        borderRadius: '2px'
-    }}
-/>
+                                        className="position-absolute"
+                                        style={{
+                                            left: '62px', // perfectly aligned with the center of the nodes
+                                            top: '20px',
+                                            bottom: '20px',
+                                            width: '2px',
+                                            backgroundColor: isDark
+                                                ? 'rgba(255,255,255,0.08)'
+                                                : 'rgba(0,0,0,0.08)',
+                                            borderRadius: '2px'
+                                        }}
+                                    />
                                     
                                     <div className="d-flex flex-column gap-3 position-relative" style={{ zIndex: 2 }}>
                                         {days.map(d => {
