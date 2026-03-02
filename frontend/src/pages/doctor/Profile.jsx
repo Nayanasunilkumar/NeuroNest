@@ -307,14 +307,18 @@ const Profile = () => {
 
                                     <div className="dark-card-pills">
                                         {profile.availability && profile.availability.length > 0 ? (
-                                            Array.from(new Set(profile.availability.map(a => `${(a.start_time || '').substring(0, 5)} - ${(a.end_time || '').substring(0, 5)}`))).slice(0, 2).map((timeStr, idx) => (
-                                                <span key={idx} className="dark-card-pill">{timeStr}</span>
+                                            [...profile.availability].sort((a, b) => {
+                                                const days = { "Monday": 1, "Tuesday": 2, "Wednesday": 3, "Thursday": 4, "Friday": 5, "Saturday": 6, "Sunday": 7 };
+                                                const dayDiff = (days[a.day_of_week] || 0) - (days[b.day_of_week] || 0);
+                                                if (dayDiff !== 0) return dayDiff;
+                                                return (a.start_time || "").localeCompare(b.start_time || "");
+                                            }).map((a, idx) => (
+                                                <span key={idx} className="dark-card-pill">
+                                                    {(a.day_of_week || '').substring(0, 3)}: {(a.start_time || '').substring(0, 5)} - {(a.end_time || '').substring(0, 5)}
+                                                </span>
                                             ))
                                         ) : (
                                             <span className="dark-card-pill">No Schedule Set</span>
-                                        )}
-                                        {profile.availability && Array.from(new Set(profile.availability.map(a => `${(a.start_time || '').substring(0, 5)} - ${(a.end_time || '').substring(0, 5)}`))).length > 2 && (
-                                            <span className="dark-card-pill">+{Array.from(new Set(profile.availability.map(a => `${(a.start_time || '').substring(0, 5)} - ${(a.end_time || '').substring(0, 5)}`))).length - 2}</span>
                                         )}
                                         <span 
                                             className="dark-card-pill" 
