@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { getDoctorProfile, updateDoctorProfile, uploadProfileImage } from '../../services/doctorProfileService';
+import { getDoctorProfile, updateDoctorProfile, uploadProfileImage, addExperience, deleteExperience } from '../../services/doctorProfileService';
 import { 
-  Camera, Briefcase, FileText, Phone, Award, Shield, DollarSign, Hospital, Globe, Clock, Settings, ArrowRight, User
+  Camera, Briefcase, FileText, Phone, Award, Shield, DollarSign, Hospital, Globe, Clock, Settings, ArrowRight, User, Trash2, Plus
 } from 'lucide-react';
 import ExpertiseTags from '../../components/doctor/ExpertiseTags';
 import AvailabilityModal from '../../components/doctor/AvailabilityModal';
@@ -23,6 +23,13 @@ const Profile = () => {
     const [formData, setFormData] = useState({});
     const [specialties, setSpecialties] = useState([]);
     const [activeTab, setActiveTab] = useState('overview');
+    const [isExperienceLoading, setIsExperienceLoading] = useState(false);
+    const [newExp, setNewExp] = useState({
+        title: '',
+        hospital: '',
+        period: '',
+        description: ''
+    });
 
     useEffect(() => {
         fetchProfile();
@@ -117,7 +124,39 @@ const Profile = () => {
             })
         }));
     };
-    
+
+    // --- Experience Handlers ---
+    const handleAddExp = async () => {
+        if (!newExp.title || !newExp.hospital || !newExp.period) {
+            alert("Title, Hospital/Clinic, and Period are required.");
+            return;
+        }
+        setIsExperienceLoading(true);
+        try {
+            const updatedProfile = await addExperience(newExp);
+            setProfile(updatedProfile);
+            setFormData(updatedProfile);
+            setNewExp({ title: '', hospital: '', period: '', description: '' });
+        } catch (err) {
+            console.error("Failed to add experience", err);
+            alert("Failed to add experience.");
+        } finally {
+            setIsExperienceLoading(false);
+        }
+    };
+
+    const handleDeleteExp = async (expId) => {
+        if (!window.confirm("Delete this experience record?")) return;
+        try {
+            const updatedProfile = await deleteExperience(expId);
+            setProfile(updatedProfile);
+            setFormData(updatedProfile);
+        } catch (err) {
+            console.error("Failed to delete experience", err);
+            alert("Failed to delete experience.");
+        }
+    };
+
     // --- Availability Update Handler ---
     const handleAvailabilityUpdate = (updatedProfile) => {
         setProfile(updatedProfile);
@@ -348,26 +387,7 @@ const Profile = () => {
                                     />
 
                                     {/* Timeline Items */}
-                                    {[
-                                        {
-                                            title: "Senior Consultant, Neurology",
-                                            hospital: formData.hospital_name || "NeuroNest Central Hospital",
-                                            period: "2020 - Present",
-                                            description: "Leading the advanced department, focusing on scalable patient methodologies and overseeing clinical trials."
-                                        }, 
-                                        {
-                                            title: "Attending Specialist",
-                                            hospital: "City Medical Center",
-                                            period: "2015 - 2020",
-                                            description: "Managed complex inpatient and outpatient cases. Contributed to significant clinical research and resident education."
-                                        }, 
-                                        {
-                                            title: "Residency Program",
-                                            hospital: "State University Hospital",
-                                            period: "2012 - 2015",
-                                            description: "Completed comprehensive clinical training in diagnostics and advanced treatment planning."
-                                        }
-                                    ].map((exp, idx) => (
+                                    {profile.experience && profile.experience.length > 0 ? profile.experience.map((exp, idx) => (
                                         <div key={idx} className="position-relative mb-4 pb-2">
                                             {/* Node Marker */}
                                             <div 
@@ -390,7 +410,11 @@ const Profile = () => {
                                             </div>
                                             <p className="mb-0 mt-2" style={{ color: isDark ? '#a0a0a0' : '#555', fontSize: '0.85rem', lineHeight: '1.6', maxWidth: '800px' }}>{exp.description}</p>
                                         </div>
-                                    ))}
+                                    )) : (
+                                        <div className="text-center py-4">
+                                            <p className="mb-0" style={{ color: isDark ? '#666' : '#999', fontSize: '0.9rem' }}>No clinical experience records mapped to this profile module.</p>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                             </>
@@ -463,6 +487,92 @@ const Profile = () => {
                                             <option value="Offline">Offline Payload</option>
                                             <option value="Both">Dual Stack</option>
                                         </select>
+                                    </div>
+                                </div>
+
+                                <div className="col-12"><hr style={{borderColor:'#333', margin:'35px 0 25px 0'}}/></div>
+                                
+                                {/* Experience Builder */}
+                                <div className="mt-2">
+                                    <h5 className="text-white mb-4 fw-bold d-flex align-items-center gap-2">
+                                        <Award size={18} className="text-primary"/> Experience Matrix Builder
+                                    </h5>
+                                    
+                                    {/* List view of experiences in Edit Mode */}
+                                    {formData.experience && formData.experience.length > 0 && (
+                                        <div className="mb-4">
+                                            {formData.experience.map((exp) => (
+                                                <div key={exp.id} className="dark-card mb-3 p-3 d-flex justify-content-between align-items-center" style={{ backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                                                    <div>
+                                                        <h6 className="text-white mb-1 fw-bold">{exp.title}</h6>
+                                                        <p className="mb-0 text-secondary" style={{ fontSize: '0.85rem' }}>{exp.hospital} | <span className="text-primary">{exp.period}</span></p>
+                                                    </div>
+                                                    <button 
+                                                        className="btn btn-link text-danger p-0" 
+                                                        onClick={() => handleDeleteExp(exp.id)}
+                                                        title="Delete entry"
+                                                    >
+                                                        <Trash2 size={18} />
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+
+                                    {/* Add New Experience Form */}
+                                    <div className="dark-card p-4" style={{ backgroundColor: 'rgba(0,85,255,0.05)', border: '1px dashed rgba(0,85,255,0.3)' }}>
+                                        <div className="row g-3">
+                                            <div className="col-12 col-md-6">
+                                                <label className="dark-label" style={{ fontSize: '0.75rem' }}>Job Title Key</label>
+                                                <input 
+                                                    className="dark-input" 
+                                                    style={{ height: '42px', fontSize: '0.85rem' }} 
+                                                    placeholder="e.g. Senior Neuro-Surgeon"
+                                                    value={newExp.title}
+                                                    onChange={e => setNewExp(prev => ({ ...prev, title: e.target.value }))}
+                                                />
+                                            </div>
+                                            <div className="col-12 col-md-6">
+                                                <label className="dark-label" style={{ fontSize: '0.75rem' }}>Hospital/Clinic Node</label>
+                                                <input 
+                                                    className="dark-input" 
+                                                    style={{ height: '42px', fontSize: '0.85rem' }} 
+                                                    placeholder="e.g. Central City Medical"
+                                                    value={newExp.hospital}
+                                                    onChange={e => setNewExp(prev => ({ ...prev, hospital: e.target.value }))}
+                                                />
+                                            </div>
+                                            <div className="col-12 col-md-4">
+                                                <label className="dark-label" style={{ fontSize: '0.75rem' }}>Timeline Range</label>
+                                                <input 
+                                                    className="dark-input" 
+                                                    style={{ height: '42px', fontSize: '0.85rem' }} 
+                                                    placeholder="e.g. 2018 - 2022"
+                                                    value={newExp.period}
+                                                    onChange={e => setNewExp(prev => ({ ...prev, period: e.target.value }))}
+                                                />
+                                            </div>
+                                            <div className="col-12 col-md-8">
+                                                <label className="dark-label" style={{ fontSize: '0.75rem' }}>Role Logic Description</label>
+                                                <input 
+                                                    className="dark-input" 
+                                                    style={{ height: '42px', fontSize: '0.85rem' }} 
+                                                    placeholder="Brief outline of clinical responsibilities"
+                                                    value={newExp.description}
+                                                    onChange={e => setNewExp(prev => ({ ...prev, description: e.target.value }))}
+                                                />
+                                            </div>
+                                            <div className="col-12 d-flex justify-content-end">
+                                                <button 
+                                                    className="dark-btn-primary d-flex align-items-center gap-2" 
+                                                    onClick={handleAddExp}
+                                                    disabled={isExperienceLoading}
+                                                    style={{ padding: '8px 16px', borderRadius: '12px', fontSize: '0.8rem' }}
+                                                >
+                                                    {isExperienceLoading ? "Processing..." : <><Plus size={16}/> Insert Experience</>}
+                                                </button>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
 

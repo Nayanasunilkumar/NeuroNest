@@ -71,3 +71,23 @@ export const deleteAvailabilitySlot = async (slotId) => {
         throw error;
     }
 };
+
+export const addExperience = async (experienceData) => {
+    try {
+        const response = await axios.post(`${API_URL}/experience`, experienceData, getAuthHeaders());
+        return response.data; // Returns updated profile
+    } catch (error) {
+        console.error("Error adding experience:", error);
+        throw error;
+    }
+};
+
+export const deleteExperience = async (expId) => {
+    try {
+        const response = await axios.delete(`${API_URL}/experience/${expId}`, getAuthHeaders());
+        return response.data; // Returns updated profile
+    } catch (error) {
+        console.error("Error deleting experience:", error);
+        throw error;
+    }
+};

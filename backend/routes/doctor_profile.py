@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
-from database.models import db, DoctorProfile, User, DoctorAvailability, DoctorExpertiseTag, AppointmentSlot
+from database.models import db, DoctorProfile, User, DoctorAvailability, DoctorExpertiseTag, AppointmentSlot, DoctorExperience
 from datetime import datetime, timezone
 from utils.cloudinary_upload import upload_file as cld_upload
 from utils.slot_engine import regenerate_slots_for_doctor, rolling_window_bounds
@@ -288,3 +288,60 @@ def delete_availability(slot_id):
     except Exception as e:
         db.session.rollback()
         return jsonify({"message": f"Failed to delete availability: {str(e)}"}), 500
+
+# ============================
+# EXPERIENCE CRUD
+# ============================
+@doctor_profile_bp.route("/experience", methods=["POST"])
+@jwt_required()
+def add_experience():
+    claims = get_jwt()
+    if claims.get("role") != "doctor":
+        return jsonify({"message": "Doctor access required"}), 403
+
+    user_id = int(get_jwt_identity())
+    profile = DoctorProfile.query.filter_by(user_id=user_id).first()
+    
+    if not profile:
+        return jsonify({"message": "Doctor profile not found"}), 404
+        
+    data = request.json
+    title = data.get("title")
+    hospital = data.get("hospital")
+    period = data.get("period")
+    description = data.get("description")
+    
+    if not title or not hospital or not period:
+        return jsonify({"message": "Missing required fields"}), 400
+        
+    new_exp = DoctorExperience(
+        doctor_id=profile.id,
+        title=title,
+        hospital=hospital,
+        period=period,
+        description=description
+    )
+    
+    db.session.add(new_exp)
+    db.session.commit()
+    
+    return jsonify(profile.to_dict()), 201
+
+@doctor_profile_bp.route("/experience/<int:exp_id>", methods=["DELETE"])
+@jwt_required()
+def delete_experience(exp_id):
+    claims = get_jwt()
+    if claims.get("role") != "doctor":
+        return jsonify({"message": "Doctor access required"}), 403
+
+    user_id = int(get_jwt_identity())
+    profile = DoctorProfile.query.filter_by(user_id=user_id).first()
+    
+    exp = DoctorExperience.query.get(exp_id)
+    if not exp or exp.doctor_id != profile.id:
+        return jsonify({"message": "Experience not found"}), 404
+        
+    db.session.delete(exp)
+    db.session.commit()
+    
+    return jsonify(profile.to_dict()), 200

@@ -851,6 +851,7 @@ class DoctorProfile(db.Model):
     availability = db.relationship("DoctorAvailability", backref="doctor", lazy=True, cascade="all, delete-orphan")
     blocked_dates = db.relationship("DoctorBlockedDate", backref="doctor", lazy=True, cascade="all, delete-orphan")
     expertise_tags = db.relationship("DoctorExpertiseTag", backref="doctor", lazy=True, cascade="all, delete-orphan")
+    experience = db.relationship("DoctorExperience", backref="doctor", lazy=True, cascade="all, delete-orphan")
 
     def to_dict(self):
         return {
@@ -875,7 +876,8 @@ class DoctorProfile(db.Model):
             "updated_at": self.updated_at.isoformat() + 'Z',
             "availability": [a.to_dict() for a in self.availability],
             "blocked_dates": [b.to_dict() for b in self.blocked_dates],
-            "expertise_tags": [t.to_dict() for t in self.expertise_tags]
+            "expertise_tags": [t.to_dict() for t in self.expertise_tags],
+            "experience": [e.to_dict() for e in self.experience]
         }
 
 
@@ -936,6 +938,31 @@ class DoctorExpertiseTag(db.Model):
         return {
             "id": self.id,
             "tag_name": self.tag_name
+        }
+
+# =========================================
+# DOCTOR EXPERIENCE TIMELINE
+# =========================================
+class DoctorExperience(db.Model):
+    __tablename__ = "doctor_experiences"
+    
+    id = db.Column(db.Integer, primary_key=True)
+    doctor_id = db.Column(db.Integer, db.ForeignKey("doctor_profiles.id"), nullable=False)
+    
+    title = db.Column(db.String(150), nullable=False)
+    hospital = db.Column(db.String(200), nullable=False)
+    period = db.Column(db.String(50), nullable=False) # e.g., "2020 - Present"
+    description = db.Column(db.Text)
+    
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "title": self.title,
+            "hospital": self.hospital,
+            "period": self.period,
+            "description": self.description
         }
 
 # =========================================
