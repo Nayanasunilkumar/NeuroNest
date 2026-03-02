@@ -252,9 +252,7 @@ const Profile = () => {
                                             <span className="dark-card-sub">Clinical Roles</span>
                                         </div>
                                     </div>
-                                    <p className="dark-card-desc">
-                                        The Specialist will create intuitive, scalable methodologies across advanced clinical platforms and ensure optimal patient outcomes through proven expertise.
-                                    </p>
+
                                     <div className="dark-card-pills">
                                         <span className="dark-card-pill">{formData.qualification || "Degree"}</span>
                                         <span className="dark-card-pill">Min. {formData.experience_years || 0} Years</span>
@@ -271,9 +269,7 @@ const Profile = () => {
                                             <span className="dark-card-sub">Accreditations</span>
                                         </div>
                                     </div>
-                                    <p className="dark-card-desc">
-                                        As a registered medical practitioner, you shape next-generation clinical experiences securely, bridging trusted identities across systems.
-                                    </p>
+
                                     <div className="dark-card-pills">
                                         <span className="dark-card-pill">Lic: {formData.license_number || "None"}</span>
                                         <span className="dark-card-pill">DOB: {formData.dob || "XX-XX"}</span>
@@ -290,9 +286,7 @@ const Profile = () => {
                                             <span className="dark-card-sub">Monetization & Modes</span>
                                         </div>
                                     </div>
-                                    <p className="dark-card-desc">
-                                        Ensure clear and efficient transactional pipelines. Manage your consulting rates and operational modalities accurately to inform patients.
-                                    </p>
+
                                     <div className="dark-card-pills">
                                         <span className="dark-card-pill">Fee: ₹{formData.consultation_fee || 0}</span>
                                         <span className="dark-card-pill">Format: {formData.consultation_mode || "Mixed"}</span>
@@ -310,9 +304,7 @@ const Profile = () => {
                                             <span className="dark-card-sub">Availability Range</span>
                                         </div>
                                     </div>
-                                    <p className="dark-card-desc">
-                                        Review your current active engagement window block. You can manage shifts and capacity metrics by launching the scheduling matrix.
-                                    </p>
+
                                     <div className="dark-card-pills">
                                         {profile.availability && profile.availability.length > 0 ? (
                                             Array.from(new Set(profile.availability.map(a => `${(a.start_time || '').substring(0, 5)} - ${(a.end_time || '').substring(0, 5)}`))).slice(0, 2).map((timeStr, idx) => (
