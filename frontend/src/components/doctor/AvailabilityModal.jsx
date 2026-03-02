@@ -139,36 +139,37 @@ const AvailabilityModal = ({ isOpen, onClose, availability, onUpdate }) => {
             onClick={onClose}
         >
             <div
-    className="w-100"
-    style={{
-        maxWidth: '1100px',
-        width: '92%',
-        maxHeight: '92vh'
-    }}
+                className="w-100 d-flex flex-column"
+                style={{
+                    maxWidth: '1100px',
+                    width: '92%',
+                    maxHeight: '92vh'
+                }}
                 onClick={e => e.stopPropagation()}
             >
                <div
-    className={`shadow-lg overflow-hidden ${isDark ? 'text-light' : 'text-dark'}`}
-    style={{
-        borderRadius: '20px',
-        background: isDark
-            ? 'linear-gradient(145deg, #111827, #1f2937)'
-            : 'linear-gradient(145deg, #ffffff, #f8fafc)',
-        border: isDark
-            ? '1px solid rgba(255,255,255,0.05)'
-            : '1px solid rgba(0,0,0,0.05)'
-    }}
->
+                    className={`shadow-lg overflow-hidden d-flex flex-column flex-grow-1 ${isDark ? 'text-light' : 'text-dark'}`}
+                    style={{
+                        borderRadius: '20px',
+                        maxHeight: '100%',
+                        background: isDark
+                            ? 'linear-gradient(145deg, #111827, #1f2937)'
+                            : 'linear-gradient(145deg, #ffffff, #f8fafc)',
+                        border: isDark
+                            ? '1px solid rgba(255,255,255,0.05)'
+                            : '1px solid rgba(0,0,0,0.05)'
+                    }}
+                >
                     
                     {/* Header */}
                     <div
-    className="px-4 py-3 d-flex justify-content-between align-items-center"
-    style={{
-        borderBottom: isDark
-            ? '1px solid rgba(255,255,255,0.05)'
-            : '1px solid rgba(0,0,0,0.06)'
-    }}
->
+                        className="px-4 py-3 d-flex justify-content-between align-items-center"
+                        style={{
+                            borderBottom: isDark
+                                ? '1px solid rgba(255,255,255,0.05)'
+                                : '1px solid rgba(0,0,0,0.06)'
+                        }}
+                    >
                         <div className="modal-title d-flex align-items-center gap-3">
                             <div className="bg-primary bg-opacity-10 p-2 rounded-2 text-primary">
                                 <Calendar size={20} />
@@ -181,8 +182,8 @@ const AvailabilityModal = ({ isOpen, onClose, availability, onUpdate }) => {
                         <button onClick={onClose} className={`btn-close shadow-none opacity-50 transition-all ${isDark ? 'btn-close-white' : ''}`} style={{ fontSize: '12px' }}></button>
                     </div>
 
-                    <div className="modal-body p-0">
-                        <div className="row m-0">
+                    <div className="modal-body p-0" style={{ overflowY: 'auto', flex: 1, display: 'flex' }}>
+                        <div className="row m-0 w-100 flex-grow-1">
                             {/* Left: Time Builder */}
                             <div
     className="col-12 col-md-5 col-lg-4 p-4"
