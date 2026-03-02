@@ -235,8 +235,8 @@ const Profile = () => {
                         
                         <div className="dark-tabs d-flex flex-wrap">
                             <button className={`dark-tab ${activeTab === 'overview' ? 'dark-tab-box' : ''}`} onClick={() => setActiveTab('overview')}>Overview</button>
-                            <button className="dark-tab" style={{ marginLeft: 'auto' }} onClick={() => setIsAvailabilityModalOpen(true)}>
-                                <Clock size={16} className="me-2"/> Scheduling
+                            <button className="dark-btn-primary d-flex align-items-center gap-2 shadow-sm" style={{ marginLeft: 'auto', padding: '8px 20px', fontSize: '0.85rem' }} onClick={() => setIsAvailabilityModalOpen(true)}>
+                                <Clock size={16} /> Scheduling
                             </button>
                         </div>
 
