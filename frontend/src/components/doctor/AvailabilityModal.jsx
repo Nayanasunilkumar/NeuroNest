@@ -182,8 +182,8 @@ const AvailabilityModal = ({ isOpen, onClose, availability, onUpdate }) => {
                         <button onClick={onClose} className={`btn-close shadow-none opacity-50 transition-all ${isDark ? 'btn-close-white' : ''}`} style={{ fontSize: '12px' }}></button>
                     </div>
 
-                    <div className="modal-body p-0" style={{ overflowY: 'auto', flex: 1, display: 'flex' }}>
-                        <div className="row m-0 w-100 flex-grow-1">
+                    <div className="modal-body p-0" style={{ overflowY: 'auto', flex: 1 }}>
+                        <div className="row m-0 w-100" style={{ minHeight: '100%' }}>
                             {/* Left: Time Builder */}
                             <div
     className="col-12 col-md-5 col-lg-4 p-4"
@@ -263,10 +263,10 @@ const AvailabilityModal = ({ isOpen, onClose, availability, onUpdate }) => {
                             </div>
 
                             {/* Right: Calendar Grid */}
-                            <div className="col-12 col-md-7 col-lg-8 p-3 p-md-4 py-lg-4" style={{ backgroundColor: isDark ? '#111' : '#f8f9fa' }}>
+                            <div className="col-12 col-md-7 col-lg-8 p-3 p-md-4 py-lg-4 d-flex flex-column" style={{ backgroundColor: isDark ? '#111' : '#f8f9fa' }}>
                                 {/* Fully enclosed glass container */}
                                 <div 
-                                    className="p-4 p-xl-5 d-flex flex-column h-100"
+                                    className="p-4 p-xl-5 d-flex flex-column flex-grow-1"
                                     style={{ 
                                         background: isDark ? 'linear-gradient(145deg, #111827 0%, #1f2937 100%)' : 'linear-gradient(145deg, #e0e7ff 0%, #bfdbfe 100%)',
                                         position: 'relative',
