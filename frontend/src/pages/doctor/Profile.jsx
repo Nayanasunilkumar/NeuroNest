@@ -242,6 +242,7 @@ const Profile = () => {
 
                         {/* VIEW MODE */}
                         {!isEditing && activeTab === 'overview' && (
+                            <>
                             <div className="dark-card-grid">
                                 {/* Card 1: Senior credentials */}
                                 <div className="dark-card">
@@ -323,6 +324,76 @@ const Profile = () => {
                                     </div>
                                 </div>
                             </div>
+
+                            {/* Experience Timeline */}
+                            <div className="dark-card mt-4">
+                                <div className="dark-card-header mb-2">
+                                    <div className="dark-card-icon"><Award size={20} color="#0055ff"/></div>
+                                    <div className="dark-card-title-wrap">
+                                        <span className="dark-card-title">Clinical Experience Timeline</span>
+                                        <span className="dark-card-sub">Career Progression & Roles</span>
+                                    </div>
+                                </div>
+                                <div className="position-relative py-2 mt-4" style={{ paddingLeft: '32px' }}>
+                                    {/* Timeline Line */}
+                                    <div 
+                                        className="position-absolute" 
+                                        style={{ 
+                                            left: '11px', 
+                                            top: '8px', 
+                                            bottom: '20px', 
+                                            width: '2px', 
+                                            backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'
+                                        }}
+                                    />
+
+                                    {/* Timeline Items */}
+                                    {[
+                                        {
+                                            title: "Senior Consultant, Neurology",
+                                            hospital: formData.hospital_name || "NeuroNest Central Hospital",
+                                            period: "2020 - Present",
+                                            description: "Leading the advanced department, focusing on scalable patient methodologies and overseeing clinical trials."
+                                        }, 
+                                        {
+                                            title: "Attending Specialist",
+                                            hospital: "City Medical Center",
+                                            period: "2015 - 2020",
+                                            description: "Managed complex inpatient and outpatient cases. Contributed to significant clinical research and resident education."
+                                        }, 
+                                        {
+                                            title: "Residency Program",
+                                            hospital: "State University Hospital",
+                                            period: "2012 - 2015",
+                                            description: "Completed comprehensive clinical training in diagnostics and advanced treatment planning."
+                                        }
+                                    ].map((exp, idx) => (
+                                        <div key={idx} className="position-relative mb-4 pb-2">
+                                            {/* Node Marker */}
+                                            <div 
+                                                className="position-absolute rounded-circle" 
+                                                style={{ 
+                                                    left: '-27px', 
+                                                    top: '4px', 
+                                                    width: '14px', 
+                                                    height: '14px', 
+                                                    backgroundColor: idx === 0 ? '#0055ff' : (isDark ? '#333' : '#e0e0e0'),
+                                                    border: `3px solid ${isDark ? '#1a1a1a' : '#ffffff'}`,
+                                                    zIndex: 2,
+                                                    boxShadow: idx === 0 ? '0 0 0 3px rgba(0, 85, 255, 0.2)' : 'none'
+                                                }}
+                                            />
+                                            <h5 className={`fw-bold mb-1 ${isDark ? 'text-white' : 'text-dark'}`} style={{ fontSize: '1.05rem', letterSpacing: '0.3px' }}>{exp.title}</h5>
+                                            <div className="d-flex align-items-center mb-2 gap-2">
+                                                <h6 className="mb-0" style={{ color: '#0055ff', fontSize: '0.9rem', fontWeight: '600' }}>{exp.hospital}</h6>
+                                                <span className="px-2 py-1 rounded-pill" style={{ fontSize: '0.7rem', fontWeight: '600', backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)', color: isDark ? '#a0a0a0' : '#666' }}>{exp.period}</span>
+                                            </div>
+                                            <p className="mb-0 mt-2" style={{ color: isDark ? '#a0a0a0' : '#555', fontSize: '0.85rem', lineHeight: '1.6', maxWidth: '800px' }}>{exp.description}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                            </>
                         )}
 
                         {/* EDIT MODE (Configuration Tab or Editing triggered) */}
