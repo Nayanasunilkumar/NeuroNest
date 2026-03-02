@@ -253,50 +253,81 @@ const AvailabilityModal = ({ isOpen, onClose, availability, onUpdate }) => {
 
                             {/* Right: Calendar Grid */}
                             <div className={`col-12 col-md-7 col-lg-8 p-4 py-lg-5 ${isDark ? 'bg-dark' : 'bg-light'}`} style={{ backgroundColor: isDark ? '#111' : '#f8f9fa' }}>
-                                <div className="d-flex flex-column gap-3">
-                                    {days.map(d => {
-                                        const slots = slotsByDay[d].sort((a, b) => (toMinutes(a.start_time) ?? 0) - (toMinutes(b.start_time) ?? 0));
-                                        const hasSlots = slots.length > 0;
-                                        
-                                        return (
-                                            <div key={d} className={`d-flex align-items-stretch border-start border-4 rounded-end-3 p-3 ${isDark ? 'bg-dark' : 'bg-white shadow-sm'} ${hasSlots ? 'border-primary' : 'border-secondary border-opacity-25'}`} style={{ backgroundColor: isDark ? '#1a1a1a' : '' }}>
-                                                <div className="me-4 d-flex align-items-center" style={{ width: '45px', flexShrink: 0 }}>
-                                                    <div className={`fw-bold text-uppercase ${hasSlots ? (isDark ? 'text-white' : 'text-dark') : 'text-secondary opacity-50'}`} style={{ fontSize: '0.85rem', letterSpacing: '0.5px' }}>
-                                                        {d.substring(0, 3)}
+                                <div className="position-relative py-2 ps-3">
+                                    {/* Continuous vertical timeline line */}
+                                    <div 
+                                        className="position-absolute" 
+                                        style={{ 
+                                            left: '49px', 
+                                            top: '24px', 
+                                            bottom: '24px', 
+                                            width: '3px', 
+                                            backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)',
+                                            zIndex: 1,
+                                            borderRadius: '2px'
+                                        }} 
+                                    />
+                                    
+                                    <div className="d-flex flex-column gap-3 position-relative" style={{ zIndex: 2 }}>
+                                        {days.map(d => {
+                                            const slots = slotsByDay[d].sort((a, b) => (toMinutes(a.start_time) ?? 0) - (toMinutes(b.start_time) ?? 0));
+                                            const hasSlots = slots.length > 0;
+                                            
+                                            return (
+                                                <div key={d} className="d-flex align-items-stretch">
+                                                    {/* Timeline Node & Day Label */}
+                                                    <div className="d-flex align-items-start justify-content-between position-relative pt-3" style={{ width: '56px', flexShrink: 0 }}>
+                                                        <div className={`fw-bold text-uppercase ${hasSlots ? (isDark ? 'text-white' : 'text-dark') : 'text-secondary opacity-50'}`} style={{ fontSize: '0.85rem', letterSpacing: '0.5px' }}>
+                                                            {d.substring(0, 3)}
+                                                        </div>
+                                                        <div 
+                                                            className={`rounded-circle position-absolute ${hasSlots ? 'bg-primary shadow-sm' : (isDark ? 'bg-secondary' : 'bg-white border')}`} 
+                                                            style={{ 
+                                                                right: '-1px', // exact alignment on the line
+                                                                top: '21px', // align beautifully with the card
+                                                                width: '14px', 
+                                                                height: '14px',
+                                                                border: hasSlots ? `3px solid ${isDark ? '#111' : '#f8f9fa'}` : 'none',
+                                                                zIndex: 3
+                                                            }} 
+                                                        />
+                                                    </div>
+
+                                                    {/* Right side translucent card */}
+                                                    <div className={`flex-grow-1 ms-4 p-3 rounded-4 transition-all ${hasSlots ? (isDark ? 'border border-light border-opacity-10' : 'bg-white shadow-sm border border-light') : 'opacity-75'}`} style={{ backgroundColor: isDark && hasSlots ? 'rgba(255,255,255,0.03)' : (!hasSlots ? 'transparent' : ''), border: !hasSlots ? (isDark ? '1px dashed rgba(255,255,255,0.1)' : '1px dashed rgba(0,0,0,0.1)') : '' }}>
+                                                        {!hasSlots ? (
+                                                            <div className="d-flex align-items-center h-100 px-2 py-1">
+                                                                <span className={`small fw-medium ${isDark ? 'text-secondary' : 'text-muted'}`}>No availability set</span>
+                                                            </div>
+                                                        ) : (
+                                                            <div className="d-flex flex-column gap-2">
+                                                                {slots.map(slot => (
+                                                                    <div key={slot.id} className="d-flex align-items-center gap-3 py-1 position-relative" style={{ transition: 'all 0.2s' }}>
+                                                                        <span className={`fw-medium font-monospace opacity-75 ${isDark ? 'text-light' : 'text-dark'}`} style={{ fontSize: '0.8rem', minWidth: '130px' }}>
+                                                                            {formatTimeCompact(slot.start_time)} - {formatTimeCompact(slot.end_time)}
+                                                                        </span>
+                                                                        <div className="d-flex align-items-center flex-grow-1 gap-2">
+                                                                            <span className={`fw-bold px-2 py-1 rounded-pill ${isDark ? 'bg-light bg-opacity-10 text-white' : 'bg-primary bg-opacity-10 text-primary'}`} style={{ fontSize: '0.75rem' }}>
+                                                                                Available
+                                                                            </span>
+                                                                        </div>
+                                                                        <button 
+                                                                            onClick={() => handleDelete(slot.id)}
+                                                                            className="btn btn-sm text-danger p-1 rounded-circle hover-bg-danger hover-text-white transition-all text-decoration-none d-flex align-items-center justify-content-center"
+                                                                            style={{ width: '28px', height: '28px', backgroundColor: isDark ? 'rgba(220,53,69,0.1)' : 'rgba(220,53,69,0.05)' }}
+                                                                            title="Remove time slot"
+                                                                        >
+                                                                            <Trash2 size={13} />
+                                                                        </button>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 </div>
-                                                
-                                                <div className="flex-grow-1 align-items-center d-flex">
-                                                {!hasSlots ? (
-                                                    <div className={`p-2 px-3 fw-medium small rounded-3 d-inline-block ${isDark ? 'bg-secondary bg-opacity-10 text-secondary' : 'bg-white border text-muted'}`}>
-                                                        No availability set
-                                                    </div>
-                                                ) : (
-                                                    <div className="d-flex flex-wrap gap-2">
-                                                        {slots.map(slot => (
-                                                            <div key={slot.id} className={`p-2 px-3 rounded-3 border d-flex align-items-center gap-3 transition-all ${isDark ? 'bg-dark border-secondary hover-bg-secondary' : 'bg-white shadow-sm hover-shadow'}`} style={{ backgroundColor: isDark ? '#222' : '' }}>
-                                                                <div className="d-flex align-items-center gap-2">
-                                                                    <Clock size={14} className="text-primary opacity-75" />
-                                                                    <span className={`fw-bold ${isDark ? 'text-light' : 'text-dark'}`} style={{ fontSize: '0.85rem' }}>
-                                                                        {formatTimeCompact(slot.start_time)} - {formatTimeCompact(slot.end_time)}
-                                                                    </span>
-                                                                </div>
-                                                                <button 
-                                                                    onClick={() => handleDelete(slot.id)}
-                                                                    className="btn btn-sm btn-link text-danger p-1 rounded-circle hover-bg-danger hover-text-white transition-all text-decoration-none d-flex align-items-center justify-content-center"
-                                                                    style={{ width: '24px', height: '24px' }}
-                                                                    title="Remove time slot"
-                                                                >
-                                                                    <Trash2 size={13} />
-                                                                </button>
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
-                                    );
-                                })}
+                                            );
+                                        })}
+                                    </div>
                                 </div>
                             </div>
                         </div>
