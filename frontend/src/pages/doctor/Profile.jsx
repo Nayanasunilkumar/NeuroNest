@@ -259,7 +259,7 @@ const Profile = () => {
                             <div className="dark-sidebar-item">
                                 <div className="dark-sidebar-icon"><Globe size={14} color="#00d2ff"/></div>
                                 <div className="dark-sidebar-text">
-                                    <span className="title">{formData.consultation_mode || "Mixed"}</span>
+                                    <span className="title">{formData.consultation_mode === 'Both' ? 'Online and Offline Consultation' : (formData.consultation_mode || "Mixed")}</span>
                                     <span className="subtitle">Modality</span>
                                 </div>
                             </div>
@@ -327,7 +327,7 @@ const Profile = () => {
 
                                     <div className="dark-card-pills">
                                         <span className="dark-card-pill">Fee: ₹{formData.consultation_fee || 0}</span>
-                                        <span className="dark-card-pill">Format: {formData.consultation_mode || "Mixed"}</span>
+                                        <span className="dark-card-pill">Format: {formData.consultation_mode === 'Both' ? 'Online and Offline Consultation' : (formData.consultation_mode || "Mixed")}</span>
                                     </div>
                                 </div>
 
@@ -429,7 +429,7 @@ const Profile = () => {
                                             <option value="">Routing Mode</option>
                                             <option value="Online">Online Payload</option>
                                             <option value="Offline">Offline Payload</option>
-                                            <option value="Both">Dual Stack</option>
+                                            <option value="Both">Online and Offline Consultation</option>
                                         </select>
                                     </div>
 
