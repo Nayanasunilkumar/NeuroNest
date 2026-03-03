@@ -1,12 +1,9 @@
-/* =========================================================
-   NEURONEST APPOINTMENT TRIAGE & APPROVAL CENTER
-   ========================================================= */
-
 .ar-page {
   padding: 32px;
   min-height: 100vh;
   font-family: 'Inter', sans-serif;
-  background-color: #0d0d0f; /* Deepest black for serious clinical tone */
+  background-color: var(--nn-bg);
+  transition: background-color 0.4s ease;
 }
 
 .ar-main-container {
@@ -47,7 +44,7 @@
 }
 
 .ar-title-stack h1 {
-  color: white;
+  color: var(--nn-text-main);
   font-size: 2.2rem;
   font-weight: 800;
   margin: 0;
@@ -55,7 +52,7 @@
 }
 
 .ar-title-stack p {
-  color: #666;
+  color: var(--nn-text-secondary);
   margin: 4px 0 0 0;
   font-size: 0.95rem;
 }
@@ -90,14 +87,14 @@
 }
 
 .ar-btn-outline {
-  background: #16161a;
-  color: #aaa;
-  border-color: #2a2a2f;
+  background: var(--nn-surface);
+  color: var(--nn-text-secondary);
+  border-color: var(--nn-border);
 }
 .ar-btn-outline:hover {
-  background: #1c1c21;
-  color: white;
-  border-color: #3a3a3f;
+  background: var(--nn-surface-secondary);
+  color: var(--nn-text-main);
+  border-color: var(--nn-text-muted);
 }
 
 /* --- TIER 2: KPI HUB --- */
@@ -108,18 +105,19 @@
 }
 
 .ar-kpi-card {
-  background: #16161a;
-  border: 1px solid #232327;
+  background: var(--nn-surface);
+  border: 1px solid var(--nn-border);
   border-radius: 20px;
   padding: 24px;
   display: flex;
   flex-direction: column;
+  box-shadow: var(--nn-shadow);
 }
 
 .ar-kpi-tag {
   font-size: 0.65rem;
   font-weight: 800;
-  color: #555;
+  color: var(--nn-text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.1em;
   margin-bottom: 8px;
@@ -134,7 +132,7 @@
 .ar-kpi-value {
   font-size: 2.4rem;
   font-weight: 800;
-  color: white;
+  color: var(--nn-text-main);
   line-height: 1;
 }
 
@@ -164,10 +162,11 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: #16161a;
-  border: 1px solid #232327;
+  background: var(--nn-surface);
+  border: 1px solid var(--nn-border);
   border-radius: 16px;
   padding: 8px 12px;
+  box-shadow: var(--nn-shadow);
 }
 
 .ar-triage-tabs {
@@ -180,7 +179,7 @@
   border-radius: 10px;
   font-size: 0.88rem;
   font-weight: 700;
-  color: #666;
+  color: var(--nn-text-secondary);
   background: transparent;
   border: none;
   cursor: pointer;
@@ -188,8 +187,8 @@
 }
 
 .ar-triage-tab.active {
-  background: #232327;
-  color: white;
+  background: var(--nn-surface-secondary);
+  color: var(--nn-text-main);
 }
 
 .ar-triage-tab .count {
@@ -205,9 +204,9 @@
 
 .ar-search-wrap input {
   width: 100%;
-  background: #0d0d0f;
-  border: 1px solid #232327;
-  color: white;
+  background: var(--nn-bg);
+  border: 1px solid var(--nn-border);
+  color: var(--nn-text-main);
   height: 40px;
   padding: 0 12px 0 40px;
   border-radius: 10px;
@@ -246,7 +245,7 @@
   display: grid;
   grid-template-columns: 2.2fr 1.8fr 1.5fr 1.2fr 180px;
   padding: 8px 24px;
-  color: #444;
+  color: var(--nn-text-muted);
   font-size: 0.72rem;
   font-weight: 800;
   text-transform: uppercase;
@@ -258,8 +257,8 @@
   display: grid;
   grid-template-columns: 2.2fr 1.8fr 1.5fr 1.2fr 180px;
   padding: 24px;
-  background: #111114;
-  border: 1px solid #1f1f23;
+  background: var(--nn-surface);
+  border: 1px solid var(--nn-border);
   border-radius: 20px;
   align-items: center;
   margin-bottom: 12px;
@@ -267,10 +266,10 @@
 }
 
 .ar-triage-row:hover {
-  border-color: #2b70ff60;
-  background: #16161a;
+  border-color: var(--nn-primary);
+  background: var(--nn-surface-secondary);
   transform: translateX(4px);
-  box-shadow: 0 12px 30px rgba(0,0,0,0.4);
+  box-shadow: var(--nn-shadow);
 }
 
 /* Patient Column */

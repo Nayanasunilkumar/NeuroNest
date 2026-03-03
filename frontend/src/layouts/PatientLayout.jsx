@@ -14,13 +14,13 @@ const PatientLayout = () => {
     const isMessagePath = location.pathname.includes('/messages');
 
     return (
-        <div className={`vh-100 d-flex flex-column overflow-hidden ${darkMode ? 'bg-dark text-light' : 'bg-light text-dark'}`} style={{ transition: 'all 0.3s' }}>
+        <div className="vh-100 d-flex flex-column overflow-hidden" style={{ transition: 'all 0.3s' }}>
             {/* Navbar */}
-            <header className={`navbar navbar-expand-lg sticky-top ${darkMode ? 'navbar-dark bg-dark border-secondary' : 'navbar-light bg-white'} border-bottom shadow-sm px-3`} style={{ height: '80px', zIndex: 1050 }}>
+            <header className="navbar navbar-expand-lg sticky-top border-bottom shadow-sm px-3" style={{ height: '80px', zIndex: 1050, background: 'var(--nn-nav-bg)', backdropFilter: 'blur(10px)', borderColor: 'var(--nn-border)' }}>
                 <div className="container-fluid align-items-center flex-nowrap">
                     {/* Left: Branding */}
                     <div className="d-flex align-items-center flex-shrink-0 me-3 me-xl-5">
-                        <span className={`h4 fw-black mb-0 ${darkMode ? 'text-white' : 'text-primary'}`} style={{ letterSpacing: '-0.05em' }}>NEURONEST</span>
+                        <span className="h4 fw-black mb-0 text-primary" style={{ letterSpacing: '-0.05em' }}>NEURONEST</span>
                     </div>
 
                     {/* Center: Dynamic Island Navigation */}

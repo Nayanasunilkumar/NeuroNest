@@ -11,7 +11,7 @@ const DoctorLayout = () => {
   const location = useLocation();
 
   return (
-    <div className={`vh-100 d-flex flex-column overflow-hidden ${darkMode ? 'bg-dark text-light' : 'bg-light text-dark'}`} style={{ transition: 'all 0.3s' }}>
+    <div className="vh-100 d-flex flex-column overflow-hidden" style={{ transition: 'all 0.3s' }}>
       <DoctorNavbar
         darkMode={darkMode}
         toggleTheme={toggleTheme}
