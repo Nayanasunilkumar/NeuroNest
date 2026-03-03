@@ -63,7 +63,7 @@ const DoctorNavbar = ({ darkMode, toggleTheme }) => {
               type: 'request',
               title: `${pending} New Appointment Request${pending > 1 ? 's' : ''}`,
               desc: 'Requires your approval',
-              link: '/doctor/requests',
+              link: '/doctor/appointment-requests',
               icon: <CalendarCheck size={16} className="text-blue-500" />
             });
           }

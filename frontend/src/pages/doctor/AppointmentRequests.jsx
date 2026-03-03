@@ -1,5 +1,42 @@
 import { useState, useEffect, useMemo } from "react";
 import { getAppointmentRequests, approveAppointment, rejectAppointment, getAppointmentHistory } from "../../api/doctor";
+
+// --- Clinical Utilities (Hoisted via Function Declarations) ---
+function isCloseDate(dateStr) {
+  const d = new Date(dateStr);
+  const today = new Date();
+  const diff = (d - today) / (1000 * 60 * 60 * 24);
+  return diff >= 0 && diff <= 2;
+}
+
+function calculateAge(dob) {
+  if (!dob) return "N/A";
+  const birthDate = new Date(dob);
+  const today = new Date();
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const m = today.getMonth() - birthDate.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+    age--;
+  }
+  return age;
+}
+
+function formatDateHeader(dateStr) {
+  const date = new Date(dateStr);
+  return date.toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+}
+
+function formatDateSmall(dateStr) {
+  const date = new Date(dateStr);
+  return date.toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
+}
+
+function formatTime(timeStr) {
+  if (!timeStr) return "N/A";
+  const [h, m] = timeStr.split(':');
+  const hh = parseInt(h);
+  return `${hh % 12 || 12}:${m} ${hh >= 12 ? 'PM' : 'AM'}`;
+}
 import {
   X, RefreshCw, ChevronRight, Activity, Search,
   Calendar, CheckCircle2, ShieldAlert, Zap, Clock, Stethoscope
@@ -281,20 +318,22 @@ const AppointmentRequests = () => {
 
 // --- Sub-components ---
 
-const TriageKPI = ({ title, value, trend, color, percent }) => (
-  <div className="ar-kpi-card">
-     <span className="ar-kpi-tag">{title}</span>
-     <div className="ar-kpi-main">
-        <span className="ar-kpi-value">{value}</span>
-        <span className="ar-kpi-trend" style={{ color: color }}>{trend}</span>
-     </div>
-     <div className="ar-kpi-footer">
-        <div className="ar-kpi-bar" style={{ width: `${Math.max(percent, 5)}%`, backgroundColor: color }}></div>
-     </div>
-  </div>
-);
+function TriageKPI({ title, value, trend, color, percent }) {
+  return (
+    <div className="ar-kpi-card">
+       <span className="ar-kpi-tag">{title}</span>
+       <div className="ar-kpi-main">
+          <span className="ar-kpi-value">{value}</span>
+          <span className="ar-kpi-trend" style={{ color: color }}>{trend}</span>
+       </div>
+       <div className="ar-kpi-footer">
+          <div className="ar-kpi-bar" style={{ width: `${Math.max(percent, 5)}%`, backgroundColor: color }}></div>
+       </div>
+    </div>
+  );
+}
 
-const TriageRow = ({ req, onAction, actionLoading }) => {
+function TriageRow({ req, onAction, actionLoading }) {
   return (
     <div className="ar-triage-row">
        {/* Patient Cell */}
@@ -365,43 +404,9 @@ const TriageRow = ({ req, onAction, actionLoading }) => {
        </div>
     </div>
   );
-};
+}
 
 // Utilities
-const isCloseDate = (dateStr) => {
-  const d = new Date(dateStr);
-  const today = new Date();
-  const diff = (d - today) / (1000 * 60 * 60 * 24);
-  return diff >= 0 && diff <= 2;
-};
-
-const calculateAge = (dob) => {
-  if (!dob) return "N/A";
-  const birthDate = new Date(dob);
-  const today = new Date();
-  let age = today.getFullYear() - birthDate.getFullYear();
-  const m = today.getMonth() - birthDate.getMonth();
-  if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-    age--;
-  }
-  return age;
-};
-
-const formatDateHeader = (dateStr) => {
-  const date = new Date(dateStr);
-  return date.toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-};
-
-const formatDateSmall = (dateStr) => {
-  const date = new Date(dateStr);
-  return date.toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
-};
-
-const formatTime = (timeStr) => {
-  if (!timeStr) return "N/A";
-  const [h, m] = timeStr.split(':');
-  const hh = parseInt(h);
-  return `${hh % 12 || 12}:${m} ${hh >= 12 ? 'PM' : 'AM'}`;
-};
+// Cleanup old arrow definitions
 
 export default AppointmentRequests;

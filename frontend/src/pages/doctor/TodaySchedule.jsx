@@ -212,7 +212,7 @@ const TodaySchedule = () => {
                         </div>
                         <h4 className="fw-bolder text-dark mb-2">Agenda Clear</h4>
                         <p className="text-secondary small mb-4">No OPD consultations linked to this station.</p>
-                        <button onClick={() => navigate('/doctor/requests')} className="btn btn-primary rounded-pill px-4 fw-bold shadow-sm">
+                        <button onClick={() => navigate('/doctor/appointment-requests')} className="btn btn-primary rounded-pill px-4 fw-bold shadow-sm">
                             Review Requests
                         </button>
                     </div>
