@@ -1,357 +1,462 @@
 /* =========================================================
-   APPOINTMENT CONTROL CENTER — DRIBBBLE INSPIRED (DARK)
+   NEURONEST APPOINTMENT TRIAGE & APPROVAL CENTER
    ========================================================= */
 
 .ar-page {
-  padding: 24px;
+  padding: 32px;
   min-height: 100vh;
   font-family: 'Inter', sans-serif;
-  background-color: #0f0f12; /* Deeper dark for premium feel */
+  background-color: #0d0d0f; /* Deepest black for serious clinical tone */
 }
 
 .ar-main-container {
-  max-width: 1500px;
+  max-width: 1560px;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 32px;
+  gap: 28px;
 }
 
-/* --- BREADCRUMBS --- */
-.ar-breadcrumbs {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 0.85rem;
-  color: #666;
-  font-weight: 600;
-}
-
-.ar-breadcrumbs .active {
-  color: #eee;
-}
-
-/* --- TOP HEADER --- */
-.ar-top-header {
+/* --- BREADCRUMBS & CONTEXT --- */
+.ar-top-meta {
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
-.ar-page-title {
+.ar-breadcrumbs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.78rem;
+  color: #555;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.ar-breadcrumbs .active {
+  color: #2b70ff;
+}
+
+/* --- TIER 1: HEADER & PRIMARY ACTIONS --- */
+.ar-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+
+.ar-title-stack h1 {
   color: white;
-  font-size: 1.75rem;
+  font-size: 2.2rem;
   font-weight: 800;
   margin: 0;
+  letter-spacing: -0.01em;
 }
 
-.ar-header-right {
-  display: flex;
-  align-items: center;
-  gap: 16px;
+.ar-title-stack p {
+  color: #666;
+  margin: 4px 0 0 0;
+  font-size: 0.95rem;
 }
 
-.ar-date-display {
-  background: #1a1a1f;
-  border: 1px solid #2a2a2f;
-  border-radius: 12px;
-  padding: 8px 16px;
+.ar-header-actions {
   display: flex;
-  align-items: center;
   gap: 12px;
-  color: #eee;
-  font-weight: 600;
 }
 
-.ar-primary-btn {
+.ar-action-btn {
+  height: 44px;
+  padding: 0 18px;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid transparent;
+}
+
+.ar-btn-primary {
   background: #2b70ff;
   color: white;
-  border: none;
-  border-radius: 12px;
-  padding: 10px 20px;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  cursor: pointer;
-  transition: all 0.2s;
+  box-shadow: 0 4px 14px rgba(43, 112, 255, 0.25);
 }
-
-.ar-primary-btn:hover {
+.ar-btn-primary:hover {
   background: #1e5ade;
-  transform: translateY(-1px);
+  transform: translateY(-2px);
 }
 
-/* --- STAT CARDS GRID --- */
-.ar-stat-grid {
+.ar-btn-outline {
+  background: #16161a;
+  color: #aaa;
+  border-color: #2a2a2f;
+}
+.ar-btn-outline:hover {
+  background: #1c1c21;
+  color: white;
+  border-color: #3a3a3f;
+}
+
+/* --- TIER 2: KPI HUB --- */
+.ar-kpi-row {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 20px;
 }
 
-.ar-stat-box {
-  background: #1a1a1f;
-  border: 1px solid #2a2a2f;
+.ar-kpi-card {
+  background: #16161a;
+  border: 1px solid #232327;
   border-radius: 20px;
   padding: 24px;
-}
-
-.ar-stat-header {
   display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 12px;
+  flex-direction: column;
 }
 
-.ar-stat-indicator {
-  width: 4px;
-  height: 16px;
-  border-radius: 2px;
+.ar-kpi-tag {
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: #555;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 8px;
 }
 
-.ar-stat-title {
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: #888;
+.ar-kpi-main {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
 }
 
-.ar-stat-value {
-  font-size: 2rem;
+.ar-kpi-value {
+  font-size: 2.4rem;
   font-weight: 800;
   color: white;
-  margin-bottom: 4px;
+  line-height: 1;
 }
 
-.ar-stat-trend {
-  font-size: 0.75rem;
-  font-weight: 600;
+.ar-kpi-trend {
+  font-size: 0.8rem;
+  font-weight: 700;
   display: flex;
   align-items: center;
   gap: 4px;
 }
 
-/* --- TABS & FILTERS --- */
-.ar-row-actions {
+.ar-kpi-footer {
+  margin-top: 14px;
+  height: 4px;
+  background: #1f1f23;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.ar-kpi-bar {
+  height: 100%;
+  border-radius: 2px;
+}
+
+/* --- TIER 3: TRIAGE CONTROLS --- */
+.ar-triage-controls {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 1px solid #222;
-  margin-bottom: 8px;
+  background: #16161a;
+  border: 1px solid #232327;
+  border-radius: 16px;
+  padding: 8px 12px;
 }
 
-.ar-tabs {
+.ar-triage-tabs {
   display: flex;
-  gap: 32px;
+  gap: 4px;
 }
 
-.ar-tab {
-  padding: 16px 0;
-  color: #666;
+.ar-triage-tab {
+  padding: 8px 20px;
+  border-radius: 10px;
+  font-size: 0.88rem;
   font-weight: 700;
-  font-size: 0.9rem;
-  border-bottom: 2px solid transparent;
+  color: #666;
+  background: transparent;
+  border: none;
   cursor: pointer;
   transition: all 0.2s;
-  background: transparent;
-  border-top: none;
-  border-left: none;
-  border-right: none;
 }
 
-.ar-tab.active {
-  color: #2b70ff;
-  border-bottom-color: #2b70ff;
+.ar-triage-tab.active {
+  background: #232327;
+  color: white;
 }
 
-.ar-tab:hover:not(.active) {
-  color: #aaa;
+.ar-triage-tab .count {
+  margin-left: 6px;
+  font-size: 0.75rem;
+  color: #444;
 }
 
-/* --- PATIENT LIST ROWS --- */
-.ar-list-section {
+.ar-search-wrap {
+  position: relative;
+  width: 320px;
+}
+
+.ar-search-wrap input {
+  width: 100%;
+  background: #0d0d0f;
+  border: 1px solid #232327;
+  color: white;
+  height: 40px;
+  padding: 0 12px 0 40px;
+  border-radius: 10px;
+  font-size: 0.85rem;
+}
+
+.ar-search-wrap .search-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #444;
+}
+
+/* --- TIER 4: APPOINTMENT TRIAGE TABLE --- */
+.ar-triage-list {
   display: flex;
   flex-direction: column;
 }
 
-.ar-date-group {
-  margin-top: 24px;
-}
-
-.ar-date-header {
-  text-align: center;
-  position: relative;
-  margin-bottom: 24px;
-}
-
-.ar-date-header::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 50%;
-  width: 100%;
-  height: 1px;
-  background: #222;
-  z-index: 1;
-}
-
-.ar-date-text {
-  position: relative;
-  z-index: 2;
-  background: #0f0f12;
-  padding: 0 16px;
-  color: #666;
-  font-size: 0.8rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.ar-table-header {
+.ar-table-head {
   display: grid;
-  grid-template-columns: 2fr 1.5fr 1.5fr 1.5fr 0.8fr 120px;
+  grid-template-columns: 2.2fr 1.8fr 1.5fr 1.2fr 180px;
   padding: 8px 24px;
-  color: #555;
-  font-size: 0.8rem;
-  font-weight: 700;
+  color: #444;
+  font-size: 0.72rem;
+  font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.1em;
 }
 
-.ar-row {
+/* Row Styling */
+.ar-triage-row {
   display: grid;
-  grid-template-columns: 2fr 1.5fr 1.5fr 1.5fr 0.8fr 120px;
-  padding: 20px 24px;
-  background: #16161a;
-  border: 1px solid #222;
-  border-radius: 16px;
+  grid-template-columns: 2.2fr 1.8fr 1.5fr 1.2fr 180px;
+  padding: 24px;
+  background: #111114;
+  border: 1px solid #1f1f23;
+  border-radius: 20px;
   align-items: center;
   margin-bottom: 12px;
-  transition: all 0.2s;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.ar-row:hover {
-  border-color: #333;
-  background: #1c1c21;
+.ar-triage-row:hover {
+  border-color: #2b70ff60;
+  background: #16161a;
+  transform: translateX(4px);
+  box-shadow: 0 12px 30px rgba(0,0,0,0.4);
 }
 
-/* Columns */
-.ar-col-patient {
+/* Patient Column */
+.ar-patient-cell {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 20px;
 }
 
-.ar-avatar {
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
+.ar-avatar-container {
+  position: relative;
+}
+
+.ar-avatar-img {
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
   object-fit: cover;
+  border: 2px solid #232327;
 }
 
-.ar-name-box {
+.ar-risk-indicator {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid #111114;
+}
+
+.ar-details {
   display: flex;
   flex-direction: column;
 }
 
 .ar-p-name {
   color: white;
+  font-weight: 800;
+  font-size: 1.05rem;
+  margin-bottom: 2px;
+}
+
+.ar-p-meta {
+  font-size: 0.78rem;
+  color: #666;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Clinical Info Column */
+.ar-clinical-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ar-reason-text {
+  color: #eee;
+  font-size: 0.88rem;
+  font-weight: 600;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.ar-clinical-tags {
+  display: flex;
+  gap: 6px;
+}
+
+.ar-clin-badge {
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 0.6rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  background: #232327;
+  color: #888;
+  border: 1px solid #2a2a2f;
+}
+
+/* Schedule Cell */
+.ar-schedule-cell {
+  display: flex;
+  flex-direction: column;
+}
+
+.ar-time-primary {
+  color: white;
   font-weight: 700;
   font-size: 0.95rem;
 }
 
-.ar-p-id {
+.ar-date-secondary {
   color: #666;
-  font-size: 0.75rem;
+  font-size: 0.8rem;
   font-weight: 600;
 }
 
-.ar-col-subinfo {
+/* Conflict Logic UI */
+.ar-conflict-cell {
   display: flex;
-  flex-direction: column;
-  gap: 2px;
+  align-items: center;
+  gap: 10px;
 }
 
-.ar-info-title {
-  color: white;
-  font-weight: 600;
-  font-size: 0.85rem;
+.ar-conflict-flag {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
 }
 
-.ar-info-sub {
-  color: #666;
-  font-size: 0.75rem;
+.ar-conflict-text {
+  font-size: 0.78rem;
+  font-weight: 700;
 }
 
-.ar-col-status {
-  display: flex;
-  justify-content: flex-start;
-}
-
-.ar-badge-status {
-  padding: 4px 10px;
-  border-radius: 8px;
-  font-size: 0.7rem;
-  font-weight: 800;
-  text-transform: uppercase;
-}
-
-.ar-badge-regular { background: #dcfce720; color: #4ade80; }
-.ar-badge-urgent { background: #fee2e220; color: #f87171; }
-
-.ar-row-buttons {
+/* Decision Area */
+.ar-decision-cell {
   display: flex;
   gap: 8px;
   justify-content: flex-end;
 }
 
-.ar-icon-btn {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
+.ar-triage-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   transition: all 0.2s;
   border: 1px solid transparent;
+  background: #1c1c21;
 }
 
-.ar-btn-check {
-  background: #2b70ff15;
+.ar-btn-approve {
+  color: #4ade80;
+  border-color: #4ade8020;
+}
+.ar-btn-approve:hover {
+  background: #4ade80;
+  color: white;
+  box-shadow: 0 4px 12px rgba(74, 222, 128, 0.3);
+}
+
+.ar-btn-suggest {
   color: #2b70ff;
-  border-color: #2b70ff30;
+  border-color: #2b70ff20;
 }
-
-.ar-btn-check:hover {
+.ar-btn-suggest:hover {
   background: #2b70ff;
   color: white;
+  box-shadow: 0 4px 12px rgba(43, 112, 255, 0.3);
 }
 
-.ar-btn-close {
-  background: #2a2a2f;
-  color: #666;
-  border-color: #3a3a3f;
+.ar-btn-reject {
+  color: #f87171;
+  border-color: #f8717120;
+}
+.ar-btn-reject:hover {
+  background: #f87171;
+  color: white;
+  box-shadow: 0 4px 12px rgba(248, 113, 113, 0.3);
 }
 
-.ar-btn-close:hover {
-  background: #ff4d4d20;
-  color: #ff4d4d;
-  border-color: #ff4d4d30;
+/* DATE HEADERS */
+.ar-triage-date-header {
+  margin: 32px 0 16px 0;
+  position: relative;
+  display: flex;
+  align-items: center;
 }
 
-/* RESPONSIVE */
-@media (max-width: 1200px) {
-  .ar-stat-grid { grid-template-columns: repeat(2, 1fr); }
-  .ar-row, .ar-table-header {
-    grid-template-columns: 2fr 1.5fr 1.5fr 1fr;
+.ar-triage-date-header::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: #1f1f23;
+  margin-left: 20px;
+}
+
+.ar-date-label {
+  color: #444;
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+/* RESPONSIVE TRIAGE */
+@media (max-width: 1400px) {
+  .ar-kpi-row { grid-template-columns: repeat(2, 1fr); }
+  .ar-table-head, .ar-triage-row {
+    grid-template-columns: 2fr 1.5fr 1.5fr 150px;
   }
-  .ar-col-doctor, .ar-col-status { display: none; }
-}
-
-@media (max-width: 800px) {
-  .ar-stat-grid { grid-template-columns: 1fr; }
-  .ar-row, .ar-table-header {
-    grid-template-columns: 2fr 1fr;
-  }
-  .ar-col-contact, .ar-col-schedule { display: none; }
+  .ar-conflict-cell { display: none; }
 }

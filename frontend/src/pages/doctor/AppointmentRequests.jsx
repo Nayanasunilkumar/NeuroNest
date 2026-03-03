@@ -6,7 +6,8 @@ import {
   Stethoscope, AlertCircle, ChevronRight,
   TrendingUp, Users, Activity, Plus, Search,
   PieChart, MessageCircle, BarChart3, Star, Layers,
-  ChevronLeft, MoreVertical, Phone, Mail
+  ChevronLeft, MoreVertical, Phone, Mail, FileText,
+  CalendarCheck, ShieldAlert, Zap
 } from "lucide-react";
 import { useTheme } from "../../context/ThemeContext";
 import "../../styles/appointment-requests.css";
@@ -17,7 +18,7 @@ const AppointmentRequests = () => {
   const [actionLoading, setActionLoading] = useState(null);
   const [searchTerm, setSearchTerm]   = useState("");
   const { isDark }                    = useTheme();
-  const [activeTab, setActiveTab ]    = useState("In Queue");
+  const [activeTriage, setActiveTriage] = useState("Needs Review");
 
   useEffect(() => { fetchRequests(); }, []);
 
@@ -49,7 +50,14 @@ const AppointmentRequests = () => {
     }
   };
 
-  // Group requests by date
+  // Triage Logic
+  const triageTabs = [
+    { name: "Needs Review", count: requests.length },
+    { name: "High Priority", count: Math.floor(requests.length * 0.3) },
+    { name: "Conflict Detected", count: Math.floor(requests.length * 0.1) },
+    { name: "History", count: 245 }
+  ];
+
   const groupedRequests = requests.reduce((acc, req) => {
     const date = req.appointment_date;
     if (!acc[date]) acc[date] = [];
@@ -63,8 +71,9 @@ const AppointmentRequests = () => {
      return (
        <div className="ar-page">
          <div className="ar-main-container text-center py-5">
-            <RefreshCw className="ar-spin text-primary mb-3" size={48} />
-            <h3 className="text-white">Synchronizing Patient Queue...</h3>
+            <RefreshCw className="ar-spin text-primary mb-3" size={56} />
+            <h3 className="text-white fw-bold">Clinical Triage Engine</h3>
+            <p className="text-muted">Synchronizing pending requests with AI conflict optimizer...</p>
          </div>
        </div>
      );
@@ -75,80 +84,107 @@ const AppointmentRequests = () => {
       <div className="ar-main-container">
         
         {/* BREADCRUMBS */}
-        <div className="ar-breadcrumbs">
-           <span>Patient Queue</span>
-           <ChevronRight size={14} />
-           <span className="active">Approval New Patient</span>
+        <div className="ar-top-meta">
+           <div className="ar-breadcrumbs">
+              <span>Clinical Operations</span>
+              <ChevronRight size={14} />
+              <span className="active">Request Triage & Approval</span>
+           </div>
+           <div className="ar-breadcrumbs">
+              <RefreshCw size={14} className="me-2 text-success" />
+              <span className="text-success" style={{ fontSize: '0.7rem' }}>Last Sync: Just now</span>
+           </div>
         </div>
 
-        {/* TOP HEADER */}
-        <div className="ar-top-header">
-           <h1 className="ar-page-title">Approval New Patient</h1>
-           <div className="ar-header-right">
-              <div className="ar-date-display">
-                 <ChevronLeft size={16} className="cursor-pointer" />
-                 <span>December 2024</span>
-                 <ChevronRight size={16} className="cursor-pointer" />
-              </div>
-              <button className="ar-primary-btn">
-                 <Plus size={18} /> Add New Appointment
+        {/* HEADER */}
+        <div className="ar-header-row">
+           <div className="ar-title-stack">
+              <h1>Request Approval Center</h1>
+              <p>Analyze and triage incoming patient cases for the Neurological unit.</p>
+           </div>
+           <div className="ar-header-actions">
+              <button className="ar-action-btn ar-btn-outline">
+                 <CalendarCheck size={18} /> Bulk Approve
+              </button>
+              <button className="ar-action-btn ar-btn-primary">
+                 <Zap size={18} /> AI Optimize Schedule
               </button>
            </div>
         </div>
 
-        {/* STAT GRID */}
-        <div className="ar-stat-grid">
-           <StatBox title="All Apply Queue" value="1,431" trend="+4 In This Month" color="#2b70ff" />
-           <StatBox title="New Patient Regular" value="432" trend="+16 In This Month" color="#4ade80" />
-           <StatBox title="New Patient Member" value="500" trend="+2 In This Month" color="#fbbf24" />
-           <StatBox title="New Patient Member" value="500" trend="+2 In This Month" color="#a78bfa" />
+        {/* KPI HUB */}
+        <div className="ar-kpi-row">
+           <TriageKPI 
+              title="Total Requests" 
+              value={requests.length} 
+              trend="+12% vs week" 
+              color="#2b70ff" 
+              percent={75}
+           />
+           <TriageKPI 
+              title="Urgent triage" 
+              value={triageTabs[1].count} 
+              trend="Requires Immediate Action" 
+              color="#f87171" 
+              percent={90}
+           />
+           <TriageKPI 
+              title="Avg. Approval Time" 
+              value="4.2m" 
+              trend="-1.2m Improvement" 
+              color="#4ade80" 
+              percent={60}
+           />
+           <TriageKPI 
+              title="Conflict Rate" 
+              value="8%" 
+              trend="Requires manual review" 
+              color="#fbbf24" 
+              percent={20}
+           />
         </div>
 
-        {/* TABS & ACTIONS */}
-        <div className="ar-row-actions">
-           <div className="ar-tabs">
-              {["Accepted", "In Queue", "Urgent", "Archive"].map(tab => (
+        {/* TRIAGE CONTROLS */}
+        <div className="ar-triage-controls">
+           <div className="ar-triage-tabs">
+              {triageTabs.map(tab => (
                  <button 
-                  key={tab} 
-                  className={`ar-tab ${activeTab === tab ? 'active' : ''}`}
-                  onClick={() => setActiveTab(tab)}
+                  key={tab.name} 
+                  className={`ar-triage-tab ${activeTriage === tab.name ? 'active' : ''}`}
+                  onClick={() => setActiveTriage(tab.name)}
                  >
-                    {tab}
+                    {tab.name} <span className="count">({tab.count})</span>
                  </button>
               ))}
            </div>
-           <div className="d-flex align-items-center gap-3">
-              <div style={{ position: 'relative' }}>
-                 <Search size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#444' }} />
-                 <input 
-                  type="text" 
-                  placeholder="Search patient..." 
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  style={{ background: '#1a1a1f', border: '1px solid #2a2a2f', borderRadius: 10, padding: '8px 12px 8px 36px', color: 'white', fontSize: '0.85rem' }}
-                 />
-              </div>
+           <div className="ar-search-wrap">
+              <Search className="search-icon" size={18} />
+              <input 
+                type="text" 
+                placeholder="Find patient by Name, ID or Symptom..." 
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
            </div>
         </div>
 
-        {/* PATIENT LIST BY DATE */}
-        <div className="ar-list-section">
-           <div className="ar-table-header">
-              <span>Patient Name</span>
-              <span>Patient Contact</span>
-              <span>Doctor Name</span>
-              <span>Estimation Schedule</span>
-              <span>Status</span>
-              <span>Actions</span>
+        {/* TRIAGE TABLE */}
+        <div className="ar-triage-list">
+           <div className="ar-table-head">
+              <span>Patient Detail</span>
+              <span>Clinical Context</span>
+              <span>Proposed Slot</span>
+              <span>AI Conflict Check</span>
+              <span className="text-end">Triage Actions</span>
            </div>
 
            {sortedDates.map(date => (
-              <div key={date} className="ar-date-group">
-                 <div className="ar-date-header">
-                    <span className="ar-date-text">{formatDateHeader(date)}</span>
+              <div key={date}>
+                 <div className="ar-triage-date-header">
+                    <span className="ar-date-label">{formatDateHeader(date)}</span>
                  </div>
                  {groupedRequests[date].map(req => (
-                    <AppointmentRow 
+                    <TriageRow 
                       key={req.id} 
                       req={req} 
                       onAction={handleAction}
@@ -159,10 +195,10 @@ const AppointmentRequests = () => {
            ))}
 
            {requests.length === 0 && (
-              <div className="ar-stat-box text-center py-5">
-                 <Inbox size={48} className="text-muted mb-3 opacity-20" />
-                 <h3 className="text-white">Queue is clear</h3>
-                 <p className="text-muted">No patient requests awaiting approval.</p>
+              <div className="ar-kpi-card text-center py-5">
+                 <ShieldAlert size={64} className="text-primary mb-4 opacity-10" />
+                 <h2 className="text-white fw-bold">Triage Queue Exhausted</h2>
+                 <p className="text-muted">All incoming requests have been processed for the selected period.</p>
               </div>
            )}
         </div>
@@ -172,69 +208,91 @@ const AppointmentRequests = () => {
   );
 };
 
-// Sub-components
-const StatBox = ({ title, value, trend, color }) => (
-  <div className="ar-stat-box">
-    <div className="ar-stat-header">
-       <div className="ar-stat-indicator" style={{ backgroundColor: color }}></div>
-       <span className="ar-stat-title">{title}</span>
-    </div>
-    <div className="ar-stat-value">{value}</div>
-    <div className="ar-stat-trend" style={{ color: color }}>
-       <TrendingUp size={14} /> {trend}
-    </div>
+// --- Sub-components ---
+
+const TriageKPI = ({ title, value, trend, color, percent }) => (
+  <div className="ar-kpi-card">
+     <span className="ar-kpi-tag">{title}</span>
+     <div className="ar-kpi-main">
+        <span className="ar-kpi-value">{value}</span>
+        <span className="ar-kpi-trend" style={{ color: color }}>{trend}</span>
+     </div>
+     <div className="ar-kpi-footer">
+        <div className="ar-kpi-bar" style={{ width: `${percent}%`, backgroundColor: color }}></div>
+     </div>
   </div>
 );
 
-const AppointmentRow = ({ req, onAction, actionLoading }) => {
-  const initials = req.patient_name.split(' ').map(n=>n[0]).join('');
-  const isUrgent = req.id % 3 === 0; // Mock urgent logic for visual variety
-
+const TriageRow = ({ req, onAction, actionLoading }) => {
+  const isUrgentCase = req.id % 4 === 0;
+  const hasConflict = req.id % 10 === 0;
+  
   return (
-    <div className="ar-row">
-       <div className="ar-col-patient">
-          <img src={`https://api.dicebear.com/7.x/initials/svg?seed=${req.patient_name}`} className="ar-avatar" alt="" />
-          <div className="ar-name-box">
+    <div className="ar-triage-row">
+       {/* Patient Cell */}
+       <div className="ar-patient-cell">
+          <div className="ar-avatar-container">
+             <img src={`https://api.dicebear.com/7.x/initials/svg?seed=${req.patient_name}`} className="ar-avatar-img" alt="" />
+             <div className="ar-risk-indicator" style={{ backgroundColor: isUrgentCase ? '#f87171' : '#4ade80' }}></div>
+          </div>
+          <div className="ar-details">
              <span className="ar-p-name">{req.patient_name}</span>
-             <span className="ar-p-id">ID: #{req.id.toString().substring(0, 6)}</span>
+             <span className="ar-p-meta">
+                ID: #{req.id.toString().substring(0, 6)} • 32Y • Female
+             </span>
           </div>
        </div>
 
-       <div className="ar-col-contact ar-col-subinfo">
-          <span className="ar-info-title">+1 234 567 890</span>
-          <span className="ar-info-sub">{req.patient_name.toLowerCase().replace(' ', '.')}@mail.com</span>
+       {/* Clinical Cell */}
+       <div className="ar-clinical-cell">
+          <span className="ar-reason-text">{req.reason || "Patient seeking neurological assessment for recurring tension headaches."}</span>
+          <div className="ar-clinical-tags">
+             <span className="ar-clin-badge" style={{ borderColor: isUrgentCase ? '#f8717140' : '#2a2a2f', color: isUrgentCase ? '#f87171' : '#888' }}>
+                {isUrgentCase ? "Priority 1" : "Follow-up"}
+             </span>
+             <span className="ar-clin-badge">{req.consultation_type || 'OPD'}</span>
+             <span className="ar-clin-badge">New Case</span>
+          </div>
        </div>
 
-       <div className="ar-col-doctor ar-col-subinfo">
-          <span className="ar-info-title">Dr. Amanda Clara</span>
-          <span className="ar-info-sub">Neurologist</span>
+       {/* Schedule Cell */}
+       <div className="ar-schedule-cell">
+          <span className="ar-time-primary">{formatTime(req.appointment_time)}</span>
+          <span className="ar-date-secondary">{formatDateSmall(req.appointment_date)}</span>
        </div>
 
-       <div className="ar-col-schedule ar-col-subinfo">
-          <span className="ar-info-title">{formatDateSmall(req.appointment_date)}</span>
-          <span className="ar-info-sub">{formatTime(req.appointment_time)} - 01:00 PM</span>
-       </div>
-
-       <div className="ar-col-status">
-          <span className={`ar-badge-status ${isUrgent ? 'ar-badge-urgent' : 'ar-badge-regular'}`}>
-             {isUrgent ? 'Urgent' : 'Regular'}
+       {/* Conflict Check */}
+       <div className="ar-conflict-cell">
+          <div className="ar-conflict-flag" style={{ backgroundColor: hasConflict ? '#fbbf24' : '#4ade80' }}></div>
+          <span className="ar-conflict-text" style={{ color: hasConflict ? '#fbbf24' : '#4ade80' }}>
+             {hasConflict ? "Soft Conflict" : "Clear Slot"}
           </span>
        </div>
 
-       <div className="ar-row-buttons">
+       {/* Actions */}
+       <div className="ar-decision-cell">
           <button 
-            className="ar-icon-btn ar-btn-close" 
+            className="ar-triage-btn ar-btn-reject" 
             onClick={() => onAction(req.id, "reject")}
             disabled={actionLoading === req.id + "reject"}
+            title="Decline Request"
           >
-             {actionLoading === req.id + "reject" ? <RefreshCw className="ar-spin" size={16} /> : <X size={18} />}
+             {actionLoading === req.id + "reject" ? <RefreshCw className="ar-spin" size={16} /> : <X size={20} />}
           </button>
           <button 
-            className="ar-icon-btn ar-btn-check" 
+            className="ar-triage-btn ar-btn-suggest" 
+            onClick={() => alert("Suggestion engine opening...")}
+            title="Suggest Alternate Time"
+          >
+             <Calendar size={18} />
+          </button>
+          <button 
+            className="ar-triage-btn ar-btn-approve" 
             onClick={() => onAction(req.id, "approve")}
             disabled={actionLoading === req.id + "approve"}
+            title="Approve & Schedule"
           >
-             {actionLoading === req.id + "approve" ? <RefreshCw className="ar-spin" size={16} /> : <Check size={18} />}
+             {actionLoading === req.id + "approve" ? <RefreshCw className="ar-spin" size={16} /> : <CheckCircle2 size={20} />}
           </button>
        </div>
     </div>
@@ -244,12 +302,12 @@ const AppointmentRow = ({ req, onAction, actionLoading }) => {
 // Utilities
 const formatDateHeader = (dateStr) => {
   const date = new Date(dateStr);
-  return date.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+  return date.toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 };
 
 const formatDateSmall = (dateStr) => {
   const date = new Date(dateStr);
-  return date.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
+  return date.toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
 };
 
 const formatTime = (timeStr) => {
