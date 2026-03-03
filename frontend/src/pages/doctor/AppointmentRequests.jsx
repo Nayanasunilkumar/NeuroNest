@@ -157,12 +157,32 @@ const AppointmentRequests = () => {
   return (
     <div className={`ar-page ${isDark ? 'dark' : ''}`}>
       
+      {/* ── Page Header & Search ── */}
+      <div className="d-flex justify-content-between align-items-center mb-4">
+         <div>
+            <h1 className="ar-title mb-0" style={{ fontSize: '1.6rem', fontWeight: 800, color: '#1e293b' }}>
+               Appointment Control Center
+            </h1>
+            <p className="text-muted small mb-0">NeuroNest Doctor Experience • Intake & Triage</p>
+         </div>
+         <div className="ar-search-input-wrap" style={{ maxWidth: '300px' }}>
+            <Search className="ar-search-icon" size={18} />
+            <input 
+               type="text" 
+               className="ar-search-input" 
+               placeholder="Search clinical queue..." 
+               value={searchTerm}
+               onChange={(e) => setSearchTerm(e.target.value)}
+            />
+         </div>
+      </div>
+
       {/* ── Top Analytics Row (Clean Cards) ── */}
       <div className="ar-stats-row">
-         <StatCard title="Active Requests" value={requests.length} icon={<Layers size={20} />} color="#3b82f6" bg="#eff6ff" />
+         <StatCard title="Pending Intake" value={pendingRequests.length} icon={<Layers size={20} />} color="#3b82f6" bg="#eff6ff" />
          <StatCard title="Critical Cases" value={urgentCases.length} icon={<AlertCircle size={20} />} color="#ef4444" bg="#fef2f2" />
-         <StatCard title="Auto-Scheduled" value="98%" icon={<CheckCircle2 size={20} />} color="#10b981" bg="#ecfdf5" />
-         <StatCard title="Today's Load" value="6" icon={<Calendar size={20} />} color="#8b5cf6" bg="#f5f3ff" />
+         <StatCard title="Success Rate" value="98%" icon={<CheckCircle2 size={20} />} color="#10b981" bg="#ecfdf5" />
+         <StatCard title="Daily Load" value="6" icon={<Calendar size={20} />} color="#8b5cf6" bg="#f5f3ff" />
       </div>
 
       <div className="ar-layout-grid">
@@ -241,7 +261,7 @@ const AppointmentRequests = () => {
                
                <div className="ar-insight-body">
                   <div className="d-flex justify-content-between mb-1">
-                     <span className="small fw-bold">Current Capacity</span>
+                     <span className="small fw-bold">Daily Capacity</span>
                      <span className="small fw-bold text-primary">71%</span>
                   </div>
                   <div className="ar-cap-meter">
@@ -251,11 +271,11 @@ const AppointmentRequests = () => {
 
                <div className="ar-insight-msg">
                   <Star size={14} className="text-warning me-1" />
-                  Capacity peak estimated at <strong>3:00 PM</strong>. Suggest move Patient #219 to morning slot for better clinical workflow.
+                  <strong>Optimization Alert:</strong> Peak hours (2-4 PM) are approaching capacity limit. AI suggests prioritizing Patient #219 now to avoid clinical bottleneck.
                </div>
 
-               <div className="ar-chart-placeholder" style={{ height: '80px', background: 'transparent' }}>
-                  <BarChart3 size={24} className="text-muted opacity-25" />
+               <div className="ar-chart-placeholder" style={{ height: '60px', background: 'transparent', border: 'none' }}>
+                  <BarChart3 size={32} className="text-primary opacity-50" />
                </div>
             </div>
 
