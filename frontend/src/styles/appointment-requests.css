@@ -1,354 +1,357 @@
 /* =========================================================
-   APPOINTMENT CONTROL CENTER — BIG CARD REDESIGN
+   APPOINTMENT CONTROL CENTER — DRIBBBLE INSPIRED (DARK)
    ========================================================= */
 
 .ar-page {
-  padding: 2rem 1rem;
+  padding: 24px;
   min-height: 100vh;
   font-family: 'Inter', sans-serif;
+  background-color: #0f0f12; /* Deeper dark for premium feel */
 }
 
-/* THE BIG CARD (Like Profile Container) */
-.ar-big-card {
-  max-width: 1400px;
+.ar-main-container {
+  max-width: 1500px;
   margin: 0 auto;
-  background-color: #121212;
-  border-radius: 32px;
-  border: 1px solid #232323;
-  padding: 24px;
-  box-shadow: 0 40px 100px rgba(0,0,0,0.6);
-  position: relative;
-  overflow: visible;
-}
-
-/* THE BANNER (Like Profile Banner) */
-.ar-banner {
-  height: 140px;
-  background: linear-gradient(90deg, #00d2ff, #0055ff);
-  border-radius: 20px;
-  margin-bottom: 24px;
   display: flex;
-  align-items: center;
-  padding: 0 40px;
-  position: relative;
-}
-
-.ar-banner-title {
-  color: white;
-  font-size: 1.8rem;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  text-shadow: 0 2px 10px rgba(0,0,0,0.2);
-}
-
-/* LAYOUT GRID */
-.ar-content-row {
-  display: flex;
+  flex-direction: column;
   gap: 32px;
-  padding: 0 8px;
-  margin-top: -60px; /* Overlap effect like profile */
 }
 
-/* SIDEBAR (Left Column) */
-.ar-sidebar {
-  width: 280px;
-  flex-shrink: 0;
+/* --- BREADCRUMBS --- */
+.ar-breadcrumbs {
   display: flex;
-  flex-direction: column;
-  gap: 24px;
-  z-index: 10;
-}
-
-.ar-doctor-profile-card {
-  background: #1a1a1a;
-  border-radius: 24px;
-  border: 1px solid #2a2a2a;
-  padding: 32px 24px;
-  display: flex;
-  flex-direction: column;
   align-items: center;
-  text-align: center;
-  box-shadow: 0 20px 40px rgba(0,0,0,0.4);
-}
-
-.ar-doc-avatar-wrap {
-  position: relative;
-  margin-bottom: 20px;
-}
-
-.ar-doc-avatar {
-  width: 100px;
-  height: 100px;
-  border-radius: 50%;
-  border: 4px solid #1a1a1a;
-  box-shadow: 0 0 0 4px #00d2ff;
-  object-fit: cover;
-}
-
-.ar-doc-name {
-  color: white;
-  font-size: 1.2rem;
-  font-weight: 800;
-  margin-bottom: 4px;
-}
-
-.ar-doc-title {
-  color: #888;
+  gap: 8px;
   font-size: 0.85rem;
+  color: #666;
   font-weight: 600;
-  margin-bottom: 24px;
 }
 
-/* VERTICAL STATS IN SIDEBAR */
-.ar-vertical-stats {
+.ar-breadcrumbs .active {
+  color: #eee;
+}
+
+/* --- TOP HEADER --- */
+.ar-top-header {
   display: flex;
-  flex-direction: column;
-  gap: 12px;
-  width: 100%;
+  justify-content: space-between;
+  align-items: center;
 }
 
-.ar-sidebar-stat {
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.05);
-  border-radius: 16px;
-  padding: 16px;
+.ar-page-title {
+  color: white;
+  font-size: 1.75rem;
+  font-weight: 800;
+  margin: 0;
+}
+
+.ar-header-right {
   display: flex;
   align-items: center;
   gap: 16px;
 }
 
-.ar-stat-point {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-}
-
-.ar-stat-info {
-  display: flex;
-  flex-direction: column;
-}
-
-.ar-stat-label {
-  font-size: 0.75rem;
-  color: #666;
-  font-weight: 600;
-  text-transform: uppercase;
-}
-
-.ar-stat-val {
-  font-size: 1.1rem;
-  color: white;
-  font-weight: 800;
-}
-
-/* MAIN CONTENT (Right Column) */
-.ar-main-content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-  padding-top: 60px; /* Offset the sidebar shift */
-}
-
-/* CONTROLS & TABS */
-.ar-header-actions {
+.ar-date-display {
+  background: #1a1a1f;
+  border: 1px solid #2a2a2f;
+  border-radius: 12px;
+  padding: 8px 16px;
   display: flex;
   align-items: center;
+  gap: 12px;
+  color: #eee;
+  font-weight: 600;
+}
+
+.ar-primary-btn {
+  background: #2b70ff;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  padding: 10px 20px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.ar-primary-btn:hover {
+  background: #1e5ade;
+  transform: translateY(-1px);
+}
+
+/* --- STAT CARDS GRID --- */
+.ar-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+
+.ar-stat-box {
+  background: #1a1a1f;
+  border: 1px solid #2a2a2f;
+  border-radius: 20px;
+  padding: 24px;
+}
+
+.ar-stat-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.ar-stat-indicator {
+  width: 4px;
+  height: 16px;
+  border-radius: 2px;
+}
+
+.ar-stat-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #888;
+}
+
+.ar-stat-value {
+  font-size: 2rem;
+  font-weight: 800;
+  color: white;
+  margin-bottom: 4px;
+}
+
+.ar-stat-trend {
+  font-size: 0.75rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* --- TABS & FILTERS --- */
+.ar-row-actions {
+  display: flex;
   justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #222;
   margin-bottom: 8px;
 }
 
 .ar-tabs {
   display: flex;
-  background: #1a1a1a;
-  padding: 6px;
-  border-radius: 14px;
-  border: 1px solid #2a2a2a;
-}
-
-.ar-tab-btn {
-  padding: 8px 20px;
-  border-radius: 10px;
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: #666;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.ar-tab-btn.active {
-  background: #2b70ff;
-  color: white;
-  box-shadow: 0 4px 12px rgba(43, 112, 255, 0.3);
-}
-
-.ar-controls-row {
-  display: flex;
-  gap: 16px;
-  align-items: center;
-}
-
-.ar-search-box {
-  position: relative;
-  flex: 1;
-}
-
-.ar-search-box input {
-  width: 100%;
-  background: #1a1a1a;
-  border: 1px solid #2a2a2a;
-  color: white;
-  height: 48px;
-  padding: 0 16px 0 48px;
-  border-radius: 16px;
-  font-size: 0.9rem;
-}
-
-.ar-search-box .search-icon {
-  position: absolute;
-  left: 18px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #444;
-}
-
-/* DASHBOARD GRID */
-.ar-dashboard-grid {
-  display: grid;
-  grid-template-columns: 1fr 340px;
   gap: 32px;
 }
 
-/* REQUESTS LIST */
-.ar-list-col {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-/* INSIGHTS COL */
-.ar-side-col {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-}
-
-/* CARDS Styling */
-.ar-dark-card {
-  background: #1a1a1a;
-  border: 1px solid #2a2a2a;
-  border-radius: 20px;
-  padding: 24px;
-  transition: all 0.2s;
-}
-
-.ar-dark-card:hover {
-  border-color: #3b82f6;
-  transform: translateY(-2px);
-  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-}
-
-/* APPOINTMENT CARD overrides */
-.ar-card {
-  background: #1a1a1a !important;
-  border: 1px solid #2a2a2a !important;
-  border-left: 6px solid #2a2a2a !important;
-  padding: 24px !important;
-}
-
-.ar-card-urgent { border-left-color: #ef4444 !important; }
-.ar-card-active { border-left-color: #3b82f6 !important; }
-
-.ar-p-name { color: white !important; }
-.ar-p-id { color: #555 !important; }
-.ar-time-badge { background: #222 !important; border: 1px solid #333 !important; color: #aaa !important; }
-.ar-card-metadata { background: #121212 !important; border: 1px solid #222 !important; }
-.ar-symptoms-preview { color: #888 !important; }
-.ar-btn-outline { background: transparent !important; color: #888 !important; border-color: #333 !important; }
-.ar-btn-outline:hover { background: #222 !important; color: white !important; }
-
-/* AI PANEL Styling */
-.ar-ai-panel {
-  background: linear-gradient(135deg, #1e1e1e, #141414);
-  border: 1px solid #2a2a2a;
-  border-radius: 24px;
-  padding: 24px;
-}
-
-.ar-ai-header {
-  color: #a78bfa;
-  font-size: 0.85rem;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 20px;
-}
-
-.ar-progress-shell {
-  height: 10px;
-  background: #000;
-  border-radius: 20px;
-  overflow: hidden;
-  margin-bottom: 12px;
-}
-
-.ar-progress-fill {
-  height: 100%;
-  background: linear-gradient(90deg, #7c3aed, #a78bfa);
-  border-radius: 20px;
-}
-
-.ar-capacity-text {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.8rem;
-  font-weight: 700;
+.ar-tab {
+  padding: 16px 0;
   color: #666;
+  font-weight: 700;
+  font-size: 0.9rem;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: transparent;
+  border-top: none;
+  border-left: none;
+  border-right: none;
+}
+
+.ar-tab.active {
+  color: #2b70ff;
+  border-bottom-color: #2b70ff;
+}
+
+.ar-tab:hover:not(.active) {
+  color: #aaa;
+}
+
+/* --- PATIENT LIST ROWS --- */
+.ar-list-section {
+  display: flex;
+  flex-direction: column;
+}
+
+.ar-date-group {
+  margin-top: 24px;
+}
+
+.ar-date-header {
+  text-align: center;
+  position: relative;
   margin-bottom: 24px;
 }
 
-.ar-ai-tip {
-  background: rgba(167, 139, 250, 0.05);
-  border: 1px solid rgba(167, 139, 250, 0.1);
+.ar-date-header::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 100%;
+  height: 1px;
+  background: #222;
+  z-index: 1;
+}
+
+.ar-date-text {
+  position: relative;
+  z-index: 2;
+  background: #0f0f12;
+  padding: 0 16px;
+  color: #666;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.ar-table-header {
+  display: grid;
+  grid-template-columns: 2fr 1.5fr 1.5fr 1.5fr 0.8fr 120px;
+  padding: 8px 24px;
+  color: #555;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.ar-row {
+  display: grid;
+  grid-template-columns: 2fr 1.5fr 1.5fr 1.5fr 0.8fr 120px;
+  padding: 20px 24px;
+  background: #16161a;
+  border: 1px solid #222;
   border-radius: 16px;
-  padding: 16px;
-  color: #ccc;
+  align-items: center;
+  margin-bottom: 12px;
+  transition: all 0.2s;
+}
+
+.ar-row:hover {
+  border-color: #333;
+  background: #1c1c21;
+}
+
+/* Columns */
+.ar-col-patient {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.ar-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  object-fit: cover;
+}
+
+.ar-name-box {
+  display: flex;
+  flex-direction: column;
+}
+
+.ar-p-name {
+  color: white;
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.ar-p-id {
+  color: #666;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.ar-col-subinfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ar-info-title {
+  color: white;
+  font-weight: 600;
   font-size: 0.85rem;
-  line-height: 1.6;
 }
 
-/* RESPONSIVENESS */
+.ar-info-sub {
+  color: #666;
+  font-size: 0.75rem;
+}
+
+.ar-col-status {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.ar-badge-status {
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.ar-badge-regular { background: #dcfce720; color: #4ade80; }
+.ar-badge-urgent { background: #fee2e220; color: #f87171; }
+
+.ar-row-buttons {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.ar-icon-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 1px solid transparent;
+}
+
+.ar-btn-check {
+  background: #2b70ff15;
+  color: #2b70ff;
+  border-color: #2b70ff30;
+}
+
+.ar-btn-check:hover {
+  background: #2b70ff;
+  color: white;
+}
+
+.ar-btn-close {
+  background: #2a2a2f;
+  color: #666;
+  border-color: #3a3a3f;
+}
+
+.ar-btn-close:hover {
+  background: #ff4d4d20;
+  color: #ff4d4d;
+  border-color: #ff4d4d30;
+}
+
+/* RESPONSIVE */
 @media (max-width: 1200px) {
-  .ar-dashboard-grid {
-    grid-template-columns: 1fr;
+  .ar-stat-grid { grid-template-columns: repeat(2, 1fr); }
+  .ar-row, .ar-table-header {
+    grid-template-columns: 2fr 1.5fr 1.5fr 1fr;
   }
+  .ar-col-doctor, .ar-col-status { display: none; }
 }
 
-@media (max-width: 900px) {
-  .ar-content-row {
-    flex-direction: column;
-    margin-top: 0;
+@media (max-width: 800px) {
+  .ar-stat-grid { grid-template-columns: 1fr; }
+  .ar-row, .ar-table-header {
+    grid-template-columns: 2fr 1fr;
   }
-  .ar-sidebar {
-    width: 100%;
-    margin-top: -80px;
-  }
-  .ar-main-content {
-    padding-top: 0;
-  }
-}
-
-/* Skeleton Adaptations for Dark */
-.ar-skeleton-card {
-  background: #1a1a1a !important;
-  border-color: #2a2a2a !important;
-}
-
-.ar-skeleton-row {
-  background: linear-gradient(90deg, #1a1a1a 25%, #2a2a2a 50%, #1a1a1a 75%) !important;
+  .ar-col-contact, .ar-col-schedule { display: none; }
 }
