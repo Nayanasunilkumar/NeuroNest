@@ -4,9 +4,13 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+# Remote NEON database URL
+REMOTE_DB_URL = "postgresql://neondb_owner:npg_iA8dhqTLUMj1@ep-old-waterfall-a1xzxd6q.ap-southeast-1.aws.neon.tech/neondb?sslmode=require"
+
 # Minimal App for migration
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
+# Use remote URL if DATABASE_URL is localhost or not set to something remote
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL') if "localhost" not in (os.getenv('DATABASE_URL') or "localhost") else REMOTE_DB_URL
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Import db FROM models so it's the correct instance
