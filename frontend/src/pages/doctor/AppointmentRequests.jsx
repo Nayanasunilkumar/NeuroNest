@@ -16,6 +16,8 @@ const AppointmentRequests = () => {
   const [approved, setApproved]       = useState([]);
   const [rejected, setRejected]       = useState([]);
   const [refreshing, setRefreshing]   = useState(false);
+  const [searchTerm, setSearchTerm]   = useState("");
+  const [filterMode, setFilterMode]   = useState("All"); // All, Urgent, Recent
   const { isDark }                    = useTheme();
 
   useEffect(() => { fetchRequests(); }, []);
@@ -153,168 +155,169 @@ const AppointmentRequests = () => {
   }
 
   // ── Main ─────────────────────────────────────────────────
+  const filteredRequests = requests.filter(req => {
+    const matchesSearch = req.patient_name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                         (req.reason && req.reason.toLowerCase().includes(searchTerm.toLowerCase()));
+    if (filterMode === "Urgent") return matchesSearch && isUrgent(req.appointment_date);
+    return matchesSearch;
+  });
+
   return (
-    <div className={`ar-page container-fluid py-4 min-vh-100 ${isDark ? 'dark' : ''}`}>
+    <div className={`ar-page container-fluid py-0 min-vh-100 ${isDark ? 'dark' : ''}`} style={{ backgroundColor: '#fdfdfe' }}>
 
-      {/* ── Top Bar ── */}
-      <div className="ar-topbar mb-2">
-        <div>
-          <h1 className="ar-title">Appointment Requests</h1>
-          <p className="ar-subtitle">Verify and authorize patient bookings</p>
-        </div>
-        <div className="ar-topbar-right">
-          <div className="ar-count-pill">
-            <div className="ar-count-dot"></div>
-            {requests.length} LIVE REQUESTS
+      {/* ── Header Section ── */}
+      <div className="ar-header-section px-4">
+        <div className="d-flex justify-content-between align-items-center mb-4">
+          <h1 className="ar-title mb-0" style={{ color: '#1e293b' }}>Appointment Requests</h1>
+          <div className="d-flex gap-2">
+            <button className="dark-btn-primary px-4 py-2 rounded-pill" style={{ height: '44px', fontSize: '0.9rem' }} onClick={handleRefresh}>
+               <RefreshCw size={16} className={refreshing ? "ar-spin" : ""} /> {refreshing ? "Syncing..." : "Sync Engine"}
+            </button>
+            <div className="ar-view-toggle">
+              <button className="ar-toggle-btn active">Card view</button>
+              <button className="ar-toggle-btn">List view</button>
+            </div>
           </div>
-          <button className="ar-refresh-btn" onClick={handleRefresh} disabled={refreshing}>
-            <RefreshCw size={15} className={refreshing ? "ar-spin" : ""} />
-            Sync
-          </button>
+        </div>
+
+        <div className="ar-search-filters">
+           <div className="ar-search-input-wrap">
+              <Activity className="ar-search-icon" size={18} />
+              <input 
+                type="text" 
+                className="ar-search-input" 
+                placeholder="Search patient, complaint, ID..." 
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+           </div>
+           
+           <div className="ar-filter-pill">
+              <Calendar size={16} />
+              <span><span className="ar-filter-label">Date range:</span> All Time</span>
+           </div>
+
+           <div className="ar-filter-pill" onClick={() => setFilterMode(filterMode === "Urgent" ? "All" : "Urgent")}>
+              <AlertCircle size={16} color={filterMode === "Urgent" ? "#ef4444" : "currentColor"} />
+              <span>
+                <span className="ar-filter-label">Urgency:</span> {filterMode === "Urgent" ? "Critical" : "All (10)"}
+              </span>
+           </div>
+
+           <div className="ar-filter-pill">
+              <Activity size={16} />
+              <span><span className="ar-filter-label">Status:</span> All (10)</span>
+           </div>
         </div>
       </div>
 
-      {/* ── Stats Strip ── */}
-      <div className="ar-stats-strip mb-4">
-        <div className="ar-stat-item">
-          <div className="ar-stat-icon ar-stat-icon-amber">
-            <Clock size={22} />
-          </div>
-          <div>
-            <div className="ar-stat-num">{requests.length}</div>
-            <div className="ar-stat-label text-uppercase">Waitlist</div>
-          </div>
-        </div>
-        
-        <div className="ar-stat-divider d-none d-md-block"></div>
-
-        <div className="ar-stat-item">
-          <div className="ar-stat-icon ar-stat-icon-red">
-            <Activity size={22} />
-          </div>
-          <div>
-            <div className="ar-stat-num">
-              {requests.filter(r => isUrgent(r.appointment_date)).length}
+      <div className="px-4 pb-5">
+        {/* ── Stats Strip ── */}
+        <div className="ar-stats-strip mb-5">
+          <div className="ar-stat-item">
+            <div className="ar-stat-icon ar-stat-icon-amber">
+              <Clock size={22} />
             </div>
-            <div className="ar-stat-label text-uppercase">Critical</div>
-          </div>
-        </div>
-        
-        <div className="ar-stat-divider d-none d-md-block"></div>
-
-        <div className="ar-stat-item">
-          <div className="ar-stat-icon ar-stat-icon-blue">
-            <Users size={22} />
-          </div>
-          <div>
-            <div className="ar-stat-num">
-              {new Set(requests.map(r => r.patient_name)).size}
+            <div>
+              <div className="ar-stat-num">{requests.length}</div>
+              <div className="ar-stat-label text-uppercase">Waitlist</div>
             </div>
-            <div className="ar-stat-label text-uppercase">Patients</div>
           </div>
-        </div>
-      </div>
-
-      {/* ── Cards Grid ── */}
-      <div className="ar-grid">
-        {requests.map((req) => {
-          const [bg, fg] = getAvatarColor(req.patient_name);
-          const urgent = isUrgent(req.appointment_date);
-          const isApproved = approved.includes(req.id);
-          const isRejected = rejected.includes(req.id);
           
-          let cardClass = "ar-card";
-          if (urgent) cardClass += " ar-card-urgent";
-          if (isApproved) cardClass += " ar-card-approved";
-          if (isRejected) cardClass += " ar-card-rejected";
+          <div className="ar-stat-divider d-none d-md-block"></div>
 
-          return (
-            <div key={req.id} className={cardClass}>
-                
-                {urgent && !isApproved && !isRejected && (
-                  <div className="ar-urgent-ribbon">
-                    <TrendingUp size={12} /> High Priority
-                  </div>
-                )}
+          <div className="ar-stat-item">
+            <div className="ar-stat-icon ar-stat-icon-red">
+              <Activity size={22} />
+            </div>
+            <div>
+              <div className="ar-stat-num">
+                {requests.filter(r => isUrgent(r.appointment_date)).length}
+              </div>
+              <div className="ar-stat-label text-uppercase">Critical</div>
+            </div>
+          </div>
+          
+          <div className="ar-stat-divider d-none d-md-block"></div>
 
-                <div className="ar-card-header">
-                  <div className="ar-patient-row">
-                      <div className="ar-avatar" style={{ background: bg, color: fg }}>
-                          {getInitials(req.patient_name)}
-                      </div>
-                      <div className="ar-patient-info text-truncate">
-                          <h3 className="ar-patient-name">{req.patient_name}</h3>
-                          <div className="ar-requested-on">
-                              UID: {req.id.toString().substring(0, 8)} • {new Date(req.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-                          </div>
-                      </div>
-                  </div>
-                  {!urgent && !isApproved && !isRejected && (
-                    <div className="ar-badge-pending">
-                      <div className="ar-badge-dot"></div>
-                      Queue
+          <div className="ar-stat-item">
+            <div className="ar-stat-icon ar-stat-icon-blue">
+              <Users size={22} />
+            </div>
+            <div>
+              <div className="ar-stat-num">
+                {new Set(requests.map(r => r.patient_name)).size}
+              </div>
+              <div className="ar-stat-label text-uppercase">Patients</div>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Cards Grid ── */}
+        <div className="ar-grid">
+          {filteredRequests.map((req) => {
+            const [bg, fg] = getAvatarColor(req.patient_name);
+            const urgent = isUrgent(req.appointment_date);
+            const isApproved = approved.includes(req.id);
+            const isRejected = rejected.includes(req.id);
+            
+            let cardClass = "ar-card";
+            if (urgent) cardClass += " ar-card-urgent";
+            else cardClass += " ar-card-active";
+            
+            if (isApproved) cardClass += " ar-card-approved";
+            if (isRejected) cardClass += " ar-card-rejected";
+
+            return (
+              <div key={req.id} className={cardClass}>
+                  
+                  <div className="ar-card-header">
+                    <span className="ar-request-id">#{req.id.toString().substring(0, 3)}</span>
+                    <div className={`ar-status-badge ${urgent ? 'ar-status-badge-urgent' : 'ar-status-badge-active'}`}>
+                       {urgent ? <AlertCircle size={14}/> : <Activity size={14}/>}
+                       {urgent ? "Over Time" : "Active"}
                     </div>
-                  )}
-                </div>
+                  </div>
 
-                <div className="ar-details">
-                  <div className="row g-2">
-                    <div className="col-6">
-                      <div className="ar-detail-row">
-                          <div className="ar-detail-icon"><Calendar size={14}/></div>
-                          <span>{formatDate(req.appointment_date)}</span>
-                      </div>
+                  <h3 className="ar-reason-title">
+                    {req.reason || "General Consultation"}
+                  </h3>
+
+                  <div className="ar-timeline-wrap">
+                    <div className="ar-timeline-times">
+                       <span>{new Date(req.appointment_date).toLocaleDateString("en-US", { day: 'numeric', month: 'short' })}, {formatTime(req.appointment_time)}</span>
+                       <span>Queue End</span>
                     </div>
-                    <div className="col-6">
-                      <div className="ar-detail-row">
-                          <div className="ar-detail-icon"><Clock size={14}/></div>
-                          <span>{formatTime(req.appointment_time)}</span>
-                      </div>
+                    <div className="ar-timeline-bar">
+                        <div className="ar-timeline-progress" style={{ width: urgent ? '100%' : '50%' }}></div>
+                        <div className="ar-timeline-dot start" style={{ left: '0' }}></div>
+                        <div className="ar-timeline-dot end" style={{ left: '100%' }}></div>
                     </div>
                   </div>
 
-                  {req.reason && (
-                      <div className="ar-reason-box mt-1">
-                          <span className="ar-reason-label">
-                              <MessageSquare size={10} /> Clinical Reason
-                          </span>
-                          <p className="ar-reason-text">{req.reason}</p>
-                      </div>
-                  )}
-                  {req.notes && (
-                      <div className="ar-notes-text mt-1">
-                          <ChevronRight size={14} className="flex-shrink-0 mt-0.5" />
-                          <span>{req.notes}</span>
-                      </div>
-                  )}
-                </div>
-
-                <div className="ar-actions">
-                    <button
-                      className="ar-btn-approve"
+                  <div className="ar-card-footer">
+                    <div className="ar-patient-brief">
+                        <div className="ar-patient-avatar-sm" style={{ background: bg, color: fg }}>
+                            {getInitials(req.patient_name)}
+                        </div>
+                        <div className="ar-patient-meta">
+                            <h4 className="ar-patient-name-btn">{req.patient_name}</h4>
+                            <span className="ar-patient-source">Via Patient Portal</span>
+                        </div>
+                    </div>
+                    
+                    <button 
+                      className="ar-action-arrow" 
                       onClick={() => handleAction(req.id, "approve")}
                       disabled={!!actionLoading}
                     >
-                      {actionLoading === req.id + "approve" || isApproved ? (
-                          <CheckCircle2 size={18} className={isApproved ? "animate-pulse" : ""} />
-                      ) : (
-                          <Check size={18} />
-                      )}
-                      {isApproved ? "Confirmed" : "Approve Booking"}
+                      {actionLoading ? <RefreshCw size={18} className="ar-spin" /> : <ChevronRight size={20} />}
                     </button>
-                    
-                    <button
-                      className="ar-btn-reject"
-                      onClick={() => handleAction(req.id, "reject")}
-                      disabled={!!actionLoading}
-                      title="Decline request"
-                    >
-                      {isRejected ? <XCircle size={18} /> : <X size={18} />}
-                    </button>
-                </div>
-            </div>
-          );
-        })}
+                  </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
     </div>
   );

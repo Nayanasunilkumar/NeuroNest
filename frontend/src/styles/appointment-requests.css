@@ -12,97 +12,110 @@
   padding-bottom: 40px;
 }
 
-/* ---- Top Bar -------------------------------------------- */
-.ar-topbar {
+/* ---- Header & Controls ---------------------------------- */
+.ar-header-section {
+  background: white;
+  border-bottom: 1px solid #f1f5f9;
+  padding: 24px 0;
+  margin-bottom: 32px;
+}
+
+.ar-controls-bar {
   display: flex;
+  align-items: center;
   justify-content: space-between;
-  align-items: flex-start;
   gap: 16px;
   flex-wrap: wrap;
+  margin-bottom: 24px;
 }
 
-.ar-title {
-  font-size: clamp(1.5rem, 3vw, 2rem);
-  font-weight: 900;
-  color: var(--doc-text-main, #1e293b);
-  letter-spacing: -0.03em;
-  margin: 0 0 4px;
-  line-height: 1.1;
-}
-
-.ar-subtitle {
-  font-size: 0.95rem;
-  color: var(--doc-text-muted, #64748b);
-  margin: 0;
-}
-
-.ar-topbar-right {
+.ar-search-filters {
   display: flex;
   align-items: center;
   gap: 12px;
-  flex-shrink: 0;
+  flex-wrap: wrap;
+  width: 100%;
 }
 
-.ar-count-pill {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 7px 14px;
-  background: #fff8eb;
-  border: 1px solid #fde8bf;
-  border-radius: 999px;
-  font-size: 0.8rem;
-  font-weight: 700;
-  color: #92400e;
+.ar-search-input-wrap {
+  position: relative;
+  flex: 1;
+  min-width: 280px;
 }
 
-.ar-count-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #f59e0b;
-  box-shadow: 0 0 8px #f59e0b;
-  animation: ar-pulse 2s infinite;
-}
-
-@keyframes ar-pulse {
-  0%, 100% { transform: scale(1); opacity: 1; }
-  50%       { transform: scale(1.35); opacity: 0.6; }
-}
-
-.ar-refresh-btn {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  padding: 8px 16px;
-  border: 1.5px solid #e2e8f0;
-  border-radius: 10px;
-  background: white;
-  color: #475569;
-  font-size: 0.85rem;
-  font-weight: 600;
-  cursor: pointer;
+.ar-search-input {
+  width: 100%;
+  height: 44px;
+  padding: 0 16px 0 44px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  font-size: 0.9rem;
   transition: all 0.2s;
 }
 
-.ar-refresh-btn:hover:not(:disabled) {
-  border-color: #94a3b8;
+.ar-search-input:focus {
+  background: white;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+  outline: none;
+}
+
+.ar-search-icon {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
+}
+
+.ar-filter-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 16px;
+  height: 44px;
   background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #475569;
+  cursor: pointer;
+}
+
+.ar-filter-pill:hover {
+  background: #f1f5f9;
+}
+
+.ar-filter-label {
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.ar-view-toggle {
+  display: flex;
+  background: #f8fafc;
+  padding: 4px;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+}
+
+.ar-toggle-btn {
+  padding: 6px 16px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border: none;
+  background: transparent;
+  color: #64748b;
+  cursor: pointer;
+}
+
+.ar-toggle-btn.active {
+  background: white;
   color: #1e293b;
-  transform: translateY(-1px);
-}
-
-.ar-refresh-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.ar-spin {
-  animation: ar-spin-anim 0.7s linear infinite;
-}
-
-@keyframes ar-spin-anim {
-  to { transform: rotate(360deg); }
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 
 /* ---- Stats Strip ---------------------------------------- */
@@ -175,75 +188,171 @@
 /* ---- Request Card --------------------------------------- */
 .ar-card {
   background: white;
-  border: 1px solid #eef2f6;
-  border-radius: 24px;
+  border-radius: 20px;
   padding: 24px;
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  height: 100%;
   position: relative;
-  overflow: hidden;
-  box-shadow:
-    0 2px 4px rgba(0,0,0,0.02),
-    0 12px 32px -12px rgba(15, 23, 42, 0.08);
-  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  animation: ar-card-in 0.5s ease both;
-}
-
-@keyframes ar-card-in {
-  from { opacity: 0; transform: translateY(12px); }
-  to   { opacity: 1; transform: translateY(0); }
+  border-bottom: 4px solid #e2e8f0;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .ar-card:hover {
   transform: translateY(-4px);
-  box-shadow:
-    0 4px 6px rgba(0,0,0,0.04),
-    0 16px 32px -8px rgba(37, 99, 235, 0.15);
-  border-color: #bfdbfe;
+  box-shadow: 0 12px 20px -8px rgba(0, 0, 0, 0.1);
 }
 
-/* Top shimmer line */
-.ar-card::before {
-  content: '';
+.ar-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.ar-request-id {
+  font-weight: 800;
+  color: #94a3b8;
+  font-size: 1.1rem;
+}
+
+.ar-status-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.ar-status-badge-urgent { color: #ef4444; }
+.ar-status-badge-active { color: #3b82f6; }
+
+.ar-reason-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 24px;
+  line-height: 1.4;
+}
+
+/* Timeline/Range */
+.ar-timeline-wrap {
+  margin-bottom: 32px;
+}
+
+.ar-timeline-times {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #94a3b8;
+  margin-bottom: 12px;
+}
+
+.ar-timeline-bar {
+  height: 4px;
+  background: #f1f5f9;
+  border-radius: 2px;
+  position: relative;
+}
+
+.ar-timeline-progress {
   position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 3px;
-  background: linear-gradient(to right, #3b82f6, #6366f1);
-  opacity: 0;
-  transition: opacity 0.3s;
+  left: 0;
+  top: 0;
+  height: 100%;
+  background: #1e293b;
+  border-radius: 2px;
 }
 
-.ar-card:hover::before {
-  opacity: 1;
+.ar-timeline-dot {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: white;
+  border: 3px solid #1e293b;
 }
 
-/* Urgent style */
-.ar-card-urgent {
-  border-color: #fecdd3;
+.ar-timeline-dot.end {
+  background: #f1f5f9;
+  border-color: #94a3b8;
 }
 
-.ar-card-urgent::before {
-  background: linear-gradient(to right, #ef4444, #f97316);
-  opacity: 1;
+/* Patient Info (Bottom) */
+.ar-card-footer {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
-/* Approved flash */
-.ar-card-approved {
-  border-color: #bbf7d0 !important;
-  background: linear-gradient(135deg, #f0fdf4, white) !important;
+.ar-patient-brief {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
-.ar-card-approved::before {
-  background: #22c55e !important;
-  opacity: 1 !important;
+.ar-patient-avatar-sm {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 0.85rem;
 }
 
-/* Rejected flash */
-.ar-card-rejected {
-  border-color: #fecdd3 !important;
-  opacity: 0.6;
+.ar-patient-meta {
+  display: flex;
+  flex-direction: column;
 }
+
+.ar-patient-name-btn {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+}
+
+.ar-patient-source {
+  font-size: 0.75rem;
+  color: #94a3b8;
+}
+
+.ar-action-arrow {
+  width: 40px;
+  height: 40px;
+  background: #1e293b;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.ar-action-arrow:hover {
+  transform: scale(1.1);
+}
+
+/* Status Variations */
+.ar-card-urgent { border-bottom-color: #ef4444; }
+.ar-card-urgent .ar-timeline-progress { background: #ef4444; }
+.ar-card-urgent .ar-timeline-dot { border-color: #ef4444; }
+
+.ar-card-active { border-bottom-color: #3b82f6; }
+.ar-card-active .ar-timeline-progress { background: #1e293b; }
+
+.ar-card-approved { border-bottom-color: #22c55e; opacity: 0.7; }
+.ar-card-rejected { border-bottom-color: #ef4444; opacity: 0.7; }
+
 
 /* ---- Urgent Ribbon -------------------------------------- */
 .ar-urgent-ribbon {
