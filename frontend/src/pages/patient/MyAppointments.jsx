@@ -271,7 +271,7 @@ const MyAppointments = () => {
                             <td>
                                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                                     <StatusBadge status={appt.status} />
-                                    {isUpcoming && (reason.includes("urgent") || reason.includes("emergency") || reason.includes("severe") || isCloseDate(appt.appointment_date)) && (
+                                    {isUpcoming && ((appt.reason || "").toLowerCase().includes("urgent") || (appt.reason || "").toLowerCase().includes("emergency") || (appt.reason || "").toLowerCase().includes("severe") || isCloseDate(appt.appointment_date)) && (
                                        <span className="priority-tag-mini">
                                           <AlertCircle size={10} /> Priority
                                        </span>
