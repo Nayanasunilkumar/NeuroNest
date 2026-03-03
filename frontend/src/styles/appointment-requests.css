@@ -110,13 +110,16 @@
   display: flex;
   align-items: center;
   gap: 0;
-  background: white;
-  border: 1px solid #e2e8f0;
-  border-radius: 16px;
-  padding: 16px 24px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  border-radius: 20px;
+  padding: 20px 32px;
+  box-shadow: 
+    0 4px 6px -1px rgba(0, 0, 0, 0.05),
+    0 2px 4px -1px rgba(0, 0, 0, 0.03);
   flex-wrap: wrap;
-  gap: 16px;
+  gap: 24px;
 }
 
 .ar-stat-item {
@@ -172,19 +175,19 @@
 /* ---- Request Card --------------------------------------- */
 .ar-card {
   background: white;
-  border: 1.5px solid #e7eef7;
-  border-radius: 20px;
-  padding: 20px;
+  border: 1px solid #eef2f6;
+  border-radius: 24px;
+  padding: 24px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 18px;
   position: relative;
   overflow: hidden;
   box-shadow:
-    0 1px 3px rgba(0,0,0,0.04),
-    0 8px 24px -8px rgba(15, 23, 42, 0.1);
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  animation: ar-card-in 0.4s ease both;
+    0 2px 4px rgba(0,0,0,0.02),
+    0 12px 32px -12px rgba(15, 23, 42, 0.08);
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  animation: ar-card-in 0.5s ease both;
 }
 
 @keyframes ar-card-in {
@@ -245,20 +248,21 @@
 /* ---- Urgent Ribbon -------------------------------------- */
 .ar-urgent-ribbon {
   position: absolute;
-  top: 14px;
-  right: -1px;
+  top: 18px;
+  right: -2px;
   display: flex;
   align-items: center;
-  gap: 5px;
-  background: #ef4444;
+  gap: 6px;
+  background: linear-gradient(135deg, #ef4444, #dc2626);
   color: white;
-  font-size: 0.7rem;
+  font-size: 0.72rem;
   font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  padding: 4px 10px 4px 8px;
+  letter-spacing: 0.06em;
+  padding: 5px 14px 5px 10px;
   border-radius: 999px 0 0 999px;
-  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.35);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+  z-index: 5;
 }
 
 /* ---- Card Header ---------------------------------------- */
@@ -554,13 +558,21 @@
 .dark .ar-subtitle { color: #94a3b8; }
 .dark .ar-refresh-btn { background: #1e293b; border-color: #334155; color: #cbd5e1; }
 .dark .ar-refresh-btn:hover:not(:disabled) { background: #334155; color: #f1f5f9; }
-.dark .ar-stats-strip  { background: #1e293b; border-color: #334155; }
-.dark .ar-stat-num     { color: #f1f5f9; }
+.dark .ar-stats-strip  { 
+  background: rgba(30, 41, 59, 0.7); 
+  backdrop-filter: blur(12px);
+  border-color: rgba(51, 65, 85, 0.5); 
+}
+.dark .ar-stat-num     { color: #f8fafc; }
 .dark .ar-stat-divider { background: #334155; }
-.dark .ar-stat-icon-amber { background: rgba(251, 191, 36, 0.1); }
-.dark .ar-stat-icon-red   { background: rgba(239, 68, 68, 0.1); }
-.dark .ar-stat-icon-blue  { background: rgba(59, 130, 246, 0.1); }
-.dark .ar-card { background: #1e293b; border-color: #263248; }
+.dark .ar-stat-icon-amber { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
+.dark .ar-stat-icon-red   { background: rgba(239, 68, 68, 0.15); color: #f87171; }
+.dark .ar-stat-icon-blue  { background: rgba(59, 130, 246, 0.15); color: #60a5fa; }
+.dark .ar-card { 
+  background: #1e293b; 
+  border-color: #334155; 
+  box-shadow: 0 4px 20px -5px rgba(0,0,0,0.3);
+}
 .dark .ar-card:hover { border-color: #36517a; }
 .dark .ar-patient-name { color: #f1f5f9; }
 .dark .ar-detail-row { color: #cbd5e1; }
