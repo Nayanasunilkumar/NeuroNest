@@ -1,6 +1,35 @@
-import { Activity, Calendar, Bell, Heart, TrendingUp, ShieldCheck } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Activity, Calendar, Bell, Heart, TrendingUp, ShieldCheck, Clock, CheckCircle, X } from "lucide-react";
+import { getMyNotifications, markNotificationRead } from "../../api/profileApi";
+import { Link } from "react-router-dom";
 
 const DashboardHome = () => {
+    const [notifications, setNotifications] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchNotifications = async () => {
+            try {
+                const data = await getMyNotifications(true);
+                setNotifications(data || []);
+            } catch (err) {
+                console.error("Failed to fetch notifications", err);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchNotifications();
+    }, []);
+
+    const handleMarkRead = async (id) => {
+        try {
+            await markNotificationRead(id);
+            setNotifications(prev => prev.filter(n => n.id !== id));
+        } catch (err) {
+            console.error("Failed to mark notification as read", err);
+        }
+    };
+
     const stats = [
         { label: "Health Score", value: "94/100", icon: <Heart size={20} />, color: "danger", trend: "+2%" },
         { label: "Active Plans", value: "3", icon: <Activity size={20} />, color: "primary", trend: "On track" },
@@ -20,7 +49,6 @@ const DashboardHome = () => {
                             <button className="btn btn-outline-light rounded-pill px-4 fw-bold">Emergency SOS</button>
                         </div>
                     </div>
-                    {/* Abstract background elements */}
                     <div className="position-absolute top-0 end-0 opacity-10 p-5 d-none d-lg-block">
                         <Activity size={200} strokeWidth={1} />
                     </div>
@@ -75,29 +103,40 @@ const DashboardHome = () => {
                         <div className="card-body p-4">
                             <h2 className="h5 fw-black text-dark mb-4">Reminders & Alerts</h2>
                             <div className="d-flex flex-column gap-3">
-                                <div className="d-flex gap-3 align-items-start p-3 rounded-4 bg-primary bg-opacity-10 border-start border-4 border-primary">
-                                    <ShieldCheck size={20} className="text-primary mt-1" />
-                                    <div>
-                                        <div className="fw-bold small text-dark">Insurance Verified</div>
-                                        <p className="small text-secondary mb-0">Your medical coverage has been updated for the 2026 term.</p>
-                                    </div>
-                                </div>
-                                
-                                <div className="d-flex gap-3 align-items-start p-3 rounded-4 bg-warning bg-opacity-10 border-start border-4 border-warning">
-                                    <Bell size={20} className="text-warning mt-1" />
-                                    <div>
-                                        <div className="fw-bold small text-dark">Upcoming Scan</div>
-                                        <p className="small text-secondary mb-0">Fast for 8 hours before your MRI appointment on Tuesday.</p>
-                                    </div>
-                                </div>
-
-                                <div className="d-flex gap-3 align-items-start p-3 rounded-4 bg-light">
-                                    <Calendar size={20} className="text-secondary mt-1" />
-                                    <div>
-                                        <div className="fw-bold small text-dark text-muted">No recent alerts</div>
-                                        <p className="small text-secondary mb-0 opacity-50">You're all caught up with your notifications.</p>
-                                    </div>
-                                </div>
+                                {notifications.length > 0 ? (
+                                    notifications.map(n => (
+                                        <div key={n.id} className={`d-flex gap-3 align-items-start p-3 rounded-4 border-start border-4 ${n.type === 'appointment_rescheduled' ? 'bg-warning bg-opacity-10 border-warning' : 'bg-primary bg-opacity-10 border-primary'}`}>
+                                            {n.type === 'appointment_rescheduled' ? <Clock size={20} className="text-warning mt-1" /> : <Bell size={20} className="text-primary mt-1" />}
+                                            <div className="flex-grow-1">
+                                                <div className="d-flex justify-content-between">
+                                                    <div className="fw-bold small text-dark">{n.title}</div>
+                                                    <button onClick={() => handleMarkRead(n.id)} className="btn btn-link p-0 text-muted" title="Dismiss"><X size={14}/></button>
+                                                </div>
+                                                <p className="small text-secondary mb-2 lh-sm">{n.message}</p>
+                                                {n.type === 'appointment_rescheduled' && (
+                                                    <Link to="/patient/appointments" className="btn btn-warning btn-sm py-0 px-2 rounded-pill fw-bold" style={{fontSize: '0.7rem'}}>Review New Time</Link>
+                                                )}
+                                            </div>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <>
+                                        <div className="d-flex gap-3 align-items-start p-3 rounded-4 bg-primary bg-opacity-10 border-start border-4 border-primary">
+                                            <ShieldCheck size={20} className="text-primary mt-1" />
+                                            <div>
+                                                <div className="fw-bold small text-dark">Insurance Verified</div>
+                                                <p className="small text-secondary mb-0">Your medical coverage has been updated for the 2026 term.</p>
+                                            </div>
+                                        </div>
+                                        <div className="d-flex gap-3 align-items-start p-3 rounded-4 bg-light">
+                                            <Calendar size={20} className="text-secondary mt-1" />
+                                            <div>
+                                                <div className="fw-bold small text-dark text-muted">No recent alerts</div>
+                                                <p className="small text-secondary mb-0 opacity-50">You're all caught up with your notifications.</p>
+                                            </div>
+                                        </div>
+                                    </>
+                                )}
                             </div>
                         </div>
                     </div>

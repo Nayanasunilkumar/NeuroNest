@@ -25,6 +25,11 @@ export const rescheduleAppointment = async (id, date, time, slotId = null) => {
   return response.data;
 };
 
+export const confirmReschedule = async (id) => {
+  const response = await axios.post(`/appointments/${id}/confirm-reschedule`);
+  return response.data;
+};
+
 export const getDoctors = async () => {
   const response = await axios.get("/appointments/doctors");
   return response.data;

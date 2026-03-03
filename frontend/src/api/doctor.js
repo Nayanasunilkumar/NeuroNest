@@ -15,6 +15,14 @@ export const rejectAppointment = async (id) => {
   return response.data;
 };
 
+export const rescheduleAppointment = async (id, date, time) => {
+  const response = await axios.patch(`/doctor/appointments/${id}/reschedule`, {
+    appointment_date: date,
+    appointment_time: time
+  });
+  return response.data;
+};
+
 export const getSchedule = async (date = null, status = 'all') => {
   let url = "/doctor/schedule";
   const params = new URLSearchParams();

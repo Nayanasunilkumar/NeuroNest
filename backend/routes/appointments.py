@@ -455,3 +455,29 @@ def reschedule_appointment(id):
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
+
+@appointments_bp.route("/<int:id>/confirm-reschedule", methods=["POST"])
+@jwt_required()
+def confirm_reschedule(id):
+    try:
+        if not _is_patient():
+            return jsonify({"error": "Patient access required"}), 403
+
+        current_user_id = int(get_jwt_identity())
+        appointment = Appointment.query.filter_by(id=id, patient_id=current_user_id).first()
+
+        if not appointment:
+            return jsonify({"error": "Appointment not found"}), 404
+
+        if appointment.status != "rescheduled":
+            return jsonify({"error": "Appointment is not in rescheduled state"}), 400
+
+        # If doctor suggested it, we can auto-approve it once patient confirms
+        appointment.status = "approved"
+        
+        db.session.commit()
+        return jsonify({"message": "Appointment confirmed successfully", "appointment": appointment.to_dict()}), 200
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500

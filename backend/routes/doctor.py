@@ -130,6 +130,72 @@ def reject_appointment(appointment_id):
         "appointment": appointment.to_dict()
     }), 200
 
+@doctor_bp.route("/appointments/<int:appointment_id>/reschedule", methods=["PATCH"])
+@jwt_required()
+def reschedule_appointment(appointment_id):
+    if not check_doctor_role():
+        return jsonify({"message": "Doctor access required"}), 403
+    
+    current_user_id = int(get_jwt_identity())
+    data = request.json
+    
+    if not data or 'appointment_date' not in data or 'appointment_time' not in data:
+        return jsonify({"message": "New date and time are required"}), 400
+        
+    appointment = Appointment.query.filter_by(id=appointment_id, doctor_id=current_user_id).first()
+    
+    if not appointment:
+        return jsonify({"message": "Appointment not found"}), 404
+    
+    old_date = appointment.appointment_date
+    old_time = appointment.appointment_time
+    
+    try:
+        new_date = datetime.strptime(data['appointment_date'], '%Y-%m-%d').date()
+        new_time = datetime.strptime(data['appointment_time'], '%H:%M').time()
+    except ValueError:
+        return jsonify({"message": "Invalid date or time format"}), 400
+
+    appointment.appointment_date = new_date
+    appointment.appointment_time = new_time
+    appointment.status = "rescheduled" # Indicates doctor suggested a new time
+    
+    # If there was a slot, unbind it as the time has changed
+    if appointment.slot_id:
+        slot = _lock_slot(appointment.slot_id)
+        if slot and slot.booked_appointment_id == appointment.id:
+            mark_slot_available(
+                slot=slot,
+                actor_user_id=current_user_id,
+                source="doctor_reschedule",
+                reason="Doctor rescheduled appointment",
+            )
+        appointment.slot_id = None
+
+    db.session.add(
+        InAppNotification(
+            user_id=appointment.patient_id,
+            type="appointment_rescheduled",
+            title="Appointment Rescheduled",
+            message=f"Dr. {appointment.doctor.full_name} has suggested a new time for your appointment: {new_date} at {new_time}. Please review and confirm.",
+            payload={
+                "appointment_id": appointment.id,
+                "old_date": str(old_date),
+                "old_time": str(old_time),
+                "new_date": str(new_date),
+                "new_time": str(new_time),
+                "doctor_id": current_user_id
+            },
+        )
+    )
+    
+    db.session.commit()
+    
+    return jsonify({
+        "message": "Appointment rescheduled successfully",
+        "appointment": appointment.to_dict()
+    }), 200
+
 @doctor_bp.route("/schedule", methods=["GET"])
 @jwt_required()
 def get_doctor_schedule():

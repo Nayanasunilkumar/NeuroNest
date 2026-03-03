@@ -600,6 +600,17 @@
     color: #ffffff;
 }
 
+.status-rescheduled {
+    background: #f5f3ff;
+    border-color: #ddd6fe;
+    color: #5b21b6;
+}
+
+.status-rescheduled .status-badge-icon {
+    background: #8b5cf6;
+    color: #ffffff;
+}
+
 /* Action Buttons */
 .action-row {
      display: flex;

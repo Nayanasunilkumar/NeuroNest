@@ -3,7 +3,8 @@ import {
   getAppointmentRequests, 
   approveAppointment, 
   rejectAppointment, 
-  getAppointmentHistory 
+  getAppointmentHistory,
+  rescheduleAppointment
 } from "../../api/doctor";
 import {
   X, RefreshCw, ChevronRight, Search,
@@ -30,7 +31,7 @@ function calculateAge(dob) {
   if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
     age--;
   }
-  return age;
+  return age === 0 ? "<1Y" : `${age}Y`;
 }
 
 function formatDateHeader(dateStr) {
@@ -70,7 +71,7 @@ function TriageKPI({ title, value, trend, color, percent }) {
   );
 }
 
-function TriageRow({ req, onAction, actionLoading }) {
+function TriageRow({ req, onAction, actionLoading, onRescheduleClick }) {
   const isHighPriority = useMemo(() => {
     const reason = (req.reason || "").toLowerCase();
     return reason.includes("urgent") || 
@@ -90,7 +91,7 @@ function TriageRow({ req, onAction, actionLoading }) {
           <div className="ar-details">
              <span className="ar-p-name">{req.patient_name}</span>
              <span className="ar-p-meta">
-                ID: #{req.id.toString().substring(0, 6)} • {req.gender || "NA"} {req.dob ? `• ${calculateAge(req.dob)}Y` : ""}
+                ID: #{req.id.toString().substring(0, 6)} • {req.gender || "NA"} {req.dob ? `• ${calculateAge(req.dob)}` : ""}
              </span>
           </div>
        </div>
@@ -127,7 +128,7 @@ function TriageRow({ req, onAction, actionLoading }) {
           </button>
           <button 
             className="ar-triage-btn ar-btn-suggest" 
-            onClick={() => alert("Reschedule engine opening...")}
+            onClick={() => onRescheduleClick(req)}
             style={{ color: '#8b5cf6', borderColor: '#8b5cf620' }}
           >
              <Clock size={18} />
@@ -144,6 +145,55 @@ function TriageRow({ req, onAction, actionLoading }) {
   );
 }
 
+const RescheduleModal = ({ isOpen, onClose, onSubmit, appointment, loading }) => {
+  const [date, setDate] = useState("");
+  const [time, setTime] = useState("");
+
+  useEffect(() => {
+    if (appointment) {
+      setDate(appointment.appointment_date || "");
+      const timeStr = appointment.appointment_time;
+      setTime(timeStr ? timeStr.substring(0, 5) : "");
+    }
+  }, [appointment]);
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="ar-modal-overlay">
+       <div className="ar-modal-content">
+          <div className="ar-modal-header">
+             <h3>Propose Alternate Schedule</h3>
+             <button onClick={onClose} className="ar-modal-close"><X size={20} /></button>
+          </div>
+          <div className="ar-modal-body">
+             <p className="ar-modal-desc">Suggest a new time slot for <strong>{appointment?.patient_name}</strong>. The patient will be notified to confirm.</p>
+             
+             <div className="ar-modal-field">
+                <label>Proposed Date</label>
+                <input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+             </div>
+             
+             <div className="ar-modal-field">
+                <label>Proposed Time</label>
+                <input type="time" value={time} onChange={(e) => setTime(e.target.value)} />
+             </div>
+          </div>
+          <div className="ar-modal-footer">
+             <button onClick={onClose} className="ar-btn-secondary">Cancel</button>
+             <button 
+                onClick={() => onSubmit(appointment.id, date, time)} 
+                className="ar-btn-primary"
+                disabled={loading || !date || !time}
+             >
+                {loading ? <RefreshCw className="ar-spin" size={16} /> : "Send Proposal"}
+             </button>
+          </div>
+       </div>
+    </div>
+  );
+};
+
 const AppointmentRequests = () => {
   const [requests, setRequests]       = useState([]);
   const [historyCount, setHistoryCount] = useState(0);
@@ -152,6 +202,8 @@ const AppointmentRequests = () => {
   const [searchTerm, setSearchTerm]   = useState("");
   const { isDark }                    = useTheme();
   const [activeTriage, setActiveTriage] = useState("Needs Review");
+
+  const [rescheduleTarget, setRescheduleTarget] = useState(null);
 
   useEffect(() => { 
     fetchRequests(); 
@@ -181,6 +233,19 @@ const AppointmentRequests = () => {
       setRequests(prev => prev.filter(r => r.id !== id));
     } catch (err) {
       console.error(`Error ${action}ing:`, err);
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleRescheduleSubmit = async (id, date, time) => {
+    setActionLoading(id + "reschedule");
+    try {
+      await rescheduleAppointment(id, date, time);
+      setRequests(prev => prev.filter(r => r.id !== id));
+      setRescheduleTarget(null);
+    } catch (err) {
+      console.error("Error rescheduling:", err);
     } finally {
       setActionLoading(null);
     }
@@ -337,6 +402,7 @@ const AppointmentRequests = () => {
                       req={req} 
                       onAction={handleAction}
                       actionLoading={actionLoading}
+                      onRescheduleClick={setRescheduleTarget}
                     />
                  ))}
               </div>
@@ -351,6 +417,14 @@ const AppointmentRequests = () => {
            )}
         </div>
       </div>
+
+      <RescheduleModal 
+        isOpen={!!rescheduleTarget}
+        onClose={() => setRescheduleTarget(null)}
+        appointment={rescheduleTarget}
+        onSubmit={handleRescheduleSubmit}
+        loading={actionLoading === (rescheduleTarget?.id + "reschedule")}
+      />
     </div>
   );
 };

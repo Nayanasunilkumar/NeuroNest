@@ -16,6 +16,8 @@ const StatusBadge = ({ status }) => {
         return "status-badge status-rejected";
       case "completed":
         return "status-badge status-completed";
+      case "rescheduled":
+        return "status-badge status-rescheduled";
       case "no-show":
       case "noshow":
         return "status-badge status-no-show";
@@ -34,6 +36,8 @@ const StatusBadge = ({ status }) => {
         return "✕";
       case "completed":
         return "•";
+      case "rescheduled":
+        return "↻";
       case "pending":
         return "…";
       case "no-show":

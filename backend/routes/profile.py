@@ -225,3 +225,34 @@ def update_my_emergency_contacts():
     except Exception:
         db.session.rollback()
         return jsonify({"message": "Server error while saving emergency contacts"}), 500
+
+@profile_bp.route("/notifications", methods=["GET"])
+@jwt_required()
+def get_my_notifications():
+    user_id = int(get_jwt_identity())
+    unread_only = request.args.get("unread_only") == "true"
+    
+    from database.models import InAppNotification
+    
+    query = InAppNotification.query.filter_by(user_id=user_id)
+    if unread_only:
+        query = query.filter_by(is_read=False)
+        
+    notifications = query.order_by(InAppNotification.created_at.desc()).limit(20).all()
+    
+    return jsonify([n.to_dict() for n in notifications]), 200
+
+@profile_bp.route("/notifications/<int:id>/read", methods=["PATCH"])
+@jwt_required()
+def mark_notification_read(id):
+    user_id = int(get_jwt_identity())
+    from database.models import InAppNotification
+    
+    notification = InAppNotification.query.filter_by(id=id, user_id=user_id).first()
+    if not notification:
+        return jsonify({"message": "Notification not found"}), 404
+        
+    notification.is_read = True
+    db.session.commit()
+    
+    return jsonify({"message": "Notification marked as read"}), 200

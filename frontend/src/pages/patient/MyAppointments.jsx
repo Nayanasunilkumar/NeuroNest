@@ -6,14 +6,17 @@ import {
   getAppointments,
   cancelAppointment,
   rescheduleAppointment,
+  confirmReschedule
 } from "../../api/appointments";
-import "../../styles/appointments.css"; // Ensure this imports the updated CSS
+import "../../styles/appointments.css"; 
+import { CheckCircle, X, Calendar, Clock, RefreshCw, ChevronLeft, ChevronRight } from "lucide-react";
 
 const MyAppointments = () => {
   const navigate = useNavigate();
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [actionLoading, setActionLoading] = useState(null);
 
   // Filter States
   const [searchTerm, setSearchTerm] = useState("");
@@ -21,7 +24,6 @@ const MyAppointments = () => {
   const [filterStatus, setFilterStatus] = useState("All");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
-
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -48,9 +50,9 @@ const MyAppointments = () => {
 
   const handleCancel = async (id) => {
     if (!window.confirm("Are you sure you want to cancel this appointment?")) return;
+    setActionLoading(id + "cancel");
     try {
       await cancelAppointment(id);
-      // Optimistic update
       setAppointments((prev) =>
         prev.map((app) =>
           app.id === id ? { ...app, status: "Cancelled" } : app
@@ -58,6 +60,24 @@ const MyAppointments = () => {
       );
     } catch (err) {
       alert(err.response?.data?.error || "Failed to cancel appointment");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleConfirmReschedule = async (id) => {
+    setActionLoading(id + "confirm");
+    try {
+      await confirmReschedule(id);
+      setAppointments((prev) =>
+        prev.map((app) =>
+          app.id === id ? { ...app, status: "Approved" } : app
+        )
+      );
+    } catch (err) {
+      alert(err.response?.data?.error || "Failed to confirm reschedule");
+    } finally {
+      setActionLoading(null);
     }
   };
 
@@ -82,9 +102,10 @@ const MyAppointments = () => {
   };
 
   const filteredAppointments = appointments.filter((appt) => {
-    const matchesSearch = appt.doctor_name
-      .toLowerCase()
-      .includes(searchTerm.toLowerCase());
+    const name = (appt.doctor_name || "").toLowerCase();
+    const reason = (appt.reason || "").toLowerCase();
+    const search = searchTerm.toLowerCase();
+    const matchesSearch = name.includes(search) || reason.includes(search);
     const matchesDate = filterDate ? appt.appointment_date === filterDate : true;
     const matchesStatus =
       filterStatus === "All" || String(appt.status).toLowerCase() === filterStatus.toLowerCase();
@@ -92,8 +113,6 @@ const MyAppointments = () => {
     return matchesSearch && matchesDate && matchesStatus;
   });
 
-
-  // Pagination Logic
   const totalPages = Math.ceil(filteredAppointments.length / itemsPerPage);
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
@@ -103,16 +122,13 @@ const MyAppointments = () => {
     setCurrentPage(newPage);
   };
 
-
-  // Reset to first page when filtering
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, filterDate, filterStatus]);
 
-  // Calculate quick stats — use case-insensitive match since backend returns lowercase enums
-  const upcomingCount  = appointments.filter(a => ['pending', 'approved'].includes(String(a.status).toLowerCase())).length;
+  const upcomingCount  = appointments.filter(a => ['pending', 'approved', 'rescheduled'].includes(String(a.status).toLowerCase())).length;
   const completedCount = appointments.filter(a => String(a.status).toLowerCase() === 'completed').length;
-  const cancelledCount = appointments.filter(a => String(a.status).toLowerCase() === 'cancelled').length;
+  const cancelledCount = appointments.filter(a => String(a.status).toLowerCase() === 'cancelled' || String(a.status).toLowerCase() === 'cancelled_by_patient').length;
   const pendingFeedback = appointments.filter(a => String(a.status).toLowerCase() === 'completed' && !a.feedback_given).length;
 
   const formatDate = (dateStr) => {
@@ -124,13 +140,11 @@ const MyAppointments = () => {
   };
 
   const formatTime = (timeStr) => {
-    // Assuming HH:MM:SS format
-    return timeStr.substring(0, 5);
+    return timeStr ? timeStr.substring(0, 5) : "N/A";
   };
 
   return (
     <div className="my-appointments-page">
-      {/* Header Section */}
       <div className="page-header-flex">
         <div className="header-text">
           <h2>My Appointments</h2>
@@ -144,7 +158,6 @@ const MyAppointments = () => {
         </button>
       </div>
 
-      {/* Statistics Cards (Optional enhancement) */}
       <div className="stats-row">
         <div className="mini-stat-card">
             <span className="stat-label">Upcoming</span>
@@ -167,13 +180,12 @@ const MyAppointments = () => {
       </div>
 
       <div className="appointments-content-wrapper">
-        {/* Filter Bar */}
         <div className="filter-bar-premium">
           <div className="search-wrapper">
              <span className="search-icon">🔍</span>
              <input
                 type="text"
-                placeholder="Search by doctor..."
+                placeholder="Search by doctor or reason..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
              />
@@ -194,6 +206,7 @@ const MyAppointments = () => {
                 <option value="All">All Status</option>
                 <option value="Pending">Pending</option>
                 <option value="Approved">Approved</option>
+                <option value="Rescheduled">Action Required</option>
                 <option value="Rejected">Rejected</option>
                 <option value="Completed">Completed</option>
                 <option value="Cancelled">Cancelled</option>
@@ -213,16 +226,15 @@ const MyAppointments = () => {
           </div>
         </div>
 
-        {/* Premium Table Card */}
         <div className="table-card-premium">
           {loading ? (
-            <div className="loading-state">
-                <div className="spinner"></div>
+            <div className="loading-state text-center py-5">
+                <RefreshCw className="spinner mb-3" />
                 <p>Loading appointments...</p>
             </div>
           ) : error ? (
-            <div className="error-state">
-                <p>{error}</p>
+            <div className="error-state text-center py-5">
+                <p className="text-danger">{error}</p>
                 <button onClick={fetchAppointments} className="retry-btn">Retry</button>
             </div>
           ) : filteredAppointments.length > 0 ? (
@@ -240,87 +252,86 @@ const MyAppointments = () => {
                     </tr>
                 </thead>
                 <tbody>
-                    {currentAppointments.map((appt) => (
-                    <tr key={appt.id}>
-                        <td>
-                             <StatusBadge status={appt.status} />
-                        </td>
-                        <td>
-                            <div className="doctor-info">
-                                <span className="doctor-name">{appt.doctor_name}</span>
-                                {/* <span className="doctor-sub">Specialist</span> */}
-                            </div>
-                        </td>
-                        <td className="text-muted font-medium">{formatDate(appt.appointment_date)}</td>
-                        <td className="text-muted">{formatTime(appt.appointment_time)}</td>
-                        <td>
-                             <div className="reason-text" title={appt.reason}>
-                                {appt.reason}
-                             </div>
-                        </td>
-                        <td>
-                             <div className="action-row">
-                                {(appt.status === 'Pending' || appt.status === 'Approved' ||
-                                  String(appt.status).toLowerCase() === 'pending' ||
-                                  String(appt.status).toLowerCase() === 'approved') && (
-                                    <>
-                                        <button 
-                                            className="icon-action-btn reschedule-btn"
-                                            onClick={() => openRescheduleModal(appt)}
-                                            title="Reschedule Appointment"
-                                        >
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-                                        </button>
-                                        <button 
-                                            className="icon-action-btn cancel-btn"
-                                            onClick={() => handleCancel(appt.id)}
-                                            title="Cancel Appointment"
-                                        >
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                                        </button>
-                                    </>
-                                )}
-                                {(appt.status === 'Completed' || String(appt.status).toLowerCase() === 'completed') && (
-                                  <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
-                                     <button
-                                        className="icon-action-btn view-btn"
-                                        title="View Details"
-                                        onClick={() => openDetailsModal(appt)}
-                                     >
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-                                     </button>
-                                     {!appt.feedback_given && (
-                                       <button
-                                         title="Leave Feedback"
-                                         onClick={() => navigate('/patient/feedback-reviews')}
-                                         style={{
-                                           display: 'inline-flex', alignItems: 'center', gap: '0.3rem',
-                                           padding: '0.35rem 0.7rem', borderRadius: '8px', border: 'none',
-                                           background: 'linear-gradient(135deg, #f59e0b, #f97316)',
-                                           color: 'white', fontSize: '0.72rem', fontWeight: 800,
-                                           cursor: 'pointer', whiteSpace: 'nowrap',
-                                           boxShadow: '0 2px 8px rgba(245,158,11,0.3)',
-                                           transition: 'transform 0.15s, box-shadow 0.15s',
-                                         }}
-                                         onMouseEnter={e => { e.currentTarget.style.transform='translateY(-1px)'; e.currentTarget.style.boxShadow='0 4px 12px rgba(245,158,11,0.4)'; }}
-                                         onMouseLeave={e => { e.currentTarget.style.transform='translateY(0)'; e.currentTarget.style.boxShadow='0 2px 8px rgba(245,158,11,0.3)'; }}
-                                       >
-                                         ⭐ Review
-                                       </button>
-                                     )}
-                                     {appt.feedback_given && (
-                                       <span style={{
-                                         padding: '0.3rem 0.55rem', borderRadius: '6px',
-                                         background: 'rgba(16,185,129,0.1)', color: '#10b981',
-                                         fontSize: '0.65rem', fontWeight: 800,
-                                       }}>✓ Reviewed</span>
-                                     )}
-                                  </div>
-                                )}
-                             </div>
-                        </td>
-                    </tr>
-                    ))}
+                    {currentAppointments.map((appt) => {
+                      const status = String(appt.status).toLowerCase();
+                      const isUpcoming = ['pending', 'approved', 'rescheduled'].includes(status);
+                      const isRescheduled = status === 'rescheduled';
+                      
+                      return (
+                        <tr key={appt.id}>
+                            <td>
+                                 <StatusBadge status={appt.status} />
+                            </td>
+                            <td>
+                                <div className="doctor-info">
+                                    <span className="doctor-name">{appt.doctor_name}</span>
+                                </div>
+                            </td>
+                            <td className="text-muted font-medium">{formatDate(appt.appointment_date)}</td>
+                            <td className="text-muted">{formatTime(appt.appointment_time)}</td>
+                            <td>
+                                 <div className="reason-text" title={appt.reason}>
+                                    {appt.reason}
+                                 </div>
+                            </td>
+                            <td>
+                                 <div className="action-row">
+                                    {isRescheduled && (
+                                      <button 
+                                          className="icon-action-btn approve-btn"
+                                          onClick={() => handleConfirmReschedule(appt.id)}
+                                          title="Accept New Time"
+                                          disabled={actionLoading === appt.id + "confirm"}
+                                          style={{ color: '#10b981', borderColor: '#10b98120' }}
+                                      >
+                                          {actionLoading === appt.id + "confirm" ? <RefreshCw size={14} className="spinner" /> : <CheckCircle size={18} />}
+                                      </button>
+                                    )}
+
+                                    {isUpcoming && (
+                                        <>
+                                            <button 
+                                                className="icon-action-btn reschedule-btn"
+                                                onClick={() => openRescheduleModal(appt)}
+                                                title="Reschedule Appointment"
+                                            >
+                                                <Calendar size={18} />
+                                            </button>
+                                            <button 
+                                                className="icon-action-btn cancel-btn"
+                                                onClick={() => handleCancel(appt.id)}
+                                                title="Cancel Appointment"
+                                                disabled={actionLoading === appt.id + "cancel"}
+                                            >
+                                                {actionLoading === appt.id + "cancel" ? <RefreshCw size={14} className="spinner" /> : <X size={18} />}
+                                            </button>
+                                        </>
+                                    )}
+                                    {status === 'completed' && (
+                                      <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+                                         <button
+                                            className="icon-action-btn view-btn"
+                                            title="View Details"
+                                            onClick={() => openDetailsModal(appt)}
+                                         >
+                                            <Clock size={18} />
+                                         </button>
+                                         {!appt.feedback_given && (
+                                           <button
+                                             title="Leave Feedback"
+                                             onClick={() => navigate('/patient/feedback-reviews')}
+                                             className="feedback-pill-btn"
+                                           >
+                                             ⭐ Review
+                                           </button>
+                                         )}
+                                      </div>
+                                    )}
+                                 </div>
+                            </td>
+                        </tr>
+                      );
+                    })}
                 </tbody>
                 </table>
             </div>
@@ -335,7 +346,7 @@ const MyAppointments = () => {
                             disabled={currentPage === 1}
                             onClick={() => handlePageChange(currentPage - 1)}
                         >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                            <ChevronLeft size={18} />
                         </button>
                         
                         {[...Array(totalPages)].map((_, idx) => (
@@ -353,7 +364,7 @@ const MyAppointments = () => {
                             disabled={currentPage === totalPages}
                             onClick={() => handlePageChange(currentPage + 1)}
                         >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                            <ChevronRight size={18} />
                         </button>
                     </div>
                 </div>
@@ -362,7 +373,7 @@ const MyAppointments = () => {
           ) : (
             <div className="empty-state-premium">
               <div className="empty-icon-ring">
-                 <span style={{ fontSize: '32px' }}>📅</span>
+                 <Calendar size={32} className="text-muted" />
               </div>
               <h3>No appointments found</h3>
               <p>You haven't booked any appointments yet, or no appointments match your filters.</p>
@@ -398,13 +409,9 @@ const MyAppointments = () => {
                 <h3>Appointment Details</h3>
                 <span className="pm-subtitle">Completed consultation summary</span>
               </div>
-              <button className="pm-close-btn" onClick={() => setIsDetailsModalOpen(false)} aria-label="Close">
-                ×
-              </button>
+              <button className="pm-close-btn" onClick={() => setIsDetailsModalOpen(false)}>×</button>
             </div>
-
             <div className="pm-divider"></div>
-
             <div className="appointment-details-grid">
               <div className="appointment-details-row">
                 <span className="label">Doctor</span>
@@ -433,15 +440,31 @@ const MyAppointments = () => {
                 <span className="value">{selectedDetailsAppointment.notes || "No notes added"}</span>
               </div>
             </div>
-
-            <div className="pm-actions appointment-details-actions">
-              <button className="pm-btn-secondary" onClick={() => setIsDetailsModalOpen(false)}>
-                Close
-              </button>
+            <div className="pm-actions mt-4 text-end">
+              <button className="btn btn-secondary rounded-pill px-4" onClick={() => setIsDetailsModalOpen(false)}>Close</button>
             </div>
           </div>
         </div>
       )}
+
+      <style>{`
+        .approve-btn:hover { background: #ecfdf3; color: #10b981; border-color: #b7e9cc; }
+        .spinner { animation: spin 1s linear infinite; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .feedback-pill-btn {
+          display: inline-flex; alignItems: center; gap: 0.3rem;
+          padding: 0.35rem 0.7rem; borderRadius: 8px; border: none;
+          background: linear-gradient(135deg, #f59e0b, #f97316);
+          color: white; fontSize: '0.72rem'; fontWeight: 800;
+          cursor: pointer; whiteSpace: nowrap;
+          box-shadow: 0 2px 8px rgba(245,158,11,0.3);
+          transition: transform 0.15s, box-shadow 0.15s;
+        }
+        .feedback-pill-btn:hover {
+          transform: translateY(-1px);
+          box-shadow: 0 4px 12px rgba(245,158,11,0.4);
+        }
+      `}</style>
     </div>
   );
 };
