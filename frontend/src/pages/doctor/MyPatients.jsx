@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { Users, Search, Filter, Loader2, ArrowUpDown, UserPlus, SlidersHorizontal, UserX } from 'lucide-react';
 import { getPatients } from '../../api/doctor';
 import PatientCard from './PatientCard';
+import "../../styles/my-patients.css";
+import { useTheme } from "../../context/ThemeContext";
 
 const MyPatients = () => {
     const [patients, setPatients] = useState([]);
@@ -67,12 +69,15 @@ const MyPatients = () => {
         inactive: patients.filter(p => p.status === 'Inactive').length
     };
 
+    const { isDark } = useTheme();
+
     return (
-        <div className="container-fluid py-4" style={{ maxWidth: '1200px' }}>
+        <div className={`roster-page-wrapper ${isDark ? 'dark' : ''}`}>
+            <div className="roster-main-card">
             
-            <div className="mb-4">
-                 <h2 className="fw-bolder text-dark mb-1" style={{ letterSpacing: '-0.5px' }}>Clinical Roster</h2>
-                 <p className="text-secondary small fw-medium">Manage and access all your patient dossiers and history</p>
+            <div className="mb-5">
+                 <h1 className="roster-title">Clinical Roster</h1>
+                 <p className="roster-subtitle">Manage and access all your patient dossiers and history</p>
             </div>
 
             {/* PREMIUM METRIC GRID */}
@@ -214,6 +219,7 @@ const MyPatients = () => {
                     </div>
                 )}
             </div>
+          </div>
         </div>
     );
 };
