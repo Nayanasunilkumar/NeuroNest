@@ -1,0 +1,203 @@
+
+.patient-profile-wrapper {
+    background-color: #f8fafc;
+    min-height: 100vh;
+    padding-bottom: 3rem;
+}
+
+.profile-card-top {
+    border-radius: 2rem;
+    background: #ffffff;
+    border: 1px solid rgba(0,0,0,0.05);
+    box-shadow: 0 10px 30px -10px rgba(0,0,0,0.05);
+    padding: 2.5rem;
+}
+
+.patient-avatar-large {
+    width: 130px;
+    height: 130px;
+    border-radius: 1.5rem;
+    object-fit: cover;
+    background: #eff6ff;
+}
+
+.vitals-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.5rem;
+}
+
+.vital-item {
+    padding: 1rem 1.5rem;
+    background: #ffffff;
+    border-radius: 1rem;
+    border: 1px dashed #e2e8f0;
+    text-align: left;
+}
+
+.vital-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.25rem;
+}
+
+.vital-value {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #1e293b;
+    line-height: 1.2;
+}
+
+.vital-unit {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #94a3b8;
+    margin-left: 0.25rem;
+}
+
+.badge-condition {
+    background: #fff1f2;
+    color: #e11d48;
+    border: none;
+    font-weight: 700;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+}
+
+.badge-barrier {
+    background: #eff6ff;
+    color: #2563eb;
+    border: none;
+    font-weight: 700;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+}
+
+.clinical-history-card {
+    border-radius: 1.5rem;
+    background: #ffffff;
+    border: 1px solid rgba(0,0,0,0.05);
+    padding: 2rem;
+    margin-bottom: 2rem;
+}
+
+.section-title {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: #0f172a;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+}
+
+.timeline-vertical {
+    position: relative;
+    padding-left: 2rem;
+}
+
+.timeline-vertical::before {
+    content: '';
+    position: absolute;
+    left: 7px;
+    top: 5px;
+    bottom: 5px;
+    width: 2px;
+    background: #e2e8f0;
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 2rem;
+}
+
+.timeline-dot {
+    position: absolute;
+    left: -2rem;
+    top: 5px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #ffffff;
+    border: 3px solid #3b82f6;
+    z-index: 1;
+}
+
+.timeline-date {
+    font-size: 0.7rem;
+    font-weight: 800;
+    color: #64748b;
+    text-transform: uppercase;
+    margin-bottom: 0.25rem;
+}
+
+.timeline-content {
+    background: #f8fafc;
+    padding: 1rem;
+    border-radius: 1rem;
+    border: 1px solid #f1f5f9;
+}
+
+.medication-table th {
+    background: #f8fafc;
+    color: #64748b;
+    font-weight: 700;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    padding: 1rem;
+}
+
+.medication-table td {
+    padding: 1rem;
+    vertical-align: middle;
+}
+
+.signature-pill {
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 0.25rem 0.75rem;
+    border-radius: 1rem;
+    background: #f1f5f9;
+    color: #475569;
+}
+
+.diet-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: #ffffff;
+    border-radius: 1rem;
+    border: 1px solid rgba(0,0,0,0.03);
+    margin-bottom: 0.75rem;
+}
+
+.diet-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,0.03);
+}
+
+.diet-text {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.diet-meta {
+    font-size: 0.7rem;
+    color: #94a3b8;
+    margin-left: auto;
+}
+
+.rotate-180 {
+    transform: rotate(180deg);
+}
+

@@ -836,10 +836,15 @@ def get_patient_clinical_dossier(patient_id):
             "dob": str(profile.date_of_birth) if profile and profile.date_of_birth else "N/A",
             "profile_image": profile.profile_image if profile else None,
             "blood_group": profile.blood_group if profile else "N/A",
-            "allergies": profile.allergies if profile else "None",
-            "chronic_conditions": profile.chronic_conditions if profile else "None"
+            "height": profile.height_cm if profile else None,
+            "weight": profile.weight_kg if profile else None,
+            "allergies_text": profile.allergies if profile else "None",
+            "chronic_conditions_text": profile.chronic_conditions if profile else "None"
         },
-        "timeline": [appt.to_dict() for appt in history]
+        "timeline": [appt.to_dict() for appt in history],
+        "medications": [m.to_dict() for m in PatientMedication.query.filter_by(patient_id=patient_id, status='active').all()],
+        "conditions": [c.to_dict() for c in PatientCondition.query.filter_by(patient_id=patient_id, status='active').all()],
+        "allergies": [a.to_dict() for a in PatientAllergy.query.filter_by(patient_id=patient_id, status='active').all()]
     }
     
     return jsonify(dossier), 200
