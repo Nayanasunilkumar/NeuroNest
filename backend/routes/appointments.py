@@ -199,6 +199,7 @@ def book_by_slot():
         current_user_id = int(get_jwt_identity())
         data = request.get_json() or {}
 
+        # Extract core fields for slot booking (fix: doctor_id defined here to avoid NameError)
         doctor_id = data.get("doctor_id")
         slot_id = data.get("slot_id")
         reason = data.get("reason")
