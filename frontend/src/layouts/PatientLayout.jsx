@@ -89,15 +89,6 @@ const PatientLayout = () => {
                     color: white; 
                     transform: scale(1.05);
                 }
-                
-                @media (min-width: 1200px) {
-                    main:not(.sidebar-minimized) {
-                        margin-left: 280px;
-                    }
-                    main.sidebar-minimized {
-                        margin-left: 80px;
-                    }
-                }
             `}</style>
         </div>
     );
