@@ -218,7 +218,7 @@ const MyPatients = () => {
                     />
                 </div>
                 
-                <div className="d-flex align-items-center gap-2 overflow-auto" style={{ width: '100%', maxWidth: '100%', msOverflowStyle: 'none', scrollbarWidth: 'none' }}>
+                <div className="d-flex align-items-center gap-2 flex-wrap justify-content-center justify-content-md-end" style={{ width: '100%', maxWidth: '100%' }}>
                     
                     {/* Status Dropdown */}
                     <div className="input-group shadow-sm border-0 rounded-pill overflow-hidden" style={{ minWidth: '160px', backgroundColor: '#fff' }}>
