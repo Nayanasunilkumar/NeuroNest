@@ -233,10 +233,8 @@ const RescheduleModal = ({ isOpen, onClose, onSubmit, appointment, loading }) =>
       const available = data.slots?.filter(s => s.status === 'available') || [];
       setAvailableSlots(available);
       
-      // If slots are available and the current time matches one, pre-select it
-      // Otherwise, if no slots available, maybe suggest manual?
       if (available.length === 0) {
-        // setUseManualTime(true); // Don't auto-switch, let doctor decide
+        // setUseManualTime(true); 
       }
     } catch (err) {
       console.error("Error fetching slots:", err);
@@ -244,11 +242,6 @@ const RescheduleModal = ({ isOpen, onClose, onSubmit, appointment, loading }) =>
     } finally {
       setFetchingSlots(false);
     }
-  };
-
-  const handleTimeSelect = (slotTime) => {
-    setTime(slotTime.substring(0, 5));
-    setUseManualTime(false);
   };
 
   if (!isOpen) return null;
@@ -297,23 +290,22 @@ const RescheduleModal = ({ isOpen, onClose, onSubmit, appointment, loading }) =>
                   ) : availableSlots.length > 0 ? (
                     <div className="ar-slot-grid">
                        {availableSlots.map((slot) => {
-                         const slotTime = slot.slot_start_utc ? new Date(slot.slot_start_utc).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false }) : "";
-                         // Wait, backend might have slot_start_local?
-                         // Let's use slot_time string if available
-                         const displayTime = slot.slot_time || formatTime(slot.appointment_time); // Fallbacks
-                         
-                         // Actually, let's use the local time from slot object
-                         const t = slot.slot_time || (slot.slot_start_local ? slot.slot_start_local.split('T')[1].substring(0, 5) : "");
-                         
-                         return (
-                           <button 
-                             key={slot.id}
-                             className={`ar-slot-btn ${time === t ? 'active' : ''}`}
-                             onClick={() => handleTimeSelect(t)}
-                           >
-                             {formatTime(t)}
-                           </button>
-                         );
+                          const t = new Date(slot.slot_start_utc).toLocaleTimeString('en-GB', { 
+                            hour: '2-digit', 
+                            minute: '2-digit', 
+                            hour12: false,
+                            timeZone: 'Asia/Kolkata' 
+                          });
+
+                          return (
+                            <button 
+                              key={slot.id}
+                              className={`ar-slot-btn ${time === t ? 'active' : ''}`}
+                              onClick={() => setTime(t)}
+                            >
+                              {formatTime(t)}
+                            </button>
+                          );
                        })}
                     </div>
                   ) : (
@@ -341,7 +333,6 @@ const RescheduleModal = ({ isOpen, onClose, onSubmit, appointment, loading }) =>
              <button 
                 onClick={(e) => {
                   e.stopPropagation();
-                  console.log("Reschedule proposal click:", { id: appointment.id, date, time });
                   onSubmit(appointment.id, date, time);
                 }} 
                 className="ar-btn-primary"
