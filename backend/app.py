@@ -14,7 +14,7 @@ BASE_DIR = Path(__file__).resolve().parent
 load_dotenv(BASE_DIR / ".env", override=True)
 
 from config.config import Config
-from database.models import db
+from database.models import db, ClinicalPin
 from routes.auth import auth_bp
 from routes.profile import profile_bp
 from routes.appointments import appointments_bp
@@ -46,6 +46,9 @@ def create_app():
     db.init_app(app)
     jwt = JWTManager(app)
     socketio.init_app(app)
+
+    with app.app_context():
+        db.create_all()
 
     # ================= Blueprints =================
     app.register_blueprint(auth_bp, url_prefix="/auth")
