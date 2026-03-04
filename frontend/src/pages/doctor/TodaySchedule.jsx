@@ -149,111 +149,24 @@ const TodaySchedule = () => {
                         </div>
                     </div>
 
-                    {/* --- POP-UP MODAL CARD --- */}
-                    {isAddingPin && (
-                        <div className="ts-modal-overlay">
-                            <div className="ts-modal-card">
-                                <div className="ts-modal-header">
-                                    <h3 className="ts-modal-title">New Clinical Pin</h3>
-                                    <div className="ts-modal-close" onClick={() => setIsAddingPin(false)}>
-                                        <X size={20} />
-                                    </div>
-                                </div>
-
-                                <div className="ts-modal-body">
-                                    <div className="ts-input-group">
-                                        <label className="ts-input-label">Pin Title</label>
-                                        <input 
-                                            autoFocus
-                                            className="ts-modal-input"
-                                            placeholder="e.g. Lab Report Review"
-                                            value={newPinData.title}
-                                            onChange={(e) => setNewPinData(p => ({...p, title: e.target.value}))}
-                                        />
-                                    </div>
-
-                                    <div className="row g-3">
-                                        <div className="col-6">
-                                            <div className="ts-input-group">
-                                                <label className="ts-input-label">Schedule Date</label>
-                                                <div className="position-relative">
-                                                    <input 
-                                                        type="date"
-                                                        className="ts-modal-input"
-                                                        value={newPinData.date}
-                                                        onChange={(e) => setNewPinData(p => ({...p, date: e.target.value}))}
-                                                    />
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div className="col-6">
-                                            <div className="ts-input-group">
-                                                <label className="ts-input-label">Clinical Time</label>
-                                                <div className="position-relative">
-                                                    <input 
-                                                        type="time"
-                                                        className="ts-modal-input"
-                                                        value={newPinData.time}
-                                                        onChange={(e) => setNewPinData(p => ({...p, time: e.target.value}))}
-                                                    />
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div className="ts-input-group">
-                                        <label className="ts-input-label">Clinical Description</label>
-                                        <textarea 
-                                            className="ts-modal-input"
-                                            rows="3"
-                                            placeholder="Detailed follow-up clinical notes..."
-                                            value={newPinData.desc}
-                                            onChange={(e) => setNewPinData(p => ({...p, desc: e.target.value}))}
-                                            style={{ resize: 'none' }}
-                                        />
-                                    </div>
-                                </div>
-
-                                <div className="ts-modal-footer">
-                                    <button className="ts-modal-btn cancel" onClick={() => setIsAddingPin(false)}>Cancel</button>
-                                    <button className="ts-modal-btn save" onClick={handleAddPin}>
-                                        <Check size={18} /> Save Pin
-                                    </button>
-                                </div>
+                    <div className="ts-widget-row">
+                        <div className="ts-widget-square">
+                            <div className="ts-widget-icon bg-danger-subtle text-danger">
+                                <Zap size={24} />
+                            </div>
+                            <div>
+                                <h4 className="fw-bolder fs-3 mb-0">{schedule.filter(a => a.status === 'approved').length}</h4>
+                                <span className="text-muted small fw-bold">Pending Slots</span>
                             </div>
                         </div>
-                    )}
-
-
-                    {/* Minimal Calendar Mini-Widget */}
-                    <div className="ts-pinned-main-container p-3">
-                        <div className="d-flex justify-content-between align-items-center mb-3">
-                            <span className="fw-bold text-dark fs-6">March, 2026</span>
-                            <div className="d-flex gap-2">
-                                <ChevronLeft size={16} className="text-muted" />
-                                <ChevronRight size={16} className="text-muted" />
+                        <div className="ts-widget-square">
+                            <div className="ts-widget-icon bg-info-subtle text-info">
+                                <UserCheck size={24} />
                             </div>
-                        </div>
-                        <div className="d-grid gap-2" style={{ gridTemplateColumns: 'repeat(7, 1fr)' }}>
-                            {['M','T','W','T','F','S','S'].map((d, i) => <span key={i} className={`text-muted text-center fw-bold`} style={{ fontSize: '0.6rem' }}>{d}</span>)}
-                            {Array.from({length: 31}).map((_, i) => {
-                                const dayNum = i + 1;
-                                const isSelected = dayNum === displayDate.day;
-                                return (
-                                    <div 
-                                        key={i} 
-                                        className={`text-center py-1 rounded-circle fw-bold transition-all ${isSelected ? 'bg-warning text-white shadow-sm' : isDark ? 'text-light hover-bg-dark' : 'text-dark hover-bg-light'}`} 
-                                        style={{ fontSize: '0.75rem', cursor: 'pointer' }}
-                                        onClick={() => {
-                                            const newDate = new Date(selectedDate);
-                                            newDate.setDate(dayNum);
-                                            setSelectedDate(newDate.toISOString().split('T')[0]);
-                                        }}
-                                    >
-                                        {dayNum}
-                                    </div>
-                                );
-                            })}
+                            <div>
+                                <h4 className="fw-bolder fs-3 mb-0">{schedule.filter(a => a.status === 'completed').length}</h4>
+                                <span className="text-muted small fw-bold">Completed</span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -370,24 +283,35 @@ const TodaySchedule = () => {
                         </div>
                     </div>
 
-                    <div className="ts-widget-row">
-                        <div className="ts-widget-square">
-                            <div className="ts-widget-icon bg-danger-subtle text-danger">
-                                <Zap size={24} />
-                            </div>
-                            <div>
-                                <h4 className="fw-bolder fs-3 mb-0">{schedule.filter(a => a.status === 'approved').length}</h4>
-                                <span className="text-muted small fw-bold">Pending Slots</span>
+                    {/* Minimal Calendar Mini-Widget */}
+                    <div className="ts-pinned-main-container p-3 shadow-sm">
+                        <div className="d-flex justify-content-between align-items-center mb-3">
+                            <span className={`fw-bold fs-6 ${isDark ? 'text-light' : 'text-dark'}`}>March, 2026</span>
+                            <div className="d-flex gap-2">
+                                <ChevronLeft size={16} className="text-muted" />
+                                <ChevronRight size={16} className="text-muted" />
                             </div>
                         </div>
-                        <div className="ts-widget-square">
-                            <div className="ts-widget-icon bg-info-subtle text-info">
-                                <UserCheck size={24} />
-                            </div>
-                            <div>
-                                <h4 className="fw-bolder fs-3 mb-0">{schedule.filter(a => a.status === 'completed').length}</h4>
-                                <span className="text-muted small fw-bold">Completed</span>
-                            </div>
+                        <div className="d-grid gap-2" style={{ gridTemplateColumns: 'repeat(7, 1fr)' }}>
+                            {['M','T','W','T','F','S','S'].map((d, i) => <span key={i} className={`text-muted text-center fw-bold`} style={{ fontSize: '0.6rem' }}>{d}</span>)}
+                            {Array.from({length: 31}).map((_, i) => {
+                                const dayNum = i + 1;
+                                const isSelected = dayNum === displayDate.day;
+                                return (
+                                    <div 
+                                        key={i} 
+                                        className={`text-center py-1 rounded-circle fw-bold transition-all ${isSelected ? 'bg-warning text-white shadow-sm' : isDark ? 'text-light hover-bg-dark' : 'text-dark hover-bg-light'}`} 
+                                        style={{ fontSize: '0.75rem', cursor: 'pointer' }}
+                                        onClick={() => {
+                                            const newDate = new Date(selectedDate);
+                                            newDate.setDate(dayNum);
+                                            setSelectedDate(newDate.toISOString().split('T')[0]);
+                                        }}
+                                    >
+                                        {dayNum}
+                                    </div>
+                                );
+                            })}
                         </div>
                     </div>
 
@@ -415,6 +339,81 @@ const TodaySchedule = () => {
                 </div>
 
             </div>
+
+            {/* --- POP-UP MODAL CARD (OUTSIDE MAIN Flex) --- */}
+            {isAddingPin && (
+                <div className="ts-modal-overlay">
+                    <div className="ts-modal-card">
+                        <div className="ts-modal-header">
+                            <h3 className="ts-modal-title">New Clinical Pin</h3>
+                            <div className="ts-modal-close" onClick={() => setIsAddingPin(false)}>
+                                <X size={20} />
+                            </div>
+                        </div>
+
+                        <div className="ts-modal-body">
+                            <div className="ts-input-group">
+                                <label className="ts-input-label">Pin Title</label>
+                                <input 
+                                    autoFocus
+                                    className="ts-modal-input"
+                                    placeholder="e.g. Lab Report Review"
+                                    value={newPinData.title}
+                                    onChange={(e) => setNewPinData(p => ({...p, title: e.target.value}))}
+                                />
+                            </div>
+
+                            <div className="row g-3">
+                                <div className="col-6">
+                                    <div className="ts-input-group">
+                                        <label className="ts-input-label">Schedule Date</label>
+                                        <div className="position-relative">
+                                            <input 
+                                                type="date"
+                                                className="ts-modal-input"
+                                                value={newPinData.date}
+                                                onChange={(e) => setNewPinData(p => ({...p, date: e.target.value}))}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="col-6">
+                                    <div className="ts-input-group">
+                                        <label className="ts-input-label">Clinical Time</label>
+                                        <div className="position-relative">
+                                            <input 
+                                                type="time"
+                                                className="ts-modal-input"
+                                                value={newPinData.time}
+                                                onChange={(e) => setNewPinData(p => ({...p, time: e.target.value}))}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="ts-input-group">
+                                <label className="ts-input-label">Clinical Description</label>
+                                <textarea 
+                                    className="ts-modal-input"
+                                    rows="3"
+                                    placeholder="Detailed follow-up clinical notes..."
+                                    value={newPinData.desc}
+                                    onChange={(e) => setNewPinData(p => ({...p, desc: e.target.value}))}
+                                    style={{ resize: 'none' }}
+                                />
+                            </div>
+                        </div>
+
+                        <div className="ts-modal-footer">
+                            <button className="ts-modal-btn cancel" onClick={() => setIsAddingPin(false)}>Cancel</button>
+                            <button className="ts-modal-btn save" onClick={handleAddPin}>
+                                <Check size={18} /> Save Pin
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

@@ -388,7 +388,6 @@
   justify-content: center;
 }
 
-/* --- RIGHT Panel Refining --- */
 .ts-clinic-time-card {
   background: var(--nn-surface);
   border-radius: 20px;
@@ -423,8 +422,8 @@
   display: flex;
   flex-direction: column;
   gap: 20px;
-  margin-top: auto;
-  margin-bottom: 160px;
+  margin-top: 8px;
+  margin-bottom: 60px;
 }
 
 .ts-summary-item {
