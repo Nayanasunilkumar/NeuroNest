@@ -891,8 +891,10 @@ def get_clinical_remarks(patient_id):
 @doctor_bp.route("/pins", methods=["GET"])
 @jwt_required()
 def get_clinical_pins():
-    check_doctor_role()
-    current_user_id = get_jwt_identity()
+    if not check_doctor_role():
+        return jsonify({"message": "Doctor access required"}), 403
+    
+    current_user_id = int(get_jwt_identity())
     
     # Sort completed pins to the bottom, then by created_at desc
     pins = ClinicalPin.query.filter_by(
@@ -904,8 +906,10 @@ def get_clinical_pins():
 @doctor_bp.route("/pins", methods=["POST"])
 @jwt_required()
 def create_clinical_pin():
-    check_doctor_role()
-    current_user_id = get_jwt_identity()
+    if not check_doctor_role():
+        return jsonify({"message": "Doctor access required"}), 403
+    
+    current_user_id = int(get_jwt_identity())
     data = request.get_json()
     
     if not data or not data.get("title"):
@@ -929,8 +933,10 @@ def create_clinical_pin():
 @doctor_bp.route("/pins/<int:pin_id>", methods=["PATCH"])
 @jwt_required()
 def update_clinical_pin(pin_id):
-    check_doctor_role()
-    current_user_id = get_jwt_identity()
+    if not check_doctor_role():
+        return jsonify({"message": "Doctor access required"}), 403
+    
+    current_user_id = int(get_jwt_identity())
     data = request.get_json()
     
     pin = ClinicalPin.query.filter_by(id=pin_id, doctor_id=current_user_id).first_or_404()
@@ -948,8 +954,10 @@ def update_clinical_pin(pin_id):
 @doctor_bp.route("/pins/<int:pin_id>", methods=["DELETE"])
 @jwt_required()
 def delete_clinical_pin(pin_id):
-    check_doctor_role()
-    current_user_id = get_jwt_identity()
+    if not check_doctor_role():
+        return jsonify({"message": "Doctor access required"}), 403
+    
+    current_user_id = int(get_jwt_identity())
     
     pin = ClinicalPin.query.filter_by(id=pin_id, doctor_id=current_user_id).first_or_404()
     
