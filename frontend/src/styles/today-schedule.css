@@ -5,24 +5,25 @@
 
 .ts-page {
   padding: 48px;
-  min-height: 100vh;
+  padding-bottom: 80px;
   background-color: var(--nn-surface);
   border-radius: 48px;
   border: 1px solid var(--nn-border);
-  margin: 0 24px 24px 24px;
+  margin: 0 24px 48px 24px;
   font-family: 'Inter', sans-serif;
-  display: flex;
-  justify-content: center;
-  position: relative;
-  overflow: visible; /* Prevent clipping */
+  min-height: calc(100vh - 48px);
+  display: block;
+  overflow: visible;
+  height: auto;
 }
 
 .ts-main-container {
   width: 100%;
   max-width: 1560px;
+  margin: 0 auto;
   display: grid;
   grid-template-columns: 320px 1fr 340px;
-  gap: 30px;
+  gap: 32px;
   background-color: transparent;
 }
 
