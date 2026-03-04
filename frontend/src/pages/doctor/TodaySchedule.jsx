@@ -18,7 +18,7 @@ const TodaySchedule = () => {
     const [statusFilter, setStatusFilter] = useState('all');
     const [imageErrors, setImageErrors] = useState({});
     const [isAddingPin, setIsAddingPin] = useState(false);
-    const [newPinData, setNewPinData] = useState({ title: "", time: "", desc: "" });
+    const [newPinData, setNewPinData] = useState({ title: "", date: "", time: "", desc: "" });
     const navigate = useNavigate();
 
     const fetchSchedule = useCallback(async () => {
@@ -151,14 +151,33 @@ const TodaySchedule = () => {
                                         />
                                     </div>
 
-                                    <div className="ts-input-group">
-                                        <label className="ts-input-label">Time & Date</label>
-                                        <input 
-                                            className="ts-modal-input"
-                                            placeholder="e.g. Tomorrow 9:00 AM"
-                                            value={newPinData.time}
-                                            onChange={(e) => setNewPinData(p => ({...p, time: e.target.value}))}
-                                        />
+                                    <div className="row g-3">
+                                        <div className="col-6">
+                                            <div className="ts-input-group">
+                                                <label className="ts-input-label">Schedule Date</label>
+                                                <div className="position-relative">
+                                                    <input 
+                                                        type="date"
+                                                        className="ts-modal-input"
+                                                        value={newPinData.date}
+                                                        onChange={(e) => setNewPinData(p => ({...p, date: e.target.value}))}
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="col-6">
+                                            <div className="ts-input-group">
+                                                <label className="ts-input-label">Clinical Time</label>
+                                                <div className="position-relative">
+                                                    <input 
+                                                        type="time"
+                                                        className="ts-modal-input"
+                                                        value={newPinData.time}
+                                                        onChange={(e) => setNewPinData(p => ({...p, time: e.target.value}))}
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
 
                                     <div className="ts-input-group">
@@ -176,7 +195,7 @@ const TodaySchedule = () => {
 
                                 <div className="ts-modal-footer">
                                     <button className="ts-modal-btn cancel" onClick={() => setIsAddingPin(false)}>Cancel</button>
-                                    <button className="ts-modal-btn save" onClick={() => { setIsAddingPin(false); setNewPinData({title:'', time:'', desc:''}); }}>
+                                    <button className="ts-modal-btn save" onClick={() => { setIsAddingPin(false); setNewPinData({title:'', date:'', time:'', desc:''}); }}>
                                         <Check size={18} /> Save Pin
                                     </button>
                                 </div>

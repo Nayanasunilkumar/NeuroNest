@@ -529,6 +529,18 @@
   width: 100%;
   outline: none;
   transition: all 0.2s;
+  box-sizing: border-box;
+}
+
+.ts-modal-input::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  filter: invert(0.8) sepia(100%) saturate(1000%) hue-rotate(5deg);
+  opacity: 0.6;
+  transition: opacity 0.2s;
+}
+
+.ts-modal-input:hover::-webkit-calendar-picker-indicator {
+  opacity: 1;
 }
 
 .ts-modal-input:focus {
