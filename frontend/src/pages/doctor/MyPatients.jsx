@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, Search, Filter, Loader2, ArrowUpDown, UserPlus, SlidersHorizontal, UserX } from 'lucide-react';
+import { Users, Search, Filter, Loader2, ArrowUpDown, UserPlus, SlidersHorizontal, UserX, MessageSquare, ExternalLink } from 'lucide-react';
 import { getPatients } from '../../api/doctor';
-import PatientCard from './PatientCard';
+import { toAssetUrl } from '../../utils/media';
 import "../../styles/my-patients.css";
 import { useTheme } from "../../context/ThemeContext";
 
@@ -32,7 +32,15 @@ const MyPatients = () => {
         }
     };
 
-    // Real-time Search & Filter Logic
+    const formatDate = (value) => {
+        if (!value) return 'N/A';
+        return new Date(value).toLocaleDateString('en-US', {
+            month: 'short',
+            day: '2-digit',
+            year: 'numeric'
+        });
+    };
+
     useEffect(() => {
         let results = patients.filter(patient =>
             patient.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -207,15 +215,79 @@ const MyPatients = () => {
                         </p>
                     </div>
                 ) : (
-                    <div className="d-flex flex-column gap-3 pb-5">
-                        {filteredPatients.map(patient => (
-                            <PatientCard 
-                                key={patient.id} 
-                                patient={patient}
-                                onNavigate={(id) => navigate(`/doctor/patient-records?patientId=${id}`)}
-                                onMessage={(id) => navigate(`/doctor/chat?patientId=${id}`)}
-                            />
-                        ))}
+                    <div className="roster-table-container">
+                        <table className="roster-table">
+                            <thead>
+                                <tr>
+                                    <th>Patient Identity</th>
+                                    <th>Latest Visit</th>
+                                    <th>Upcoming Action</th>
+                                    <th>Status</th>
+                                    <th className="text-end">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {filteredPatients.map(patient => (
+                                    <tr key={patient.id}>
+                                        <td>
+                                            <div className="roster-patient-identity">
+                                                <div className="roster-avatar-mini">
+                                                    {patient.patient_image ? (
+                                                        <img src={toAssetUrl(patient.patient_image)} alt="" className="w-100 h-100 object-fit-cover" />
+                                                    ) : (
+                                                        patient.full_name?.charAt(0).toUpperCase()
+                                                    )}
+                                                </div>
+                                                <div>
+                                                    <p className="roster-patient-name">{patient.full_name}</p>
+                                                    <p className="roster-patient-email">{patient.email}</p>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div className="roster-visit-cell">
+                                                <span className="roster-visit-label">History</span>
+                                                <span className="roster-visit-val">{formatDate(patient.last_visit)}</span>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div className="roster-visit-cell">
+                                                <span className="roster-visit-label">Schedule</span>
+                                                <span className="roster-visit-val">{patient.next_appointment ? formatDate(patient.next_appointment) : 'None'}</span>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span className={`badge rounded-pill px-3 py-1 text-uppercase fw-bold`} style={{ 
+                                                fontSize: '0.65rem', 
+                                                backgroundColor: patient.status === 'Active' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(100, 116, 139, 0.1)',
+                                                color: patient.status === 'Active' ? '#10b981' : '#64748b',
+                                                border: `1px solid ${patient.status === 'Active' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(100, 116, 139, 0.2)'}`
+                                            }}>
+                                                {patient.status || 'Active'}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div className="d-flex align-items-center justify-content-end gap-2">
+                                                <button 
+                                                    className="roster-btn-sm"
+                                                    onClick={() => navigate(`/doctor/chat?patientId=${patient.id}`)}
+                                                    title="Message"
+                                                >
+                                                    <MessageSquare size={16} />
+                                                </button>
+                                                <button 
+                                                    className="roster-btn-sm"
+                                                    onClick={() => navigate(`/doctor/patient-records?patientId=${patient.id}`)}
+                                                    title="Profile"
+                                                >
+                                                    <ExternalLink size={16} />
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
                     </div>
                 )}
             </div>

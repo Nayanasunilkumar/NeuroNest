@@ -76,6 +76,117 @@
   background-color: var(--nn-surface-secondary) !important;
 }
 
-.roster-main-card .border-dashed {
-  border-color: var(--nn-border) !important;
+
+.roster-table-container {
+  overflow-x: auto;
+  border-radius: 24px;
+  border: 1px solid var(--nn-border);
+  background: var(--nn-surface-secondary);
+}
+
+.roster-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  margin-bottom: 0;
+}
+
+.roster-table th {
+  padding: 20px 24px;
+  background: var(--nn-surface-secondary);
+  color: var(--nn-text-secondary);
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  border-bottom: 1px solid var(--nn-border);
+}
+
+.roster-table td {
+  padding: 16px 24px;
+  vertical-align: middle;
+  border-bottom: 1px solid var(--nn-border);
+  transition: all 0.2s;
+}
+
+.roster-table tr:last-child td {
+  border-bottom: none;
+}
+
+.roster-table tr:hover td {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.roster-patient-identity {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.roster-avatar-mini {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: var(--nn-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 700;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.roster-patient-name {
+  font-size: 0.95rem;
+  font-weight: 750;
+  color: var(--nn-text-main);
+  margin: 0;
+}
+
+.roster-patient-email {
+  font-size: 0.75rem;
+  color: var(--nn-text-muted);
+  margin: 0;
+}
+
+.roster-visit-cell {
+  background: transparent;
+  padding: 0;
+}
+
+.roster-visit-label {
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: var(--nn-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.roster-visit-val {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--nn-text-main);
+}
+
+.roster-btn-sm {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: var(--nn-surface);
+  border: 1px solid var(--nn-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--nn-text-secondary);
+  transition: all 0.2s;
+}
+
+.roster-btn-sm:hover {
+  background: var(--nn-primary);
+  color: white;
+  border-color: var(--nn-primary);
+  transform: translateY(-2px);
 }
