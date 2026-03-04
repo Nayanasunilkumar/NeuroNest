@@ -5,6 +5,9 @@ import { getPatients } from '../../api/doctor';
 import { toAssetUrl } from '../../utils/media';
 import "../../styles/my-patients.css";
 import { useTheme } from "../../context/ThemeContext";
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import { FileJson, FileText, ChevronDown } from 'lucide-react';
 
 const MyPatients = () => {
     const [patients, setPatients] = useState([]);
@@ -13,6 +16,7 @@ const MyPatients = () => {
     const [searchTerm, setSearchTerm] = useState("");
     const [statusFilter, setStatusFilter] = useState("all");
     const [sortBy, setSortBy] = useState("recent");
+    const [showExportMenu, setShowExportMenu] = useState(false);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -99,6 +103,45 @@ const MyPatients = () => {
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+        setShowExportMenu(false);
+    };
+
+    const handleExportPDF = () => {
+        if (filteredPatients.length === 0) return;
+
+        const doc = new jsPDF();
+        
+        // Add Header
+        doc.setFontSize(18);
+        doc.setTextColor(43, 112, 255); // NeuroNest Primary
+        doc.text("NEURONEST - CLINICAL ROSTER", 14, 20);
+        
+        doc.setFontSize(10);
+        doc.setTextColor(100);
+        doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 26);
+        doc.text(`Total Patients: ${filteredPatients.length}`, 14, 32);
+
+        // Define Table
+        const tableColumn = ["Patient Name", "Email", "Status", "Last Visit", "Upcoming"];
+        const tableRows = filteredPatients.map(p => [
+            p.full_name,
+            p.email,
+            p.status || 'Active',
+            p.last_visit ? new Date(p.last_visit).toLocaleDateString() : 'N/A',
+            p.next_appointment ? new Date(p.next_appointment).toLocaleDateString() : 'N/A'
+        ]);
+
+        autoTable(doc, {
+            head: [tableColumn],
+            body: tableRows,
+            startY: 40,
+            theme: 'striped',
+            headStyles: { fillColor: [43, 112, 255], textColor: 255 },
+            styles: { fontSize: 9 }
+        });
+
+        doc.save(`NeuroNest_Clinical_Roster_${new Date().toISOString().split('T')[0]}.pdf`);
+        setShowExportMenu(false);
     };
 
     const { isDark } = useTheme();
@@ -211,16 +254,61 @@ const MyPatients = () => {
                         </select>
                     </div>
 
-                    {/* Export Button */}
-                    <button 
-                        className="btn btn-dark rounded-pill d-flex align-items-center shadow-sm fw-bold px-4" 
-                        style={{ height: '48px', fontSize: '0.8rem' }}
-                        onClick={handleExport}
-                        disabled={filteredPatients.length === 0}
-                    >
-                        <Users size={14} className="me-2" />
-                        Export
-                    </button>
+                    {/* Export Dropdown */}
+                    <div className="position-relative">
+                        <button 
+                            className="btn btn-dark rounded-pill d-flex align-items-center shadow-sm fw-bold px-4 gap-2" 
+                            style={{ height: '48px', fontSize: '0.8rem' }}
+                            onClick={() => setShowExportMenu(!showExportMenu)}
+                            disabled={filteredPatients.length === 0}
+                        >
+                            <Users size={14} />
+                            Export
+                            <ChevronDown size={14} className={showExportMenu ? 'rotate-180' : ''} style={{ transition: 'transform 0.2s' }} />
+                        </button>
+
+                        {showExportMenu && (
+                            <>
+                                <div 
+                                    className="position-fixed top-0 start-0 w-100 h-100" 
+                                    style={{ zIndex: 998 }}
+                                    onClick={() => setShowExportMenu(false)}
+                                />
+                                <div 
+                                    className="position-absolute end-0 mt-2 p-2 rounded-4 shadow-lg border" 
+                                    style={{ 
+                                        zIndex: 999, 
+                                        minWidth: '200px', 
+                                        transformOrigin: 'top right', 
+                                        animation: 'fadeInScale 0.2s ease-out',
+                                        backgroundColor: isDark ? '#1a1f26' : '#ffffff',
+                                        borderColor: isDark ? '#2d333b' : '#f1f5f9'
+                                    }}
+                                >
+                                    <button 
+                                        className="w-100 text-start btn border-0 d-flex align-items-center gap-3 p-3 rounded-3 mb-1 export-item"
+                                        style={{ color: isDark ? '#e2e8f0' : '#0f172a', fontWeight: '600', fontSize: '0.85rem' }}
+                                        onClick={handleExport}
+                                    >
+                                        <div className="bg-success bg-opacity-10 p-2 rounded-3 text-success">
+                                            <FileJson size={16} />
+                                        </div>
+                                        Download CSV
+                                    </button>
+                                    <button 
+                                        className="w-100 text-start btn border-0 d-flex align-items-center gap-3 p-3 rounded-3 export-item"
+                                        style={{ color: isDark ? '#e2e8f0' : '#0f172a', fontWeight: '600', fontSize: '0.85rem' }}
+                                        onClick={handleExportPDF}
+                                    >
+                                        <div className="bg-danger bg-opacity-10 p-2 rounded-3 text-danger">
+                                            <FileText size={16} />
+                                        </div>
+                                        Download PDF
+                                    </button>
+                                </div>
+                            </>
+                        )}
+                    </div>
                 </div>
             </div>
 

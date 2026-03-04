@@ -190,3 +190,27 @@
   border-color: var(--nn-primary);
   transform: translateY(-2px);
 }
+
+.rotate-180 {
+  transform: rotate(180deg);
+}
+
+.export-item {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.export-item:hover {
+  background-color: rgba(43, 112, 255, 0.08) !important;
+  transform: translateX(4px);
+}
+
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
