@@ -93,12 +93,12 @@ const MyPatients = () => {
                 {/* Total Patients */}
                 <div className="col-12 col-md-4">
                     <div className="card h-100 border-0 shadow-sm rounded-4 overflow-hidden position-relative" style={{ transition: 'transform 0.3s' }} onMouseEnter={(e) => e.currentTarget.style.transform='translateY(-4px)'} onMouseLeave={(e) => e.currentTarget.style.transform='translateY(0)'}>
-                        <div className="card-body p-4">
-                            <div className="d-flex align-items-center justify-content-between mb-3">
-                                <div className="rounded-4 bg-primary bg-opacity-10 d-flex align-items-center justify-content-center text-primary" style={{ width: '56px', height: '56px' }}>
-                                    <Users size={24} strokeWidth={2.5} />
+                        <div className="card-body p-3">
+                            <div className="d-flex align-items-center justify-content-between mb-2">
+                                <div className="rounded-3 bg-primary bg-opacity-10 d-flex align-items-center justify-content-center text-primary" style={{ width: '44px', height: '44px' }}>
+                                    <Users size={20} strokeWidth={2.5} />
                                 </div>
-                                <span className="display-5 fw-bolder text-dark m-0 pb-1">{stats.total}</span>
+                                <span className="fs-2 fw-bolder text-dark m-0">{stats.total}</span>
                             </div>
                             <h6 className="text-muted text-uppercase fw-bold m-0" style={{ fontSize: '0.75rem', letterSpacing: '1px' }}>Total Patients</h6>
                         </div>
@@ -108,12 +108,12 @@ const MyPatients = () => {
                 {/* Active Patients */}
                 <div className="col-12 col-md-4">
                     <div className="card h-100 border-0 shadow-sm rounded-4 overflow-hidden position-relative" style={{ transition: 'transform 0.3s' }} onMouseEnter={(e) => e.currentTarget.style.transform='translateY(-4px)'} onMouseLeave={(e) => e.currentTarget.style.transform='translateY(0)'}>
-                        <div className="card-body p-4">
-                            <div className="d-flex align-items-center justify-content-between mb-3">
-                                <div className="rounded-4 bg-success bg-opacity-10 d-flex align-items-center justify-content-center text-success" style={{ width: '56px', height: '56px' }}>
-                                    <UserPlus size={24} strokeWidth={2.5} />
+                        <div className="card-body p-3">
+                            <div className="d-flex align-items-center justify-content-between mb-2">
+                                <div className="rounded-3 bg-success bg-opacity-10 d-flex align-items-center justify-content-center text-success" style={{ width: '44px', height: '44px' }}>
+                                    <UserPlus size={20} strokeWidth={2.5} />
                                 </div>
-                                <span className="display-5 fw-bolder text-dark m-0 pb-1">{stats.active}</span>
+                                <span className="fs-2 fw-bolder text-dark m-0">{stats.active}</span>
                             </div>
                             <h6 className="text-muted text-uppercase fw-bold m-0" style={{ fontSize: '0.75rem', letterSpacing: '1px' }}>Active Status</h6>
                         </div>
@@ -123,12 +123,12 @@ const MyPatients = () => {
                 {/* Inactive Patients */}
                 <div className="col-12 col-md-4">
                     <div className="card h-100 border-0 shadow-sm rounded-4 overflow-hidden position-relative" style={{ transition: 'transform 0.3s' }} onMouseEnter={(e) => e.currentTarget.style.transform='translateY(-4px)'} onMouseLeave={(e) => e.currentTarget.style.transform='translateY(0)'}>
-                        <div className="card-body p-4">
-                            <div className="d-flex align-items-center justify-content-between mb-3">
-                                <div className="rounded-4 bg-warning bg-opacity-10 d-flex align-items-center justify-content-center text-warning" style={{ width: '56px', height: '56px' }}>
-                                    <UserX size={24} strokeWidth={2.5} />
+                        <div className="card-body p-3">
+                            <div className="d-flex align-items-center justify-content-between mb-2">
+                                <div className="rounded-3 bg-warning bg-opacity-10 d-flex align-items-center justify-content-center text-warning" style={{ width: '44px', height: '44px' }}>
+                                    <UserX size={20} strokeWidth={2.5} />
                                 </div>
-                                <span className="display-5 fw-bolder text-dark m-0 pb-1">{stats.inactive}</span>
+                                <span className="fs-2 fw-bolder text-dark m-0">{stats.inactive}</span>
                             </div>
                             <h6 className="text-muted text-uppercase fw-bold m-0" style={{ fontSize: '0.75rem', letterSpacing: '1px' }}>Inactive / Archived</h6>
                         </div>
