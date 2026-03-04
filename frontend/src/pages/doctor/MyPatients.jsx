@@ -77,6 +77,30 @@ const MyPatients = () => {
         inactive: patients.filter(p => p.status === 'Inactive').length
     };
 
+    const handleExport = () => {
+        if (filteredPatients.length === 0) return;
+
+        const headers = ["Full Name", "Email", "Status", "Last Visit", "Next Appointment"];
+        const rows = filteredPatients.map(p => [
+            p.full_name,
+            p.email,
+            p.status || 'Active',
+            p.last_visit ? new Date(p.last_visit).toLocaleDateString() : 'N/A',
+            p.next_appointment ? new Date(p.next_appointment).toLocaleDateString() : 'N/A'
+        ]);
+
+        const csvString = [headers, ...rows].map(row => row.join(",")).join("\n");
+        const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.setAttribute("href", url);
+        link.setAttribute("download", `NeuroNest_Clinical_Roster_${new Date().toISOString().split('T')[0]}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
     const { isDark } = useTheme();
 
     return (
@@ -188,7 +212,12 @@ const MyPatients = () => {
                     </div>
 
                     {/* Export Button */}
-                    <button className="btn btn-dark rounded-pill d-flex align-items-center shadow-sm fw-bold px-4" style={{ height: '48px', fontSize: '0.8rem' }}>
+                    <button 
+                        className="btn btn-dark rounded-pill d-flex align-items-center shadow-sm fw-bold px-4" 
+                        style={{ height: '48px', fontSize: '0.8rem' }}
+                        onClick={handleExport}
+                        disabled={filteredPatients.length === 0}
+                    >
                         <Users size={14} className="me-2" />
                         Export
                     </button>
