@@ -97,33 +97,35 @@ const TodaySchedule = () => {
                         <span className="ts-view-all">View all</span>
                     </div>
 
-                    <div className="ts-pinned-list d-flex flex-column gap-3">
-                        {pinnedItems.map(item => (
-                            <div key={item.id} className="ts-pinned-card">
-                                <div className="ts-pinned-header">
-                                    <div className="ts-pinned-icon">
-                                        <Bookmark size={20} fill="currentColor" />
+                    <div className="ts-pinned-main-container">
+                        <div className="ts-pinned-scroller">
+                            {pinnedItems.map(item => (
+                                <div key={item.id} className="ts-pin-item">
+                                    <div className="ts-pin-header">
+                                        <div className="ts-pin-icon">
+                                            <Bookmark size={18} fill="currentColor" />
+                                        </div>
+                                        <div className="ts-pin-meta">
+                                            <h4 className="ts-pin-title">{item.title}</h4>
+                                            <span className="ts-pin-time">{item.time}</span>
+                                        </div>
                                     </div>
-                                    <div className="ts-pinned-meta">
-                                        <h4 className="ts-pinned-title">{item.title}</h4>
-                                        <span className="ts-pinned-time">{item.time}</span>
-                                    </div>
+                                    <span className={`badge ${isDark ? 'bg-secondary' : 'bg-warning'} bg-opacity-10 text-warning px-2 py-1 rounded-pill`} style={{ fontSize: '0.6rem', width: 'fit-content' }}>
+                                        {item.category}
+                                    </span>
+                                    <p className="ts-pin-desc">{item.desc}</p>
                                 </div>
-                                <span className={`badge ${isDark ? 'bg-secondary' : 'bg-warning'} bg-opacity-10 text-warning px-2 py-1 rounded-pill mt-1`} style={{ fontSize: '0.6rem', width: 'fit-content' }}>
-                                    {item.category}
-                                </span>
-                                <p className="ts-pinned-desc">{item.desc}</p>
-                            </div>
-                        ))}
+                            ))}
+                        </div>
 
-                        <div className="ts-add-pinned" onClick={() => {
+                        <div className="ts-add-pin-btn" onClick={() => {
                             const title = prompt("Enter clinical pin title:");
                             if(title) alert("Feature integration: This pin will be synchronized with your professional archives.");
                         }}>
-                            <div className="ts-add-icon">
-                                <Plus size={20} />
+                            <div className="ts-add-pin-icon">
+                                <Plus size={18} />
                             </div>
-                            <span className="fw-bold text-secondary small">Add new clinical pin</span>
+                            <span>Add new clinical pin</span>
                         </div>
                     </div>
 
