@@ -205,8 +205,8 @@ const MyPatients = () => {
 
             {/* FUNCTIONAL CONTROL BAR */}
             {/* FUNCTIONAL CONTROL BAR */}
-            <div className="d-flex flex-column flex-md-row gap-3 align-items-center justify-content-between mb-4">
-                <div className="position-relative flex-grow-1" style={{ maxWidth: '500px', width: '100%' }}>
+            <div className="d-flex flex-row gap-2 align-items-center justify-content-between mb-4">
+                <div className="position-relative flex-grow-1" style={{ maxWidth: '400px' }}>
                     <Search className="position-absolute text-secondary" style={{ left: '16px', top: '50%', transform: 'translateY(-50%)' }} size={16} />
                     <input 
                         type="text"
@@ -218,7 +218,7 @@ const MyPatients = () => {
                     />
                 </div>
                 
-                <div className="d-flex align-items-center gap-2 flex-wrap justify-content-center justify-content-md-end" style={{ width: '100%', maxWidth: '100%' }}>
+                <div className="d-flex align-items-center gap-2 justify-content-end" style={{ flexShrink: 0 }}>
                     
                     {/* Status Dropdown */}
                     <div className="input-group shadow-sm border-0 rounded-pill overflow-hidden" style={{ minWidth: '160px', backgroundColor: '#fff' }}>
