@@ -12,6 +12,11 @@
   display: flex;
   flex-direction: column;
   gap: 28px;
+  background: var(--nn-surface-secondary);
+  border: 1px solid var(--nn-border);
+  padding: 40px;
+  border-radius: 40px;
+  box-shadow: var(--nn-card-shadow);
 }
 
 /* --- BREADCRUMBS & CONTEXT --- */
