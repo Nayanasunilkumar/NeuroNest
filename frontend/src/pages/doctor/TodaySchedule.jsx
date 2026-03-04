@@ -18,7 +18,7 @@ const TodaySchedule = () => {
     const [statusFilter, setStatusFilter] = useState('all');
     const [imageErrors, setImageErrors] = useState({});
     const [isAddingPin, setIsAddingPin] = useState(false);
-    const [newPinTitle, setNewPinTitle] = useState("");
+    const [newPinData, setNewPinData] = useState({ title: "", time: "", desc: "" });
     const navigate = useNavigate();
 
     const fetchSchedule = useCallback(async () => {
@@ -121,18 +121,35 @@ const TodaySchedule = () => {
                         </div>
 
                         {isAddingPin ? (
-                            <div className="p-3 border-top bg-light bg-opacity-10">
-                                <input 
-                                    autoFocus
-                                    className="form-control form-control-sm border-0 bg-transparent text-white fw-bold mb-2 shadow-none"
-                                    placeholder="Pin title..."
-                                    value={newPinTitle}
-                                    onChange={(e) => setNewPinTitle(e.target.value)}
-                                    style={{ fontSize: '0.85rem' }}
-                                />
-                                <div className="d-flex gap-2 justify-content-end">
+                            <div className="p-3 border-top bg-light bg-opacity-5">
+                                <div className="d-flex flex-column gap-2 mb-3">
+                                    <input 
+                                        autoFocus
+                                        className="form-control form-control-sm border-0 bg-transparent text-white fw-bold shadow-none p-1"
+                                        placeholder="Pin Title (e.g. Lab Follow-up)"
+                                        value={newPinData.title}
+                                        onChange={(e) => setNewPinData(prev => ({...prev, title: e.target.value}))}
+                                        style={{ fontSize: '0.85rem' }}
+                                    />
+                                    <input 
+                                        className="form-control form-control-sm border-0 bg-transparent text-muted fw-bold shadow-none p-1"
+                                        placeholder="Time/Date (e.g. Tomorrow 9:00 AM)"
+                                        value={newPinData.time}
+                                        onChange={(e) => setNewPinData(prev => ({...prev, time: e.target.value}))}
+                                        style={{ fontSize: '0.75rem' }}
+                                    />
+                                    <textarea 
+                                        className="form-control form-control-sm border-0 bg-transparent text-muted shadow-none p-1"
+                                        placeholder="Clinical notes or description..."
+                                        rows="2"
+                                        value={newPinData.desc}
+                                        onChange={(e) => setNewPinData(prev => ({...prev, desc: e.target.value}))}
+                                        style={{ fontSize: '0.75rem', resize: 'none' }}
+                                    />
+                                </div>
+                                <div className="d-flex gap-2 justify-content-end pt-2 border-top border-secondary border-opacity-10">
                                     <button className="btn btn-sm btn-link text-muted text-decoration-none fw-bold" onClick={() => setIsAddingPin(false)} style={{ fontSize: '0.7rem' }}>Cancel</button>
-                                    <button className="btn btn-sm btn-warning text-white rounded-pill px-3 fw-bold" onClick={() => { setIsAddingPin(false); setNewPinTitle(""); }} style={{ fontSize: '0.7rem' }}>Save Pin</button>
+                                    <button className="btn btn-sm btn-warning text-white rounded-pill px-3 fw-bold shadow-sm" onClick={() => { setIsAddingPin(false); setNewPinData({ title: "", time: "", desc: "" }); }} style={{ fontSize: '0.7rem' }}>Save Clinical Pin</button>
                                 </div>
                             </div>
                         ) : (
