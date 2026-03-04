@@ -93,6 +93,15 @@
   cursor: pointer;
 }
 
+.ts-pin-item.completed {
+  opacity: 0.55;
+}
+
+.ts-pin-item.completed .ts-pin-title {
+  text-decoration: line-through;
+  color: var(--nn-text-muted);
+}
+
 .ts-pin-item:hover {
   background: var(--nn-surface);
   border-color: var(--nn-border);
@@ -102,8 +111,34 @@
 .ts-pin-header {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
   margin-bottom: 8px;
+}
+
+.ts-pin-check-wrapper {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ts-pin-checkbox {
+  width: 22px;
+  height: 22px;
+  border: 2px solid var(--nn-border);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  color: white;
+  background: transparent;
+}
+
+.ts-pin-checkbox.checked {
+  background: #facc15;
+  border-color: #facc15;
+  box-shadow: 0 4px 10px rgba(250, 204, 21, 0.3);
 }
 
 .ts-pin-icon {

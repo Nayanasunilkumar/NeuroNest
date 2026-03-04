@@ -19,6 +19,10 @@ const TodaySchedule = () => {
     const [imageErrors, setImageErrors] = useState({});
     const [isAddingPin, setIsAddingPin] = useState(false);
     const [newPinData, setNewPinData] = useState({ title: "", date: "", time: "", desc: "" });
+    const [pinnedItems, setPinnedItems] = useState([
+        { id: 1, title: "Call neurology lab for tests", time: "15 Mar 2026 • 9:00 AM", category: "Priority", desc: "Ask for follow-up blood tests results for Nezrin.", completed: false },
+        { id: 2, title: "Patient Review: Nezrin", time: "Every Thursday", category: "Case Review", desc: "Weekly synthesis of progress reports.", completed: false }
+    ]);
     const navigate = useNavigate();
 
     const fetchSchedule = useCallback(async () => {
@@ -72,11 +76,26 @@ const TodaySchedule = () => {
         };
     }, [selectedDate]);
 
-    // Dummy Pinned Data for aesthetic
-    const pinnedItems = [
-        { id: 1, title: "Call neurology lab for tests", time: "15 Mar 2026 • 9:00 AM", category: "Priority", desc: "Ask for follow-up blood tests results for Nezrin." },
-        { id: 2, title: "Patient Review: Nezrin", time: "Every Thursday", category: "Case Review", desc: "Weekly synthesis of progress reports." }
-    ];
+    const handleAddPin = () => {
+        if (!newPinData.title) return;
+        const newPin = {
+            id: Date.now(),
+            title: newPinData.title,
+            time: `${newPinData.date} • ${newPinData.time}`.replace(' • ', ''),
+            category: "General",
+            desc: newPinData.desc,
+            completed: false
+        };
+        setPinnedItems(prev => [newPin, ...prev]);
+        setIsAddingPin(false);
+        setNewPinData({ title: "", date: "", time: "", desc: "" });
+    };
+
+    const togglePinCompletion = (id) => {
+        setPinnedItems(prev => prev.map(item => 
+            item.id === id ? { ...item, completed: !item.completed } : item
+        ));
+    };
 
     const currentTime = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
     const [liveTime, setLiveTime] = useState(currentTime);
@@ -102,20 +121,22 @@ const TodaySchedule = () => {
                     <div className="ts-pinned-main-container">
                         <div className="ts-pinned-scroller">
                             {pinnedItems.map(item => (
-                                <div key={item.id} className="ts-pin-item">
+                                <div key={item.id} className={`ts-pin-item ${item.completed ? 'completed' : ''}`}>
                                     <div className="ts-pin-header">
-                                        <div className="ts-pin-icon">
-                                            <Bookmark size={18} fill="currentColor" />
+                                        <div className="ts-pin-check-wrapper" onClick={() => togglePinCompletion(item.id)}>
+                                            <div className={`ts-pin-checkbox ${item.completed ? 'checked' : ''}`}>
+                                                {item.completed && <Check size={12} strokeWidth={4} />}
+                                            </div>
                                         </div>
                                         <div className="ts-pin-meta">
                                             <h4 className="ts-pin-title">{item.title}</h4>
                                             <span className="ts-pin-time">{item.time}</span>
                                         </div>
                                     </div>
-                                    <span className={`badge ${isDark ? 'bg-secondary' : 'bg-warning'} bg-opacity-10 text-warning px-2 py-1 rounded-pill`} style={{ fontSize: '0.6rem', width: 'fit-content' }}>
+                                    <span className={`badge ${isDark ? 'bg-secondary' : 'bg-warning'} bg-opacity-10 text-warning px-2 py-1 rounded-pill`} style={{ fontSize: '0.6rem', width: 'fit-content', marginLeft: '34px' }}>
                                         {item.category}
                                     </span>
-                                    <p className="ts-pin-desc">{item.desc}</p>
+                                    <p className="ts-pin-desc" style={{ marginLeft: '34px' }}>{item.desc}</p>
                                 </div>
                             ))}
                         </div>
@@ -195,7 +216,7 @@ const TodaySchedule = () => {
 
                                 <div className="ts-modal-footer">
                                     <button className="ts-modal-btn cancel" onClick={() => setIsAddingPin(false)}>Cancel</button>
-                                    <button className="ts-modal-btn save" onClick={() => { setIsAddingPin(false); setNewPinData({title:'', date:'', time:'', desc:''}); }}>
+                                    <button className="ts-modal-btn save" onClick={handleAddPin}>
                                         <Check size={18} /> Save Pin
                                     </button>
                                 </div>
