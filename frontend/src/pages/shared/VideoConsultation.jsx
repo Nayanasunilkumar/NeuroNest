@@ -4,6 +4,7 @@ import { Video, Mic, MicOff, VideoOff, PhoneOff } from 'lucide-react';
 import { getUser } from '../../utils/auth';
 import { io } from 'socket.io-client';
 import { sendMessage } from '../../api/chat';
+import { getIceConfig } from '../../api/rtc';
 
 export default function VideoConsultation() {
     const { roomId } = useParams();
@@ -30,6 +31,7 @@ export default function VideoConsultation() {
     const [isVideoOff, setIsVideoOff] = useState(false);
     const [isRemoteConnected, setIsRemoteConnected] = useState(false);
     const [needsAudioResume, setNeedsAudioResume] = useState(false);
+    const [mediaError, setMediaError] = useState('');
 
     useEffect(() => {
         const room = `consult_${roomId}`;
@@ -109,33 +111,16 @@ export default function VideoConsultation() {
             }
         };
 
-        const getIceServers = () => {
-            const fromEnv = import.meta.env.VITE_ICE_SERVERS;
-            if (fromEnv) {
-                try {
-                    const parsed = JSON.parse(fromEnv);
-                    if (Array.isArray(parsed) && parsed.length > 0) {
-                        return parsed;
-                    }
-                } catch (err) {
-                    console.warn("Invalid VITE_ICE_SERVERS JSON, using defaults.", err);
+        const getIceServers = async () => {
+            try {
+                const data = await getIceConfig();
+                if (Array.isArray(data?.iceServers) && data.iceServers.length > 0) {
+                    return data.iceServers;
                 }
+            } catch (err) {
+                console.warn("Failed to fetch ICE config, using fallback STUN.", err);
             }
-            return [
-                { urls: "stun:stun.l.google.com:19302" },
-                { urls: "stun:stun1.l.google.com:19302" },
-                { urls: "stun:global.stun.twilio.com:3478" },
-                {
-                    urls: "turn:global.relay.metered.ca:80",
-                    username: "openrelayproject",
-                    credential: "openrelayproject",
-                },
-                {
-                    urls: "turn:global.relay.metered.ca:443",
-                    username: "openrelayproject",
-                    credential: "openrelayproject",
-                },
-            ];
+            return [{ urls: "stun:stun.l.google.com:19302" }];
         };
 
         const notifyCallEnded = async () => {
@@ -158,18 +143,28 @@ export default function VideoConsultation() {
         const startCall = async () => {
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({
-                    video: true,
-                    audio: true,
+                    video: {
+                        facingMode: "user",
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 },
+                    },
+                    audio: {
+                        echoCancellation: true,
+                        noiseSuppression: true,
+                        autoGainControl: true,
+                    },
                 });
                 if (isDisposed) return;
+                setMediaError('');
 
                 localStreamRef.current = stream;
                 if (localVideo.current) {
                     localVideo.current.srcObject = stream;
                 }
 
+                const iceServers = await getIceServers();
                 peerConnection.current = new RTCPeerConnection({
-                    iceServers: getIceServers(),
+                    iceServers,
                 });
                 remoteStreamRef.current = new MediaStream();
                 if (remoteVideo.current) {
@@ -198,6 +193,7 @@ export default function VideoConsultation() {
 
                 peerConnection.current.onconnectionstatechange = () => {
                     const state = peerConnection.current?.connectionState;
+                    console.log("WebRTC connectionState:", state);
                     if (state === "disconnected" || state === "failed" || state === "closed") {
                         setIsRemoteConnected(false);
                     }
@@ -209,9 +205,13 @@ export default function VideoConsultation() {
                     }
                 };
                 peerConnection.current.onnegotiationneeded = async () => {
+                    console.log("WebRTC negotiationneeded");
                     if (!remoteSidRef.current) return;
                     if (politeRef.current) return;
                     await createAndSendOffer();
+                };
+                peerConnection.current.oniceconnectionstatechange = () => {
+                    console.log("WebRTC iceConnectionState:", peerConnection.current?.iceConnectionState);
                 };
 
                 const token = localStorage.getItem("neuronest_token");
@@ -354,7 +354,14 @@ export default function VideoConsultation() {
 
             } catch (err) {
                 console.error("Error accessing media devices.", err);
-                alert("Could not access camera or microphone. Please check your permissions.");
+                const name = err?.name || '';
+                if (name === "NotAllowedError" || name === "PermissionDeniedError") {
+                    setMediaError("Camera/Microphone permission denied. Please allow access and refresh.");
+                } else if (name === "NotFoundError") {
+                    setMediaError("No camera/microphone device found on this laptop.");
+                } else {
+                    setMediaError("Unable to start media devices. Please check browser/device settings.");
+                }
             }
         };
 
@@ -435,6 +442,9 @@ export default function VideoConsultation() {
                     <div>
                         <h2 className="video-call-title">Secure P2P Consultation</h2>
                         <span className="video-call-subtitle">Room: {roomId} • End-to-end Encrypted</span>
+                        {mediaError && (
+                            <span className="video-call-subtitle" style={{ color: '#fca5a5' }}>{mediaError}</span>
+                        )}
                     </div>
                 </div>
                 <button className="video-leave-btn" onClick={handleHangup}>

@@ -98,6 +98,8 @@ def create_app():
     from routes.admin.announcement_routes import admin_announcements_bp
     app.register_blueprint(admin_announcements_bp, url_prefix="/api/admin/announcements")
 
+    from routes.rtc import rtc_bp
+    app.register_blueprint(rtc_bp, url_prefix="/api/rtc")
 
     # Import socket events to register handlers
     import modules.chat.socket_events
