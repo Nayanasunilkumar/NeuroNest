@@ -210,7 +210,7 @@ const DoctorChat = ({ isEmbedded = false }) => {
             )}
 
             {/* Column 2: Chat Nexus */}
-            <div className={`d-flex flex-column flex-grow-1 position-relative bg-white ${isFocusedMode ? 'overflow-hidden' : ''}`} style={isFocusedMode ? { borderRadius: '20px' } : { minWidth: 0 }}>
+            <div className={`d-flex flex-column flex-grow-1 position-relative bg-transparent ${isFocusedMode ? 'overflow-hidden' : ''}`} style={isFocusedMode ? { borderRadius: '20px' } : { minWidth: 0, minHeight: 0, overflow: 'hidden' }}>
                 {/* Focused-mode top bar with back navigation */}
                 {isFocusedMode && selectedConv && (
                     <div className="d-flex align-items-center gap-3 px-4 py-2 border-bottom bg-white bg-opacity-75" style={{ backdropFilter: 'blur(10px)' }}>

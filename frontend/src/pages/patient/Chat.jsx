@@ -173,7 +173,7 @@ const Chat = () => {
 
             {/* Chat Area */}
             {selectedConv ? (
-                <div className="d-flex flex-column flex-grow-1 min-w-0 bg-white position-relative">
+                <div className="d-flex flex-column flex-grow-1 min-w-0 bg-transparent position-relative" style={{ minHeight: 0, overflow: 'hidden' }}>
                     <ChatHeader 
                         otherUser={selectedConv.other_user}
                         isDoctor={false}

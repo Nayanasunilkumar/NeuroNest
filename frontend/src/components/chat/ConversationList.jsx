@@ -35,15 +35,12 @@ const ConversationList = ({ conversations, selectedId, onSelect, currentUserId }
         return (
             <div 
                 key={conv.id} 
-                className={`card border-0 mb-1 transition-all position-relative ${isActive ? 'bg-white shadow-sm rounded-0' : 'bg-transparent hover-bg-light rounded-0'}`}
-                style={{ cursor: 'pointer' }}
+                className={`card border-0 mb-1 transition-all position-relative ${isActive ? 'bg-white rounded-0' : 'bg-transparent hover-bg-light rounded-0'}`}
+                style={{ cursor: 'pointer', zIndex: isActive ? 2 : 1 }}
                 onClick={() => onSelect(conv)}
             >
                 {isActive && (
-                    <>
-                        <div className="position-absolute start-0 top-0 bottom-0" style={{ width: '3px', backgroundColor: '#ef4444' }}></div>
-                        <div className="position-absolute d-none d-md-block" style={{ right: '-12px', top: '50%', transform: 'translateY(-50%)', borderTop: '12px solid transparent', borderBottom: '12px solid transparent', borderLeft: '12px solid white', zIndex: 10 }}></div>
-                    </>
+                    <div className="position-absolute start-0 top-0 bottom-0" style={{ width: '3px', backgroundColor: '#ef4444' }}></div>
                 )}
                 
                 <div className="card-body p-3 d-flex align-items-center gap-3">

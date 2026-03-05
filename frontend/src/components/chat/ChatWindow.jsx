@@ -95,7 +95,7 @@ const ChatWindow = ({ messages, currentUserId, onSendMessage, loadingMessages, m
     };
 
     return (
-        <div className="d-flex flex-column flex-grow-1 position-relative bg-white h-100 min-w-0">
+        <div className="d-flex flex-column flex-grow-1 position-relative bg-transparent min-w-0" style={{ minHeight: 0, overflow: 'hidden' }}>
             {/* MESSAGES AREA */}
             <div className="flex-grow-1 overflow-y-auto p-4 d-flex flex-column gap-3 custom-scrollbar" ref={messagesContainerRef}>
                 {loadingMessages ? (
