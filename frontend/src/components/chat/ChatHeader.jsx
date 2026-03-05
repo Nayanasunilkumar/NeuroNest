@@ -18,17 +18,11 @@ const ChatHeader = ({ otherUser, context, isDoctor, onToggleSidebar, showSidebar
     return (
         <div className="d-flex align-items-center justify-content-between px-4 py-3 border-bottom bg-white bg-opacity-75" style={{ backdropFilter: 'blur(12px)', position: 'sticky', top: 0, zIndex: 10 }}>
             <div className="d-flex align-items-center gap-3">
-                <Avatar 
-                    src={otherUser?.profile_image}
-                    alt={otherUser?.name || 'Patient'}
-                    style={{ width: '48px', height: '48px', borderRadius: '12px' }}
-                />
-                
                 <div>
-                    <h3 className="mb-0 fw-bold text-dark" style={{ fontSize: '1.1rem' }}>{otherUser?.name || 'Loading Chat...'}</h3>
+                    <h3 className="mb-0 fw-bold text-dark" style={{ fontSize: '1.15rem' }}>{otherUser?.name || 'Loading Chat...'}</h3>
                     <div className="d-flex align-items-center gap-2 mt-1">
-                        <div className={`rounded-circle ${otherUser?.is_online ? 'bg-success' : 'bg-secondary opacity-50'}`} style={{ width: '8px', height: '8px' }}></div>
-                        <span className="text-secondary text-uppercase fw-bold" style={{ fontSize: '0.65rem', letterSpacing: '0.05em' }}>{statusText}</span>
+                        <div className={`rounded-circle ${otherUser?.is_online ? 'bg-success' : 'bg-secondary opacity-50'}`} style={{ width: '6px', height: '6px', backgroundColor: '#22c55e' }}></div>
+                        <span className="text-secondary fw-medium" style={{ fontSize: '0.75rem' }}>{otherUser?.is_online ? 'Active now' : 'Last seen recently'}</span>
                     </div>
                 </div>
             </div>
@@ -47,17 +41,17 @@ const ChatHeader = ({ otherUser, context, isDoctor, onToggleSidebar, showSidebar
                 </div>
             )}
 
-            <div className="d-flex align-items-center gap-2">
-                <button className="btn btn-light rounded-circle d-flex align-items-center justify-content-center text-secondary border hover-bg-light transition-all shadow-sm" style={{ width: '40px', height: '40px' }}>
-                    <Phone size={18} />
-                </button>
+            <div className="d-flex align-items-center gap-3">
                 <button 
-                    className="btn btn-primary rounded-circle d-flex align-items-center justify-content-center text-white border-0 transition-all shadow-sm" 
+                    className="btn rounded-circle d-flex align-items-center justify-content-center border-0 transition-all text-secondary" 
                     title="Start Video Consultation"
                     onClick={onVideoCall}
-                    style={{ width: '40px', height: '40px' }}
+                    style={{ width: '38px', height: '38px', backgroundColor: '#f4f7fb' }}
                 >
-                    <Video size={18} />
+                    <Video size={16} />
+                </button>
+                <button className="btn rounded-circle d-flex align-items-center justify-content-center border-0 transition-all text-secondary" style={{ width: '38px', height: '38px', backgroundColor: '#f4f7fb' }}>
+                    <Phone size={16} />
                 </button>
                 <div className="mx-1 bg-light border-end" style={{ height: '24px', width: '1px' }}></div>
                 <button 
@@ -66,11 +60,11 @@ const ChatHeader = ({ otherUser, context, isDoctor, onToggleSidebar, showSidebar
                             onToggleSidebar();
                         }
                     }}
-                    className={`btn rounded-circle d-flex align-items-center justify-content-center transition-all shadow-sm ${showSidebar ? 'btn-primary text-white border-0' : 'btn-light text-secondary border hover-bg-light'}`}
+                    className={`btn rounded-circle d-flex align-items-center justify-content-center transition-all shadow-none ${showSidebar ? 'btn-danger text-white border-0' : 'btn-light text-secondary border-0 hover-bg-light'}`}
                     title={showSidebar ? "Hide Details" : "Show Details"}
-                    style={{ width: '40px', height: '40px' }}
+                    style={{ width: '38px', height: '38px', backgroundColor: showSidebar ? '' : '#f4f7fb' }}
                 >
-                    <Info size={18} />
+                    <Info size={16} />
                 </button>
             </div>
             

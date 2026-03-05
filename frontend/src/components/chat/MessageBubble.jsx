@@ -24,7 +24,7 @@ const getMessageFileUrl = (content = '') => {
     return resolveApiUrl(content.trim());
 };
 
-const MessageBubble = ({ message, isMe }) => {
+const MessageBubble = ({ message, isMe, otherUserAvatar }) => {
     const navigate = useNavigate();
     const content = message?.content || '';
     const isFileMessage = message?.type === 'file' || content.includes('/uploads/');
@@ -32,15 +32,24 @@ const MessageBubble = ({ message, isMe }) => {
     const fileName = fileUrl ? extractFileName(fileUrl) : null;
 
     return (
-        <div className={`d-flex flex-column mb-3 ${isMe ? 'align-items-end' : 'align-items-start'}`}>
-            <div 
-                className={`p-3 rounded-4 shadow-sm mb-1 position-relative ${isMe ? 'bg-primary text-white text-end' : 'bg-light text-dark text-start border'}`}
-                style={{ 
-                    maxWidth: '75%', 
-                    borderBottomRightRadius: isMe ? '4px' : '16px',
-                    borderBottomLeftRadius: !isMe ? '4px' : '16px'
-                }}
-            >
+        <div className={`d-flex mb-3 ${isMe ? 'justify-content-end' : 'justify-content-start'}`} style={{ gap: '12px' }}>
+            {!isMe && (
+                <div className="flex-shrink-0 mt-auto mb-1">
+                    <img src={otherUserAvatar || '/default-avatar.png'} alt="user" className="rounded-circle object-fit-cover shadow-sm bg-light" style={{ width: '36px', height: '36px', border: '2px solid white' }} />
+                </div>
+            )}
+            <div className={`d-flex flex-column ${isMe ? 'align-items-end' : 'align-items-start'}`} style={{ maxWidth: '75%' }}>
+                <div 
+                    className={`p-3 px-4 shadow-sm mb-1 position-relative ${isMe ? 'text-white' : 'text-dark border-0'}`}
+                    style={{ 
+                        background: isMe ? 'linear-gradient(135deg, #ff5b5b 0%, #ff3b3b 100%)' : '#eef2f6',
+                        borderBottomRightRadius: isMe ? '4px' : '20px',
+                        borderBottomLeftRadius: !isMe ? '4px' : '20px',
+                        borderTopLeftRadius: '20px',
+                        borderTopRightRadius: '20px',
+                        boxShadow: isMe ? '0 4px 15px rgba(255, 59, 59, 0.3)' : 'none'
+                    }}
+                >
                 {message?.type === 'call_request' ? (
                     <div className={`rounded-3 p-3 ${isMe ? 'bg-white bg-opacity-25' : 'bg-white border'}`}>
                         <div className="d-flex align-items-center gap-2 mb-2 fw-bold text-uppercase" style={{ fontSize: '0.75rem', letterSpacing: '0.05em' }}>
@@ -79,17 +88,18 @@ const MessageBubble = ({ message, isMe }) => {
                 ) : (
                     <div className="text-break lh-sm fw-medium" style={{ fontSize: '0.9rem' }}>{content}</div>
                 )}
-            </div>
-
-            <div className={`d-flex align-items-center gap-1 ${isMe ? 'text-end' : 'text-start'}`}>
-                <span className="small text-secondary fw-bold" style={{ fontSize: '0.65rem' }}>
-                    {formatTimeIST(message.created_at)}
-                </span>
-                {isMe && (
-                    <span className={message.is_read ? 'text-primary' : 'text-secondary opacity-50'}>
-                        {message.is_read ? <CheckCheck size={14} /> : <Check size={14} />}
+                </div>
+                
+                <div className={`d-flex align-items-center gap-1 ${isMe ? 'justify-content-end' : 'justify-content-start'} w-100 px-1`}>
+                    <span className="small text-secondary fw-semibold" style={{ fontSize: '0.65rem' }}>
+                        {formatTimeIST(message.created_at)}
                     </span>
-                )}
+                    {isMe && (
+                        <span className={message.is_read ? 'text-info' : 'text-secondary opacity-50'}>
+                            {message.is_read ? <CheckCheck size={14} /> : <Check size={14} />}
+                        </span>
+                    )}
+                </div>
             </div>
 
             <style>{`

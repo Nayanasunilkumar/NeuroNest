@@ -86,6 +86,7 @@ const ChatWindow = ({ messages, currentUserId, onSendMessage, loadingMessages, m
                     key={msg.id || index} 
                     message={msg} 
                     isMe={String(msg.sender_id) === String(currentUserId)}
+                    otherUserAvatar={otherUser?.profile_image}
                 />
             );
         });
@@ -126,16 +127,15 @@ const ChatWindow = ({ messages, currentUserId, onSendMessage, loadingMessages, m
                 <div ref={messagesEndRef} />
             </div>
 
-            {/* INPUT PANEL */}
-            <div className="p-3 p-md-4 border-top border-light bg-white bg-opacity-75" style={{ backdropFilter: 'blur(12px)' }}>
+            <div className="p-3 border-top border-light bg-white d-flex flex-column" style={{ zIndex: 10 }}>
                 {/* QUICK ACTIONS */}
-                <div className="mb-3 d-flex gap-2 overflow-x-auto pb-2 custom-scrollbar">
+                <div className="d-flex gap-2 overflow-x-auto pb-2 custom-scrollbar mb-2">
                     {/* DOCTOR TEMPLATES */}
                     {isDoctor && showTemplates && templates.length > 0 && (
                         templates.map((t, i) => (
                             <button 
                                 key={i} 
-                                className="btn btn-sm btn-light border rounded-pill fw-bold text-primary text-nowrap px-3 hover-bg-primary hover-text-white transition-all shadow-sm"
+                                className="btn btn-sm btn-light border rounded-pill fw-bold text-primary text-nowrap px-3 transition-all shadow-none hover-bg-light"
                                 style={{ fontSize: '0.75rem' }}
                                 onClick={() => handleTemplateClick(t.text)}
                             >
@@ -145,70 +145,64 @@ const ChatWindow = ({ messages, currentUserId, onSendMessage, loadingMessages, m
                     )}
 
                     {/* PATIENT QUICK ACTIONS */}
-                    {!isDoctor && (
+                    {!isDoctor && showTemplates && (
                         <>
-                            <button className="btn btn-sm btn-light border rounded-pill fw-bold text-secondary text-nowrap px-3 hover-bg-primary hover-text-white transition-all shadow-sm" style={{ fontSize: '0.75rem' }} onClick={() => handleTemplateClick("I would like to book an appointment.")}>
+                            <button className="btn btn-sm btn-light border rounded-pill fw-bold text-secondary text-nowrap px-3 transition-all shadow-none hover-bg-light" style={{ fontSize: '0.75rem' }} onClick={() => handleTemplateClick("I would like to book an appointment.")}>
                                 📅 Book Appointment
                             </button>
-                            <button className="btn btn-sm btn-light border rounded-pill fw-bold text-secondary text-nowrap px-3 hover-bg-primary hover-text-white transition-all shadow-sm" style={{ fontSize: '0.75rem' }} onClick={() => handleTemplateClick("I am uploading my latest report.")}>
+                            <button className="btn btn-sm btn-light border rounded-pill fw-bold text-secondary text-nowrap px-3 transition-all shadow-none hover-bg-light" style={{ fontSize: '0.75rem' }} onClick={() => handleTemplateClick("I am uploading my latest report.")}>
                                 📄 Upload Report
-                            </button>
-                            <button className="btn btn-sm btn-light border rounded-pill fw-bold text-secondary text-nowrap px-3 hover-bg-primary hover-text-white transition-all shadow-sm" style={{ fontSize: '0.75rem' }} onClick={() => handleTemplateClick("I have a question about my medication.")}>
-                                💊 Medication Query
-                            </button>
-                            <button className="btn btn-sm btn-light border rounded-pill fw-bold text-secondary text-nowrap px-3 hover-bg-primary hover-text-white transition-all shadow-sm" style={{ fontSize: '0.75rem' }} onClick={() => handleTemplateClick("Please call me back when free.")}>
-                                📞 Request Callback
                             </button>
                         </>
                     )}
                 </div>
                 
-                <div className="d-flex align-items-center gap-2">
-                    <input 
-                        type="file" 
-                        ref={fileInputRef} 
-                        style={{ display: 'none' }} 
-                        onChange={handleFileSelect}
-                    />
+                <div className="d-flex align-items-center gap-3 w-100">
                     <button 
-                        className="btn btn-light rounded-circle d-flex align-items-center justify-content-center text-secondary border hover-bg-light transition-all shadow-sm flex-shrink-0" 
-                        title="Attach Files"
-                        style={{ width: '40px', height: '40px' }}
-                        disabled={isUploading}
-                        onClick={() => fileInputRef.current?.click()}
+                        className="btn btn-light rounded-circle shadow-none text-secondary hover-bg-light d-flex align-items-center justify-content-center p-0 flex-shrink-0"
+                        title="Emoji / Options"
+                        style={{ width: '40px', height: '40px', backgroundColor: 'transparent' }}
+                        onClick={() => setShowTemplates(!showTemplates)}
                     >
-                        <Paperclip size={18} />
+                        <span style={{ fontSize: '1.25rem' }}>😀</span>
                     </button>
                     
-                    {isDoctor && (
-                        <button 
-                            className={`btn btn-light rounded-circle d-flex align-items-center justify-content-center border hover-bg-light transition-all shadow-sm flex-shrink-0 ${showTemplates ? 'text-primary bg-primary bg-opacity-10 border-primary' : 'text-secondary'}`}
-                            onClick={() => setShowTemplates(!showTemplates)}
-                            title="Quick Templates"
-                            style={{ width: '40px', height: '40px' }}
-                        >
-                            <Zap size={18} />
-                        </button>
-                    )}
-
                     <textarea 
-                        className="form-control bg-light border-light rounded-pill px-4 py-2 shadow-sm text-dark fw-medium custom-scrollbar flex-grow-1" 
-                        placeholder={isDoctor ? "Type clinical note or message..." : "Type your message here..."}
+                        className="form-control bg-transparent border-0 shadow-none text-dark fw-medium custom-scrollbar flex-grow-1" 
+                        placeholder="Your message here..."
                         value={newMessage}
                         onChange={(e) => setNewMessage(e.target.value)}
                         onKeyDown={handleKeyDown}
                         rows={1}
-                        style={{ resize: 'none', overflowY: 'auto', maxHeight: '100px', fontSize: '0.875rem', lineHeight: '1.5', paddingRight: '46px' }}
+                        style={{ resize: 'none', overflowY: 'auto', maxHeight: '100px', fontSize: '0.9rem', lineHeight: '20px', padding: '10px 0' }}
                     />
                     
-                    <button 
-                        className={`btn rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 shadow-sm transition-all ${!newMessage.trim() || isUploading ? 'btn-light text-secondary disabled' : 'btn-primary text-white'}`}
-                        onClick={handleSend}
-                        disabled={!newMessage.trim() || isUploading}
-                        style={{ width: '40px', height: '40px', marginLeft: '-48px', zIndex: 5 }}
-                    >
-                        {isUploading ? <span className="spinner-border spinner-border-sm" /> : <Send size={16} />}
-                    </button>
+                    <div className="d-flex align-items-center gap-2 flex-shrink-0">
+                        <input 
+                            type="file" 
+                            ref={fileInputRef} 
+                            style={{ display: 'none' }} 
+                            onChange={handleFileSelect}
+                        />
+                        <button 
+                            className="btn btn-light rounded-circle shadow-none text-secondary hover-bg-light d-flex align-items-center justify-content-center p-0 flex-shrink-0" 
+                            title="Attach Files"
+                            style={{ width: '40px', height: '40px', backgroundColor: 'transparent' }}
+                            disabled={isUploading}
+                            onClick={() => fileInputRef.current?.click()}
+                        >
+                            <Paperclip size={18} />
+                        </button>
+                        
+                        <button 
+                            className={`btn rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 transition-all ${!newMessage.trim() || isUploading ? 'btn-light text-secondary disabled shadow-none' : 'text-white border-0'}`}
+                            onClick={handleSend}
+                            disabled={!newMessage.trim() || isUploading}
+                            style={{ width: '44px', height: '44px', background: (!newMessage.trim() || isUploading) ? '#f4f7fb' : '#ef4444', boxShadow: (!newMessage.trim() || isUploading) ? 'none' : '0 4px 10px rgba(239, 68, 68, 0.3)' }}
+                        >
+                            {isUploading ? <span className="spinner-border spinner-border-sm" /> : <Send size={18} style={{ marginLeft: '-2px', marginTop: '2px' }} />}
+                        </button>
+                    </div>
                 </div>
             </div>
 

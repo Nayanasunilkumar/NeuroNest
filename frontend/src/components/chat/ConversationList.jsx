@@ -35,12 +35,15 @@ const ConversationList = ({ conversations, selectedId, onSelect, currentUserId }
         return (
             <div 
                 key={conv.id} 
-                className={`card border-0 mb-2 transition-all position-relative ${isActive ? 'bg-light bg-opacity-75 shadow-sm' : 'bg-transparent hover-bg-light'}`}
-                style={{ cursor: 'pointer', borderRadius: '16px' }}
+                className={`card border-0 mb-1 transition-all position-relative ${isActive ? 'bg-white shadow-sm rounded-0' : 'bg-transparent hover-bg-light rounded-0'}`}
+                style={{ cursor: 'pointer' }}
                 onClick={() => onSelect(conv)}
             >
                 {isActive && (
-                    <div className="position-absolute start-0 top-0 bottom-0 bg-primary rounded-end" style={{ width: '4px', margin: '16px 0' }}></div>
+                    <>
+                        <div className="position-absolute start-0 top-0 bottom-0" style={{ width: '3px', backgroundColor: '#ef4444' }}></div>
+                        <div className="position-absolute d-none d-md-block" style={{ right: '-12px', top: '50%', transform: 'translateY(-50%)', borderTop: '12px solid transparent', borderBottom: '12px solid transparent', borderLeft: '12px solid white', zIndex: 10 }}></div>
+                    </>
                 )}
                 
                 <div className="card-body p-3 d-flex align-items-center gap-3">
@@ -48,10 +51,10 @@ const ConversationList = ({ conversations, selectedId, onSelect, currentUserId }
                         <Avatar 
                             src={otherUser?.profile_image} 
                             alt={otherUser?.name} 
-                            style={{ width: '48px', height: '48px', borderRadius: '12px' }}
+                            style={{ width: '48px', height: '48px', borderRadius: '50%' }}
                         />
                         {otherUser?.is_online && (
-                            <div className="position-absolute bottom-0 end-0 bg-success border border-white border-2 rounded-circle" style={{ width: '14px', height: '14px', marginBottom: '-2px', marginRight: '-2px' }}></div>
+                            <div className="position-absolute bottom-0 end-0 border border-white border-2 rounded-circle" style={{ width: '12px', height: '12px', backgroundColor: '#22c55e', marginBottom: '2px', marginRight: '2px' }}></div>
                         )}
                     </div>
                     
@@ -89,17 +92,16 @@ const ConversationList = ({ conversations, selectedId, onSelect, currentUserId }
     };
 
     return (
-        <div className="d-flex flex-column bg-white border-end border-light h-100" style={{ width: '340px', flexShrink: 0 }}>
+        <div className="d-flex flex-column border-end h-100" style={{ width: '320px', flexShrink: 0, backgroundColor: '#f4f7fb', borderColor: '#e2e8f0' }}>
             {/* Header */}
-            <div className="p-4">
-                <h2 className="fw-bolder text-dark mb-4" style={{ fontSize: '1.25rem', letterSpacing: '-0.02em' }}>Inbox</h2>
+            <div className="p-4 pb-3">
                 <div className="position-relative">
                     <Search size={16} className="position-absolute text-secondary" style={{ left: '16px', top: '50%', transform: 'translateY(-50%)' }} />
                     <input 
                         type="text" 
-                        placeholder="Search conversations..." 
-                        className="form-control bg-light border-light rounded-4 shadow-none fw-medium text-dark px-3 py-2"
-                        style={{ paddingLeft: '44px', fontSize: '0.875rem' }}
+                        placeholder="Search..." 
+                        className="form-control border-0 rounded-pill shadow-sm fw-medium text-dark px-3 py-2"
+                        style={{ paddingLeft: '44px', fontSize: '0.875rem', backgroundColor: '#ffffff' }}
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
