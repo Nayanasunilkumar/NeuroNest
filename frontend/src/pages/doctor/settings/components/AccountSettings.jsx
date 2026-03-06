@@ -36,9 +36,25 @@ const AccountSettings = ({ data, onSaveSuccess }) => {
         try {
             setProfileSaving(true);
             const res = await updateDoctorAccount(profileForm);
+            
+            // Force local storage to reflect new name synchronously
+            const userStr = localStorage.getItem('neuronest_user');
+            if (userStr) {
+                try {
+                    const parsedUser = JSON.parse(userStr);
+                    parsedUser.full_name = profileForm.full_name;
+                    localStorage.setItem('neuronest_user', JSON.stringify(parsedUser));
+                } catch (e) {}
+            }
+
             setProfileStatus('success');
             if (onSaveSuccess) onSaveSuccess(res);
-            setTimeout(() => setProfileStatus(null), 3000);
+            
+            // Reload page briefly after showing success to refresh global UI context (navbar, layout, etc.)
+            setTimeout(() => {
+                setProfileStatus(null);
+                window.location.reload();
+            }, 800);
         } catch (err) {
             console.error("Failed to update account", err);
             setProfileStatus('error');
