@@ -106,10 +106,12 @@ class NotificationService:
         smtp_port = os.getenv("SMTP_PORT", 587)
         smtp_user = os.getenv("SMTP_USER")
         smtp_pass = os.getenv("SMTP_PASS")
-        
+
+        # Verbose logging to help diagnose issues
+        print(f"[EMAIL DEBUG] SMTP_HOST={smtp_host}, SMTP_PORT={smtp_port}, SMTP_USER={smtp_user}, SMTP_PASS={'SET' if smtp_pass else 'MISSING'}")
+
         if not all([smtp_host, smtp_user, smtp_pass]):
-            print(f"[SIMULATED EMAIL] NO SMTP CONFIG. To: {recipient}, Subject: {subject}")
-            print(f"Body: {body}")
+            print(f"[EMAIL ERROR] Missing SMTP config - cannot send email to {recipient}")
             return False
 
         try:
@@ -119,15 +121,17 @@ class NotificationService:
             msg['Subject'] = subject
             msg.attach(MIMEText(body, 'plain'))
 
+            print(f"[EMAIL] Connecting to {smtp_host}:{smtp_port}...")
             server = smtplib.SMTP(smtp_host, int(smtp_port))
+            server.set_debuglevel(1)
             server.starttls()
             server.login(smtp_user, smtp_pass)
             server.send_message(msg)
             server.quit()
-            print(f"EMAIL SENT successfully to {recipient}")
+            print(f"[EMAIL] SUCCESS - sent to {recipient}")
             return True
         except Exception as e:
-            print(f"ERROR sending email: {e}")
+            print(f"[EMAIL ERROR] SMTP failed: {type(e).__name__}: {e}")
             return False
 
     @staticmethod
