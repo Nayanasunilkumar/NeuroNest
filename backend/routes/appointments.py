@@ -27,6 +27,19 @@ from services.notification_service import NotificationService
 
 appointments_bp = Blueprint("appointments", __name__)
 
+@appointments_bp.route("/test-email", methods=["GET"])
+def test_email_appointments():
+    from services.notification_service import NotificationService
+    recipient = "nayanasunilkumar8@gmail.com"
+    subject = "NeuroNest Diagnostic (Appt Route)"
+    body = "If you are reading this, your Render SMTP configuration is working perfectly via Appointments route!"
+    
+    success = NotificationService.send_email(recipient, subject, body)
+    if success:
+        return {"status": "success", "message": f"Test email sent to {recipient}."}, 200
+    else:
+        return {"status": "error", "message": "Failed to send email. Check Render logs."}, 500
+
 
 def _is_patient():
     return get_jwt().get("role") == "patient"
