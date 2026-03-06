@@ -121,8 +121,51 @@ class NotificationService:
             body = f"[DEV MODE] This email was intended for: {recipient}\n\n{body}"
             print(f"[EMAIL] TEST OVERRIDE active — redirecting {recipient} → {test_override}")
 
+        # ---------------------------------------------------------------
+        # PRIMARY: Brevo (Sendinblue) — Free 300 emails/day, sends to ANY email
+        # Set BREVO_API_KEY in Render. Does not require domain verification.
+        # Get key at: https://app.brevo.com/settings/keys/api
+        # ---------------------------------------------------------------
+        brevo_api_key = os.getenv("BREVO_API_KEY")
+        if brevo_api_key:
+            try:
+                payload = json.dumps({
+                    "sender": {"name": "NeuroNest", "email": os.getenv("BREVO_FROM_EMAIL", "neuronest4@gmail.com")},
+                    "to": [{"email": actual_recipient}],
+                    "subject": subject,
+                    "textContent": body,
+                }).encode("utf-8")
+
+                req = urllib.request.Request(
+                    "https://api.brevo.com/v3/smtp/email",
+                    data=payload,
+                    headers={
+                        "api-key": brevo_api_key,
+                        "Content-Type": "application/json",
+                        "Accept": "application/json",
+                    },
+                    method="POST"
+                )
+                with urllib.request.urlopen(req, timeout=15) as resp:
+                    result = json.loads(resp.read())
+                    print(f"[EMAIL] Brevo SUCCESS → {actual_recipient} (intended: {recipient})")
+                    return True
+            except urllib.error.HTTPError as e:
+                error_body = e.read().decode("utf-8")
+                print(f"[EMAIL ERROR] Brevo HTTP {e.code}: {error_body}")
+                # Fall through to Resend below
+            except Exception as e:
+                print(f"[EMAIL ERROR] Brevo failed: {type(e).__name__}: {e}")
+                # Fall through to Resend below
+
+        # ---------------------------------------------------------------
+        # FALLBACK: Resend API — free plan only sends to own email unless
+        # a domain is verified. Set RESEND_API_KEY in Render.
+        # ---------------------------------------------------------------
+        resend_api_key = os.getenv("RESEND_API_KEY")
         if resend_api_key:
             try:
+                sender = os.getenv("RESEND_FROM", "onboarding@resend.dev")
                 payload = json.dumps({
                     "from": f"NeuroNest <{sender}>",
                     "to": [actual_recipient],
