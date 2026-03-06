@@ -107,9 +107,10 @@ class NotificationService:
 
         # --- Primary: Resend API (works on Render, bypasses SMTP port blocks) ---
         resend_api_key = os.getenv("RESEND_API_KEY")
-        smtp_user = os.getenv("SMTP_USER")  # Used as the "from" address
 
-        sender = smtp_user or "onboarding@resend.dev"
+        # Use custom from address if set (requires verified domain on Resend),
+        # otherwise fall back to Resend's free onboarding address.
+        sender = os.getenv("RESEND_FROM", "onboarding@resend.dev")
 
         if resend_api_key:
             try:
