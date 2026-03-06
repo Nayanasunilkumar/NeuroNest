@@ -98,6 +98,19 @@ def create_app():
     from routes.admin.announcement_routes import admin_announcements_bp
     app.register_blueprint(admin_announcements_bp, url_prefix="/api/admin/announcements")
 
+    @app.route("/test-email")
+    def test_email_route():
+        from services.notification_service import NotificationService
+        recipient = "nayanasunilkumar8@gmail.com"
+        subject = "NeuroNest Live Diagnostic"
+        body = "If you are reading this, your Render SMTP configuration is working perfectly!"
+        
+        success = NotificationService.send_email(recipient, subject, body)
+        if success:
+            return {"status": "success", "message": f"Test email sent to {recipient}. Check inbox/spam."}, 200
+        else:
+            return {"status": "error", "message": "Failed to send email. Check Render logs for the exact error."}, 500
+
     from routes.rtc import rtc_bp
     app.register_blueprint(rtc_bp, url_prefix="/api/rtc")
 
