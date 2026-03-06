@@ -152,7 +152,7 @@ const AccountSettings = ({ data, onSaveSuccess }) => {
                             borderRadius: '10px', background: '#f8fafc', color: '#64748b', fontSize: '0.95rem'
                         }}>
                             <Mail size={16} color="#94a3b8" />
-                            <span>{data?.email || 'doctor@neuronest.com'}</span>
+                            <span>{data?.email || 'nayanasunilkumar8@gmail.com'}</span>
                             <span style={{
                                 marginLeft: 'auto', fontSize: '0.75rem', padding: '3px 10px',
                                 background: '#dcfce7', color: '#16a34a', borderRadius: '20px', fontWeight: '600'

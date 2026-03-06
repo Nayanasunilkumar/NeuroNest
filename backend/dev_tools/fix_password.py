@@ -14,13 +14,13 @@ def fix_password():
     
     with app.app_context():
         # Update doctor password
-        user = User.query.filter_by(email="doctor@neuronest.com").first()
+        user = User.query.filter_by(email="nayanasunilkumar8@gmail.com").first()
         if user:
             user.password_hash = hash_password("123456")
             db.session.commit()
-            print("Successfully updated password for doctor@neuronest.com to '123456'")
+            print("Successfully updated password for nayanasunilkumar8@gmail.com to '123456'")
         else:
-            print("User doctor@neuronest.com not found")
+            print("User nayanasunilkumar8@gmail.com not found")
 
 if __name__ == "__main__":
     fix_password()

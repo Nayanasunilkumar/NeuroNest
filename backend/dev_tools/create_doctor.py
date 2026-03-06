@@ -24,7 +24,7 @@ def create_doctor():
         db.create_all() # Recreate tables
         
         # Check if doctor exists
-        email = "doctor@neuronest.com"
+        email = "nayanasunilkumar8@gmail.com"
         existing = User.query.filter_by(email=email).first()
         
         if existing:

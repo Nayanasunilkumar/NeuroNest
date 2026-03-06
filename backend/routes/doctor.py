@@ -28,6 +28,7 @@ from services.slot_lifecycle_service import (
     mark_slot_blocked,
     mark_slot_booked,
 )
+from services.notification_service import NotificationService
 
 doctor_bp = Blueprint("doctor", __name__)
 
@@ -95,6 +96,7 @@ def approve_appointment(appointment_id):
                 source="doctor_approval",
                 reason="Doctor approved appointment",
             )
+    NotificationService.notify_appointment_event(appointment.id, "approved")
     db.session.commit()
     
     return jsonify({
@@ -598,6 +600,7 @@ def cancel_appointment(appointment_id):
             },
         )
     )
+    NotificationService.notify_appointment_event(appointment.id, "cancelled")
     db.session.commit()
     
     return jsonify({"message": "Appointment cancelled"}), 200

@@ -48,7 +48,7 @@ def log_security_event(user_id, event_type, description, commit=True):
 
 # Cache bootstrap config to speed up failed/dev lookups
 ALLOW_BOOTSTRAP = os.getenv("ALLOW_DEV_DOCTOR_BOOTSTRAP", "false").lower() == "true"
-DEFAULT_DOCTOR_EMAIL = os.getenv("DEFAULT_DOCTOR_EMAIL", "doctor@neuronest.com").strip().lower()
+DEFAULT_DOCTOR_EMAIL = os.getenv("DEFAULT_DOCTOR_EMAIL", "nayanasunilkumar8@gmail.com").strip().lower()
 DEFAULT_DOCTOR_PASSWORD = os.getenv("DEFAULT_DOCTOR_PASSWORD", "123456")
 
 def _maybe_bootstrap_doctor_for_dev(email: str):

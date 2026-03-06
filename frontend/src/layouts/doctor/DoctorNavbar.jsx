@@ -7,7 +7,9 @@ import { getAppointmentRequests } from '../../api/doctor';
 import { getConversations } from '../../api/chat';
 import { doctorFeedbackService } from '../../services/doctorFeedbackService';
 import { getUser } from '../../utils/auth';
+import { getMyNotifications, markNotificationRead } from '../../api/profileApi';
 import DynamicIslandNav from '../../components/DynamicIslandNav';
+import { Bell, Info, AlertTriangle } from 'lucide-react';
 
 const DoctorNavbar = ({ darkMode, toggleTheme }) => {
   const location = useLocation();
@@ -101,6 +103,21 @@ const DoctorNavbar = ({ darkMode, toggleTheme }) => {
             }
           }
         } catch(e) {}
+        try {
+          const generalNotifs = await getMyNotifications(true); // unread only
+          generalNotifs.forEach(n => {
+            notifs.push({
+              id: `gen-${n.id}`,
+              type: 'general',
+              title: n.title,
+              desc: n.message,
+              link: '#', // TODO: Add contextual links if needed
+              icon: n.type === 'error' ? <AlertTriangle size={16} className="text-danger" /> : <Info size={16} className="text-blue-500" />,
+              backend_id: n.id
+            });
+          });
+        } catch(e) {}
+
         setNotifications(notifs);
       } catch (err) {
         console.error("Failed to load notifications", err);
@@ -168,7 +185,15 @@ const DoctorNavbar = ({ darkMode, toggleTheme }) => {
               <div className="p-1 max-vh-50 overflow-auto">
                 {notifications.length > 0 ? (
                   notifications.map(n => (
-                    <div key={n.id} onClick={() => { setShowDropdown(false); navigate(n.link); }} className={`d-flex gap-3 p-2 rounded-3 cursor-pointer mb-1 transition-all ${darkMode ? 'text-light hover-bg-dark' : 'text-dark hover-bg-light'}`}>
+                    <div 
+                      key={n.id} 
+                      onClick={async () => { 
+                        setShowDropdown(false); 
+                        if (n.backend_id) await markNotificationRead(n.backend_id);
+                        if (n.link !== '#') navigate(n.link); 
+                      }} 
+                      className={`d-flex gap-3 p-2 rounded-3 cursor-pointer mb-1 transition-all ${darkMode ? 'text-light hover-bg-dark' : 'text-dark hover-bg-light'}`}
+                    >
                       <div className="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0 shadow-sm" style={{ 
                         width: '38px', height: '38px',
                         background: n.type === 'request' ? 'rgba(13, 110, 253, 0.1)' : n.type === 'chat' ? 'rgba(25, 135, 84, 0.1)' : 'rgba(255, 193, 7, 0.1)'

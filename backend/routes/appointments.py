@@ -23,6 +23,7 @@ from services.slot_lifecycle_service import (
     mark_slot_booked,
     mark_slot_held,
 )
+from services.notification_service import NotificationService
 
 appointments_bp = Blueprint("appointments", __name__)
 
@@ -102,6 +103,9 @@ def _book_slot_atomic(*, current_user_id: int, doctor_id: int, slot_id: int, rea
             source="patient_booking",
             reason="Auto-confirm booking",
         )
+
+    # Trigger notification logic (Email, App, SMS check inside service)
+    NotificationService.notify_appointment_event(appointment.id, "new_booking")
 
     return appointment, None, None
 
@@ -357,6 +361,7 @@ def cancel_appointment(id):
                 reason="Patient cancelled appointment",
             )
 
+        NotificationService.notify_appointment_event(appointment.id, "cancelled")
         db.session.commit()
         return jsonify({"message": "Appointment cancelled successfully"}), 200
 
@@ -435,6 +440,7 @@ def reschedule_appointment(id):
                     source="patient_reschedule",
                     reason="Rescheduled slot confirmed",
                 )
+            NotificationService.notify_appointment_event(appointment.id, "rescheduled")
             db.session.commit()
             return jsonify({"message": "Appointment rescheduled successfully", "appointment": appointment.to_dict()}), 200
 
