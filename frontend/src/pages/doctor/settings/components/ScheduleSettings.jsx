@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Clock, ShieldCheck, Timer, Globe2, Save, AlertCircle } from 'lucide-react';
 import { updateDoctorScheduleConfig } from '../../../../api/doctor';
 
@@ -11,6 +11,26 @@ const ScheduleSettings = ({ data, onSaveSuccess }) => {
     });
     const [saving, setSaving] = useState(false);
     const [saveStatus, setSaveStatus] = useState(null); // 'success' | 'error' | null
+    const [timezones, setTimezones] = useState([
+        'Asia/Kolkata', 'UTC', 'America/New_York', 'Europe/London'
+    ]); // Initial fallback
+
+    useEffect(() => {
+        const fetchTimezones = async () => {
+            try {
+                const response = await fetch('https://timeapi.io/api/TimeZone/AvailableTimeZones');
+                if (response.ok) {
+                    const data = await response.json();
+                    if (Array.isArray(data) && data.length > 0) {
+                        setTimezones(data.sort());
+                    }
+                }
+            } catch (err) {
+                console.error("Failed to load timezones from external API", err);
+            }
+        };
+        fetchTimezones();
+    }, []);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -155,11 +175,11 @@ const ScheduleSettings = ({ data, onSaveSuccess }) => {
                             onChange={handleChange}
                             className="premium-select"
                         >
-                            <option value="Asia/Kolkata">India Standard Time (IST) - Asia/Kolkata</option>
-                            <option value="UTC">Universal Time Coordinated (UTC)</option>
-                            <option value="America/New_York">Eastern Time (ET) - America/New_York</option>
-                            <option value="Europe/London">Greenwich Mean Time (GMT) - Europe/London</option>
-                            {/* Expand as necessary */}
+                            {timezones.map((tz) => (
+                                <option key={tz} value={tz}>
+                                    {tz}
+                                </option>
+                            ))}
                         </select>
                         <p className="field-hint">All your slots will be computed based on this fundamental timezone.</p>
                     </div>
