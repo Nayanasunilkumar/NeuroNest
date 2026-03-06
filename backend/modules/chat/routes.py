@@ -96,7 +96,7 @@ def get_conversations():
         })
         
     # Sort by last message date
-    results.sort(key=lambda x: x['last_message']['created_at'] or "", reverse=True)
+    results.sort(key=lambda x: (x['last_message']['created_at'] if x['last_message'] else ""), reverse=True)
     
     return jsonify(results), 200
 
