@@ -7,6 +7,7 @@ from zoneinfo import ZoneInfo
 from sqlalchemy import inspect, text
 
 from database.models import (
+    Appointment,
     AppointmentSlot,
     DoctorAvailability,
     DoctorBlockedDate,
@@ -31,6 +32,9 @@ DAY_NAMES = [
 ]
 
 ROLLING_WINDOW_DAYS = 14
+LOCKED_SLOT_DURATION_MINUTES = 30
+LOCKED_BUFFER_MINUTES = 10
+LOCKED_SLOT_STEP_MINUTES = LOCKED_SLOT_DURATION_MINUTES + LOCKED_BUFFER_MINUTES
 _slot_overrides_table_available: Optional[bool] = None
 _schedule_settings_schema_checked: Optional[bool] = None
 
@@ -178,10 +182,8 @@ def generate_slots_for_doctor(doctor_user_id: int, start_date: date, end_date: d
         raise ValueError("Doctor profile not found")
 
     setting = get_or_create_schedule_setting(doctor_user_id)
-    slot_duration_minutes = setting.slot_duration_minutes or 30
-    buffer_minutes = setting.buffer_minutes or 0
-    duration = timedelta(minutes=slot_duration_minutes)
-    step = timedelta(minutes=slot_duration_minutes + buffer_minutes)
+    duration = timedelta(minutes=setting.slot_duration_minutes)
+    step = timedelta(minutes=setting.slot_duration_minutes + setting.buffer_minutes)
 
     availability_by_day = _availability_map_for_profile(profile.id)
     blocked_dates = _blocked_days_for_profile(profile.id)
@@ -281,20 +283,36 @@ def regenerate_slots_for_doctor(doctor_user_id: int, start_date: date, end_date:
     if start_date > end_date:
         raise ValueError("start_date must be <= end_date")
 
-    cleanup_query = AppointmentSlot.query.filter(
+    # Find all slots in range that are candidates for deletion (not active/held)
+    slots_to_delete_query = AppointmentSlot.query.filter(
         AppointmentSlot.doctor_user_id == doctor_user_id,
         AppointmentSlot.slot_date_local >= start_date,
         AppointmentSlot.slot_date_local <= end_date,
         AppointmentSlot.status.in_(["available", "blocked", "cancelled"]),
     )
-    cleanup_count = cleanup_query.count()
-    cleanup_query.delete(synchronize_session=False)
+    
+    slots_to_delete = slots_to_delete_query.all()
+    slot_ids_to_delete = [s.id for s in slots_to_delete]
+    cleanup_count = len(slot_ids_to_delete)
+
+    if slot_ids_to_delete:
+        # Step 1: Nullify Appointment -> Slot references to prevent FK violations.
+        Appointment.query.filter(Appointment.slot_id.in_(slot_ids_to_delete)).update(
+            {Appointment.slot_id: None}, synchronize_session='fetch'
+        )
+        db.session.flush()
+
+        # Step 2: Delete the slots.
+        AppointmentSlot.query.filter(AppointmentSlot.id.in_(slot_ids_to_delete)).delete(synchronize_session='fetch')
+        
+        # Step 3: Flush to clear the unique constraint on (doctor_id, slot_start_utc) 
+        db.session.flush()
 
     log_slot_event(
         event_type="slots_cleanup",
         doctor_user_id=doctor_user_id,
         source="slot_generation",
-        reason="Regenerate range cleanup",
+        reason="Regenerate range cleanup with FK handling",
         metadata={
             "doctor_user_id": doctor_user_id,
             "start_date": str(start_date),
@@ -316,7 +334,7 @@ def maintain_rolling_window(*, days: int = ROLLING_WINDOW_DAYS, doctor_user_id: 
     if doctor_user_id:
         past_query = past_query.filter(AppointmentSlot.doctor_user_id == doctor_user_id)
     deleted_past = past_query.count()
-    past_query.delete(synchronize_session=False)
+    past_query.delete(synchronize_session='fetch')
 
     doctor_ids = [doctor_user_id] if doctor_user_id else [p.user_id for p in DoctorProfile.query.all()]
 

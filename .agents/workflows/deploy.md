@@ -1,6 +1,7 @@
 ---
 description: How to safely deploy changes to the NeuroNest production environment
 ---
+
 # NeuroNest Production Deployment Workflow
 
 This workflow enforces a strict, zero-downtime, safe deployment pipeline across Vercel (Frontend) and Render (Backend). Do not push directly to `main` without completing these steps.
