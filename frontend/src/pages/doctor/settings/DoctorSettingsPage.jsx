@@ -81,23 +81,21 @@ const DoctorSettingsPage = () => {
             </div>
 
             <div className="doc-settings-layout">
-                {/* Vertical Navigation System */}
-                <div className="doc-settings-sidebar">
-                    <nav className="doc-settings-nav">
-                        {TABS.map(tab => {
-                            const Icon = tab.icon;
-                            return (
-                                <button 
-                                    key={tab.id}
-                                    className={`nav-btn ${activeTab === tab.id ? "active" : ""}`}
-                                    onClick={() => setActiveTab(tab.id)}
-                                >
-                                    <Icon size={18} strokeWidth={2.5} />
-                                    <span>{tab.label}</span>
-                                </button>
-                            );
-                        })}
-                    </nav>
+                {/* Horizontal Navigation System */}
+                <div className="doc-settings-tabs-topbar">
+                    {TABS.map(tab => {
+                        const Icon = tab.icon;
+                        return (
+                            <button 
+                                key={tab.id}
+                                className={`doc-tab-button-top ${activeTab === tab.id ? "active" : ""}`}
+                                onClick={() => setActiveTab(tab.id)}
+                            >
+                                <Icon size={18} strokeWidth={2.5} />
+                                <span>{tab.label}</span>
+                            </button>
+                        );
+                    })}
                 </div>
 
                 {/* Main Dynamic Content Canvas */}

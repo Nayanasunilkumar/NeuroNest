@@ -37,54 +37,57 @@
 
 /* Layout Framework */
 .doc-settings-layout {
-    display: grid;
-    grid-template-columns: 280px 1fr;
-    gap: 40px;
-    align-items: start;
-}
-
-/* Vertical Sidebar Navigation */
-.doc-settings-sidebar {
-    background: transparent;
-    padding: 12px 24px 12px 0;
-    position: sticky;
-    top: 24px;
-    border-right: 1px solid #E2E8F0;
-}
-
-.doc-settings-nav {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 24px;
 }
 
-.nav-btn {
+/* Horizontal Tab Navigation */
+.doc-settings-tabs-topbar {
+    display: flex;
+    overflow-x: auto;
+    border-bottom: 2px solid #E2E8F0;
+    margin-bottom: 16px;
+    gap: 8px;
+    /* Hide scrollbar */
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+.doc-settings-tabs-topbar::-webkit-scrollbar {
+    display: none;
+}
+
+.doc-tab-button-top {
     display: flex;
     align-items: center;
-    gap: 14px;
-    padding: 16px 20px;
+    gap: 8px;
+    padding: 12px 24px;
     background: transparent;
     border: none;
-    border-radius: 14px;
-    font-size: 14px;
-    font-weight: 700;
+    font-size: 15px;
+    font-weight: 600;
     color: #64748B;
     cursor: pointer;
-    transition: all 0.2s ease;
-    text-align: left;
+    border-bottom: 3px solid transparent;
+    margin-bottom: -2px; /* Pull down to overlap the container border */
+    transition: all 0.2s;
+    white-space: nowrap;
 }
 
-.nav-btn:hover {
+.doc-tab-button-top:hover {
+    color: #0F172A;
     background: #F8FAFC;
-    color: #334155;
+    border-radius: 8px 8px 0 0;
 }
 
-.nav-btn.active {
-    background: #EFF6FF;
+.doc-tab-button-top.active {
     color: #2563EB;
+    border-bottom-color: #2563EB;
+    background: #EFF6FF;
+    border-radius: 8px 8px 0 0;
 }
 
-.nav-btn.active svg {
+.doc-tab-button-top.active svg {
     color: #3B82F6;
 }
 
@@ -131,32 +134,21 @@
 .dark .doc-settings-title { color: #F8FAFC; }
 .dark .doc-settings-subtitle { color: #94A3B8; }
 .dark .doc-settings-header { border-color: #334155; }
-.dark .doc-settings-sidebar { border-color: #334155; }
-.dark .nav-btn { color: #94A3B8; }
-.dark .nav-btn:hover { background: #334155; color: #F8FAFC; }
-.dark .nav-btn.active { background: rgba(59, 130, 246, 0.15); color: #93C5FD; }
+.dark .doc-settings-tabs-topbar { border-color: #334155; }
+.dark .doc-tab-button-top { color: #94A3B8; }
+.dark .doc-tab-button-top:hover { background: #334155; color: #F8FAFC; }
+.dark .doc-tab-button-top.active { background: rgba(59, 130, 246, 0.15); color: #93C5FD; border-bottom-color: #3B82F6; }
 .dark .settings-pane-placeholder,
 .dark .loading-state-vault { background: #1E293B; border-color: #334155; color: #64748B; }
 
 /* Responsive Flow */
 @media (max-width: 960px) {
     .doc-settings-layout {
-        grid-template-columns: 1fr;
         gap: 24px;
     }
-    .doc-settings-sidebar {
-        position: static;
-        padding: 8px;
-    }
-    .doc-settings-nav {
-        flex-direction: row;
-        flex-wrap: nowrap;
-        overflow-x: auto;
-        padding-bottom: 8px;
-    }
-    .nav-btn {
-        flex-shrink: 0;
-        padding: 12px 18px;
+    .doc-tab-button-top {
+        padding: 12px 16px;
+        font-size: 14px;
     }
 }
 
