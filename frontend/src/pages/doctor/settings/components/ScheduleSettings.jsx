@@ -11,6 +11,7 @@ const ScheduleSettings = ({ data, onSaveSuccess }) => {
     });
     const [saving, setSaving] = useState(false);
     const [saveStatus, setSaveStatus] = useState(null); // 'success' | 'error' | null
+    const [errorMessage, setErrorMessage] = useState("");
     const [timezones, setTimezones] = useState([
         'Asia/Kolkata', 'UTC', 'America/New_York', 'Europe/London'
     ]); // Initial fallback
@@ -51,6 +52,8 @@ const ScheduleSettings = ({ data, onSaveSuccess }) => {
         } catch (error) {
             console.error("Failed to update schedule settings", error);
             setSaveStatus('error');
+            const msg = error.response?.data?.message || "Update failed. Try again.";
+            setErrorMessage(msg);
         } finally {
             setSaving(false);
         }
@@ -191,7 +194,7 @@ const ScheduleSettings = ({ data, onSaveSuccess }) => {
                     <span className="success-text">Settings updated successfully</span>
                 )}
                 {saveStatus === 'error' && (
-                    <span className="error-text">Update failed. Try again.</span>
+                    <span className="error-text">{errorMessage}</span>
                 )}
                 <button 
                     onClick={handleSave} 
