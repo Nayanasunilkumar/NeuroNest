@@ -8,35 +8,37 @@ auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
 
 @auth_bp.route("/test-email")
 def test_email():
-    import os, urllib.request, urllib.error, json
-    resend_api_key = os.getenv("RESEND_API_KEY")
-
-    if not resend_api_key:
-        return {"status": "error", "reason": "RESEND_API_KEY is MISSING from Render environment"}, 500
-
-    payload = json.dumps({
-        "from": "NeuroNest <onboarding@resend.dev>",
-        "to": ["neuronest4@gmail.com"],
-        "subject": "NeuroNest Resend Test",
-        "text": "This confirms your NeuroNest email system is working via Resend!",
-    }).encode("utf-8")
-
-    req = urllib.request.Request(
-        "https://api.resend.com/emails",
-        data=payload,
-        headers={"Authorization": f"Bearer {resend_api_key}", "Content-Type": "application/json"},
-        method="POST"
-    )
     try:
-        with urllib.request.urlopen(req, timeout=15) as resp:
-            result = json.loads(resp.read())
-            return {"status": "SUCCESS", "message": "Email sent! Check inbox.", "resend_id": result.get("id")}, 200
-    except urllib.error.HTTPError as e:
-        error_body = e.read().decode("utf-8")
-        return {"status": "error", "http_code": e.code, "resend_error": json.loads(error_body)}, 500
-    except Exception as e:
-        return {"status": "error", "reason": f"{type(e).__name__}: {str(e)}"}, 500
+        import urllib.request
+        import urllib.error
+        import json as _json
+        import os as _os
 
+        resend_api_key = _os.getenv("RESEND_API_KEY")
+        if not resend_api_key:
+            return jsonify({"status": "error", "reason": "RESEND_API_KEY missing"}), 500
+
+        payload = _json.dumps({
+            "from": "NeuroNest <onboarding@resend.dev>",
+            "to": ["neuronest4@gmail.com"],
+            "subject": "NeuroNest Test",
+            "text": "Email system working!",
+        }).encode("utf-8")
+
+        req = urllib.request.Request(
+            "https://api.resend.com/emails",
+            data=payload,
+            headers={"Authorization": f"Bearer {resend_api_key}", "Content-Type": "application/json"},
+            method="POST"
+        )
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            result = _json.loads(resp.read())
+            return jsonify({"status": "SUCCESS", "id": result.get("id")}), 200
+    except urllib.error.HTTPError as e:
+        body = e.read().decode("utf-8")
+        return jsonify({"status": "error", "http_code": e.code, "detail": body}), 500
+    except Exception as e:
+        return jsonify({"status": "error", "type": type(e).__name__, "msg": str(e)}), 500
 
 def parse_user_agent(ua_string):
     if not ua_string: return "Unknown Device"
