@@ -31,9 +31,6 @@ DAY_NAMES = [
 ]
 
 ROLLING_WINDOW_DAYS = 14
-LOCKED_SLOT_DURATION_MINUTES = 30
-LOCKED_BUFFER_MINUTES = 10
-LOCKED_SLOT_STEP_MINUTES = LOCKED_SLOT_DURATION_MINUTES + LOCKED_BUFFER_MINUTES
 _slot_overrides_table_available: Optional[bool] = None
 _schedule_settings_schema_checked: Optional[bool] = None
 
@@ -181,8 +178,10 @@ def generate_slots_for_doctor(doctor_user_id: int, start_date: date, end_date: d
         raise ValueError("Doctor profile not found")
 
     setting = get_or_create_schedule_setting(doctor_user_id)
-    duration = timedelta(minutes=LOCKED_SLOT_DURATION_MINUTES)
-    step = timedelta(minutes=LOCKED_SLOT_STEP_MINUTES)
+    slot_duration_minutes = setting.slot_duration_minutes or 30
+    buffer_minutes = setting.buffer_minutes or 0
+    duration = timedelta(minutes=slot_duration_minutes)
+    step = timedelta(minutes=slot_duration_minutes + buffer_minutes)
 
     availability_by_day = _availability_map_for_profile(profile.id)
     blocked_dates = _blocked_days_for_profile(profile.id)
