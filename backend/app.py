@@ -110,18 +110,7 @@ def create_app():
     # ================= Home Route =================
     @app.route("/")
     def home():
-        from services.notification_service import NotificationService
-        # If user visits ?test=1, send a test email.
-        test_mode = request.args.get("test")
-        if test_mode:
-             success = NotificationService.send_email("nayanasunilkumar8@gmail.com", "NeuroNest Home Diagnostic", "This test was triggered from the homepage.")
-             return {
-                 "status": "Diagnostic trigger attempted",
-                 "success": success,
-                 "check": "Look at Render logs if success is False"
-             }
-
-        return {"status": "NeuroNest backend running. Use /?test=1 to trigger email."}
+        return {"status": "DEPLOY_SUCCESS_V5_LIVE"}
 
     # NOTE: /uploads/<filename> route removed — files are now served by Cloudinary directly.
 
