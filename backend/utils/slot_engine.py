@@ -9,6 +9,7 @@ from sqlalchemy import inspect, text
 from database.models import (
     Appointment,
     AppointmentSlot,
+    SlotEventLog,
     DoctorAvailability,
     DoctorBlockedDate,
     DoctorProfile,
@@ -300,12 +301,16 @@ def regenerate_slots_for_doctor(doctor_user_id: int, start_date: date, end_date:
         Appointment.query.filter(Appointment.slot_id.in_(slot_ids_to_delete)).update(
             {Appointment.slot_id: None}, synchronize_session='fetch'
         )
+        # Step 2: Nullify SlotEventLog -> Slot references to prevent FK violations.
+        SlotEventLog.query.filter(SlotEventLog.slot_id.in_(slot_ids_to_delete)).update(
+            {SlotEventLog.slot_id: None}, synchronize_session='fetch'
+        )
         db.session.flush()
 
-        # Step 2: Delete the slots.
+        # Step 3: Delete the slots.
         AppointmentSlot.query.filter(AppointmentSlot.id.in_(slot_ids_to_delete)).delete(synchronize_session='fetch')
         
-        # Step 3: Flush to clear the unique constraint on (doctor_id, slot_start_utc) 
+        # Step 4: Flush to clear the unique constraint on (doctor_id, slot_start_utc) 
         db.session.flush()
 
     log_slot_event(

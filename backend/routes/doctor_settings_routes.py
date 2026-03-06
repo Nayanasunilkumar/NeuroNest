@@ -102,10 +102,16 @@ def update_schedule_settings():
     schedule.buffer_minutes = buffer_minutes
     schedule.timezone = timezone
 
-    if requires_regeneration:
-        start_date, end_date = rolling_window_bounds()
-        regenerate_slots_for_doctor(doctor_id, start_date, end_date)
-    db.session.commit()
+    try:
+        if requires_regeneration:
+            start_date, end_date = rolling_window_bounds()
+            regenerate_slots_for_doctor(doctor_id, start_date, end_date)
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        print(f"ERROR updating doctor schedule settings: {e}")
+        return jsonify({"message": f"Update failed: {str(e)}"}), 500
+
     return jsonify({"message": "Schedule settings updated", "settings": schedule.to_dict()}), 200
 
 
