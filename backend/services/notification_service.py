@@ -3,12 +3,10 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from datetime import datetime, timezone
 import os
-import requests
-from database.models import db, InAppNotification, User, DoctorNotificationSetting, Appointment
-
 class NotificationService:
     @staticmethod
     def _utc_now():
+        from datetime import datetime, timezone
         return datetime.now(timezone.utc)
 
     @staticmethod
@@ -16,7 +14,7 @@ class NotificationService:
         """
         event_type: 'new_booking', 'cancelled', 'rescheduled', 'approved', 'rejected'
         """
-        from database.models import DoctorNotificationSetting, NotificationPreference
+        from database.models import db, Appointment, DoctorNotificationSetting, NotificationPreference
         appointment = Appointment.query.get(appointment_id)
         if not appointment:
             return
@@ -84,6 +82,7 @@ class NotificationService:
 
     @staticmethod
     def send_in_app(user_id, title, message, payload=None):
+        from database.models import db, InAppNotification
         notif = InAppNotification(
             user_id=user_id,
             title=title,
