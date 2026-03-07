@@ -144,11 +144,14 @@ def get_all_doctors():
         result = []
         for user, profile, privacy, consultation in doctors_data:
             # ENFORCE PRIVACY: Hide doctor if show_profile_publicly is False.
-            # Default to visible (True) if no privacy setting record exists.
-            is_visible = getattr(privacy, 'show_profile_publicly', True)
+            # Default to visible (True) if no privacy setting record exists or is None.
+            raw_visibility = getattr(privacy, 'show_profile_publicly', True)
+            is_visible = True if raw_visibility is None else bool(raw_visibility)
             
-            if is_visible is False:
-                # Log this for debugging in production logs if needed
+            # DEBUG: Print to logs to see what's happening
+            print(f"[DEBUG] Doctor: {user.full_name}, ID: {user.id}, Visibility: {is_visible}")
+            
+            if not is_visible:
                 print(f"[PRIVACY ENFORCED] Hiding doctor {user.id} ({user.full_name}) from patient search")
                 continue
             
