@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Bell, Mail, MessageSquare, Megaphone, Star, Smartphone, Monitor, ShieldCheck, ChevronRight } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import { Bell, Mail, MessageSquare, Megaphone, Star, Smartphone, Monitor, ShieldCheck } from 'lucide-react';
 
 const Toggle = ({ checked, onChange, disabled }) => (
   <button 
@@ -21,20 +21,18 @@ const ROWS = [
 ];
 
 export default function NotificationPreferences({ data, saving, onSave }) {
-  const [prefs, setPrefs] = useState({
-    email_appointments:  true, email_prescriptions: true, email_messages: true,
+  const basePrefs = useMemo(() => ({
+    email_appointments: true, email_prescriptions: true, email_messages: true,
     email_announcements: true, email_feedback: true,
-    sms_appointments:    false, sms_prescriptions: false,
-    inapp_appointments:  true, inapp_prescriptions: true,
-    inapp_messages:      true, inapp_announcements: true,
+    sms_appointments: false, sms_prescriptions: false,
+    inapp_appointments: true, inapp_prescriptions: true,
+    inapp_messages: true, inapp_announcements: true,
     allow_doctor_followup: true, allow_promotions: false,
-  });
-
-  useEffect(() => {
-    if (data?.notifications) setPrefs(p => ({ ...p, ...data.notifications }));
-  }, [data]);
-
-  const set = (k, v) => setPrefs(p => ({ ...p, [k]: v }));
+    ...(data?.notifications || {}),
+  }), [data]);
+  const [overrides, setOverrides] = useState({});
+  const prefs = { ...basePrefs, ...overrides };
+  const set = (k, v) => setOverrides((p) => ({ ...p, [k]: v }));
 
   return (
     <div className="pset-section">
@@ -55,11 +53,11 @@ export default function NotificationPreferences({ data, saving, onSave }) {
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-          {ROWS.map(({ key, icon: Icon, label, hint, emailOnly, color }) => (
+          {ROWS.map(({ key, icon, label, hint, emailOnly, color }) => (
             <div key={key} className="pset-toggle-row" style={{ background: '#fff' }}>
               <div style={{ flex:1, display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
                 <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: color + '10', color: color, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <Icon size={18} />
+                  {React.createElement(icon, { size: 18 })}
                 </div>
                 <div>
                   <div className="pset-toggle-label" style={{ fontSize: '0.95rem' }}>{label}</div>

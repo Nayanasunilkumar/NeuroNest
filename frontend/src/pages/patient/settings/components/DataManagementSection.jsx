@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Download, FileText, Calendar, Pill, Package, FileCheck, ChevronRight, Share2 } from 'lucide-react';
+import { Download, Calendar, Pill, Package, FileCheck, ChevronRight, Share2 } from 'lucide-react';
 
-const ExportCard = ({ icon: Icon, title, description, color, onClick, loading, actionText = "Download PDF" }) => (
+const ExportCard = ({ icon, title, description, color, onClick, loading, actionText = "Download PDF" }) => (
   <button 
     className="pset-export-card" 
     onClick={onClick} 
@@ -9,7 +9,7 @@ const ExportCard = ({ icon: Icon, title, description, color, onClick, loading, a
     style={{ '--card-color': color }}
   >
     <div className="pset-export-icon" style={{ background: color + '15', color }}>
-      <Icon size={24} />
+      {React.createElement(icon, { size: 24 })}
     </div>
     <div style={{ flex: 1 }}>
       <div className="pset-export-title">{title}</div>

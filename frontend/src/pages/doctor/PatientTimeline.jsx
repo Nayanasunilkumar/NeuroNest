@@ -1,10 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { 
-    getPatientDossier, 
-    completeAppointment,
-    cancelAppointment,
-    markNoShow
+    getPatientDossier
 } from "../../api/doctor";
 import { 
     Calendar, User, Mail, Phone, Clock, Bookmark, 
@@ -161,7 +158,7 @@ const PatientTimelinePage = () => {
 
             {/* Experimental Premium Timeline View */}
             <div className="row g-4">
-                {timeline.map((event, index) => (
+                {timeline.map((event) => (
                     <div key={event.id} className="col-12 col-xl-6">
                         <div className="card-premium p-4 h-100 bg-white border border-opacity-10 position-relative overflow-visible">
                             <div className="position-absolute top-50 start-0 translate-middle-x ms-n2 d-none d-xl-block">

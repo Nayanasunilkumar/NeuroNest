@@ -131,7 +131,7 @@ const ClinicalArchivesPage = () => {
                     </div>
                 ) : (
                     <div className="d-flex flex-column gap-4">
-                        {remarksList.map((remark, idx) => (
+                        {remarksList.map((remark) => (
                             <div 
                                 key={remark.id} 
                                 className="card border-0 shadow-sm rounded-4 overflow-hidden position-relative hover-shadow-lg transition-all"

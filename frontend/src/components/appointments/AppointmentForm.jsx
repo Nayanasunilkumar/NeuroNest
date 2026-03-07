@@ -117,6 +117,7 @@ const AppointmentForm = ({ onSubmit, loading }) => {
       }
     };
     fetchDoctors();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const [showConfirm, setShowConfirm] = useState(false);
@@ -182,6 +183,7 @@ const AppointmentForm = ({ onSubmit, loading }) => {
       fetchAvailableSlots(formData.doctor_id, formData.date, false);
     }, 30000);
     return () => clearInterval(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [formData.doctor_id, formData.date]);
 
   return (

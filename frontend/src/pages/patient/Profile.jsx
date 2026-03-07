@@ -1,10 +1,9 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import api from "../../api/axios";
 import axios from "axios";
 import { toAssetUrl } from "../../utils/media";
 import "../../styles/ProfileStyles.css"; 
 import "../../styles/patient-records.css"; // Reuse premium clinical styles
-import { useNavigate } from "react-router-dom";
 import { getClinicalSummary } from "../../api/profileApi";
 import { 
   User, Phone, Mail, MapPin, Activity, 
@@ -48,19 +47,14 @@ const normalizeEmergencyContacts = (contacts = []) =>
     is_primary: Boolean(contact.is_primary),
   }));
 
-const normalizeText = (value = "") => value.toString().trim().toLowerCase();
-
 const Profile = () => {
   const [profile, setProfile] = useState(null);
   const [clinicalData, setClinicalData] = useState(null);
   const [profileImage, setProfileImage] = useState(null);
-  const [profileImageName, setProfileImageName] = useState("");
   const [emergencyContacts, setEmergencyContacts] = useState([]);
   const [countries, setCountries] = useState([]);
   const [states, setStates] = useState([]);
-  const [cities, setCities] = useState([]);
-
-  const navigate = useNavigate();
+  const [_CITIES, setCities] = useState([]);
 
   const [editing, setEditing] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -140,7 +134,6 @@ const Profile = () => {
   const handleImageChange = (e) => {
     if (e.target.files && e.target.files[0]) {
       setProfileImage(e.target.files[0]);
-      setProfileImageName(e.target.files[0].name);
     }
   };
 
@@ -185,7 +178,9 @@ const Profile = () => {
               const parsedUser = JSON.parse(userStr);
               parsedUser.full_name = profile.full_name;
               localStorage.setItem('neuronest_user', JSON.stringify(parsedUser));
-          } catch (e) {}
+          } catch {
+              // Ignore malformed local cache and proceed.
+          }
       }
 
       setEditing(false);
@@ -204,8 +199,9 @@ const Profile = () => {
 
   const calculateAge = (dobString) => {
     if (!dobString || dobString === "N/A") return "N/A";
+    const now = new Date();
     const birthDate = new Date(dobString);
-    const difference = Date.now() - birthDate.getTime();
+    const difference = now.getTime() - birthDate.getTime();
     return Math.abs(new Date(difference).getUTCFullYear() - 1970);
   };
 

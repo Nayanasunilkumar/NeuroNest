@@ -5,7 +5,6 @@ import { Link } from "react-router-dom";
 
 const DashboardHome = () => {
     const [notifications, setNotifications] = useState([]);
-    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const fetchNotifications = async () => {
@@ -14,8 +13,6 @@ const DashboardHome = () => {
                 setNotifications(data || []);
             } catch (err) {
                 console.error("Failed to fetch notifications", err);
-            } finally {
-                setLoading(false);
             }
         };
         fetchNotifications();

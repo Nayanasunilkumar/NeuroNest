@@ -14,6 +14,7 @@ const DoctorDrawer = ({ doctorId, isOpen, onClose }) => {
         if (isOpen && doctorId) {
             loadDoctorDetail();
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isOpen, doctorId]);
 
     const loadDoctorDetail = async () => {

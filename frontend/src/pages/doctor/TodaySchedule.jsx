@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { 
     getSchedule, completeAppointment, cancelAppointment, markNoShow,
-    getClinicalPins, createClinicalPin, updateClinicalPin, deleteClinicalPin
+    getClinicalPins, createClinicalPin, updateClinicalPin
 } from "../../api/doctor";
 import { 
     Clock, Calendar, ChevronRight, FileText,
@@ -91,7 +91,7 @@ const TodaySchedule = () => {
                 description: newPinData.desc,
                 category: "General"
             };
-            const savedPin = await createClinicalPin(payload);
+            await createClinicalPin(payload);
             
             // Re-fetch to get sorted list
             const updatedPins = await getClinicalPins();

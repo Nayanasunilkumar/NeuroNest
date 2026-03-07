@@ -29,8 +29,6 @@ const TagAnalyticsPanel = ({ tags }) => {
     );
   }
 
-  const max = tags[0]?.count || 1;
-
   return (
     <div className="df-panel">
       <div className="df-panel-header">

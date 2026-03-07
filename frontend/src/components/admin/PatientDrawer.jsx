@@ -29,6 +29,7 @@ const PatientDrawer = ({ patientId, isOpen, onClose, onRefresh }) => {
     } else {
       setData(null);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, patientId]);
 
   const loadDetail = async () => {
@@ -52,7 +53,7 @@ const PatientDrawer = ({ patientId, isOpen, onClose, onRefresh }) => {
       await updatePatientStatus(patientId, { status: newStatus, reason });
       await loadDetail();
       onRefresh(); 
-    } catch (err) {
+    } catch {
       alert("CRITICAL ERROR: Failed to update node status.");
     } finally {
       setUpdating(false);

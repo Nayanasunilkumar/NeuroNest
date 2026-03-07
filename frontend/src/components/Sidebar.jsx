@@ -6,17 +6,10 @@ import { logout } from "../utils/auth";
 import { useTheme } from "../context/ThemeContext";
 import { X, LogOut, ChevronRight } from "lucide-react";
 
-const Sidebar = ({ isOpen, setIsOpen, role = "patient", title = "NeuroNest Panel" }) => {
+const Sidebar = ({ isOpen, setIsOpen, role = "patient" }) => {
     const { enabledMap } = useModuleConfig();
     const { isDark: darkMode } = useTheme();
     const menuItems = getModulesForRole(role, { enabledMap, sidebarOnly: true });
-
-    const groupedItems = menuItems.reduce((acc, item) => {
-        const group = item.group || 'General';
-        if (!acc[group]) acc[group] = [];
-        acc[group].push(item);
-        return acc;
-    }, {});
 
     return (
         <>

@@ -18,10 +18,8 @@ const AdminReports = () => {
     const [error, setError] = useState(null);
     const [days, setDays] = useState(7);
     const [showExportMenu, setShowExportMenu] = useState(false);
-    const [showDateMenu, setShowDateMenu] = useState(false);
     
     // Refs for outside click detection
-    const dateRef = useRef(null);
     const exportRef = useRef(null);
 
     const fetchAllReports = async () => {
@@ -49,14 +47,12 @@ const AdminReports = () => {
 
     useEffect(() => {
         fetchAllReports();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [days]);
 
     // Handle outside clicks to close menus
     useEffect(() => {
         const handleClickOutside = (event) => {
-            if (dateRef.current && !dateRef.current.contains(event.target)) {
-                setShowDateMenu(false);
-            }
             if (exportRef.current && !exportRef.current.contains(event.target)) {
                 setShowExportMenu(false);
             }
@@ -137,7 +133,7 @@ const AdminReports = () => {
                         <button 
                             type="button"
                             id="export-report-btn"
-                            onClick={(e) => { e.stopPropagation(); setShowExportMenu(!showExportMenu); setShowDateMenu(false); }} 
+                            onClick={(e) => { e.stopPropagation(); setShowExportMenu(!showExportMenu); }} 
                             className={`btn-export-trigger ${showExportMenu ? 'active' : ''}`}
                         >
                             <Download size={15} strokeWidth={2.5} /> 

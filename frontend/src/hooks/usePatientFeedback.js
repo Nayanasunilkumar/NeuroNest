@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { patientFeedbackService } from '../services/patientFeedbackService';
-import { getToken, getUser } from '../utils/auth';
+import { getUser } from '../utils/auth';
 
 const getPatientId = () => {
   try {

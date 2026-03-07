@@ -15,6 +15,7 @@ const ManagePatients = () => {
 
   useEffect(() => {
     loadPatients();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search, status]);
 
   const loadPatients = async () => {

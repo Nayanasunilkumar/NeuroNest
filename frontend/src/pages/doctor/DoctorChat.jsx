@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { initSocket, getSocket, disconnectSocket } from '../../services/socket';
+import { initSocket, getSocket } from '../../services/socket';
 import { getConversations, getMessages, markAsRead, getPatientContext, startConversation, sendMessage } from '../../api/chat';
 import ConversationList from '../../components/chat/ConversationList';
 import ChatWindow from '../../components/chat/ChatWindow';
@@ -170,7 +170,7 @@ const DoctorChat = ({ isEmbedded = false }) => {
         };
     }, [fetchConversations, handleIncomingMessage, handleSelectConversation, patientIdParam]);
 
-    const handleSendMessage = async (content, type = 'text') => {
+    const handleSendMessage = useCallback(async (content, type = 'text') => {
         if (!selectedConv || !currentUser) return;
         
         try {
@@ -189,14 +189,14 @@ const DoctorChat = ({ isEmbedded = false }) => {
         } catch (err) {
             console.error("Clinical dispatch error:", err);
         }
-    };
+    }, [selectedConv, currentUser, handleIncomingMessage]);
 
-    const handleVideoCall = async () => {
+    const handleVideoCall = useCallback(async () => {
         if (!selectedConv) return;
         const roleStr = currentUser?.role === 'doctor' ? 'Doctor' : 'Patient';
         await handleSendMessage(`${roleStr} is initiating a secure video consultation.`, 'call_request');
         navigate(`/consultation/${selectedConv.id}`);
-    };
+    }, [selectedConv, currentUser?.role, handleSendMessage, navigate]);
 
     useEffect(() => {
         if (!startVideoParam || hasAutoStartedVideoRef.current) return;

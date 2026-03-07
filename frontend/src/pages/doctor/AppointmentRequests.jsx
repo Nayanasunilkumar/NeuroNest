@@ -325,8 +325,6 @@ const RescheduleModal = ({ isOpen, onClose, onSubmit, appointment, loading }) =>
 const AppointmentRequests = () => {
   const [requests, setRequests]       = useState([]);
   const [history, setHistory]         = useState([]);
-  const [approvedSchedule, setApprovedSchedule] = useState([]);
-  const [historyCount, setHistoryCount] = useState(0);
   const [loading, setLoading]         = useState(true);
   const [actionLoading, setActionLoading] = useState(null);
   const [searchTerm, setSearchTerm]   = useState("");
@@ -351,14 +349,6 @@ const AppointmentRequests = () => {
       ]);
       setRequests(reqData || []);
       setHistory(histData || []);
-      setHistoryCount(histData?.length || 0);
-
-      // Extract only approved appointments for conflict checking
-      const approved = (histData || []).filter(a => 
-        String(a.status).toLowerCase() === 'approved' || 
-        String(a.status).toLowerCase() === 'confirmed'
-      );
-      setApprovedSchedule(approved);
 
     } catch (err) {
       console.error("Error fetching requests:", err);

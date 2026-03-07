@@ -57,7 +57,7 @@ const PremiumStatCard = ({ label, value, subLabel, icon, colorClass, avatars = [
     </div>
 );
 
-const TimetableItem = ({ time, name, status, active }) => (
+const TimetableItem = ({ time, name, status }) => (
     <div className="timetable-appointment-card d-flex align-items-center gap-3 mb-2">
         <div className="small fw-bold text-muted" style={{ width: '40px' }}>{time}</div>
         <div className="d-flex align-items-center gap-2 flex-grow-1">

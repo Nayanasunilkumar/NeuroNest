@@ -18,6 +18,7 @@ const AddDoctorModal = ({ isOpen, onClose, onAdd }) => {
     if (isOpen) {
       loadSpecialties();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
   const loadSpecialties = async () => {

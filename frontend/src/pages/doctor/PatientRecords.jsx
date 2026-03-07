@@ -2,10 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { 
     getPatientDossier, 
-    saveClinicalRemark, 
-    completeAppointment,
-    cancelAppointment,
-    markNoShow
+    saveClinicalRemark
 } from "../../api/doctor";
 import { 
     Calendar, User, Clock, Mail, Phone, Info, 
@@ -96,21 +93,7 @@ const PatientRecords = () => {
         </div>
     );
 
-    const { identity, timeline, allergies, conditions, medications } = dossier;
-
-    // Helper to calculate age from DOB
-    const getAge = (dobString) => {
-        if (!dobString || dobString === "N/A") return "";
-        const today = new Date();
-        const birthDate = new Date(dobString);
-        let age = today.getFullYear() - birthDate.getFullYear();
-        const m = today.getMonth() - birthDate.getMonth();
-        if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-            age--;
-        }
-        return age;
-    };
-    const age = getAge(identity.dob);
+    const { identity } = dossier;
 
     return (
         <div className="patient-dashboard-grid-bg py-4 px-3 px-md-5">

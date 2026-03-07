@@ -1,32 +1,19 @@
 import { useState, useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
-import Sidebar from '../components/Sidebar';
 import DynamicIslandNav from '../components/DynamicIslandNav';
 import { logout } from '../utils/auth';
 import { useTheme } from '../context/ThemeContext';
 import { 
-    Search, Bell, LogOut, Menu, Activity, 
-    Monitor, Shield, Clock, Sun, Moon 
+    LogOut, Sun, Moon 
 } from 'lucide-react';
 
 const AdminLayout = () => {
   const { isDark: darkMode, toggleTheme } = useTheme();
-  const [nodeCount, setNodeCount] = useState(4285);
   const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
     const timeInterval = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timeInterval);
-  }, []);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setNodeCount(prev => {
-        const drift = Math.floor(Math.random() * 5) - 2;
-        return Math.max(4000, prev + drift);
-      });
-    }, 3000);
-    return () => clearInterval(interval);
   }, []);
 
   return (

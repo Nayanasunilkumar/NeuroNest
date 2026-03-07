@@ -2,6 +2,21 @@ import React from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Activity } from 'lucide-react';
 
+const CustomTooltip = ({ active, payload, label }) => {
+    if (active && payload && payload.length) {
+        return (
+            <div className="custom-chart-tooltip">
+                <p className="tooltip-date">{label}</p>
+                <p className="tooltip-value">
+                    <span className="tooltip-dot bg-blue-500"></span>
+                    {payload[0].value} Appointments
+                </p>
+            </div>
+        );
+    }
+    return null;
+};
+
 const AppointmentCharts = ({ data }) => {
     // Format dates for display
     const chartData = data?.map(item => ({
@@ -12,21 +27,6 @@ const AppointmentCharts = ({ data }) => {
     const totalVolume = chartData.reduce((sum, item) => sum + Number(item.count || 0), 0);
     const avgDaily = chartData.length > 0 ? (totalVolume / chartData.length).toFixed(1) : 0;
     const peakDay = chartData.length > 0 ? Math.max(...chartData.map(item => Number(item.count || 0))) : 0;
-
-    const CustomTooltip = ({ active, payload, label }) => {
-        if (active && payload && payload.length) {
-            return (
-                <div className="custom-chart-tooltip">
-                    <p className="tooltip-date">{label}</p>
-                    <p className="tooltip-value">
-                        <span className="tooltip-dot bg-blue-500"></span>
-                        {payload[0].value} Appointments
-                    </p>
-                </div>
-            );
-        }
-        return null;
-    };
 
     return (
         <div className="reports-chart-container flex flex-col h-full justify-between">

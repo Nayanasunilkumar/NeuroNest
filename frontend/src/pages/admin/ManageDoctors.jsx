@@ -26,6 +26,7 @@ const ManageDoctors = () => {
 
     useEffect(() => {
         loadDoctors();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [page, statusFilter, sectorFilter]);
 
     useEffect(() => {
@@ -114,21 +115,6 @@ const ManageDoctors = () => {
         loadDoctors();
     };
 
-    const handleExport = () => {
-        if (selectedDoctors.length === 0) return;
-        const selectedData = doctors.filter(d => selectedDoctors.includes(d.id));
-        const csvContent = "data:text/csv;charset=utf-8," 
-            + "ID,Name,Email,Specialization,License,Sector,Status\n"
-            + selectedData.map(d => `${d.id},${d.full_name},${d.email},${d.specialization},${d.license_number},${d.sector},${d.account_status}`).join("\n");
-        const encodedUri = encodeURI(csvContent);
-        const link = document.createElement("a");
-        link.setAttribute("href", encodedUri);
-        link.setAttribute("download", `NeuroNest_Specialists_${new Date().toISOString().slice(0,10)}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    };
-
     const handleOnboard = async (formData) => {
         await createDoctor(formData);
         loadDoctors();
@@ -137,13 +123,6 @@ const ManageDoctors = () => {
     const handleVerify = async (id) => {
         if (window.confirm('Confirm clinical credential verification?')) {
             await verifyDoctor(id);
-            loadDoctors();
-        }
-    };
-
-    const handleRevoke = async (id) => {
-        if (window.confirm('Revoke clinical credentials for this specialist?')) {
-            await verifyDoctor(id, false);
             loadDoctors();
         }
     };

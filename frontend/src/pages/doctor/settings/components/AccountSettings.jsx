@@ -44,7 +44,9 @@ const AccountSettings = ({ data, onSaveSuccess }) => {
                     const parsedUser = JSON.parse(userStr);
                     parsedUser.full_name = profileForm.full_name;
                     localStorage.setItem('neuronest_user', JSON.stringify(parsedUser));
-                } catch (e) {}
+                } catch {
+                    // Ignore malformed local cache and proceed.
+                }
             }
 
             setProfileStatus('success');

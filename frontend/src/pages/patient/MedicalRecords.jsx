@@ -46,20 +46,6 @@ const MedicalRecords = ({ patientId: propPatientId = null }) => {
       year: "numeric",
     });
   };
-  const toLabel = (value) => {
-    if (!value) return "N/A";
-    const str = String(value).replaceAll("_", " ");
-    return str.charAt(0).toUpperCase() + str.slice(1);
-  };
-  const actorLabel = (role) =>
-    role === "doctor" ? "Doctor" : role === "admin" ? "Admin" : "Patient";
-  const severityLabel = (value) => {
-    if (!value) return "Unknown";
-    const normalized = String(value).toLowerCase();
-    if (normalized === "mild") return "Mild";
-    if (normalized === "moderate") return "Moderate";
-    return "Severe";
-  };
   const medicationSourceLabel = (item) => {
     if (item.read_only) {
       return "Doctor Prescription";
@@ -75,11 +61,6 @@ const MedicalRecords = ({ patientId: propPatientId = null }) => {
     }
     return "Patient Entered";
   };
-  const medicationSourceClass = (item) =>
-    item.medication_origin === "current_doctor" ||
-    item.created_by_role === "doctor"
-      ? "meta-badge-source-current"
-      : "meta-badge-source-past";
   // State
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -193,6 +174,7 @@ const MedicalRecords = ({ patientId: propPatientId = null }) => {
         .then(data => setIdentity(data.identity))
         .catch(err => console.error("Error fetching patient identity:", err));
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [patientId]);
 
   // Handlers
@@ -750,11 +732,11 @@ const MedicalRecords = ({ patientId: propPatientId = null }) => {
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
               <div style={{ display: 'flex', flex: 1, border: '1px solid #cbd5e1', borderRadius: '10px', background: '#f8fafc', overflow: 'hidden' }}>
                 <input
-                  value={String(medicationForm.dosage || "").match(/[0-9\.]+/) ? String(medicationForm.dosage || "").match(/[0-9\.]+/)[0] : ""}
+                  value={String(medicationForm.dosage || "").match(/[0-9.]+/) ? String(medicationForm.dosage || "").match(/[0-9.]+/)[0] : ""}
                   onChange={(e) => {
                     const newNum = e.target.value;
                     const valStr = String(medicationForm.dosage || "0");
-                    const currentUnit = valStr.replace(/[0-9\.]/g, '').trim() || "mg";
+                    const currentUnit = valStr.replace(/[0-9.]/g, '').trim() || "mg";
                     setMedicationForm((prev) => ({ ...prev, dosage: newNum ? `${newNum} ${currentUnit}` : currentUnit }));
                   }}
                   placeholder="e.g. 500"
@@ -762,11 +744,11 @@ const MedicalRecords = ({ patientId: propPatientId = null }) => {
                 />
                 <div style={{ width: '1px', background: '#cbd5e1' }}></div>
                 <select
-                  value={String(medicationForm.dosage || "").replace(/[0-9\.]/g, '').trim() || "mg"}
+                  value={String(medicationForm.dosage || "").replace(/[0-9.]/g, '').trim() || "mg"}
                   onChange={(e) => {
                     const newUnit = e.target.value;
                     const valStr = String(medicationForm.dosage || "0");
-                    const numMatch = valStr.match(/[0-9\.]+/);
+                    const numMatch = valStr.match(/[0-9.]+/);
                     const currentNum = numMatch ? numMatch[0] : "";
                     setMedicationForm((prev) => ({ ...prev, dosage: currentNum ? `${currentNum} ${newUnit}` : newUnit }));
                   }}
@@ -801,9 +783,9 @@ const MedicalRecords = ({ patientId: propPatientId = null }) => {
                   type="button"
                   onClick={() => {
                     const valStr = String(medicationForm.dosage || "0");
-                    const numMatch = valStr.match(/[0-9\.]+/);
+                    const numMatch = valStr.match(/[0-9.]+/);
                     let currentNum = numMatch ? parseFloat(numMatch[0]) : 0;
-                    const currentUnit = valStr.replace(/[0-9\.]/g, '').trim() || "mg";
+                    const currentUnit = valStr.replace(/[0-9.]/g, '').trim() || "mg";
                     
                     let step = 1;
                     if (currentUnit.toLowerCase() === "mg") step = 50;
@@ -823,9 +805,9 @@ const MedicalRecords = ({ patientId: propPatientId = null }) => {
                   type="button"
                   onClick={() => {
                     const valStr = String(medicationForm.dosage || "0");
-                    const numMatch = valStr.match(/[0-9\.]+/);
+                    const numMatch = valStr.match(/[0-9.]+/);
                     let currentNum = numMatch ? parseFloat(numMatch[0]) : 0;
-                    const currentUnit = valStr.replace(/[0-9\.]/g, '').trim() || "mg";
+                    const currentUnit = valStr.replace(/[0-9.]/g, '').trim() || "mg";
                     
                     let step = 1;
                     if (currentUnit.toLowerCase() === "mg") step = 50;

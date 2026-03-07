@@ -367,6 +367,7 @@ export default function VideoConsultation() {
 
         startCall();
 
+        const remoteVideoEl = remoteVideo.current;
         return () => {
             isDisposed = true;
             void notifyCallEnded();
@@ -383,8 +384,8 @@ export default function VideoConsultation() {
                 localStreamRef.current.getTracks().forEach((track) => track.stop());
                 localStreamRef.current = null;
             }
-            if (remoteVideo.current) {
-                remoteVideo.current.srcObject = null;
+            if (remoteVideoEl) {
+                remoteVideoEl.srcObject = null;
             }
             remoteStreamRef.current = null;
             iceCandidateQueue.current = [];
@@ -393,6 +394,7 @@ export default function VideoConsultation() {
             if (joinRetryTimer) clearInterval(joinRetryTimer);
             if (restartTimer) clearTimeout(restartTimer);
         };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [roomId]);
 
     const handleHangup = () => {

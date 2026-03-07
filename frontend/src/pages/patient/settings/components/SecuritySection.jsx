@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Lock, Eye, EyeOff, Shield, AlertTriangle, Monitor, MapPin, Clock, LogOut, CheckCircle2, Circle, KeyRound, Activity } from 'lucide-react';
+import { Lock, Eye, EyeOff, Shield, AlertTriangle, Monitor, CheckCircle2, KeyRound, Activity } from 'lucide-react';
 
 const PasswordRequirement = ({ met, text }) => (
   <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', fontSize: '0.8rem', color: met ? '#059669' : '#64748b', transition: 'all 0.2s', fontWeight: met ? '700' : '500' }}>
@@ -89,7 +89,7 @@ const formatRelativeTime = (dateStr) => {
   return date.toLocaleDateString();
 };
 
-export default function SecuritySection({ data, activity = [], saving, onChangePassword }) {
+export default function SecuritySection({ activity = [], saving, onChangePassword }) {
   const [form, setForm] = useState({ current_password: '', new_password: '', confirm_password: '' });
   const [show, setShow] = useState({ cur: false, new: false, con: false });
   const [pwError, setPwError] = useState('');

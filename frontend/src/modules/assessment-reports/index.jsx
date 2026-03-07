@@ -1,6 +1,7 @@
 import { Brain } from 'lucide-react';
 import ModuleComingSoon from '../../pages/shared/ModuleComingSoon';
 
+// eslint-disable-next-line react-refresh/only-export-components
 const AssessmentReportsPage = () =>
   ModuleComingSoon({
     title: 'Assessment Reports',

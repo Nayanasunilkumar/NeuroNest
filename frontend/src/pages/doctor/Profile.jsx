@@ -116,16 +116,6 @@ const Profile = () => {
         }));
     };
 
-    const handleRemoveTag = (tagIdOrName) => {
-        setFormData(prev => ({
-            ...prev,
-            expertise_tags: prev.expertise_tags.filter(t => {
-                const val = typeof t === 'string' ? t : (t.id || t.tag_name);
-                return val !== tagIdOrName;
-            })
-        }));
-    };
-
     // --- Experience Handlers ---
     const handleAddExp = async () => {
         if (!newExp.title || !newExp.hospital || !newExp.startYear || !newExp.endYear) {

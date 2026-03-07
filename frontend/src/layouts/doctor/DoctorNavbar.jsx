@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { BellRing, Moon, Sun, ChevronDown, Calendar, MessageSquare, CalendarCheck, Star, Activity, LogOut } from 'lucide-react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { getDoctorProfile } from '../../services/doctorProfileService';
-import { getModuleByPathname } from '../../modules/moduleRegistry';
 import { getAppointmentRequests } from '../../api/doctor';
 import { getConversations } from '../../api/chat';
 import { doctorFeedbackService } from '../../services/doctorFeedbackService';
@@ -12,7 +11,6 @@ import DynamicIslandNav from '../../components/DynamicIslandNav';
 import { Bell, Info, AlertTriangle } from 'lucide-react';
 
 const DoctorNavbar = ({ darkMode, toggleTheme }) => {
-  const location = useLocation();
   const navigate = useNavigate();
   const [doctorInfo, setDoctorInfo] = useState({
     name: 'Dr. Nayana',
@@ -69,7 +67,9 @@ const DoctorNavbar = ({ darkMode, toggleTheme }) => {
               icon: <CalendarCheck size={16} className="text-blue-500" />
             });
           }
-        } catch(e) {}
+        } catch {
+          // Optional source; keep navbar resilient.
+        }
 
         try {
           const convs = await getConversations();
@@ -85,7 +85,9 @@ const DoctorNavbar = ({ darkMode, toggleTheme }) => {
                icon: <MessageSquare size={16} className="text-emerald-500" />
              });
           }
-        } catch(e) {}
+        } catch {
+          // Optional source; keep navbar resilient.
+        }
 
         try {
           const user = getUser();
@@ -102,7 +104,9 @@ const DoctorNavbar = ({ darkMode, toggleTheme }) => {
                });
             }
           }
-        } catch(e) {}
+        } catch {
+          // Optional source; keep navbar resilient.
+        }
         try {
           const generalNotifs = await getMyNotifications(true); // unread only
           generalNotifs.forEach(n => {
@@ -116,7 +120,9 @@ const DoctorNavbar = ({ darkMode, toggleTheme }) => {
               backend_id: n.id
             });
           });
-        } catch(e) {}
+        } catch {
+          // Optional source; keep navbar resilient.
+        }
 
         setNotifications(notifs);
       } catch (err) {

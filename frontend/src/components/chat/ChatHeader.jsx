@@ -13,8 +13,6 @@ const formatAppointmentIST = (appointment) => {
 };
 
 const ChatHeader = ({ otherUser, context, isDoctor, onToggleSidebar, showSidebar, onVideoCall }) => {
-    const statusText = otherUser?.is_online ? 'Online' : 'Last seen recently';
-
     return (
         <div className="d-flex align-items-center justify-content-between px-4 py-3 border-bottom bg-white bg-opacity-75" style={{ backdropFilter: 'blur(12px)', position: 'sticky', top: 0, zIndex: 10 }}>
             <div className="d-flex align-items-center gap-3">

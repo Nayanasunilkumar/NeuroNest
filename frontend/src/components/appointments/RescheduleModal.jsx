@@ -43,7 +43,7 @@ const RescheduleModal = ({ isOpen, onClose, onSave, currentAppointment }) => {
         } else {
           setError("");
         }
-      } catch (e) {
+      } catch {
         setAvailableSlots([]);
         setSelectedSlotId("");
         setTime("");

@@ -131,7 +131,7 @@ const ManageAppointments = () => {
             });
             setAppointments(data.appointments);
             setStats(data.stats);
-        } catch (err) {
+        } catch {
             alert("Governance Error: Transition Denied.");
         }
     };

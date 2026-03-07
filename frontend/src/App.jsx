@@ -58,6 +58,7 @@ export default function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/403" element={<Forbidden />} />
+            <Route path="/404" element={<NotFound />} />
 
             {/* ================= PATIENT ================= */}
             <Route

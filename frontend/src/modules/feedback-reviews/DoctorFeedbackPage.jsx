@@ -13,7 +13,8 @@ const QualityAlert = ({ summary, reviews }) => {
   const show = useMemo(() => {
     if (!summary || !reviews) return null;
     // Alert: 3 or more 1★ in last 7 days
-    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
     const recentOneStar = reviews.filter(r => r.rating === 1 && new Date(r.date) >= sevenDaysAgo).length;
     if (recentOneStar >= 3) return `⚠ ${recentOneStar} one-star reviews in the past 7 days. Review your recent consultations.`;
     if (summary.negative_reviews_30d >= 5) return `⚠ ${summary.negative_reviews_30d} negative reviews in the last 30 days. Consider reviewing patterns.`;

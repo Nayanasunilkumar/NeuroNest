@@ -35,7 +35,7 @@ const Login = () => {
       if (role === "patient")          navigate("/patient/dashboard");
       else if (role === "doctor")      navigate("/doctor/dashboard");
       else if (role === "admin")       navigate("/admin/dashboard");
-      else if (role === "super_admin") navigate("/super-admin/dashboard");
+      else if (role === "super_admin") navigate("/admin/dashboard");
     } catch {
       setError("Invalid email or password.");
     } finally {
@@ -90,7 +90,7 @@ const Login = () => {
                             <div className="form-group mb-3">
                                 <div className="d-flex justify-content-between align-items-center mb-2">
                                     <label htmlFor="login-pw" className="form-label small fw-bold text-secondary text-uppercase mb-0" style={{ letterSpacing: '1px' }}>Password</label>
-                                    <Link to="/forgot-password" className="text-decoration-none fw-bold small text-primary">Forgot?</Link>
+                                    <Link to="/login" className="text-decoration-none fw-bold small text-primary">Forgot?</Link>
                                 </div>
                                 <div className="input-group shadow-sm bg-light rounded overflow-hidden">
                                     <input

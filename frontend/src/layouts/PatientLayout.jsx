@@ -1,13 +1,10 @@
-import { useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
-import Sidebar from "../components/Sidebar";
 import DynamicIslandNav from "../components/DynamicIslandNav";
 import { logout } from "../utils/auth";
 import { useTheme } from "../context/ThemeContext";
-import { Activity, Sun, Moon, LogOut, Search, Bell } from "lucide-react";
+import { Sun, Moon, LogOut, Bell } from "lucide-react";
 
 const PatientLayout = () => {
-    const [sidebarOpen, setSidebarOpen] = useState(false);
     const { isDark: darkMode, toggleTheme } = useTheme();
     const location = useLocation();
 
