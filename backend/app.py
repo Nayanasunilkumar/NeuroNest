@@ -49,15 +49,15 @@ def create_app():
 
     with app.app_context():
         db.create_all()
-        # ── Safe column migrations (idempotent — safe to run every boot) ──
+        # ── Safe column migrations — DDL must run in AUTOCOMMIT mode ──
         try:
-            db.session.execute(db.text(
-                "ALTER TABLE appointments ADD COLUMN IF NOT EXISTS consultation_type VARCHAR(20) DEFAULT 'in_person'"
-            ))
-            db.session.commit()
-            print("[MIGRATION] consultation_type column ensured on appointments table")
+            with db.engine.connect().execution_options(isolation_level="AUTOCOMMIT") as conn:
+                conn.execute(db.text(
+                    "ALTER TABLE appointments ADD COLUMN IF NOT EXISTS "
+                    "consultation_type VARCHAR(20) DEFAULT 'in_person'"
+                ))
+            print("[MIGRATION] ✓ consultation_type column ensured")
         except Exception as e:
-            db.session.rollback()
             print(f"[MIGRATION] Warning: {e}")
 
     # ================= Blueprints =================
