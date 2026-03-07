@@ -905,6 +905,12 @@ class DoctorProfile(db.Model):
     experience = db.relationship("DoctorExperience", backref="doctor", lazy=True, cascade="all, delete-orphan")
 
     def to_dict(self):
+        # Dynamically fetch consultation settings to ensure it matches Settings -> Consultation Terms perfectly
+        from database.models import DoctorConsultationSetting
+        consultation = DoctorConsultationSetting.query.filter_by(doctor_user_id=self.user_id).first()
+        actual_fee = consultation.consultation_fee if consultation else (self.consultation_fee or 500.0)
+        actual_mode = consultation.consultation_mode if consultation else (self.consultation_mode or "Online")
+
         return {
             "id": self.id,
             "user_id": self.user_id,
@@ -920,8 +926,8 @@ class DoctorProfile(db.Model):
             "dob": str(self.dob) if self.dob else None,
             "bio": self.bio,
             "hospital_name": self.hospital_name,
-            "consultation_fee": self.consultation_fee,
-            "consultation_mode": self.consultation_mode,
+            "consultation_fee": actual_fee,
+            "consultation_mode": actual_mode,
             "profile_image": self.profile_image,
             "created_at": self.created_at.isoformat() + 'Z',
             "updated_at": self.updated_at.isoformat() + 'Z',
