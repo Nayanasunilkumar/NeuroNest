@@ -57,7 +57,7 @@
 .dark {
   --nn-bg:                  #0F172A;
   --nn-surface:             #1E293B;
-  --nn-surface-secondary:   var(--nn-surface-secondary);
+  --nn-surface-secondary:   #111827;
   --nn-border:              #334155;
   --nn-border-strong:       #475569;
   --nn-text-main:           #F1F5F9;
