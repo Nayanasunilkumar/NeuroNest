@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { getDoctorPublicProfile } from "../../api/appointments";
-import { toAssetUrl } from "../../utils/toAssetUrl";
+import { toAssetUrl } from "../../utils/media";
 
 const DoctorProfileView = () => {
   const { doctorId } = useParams();
