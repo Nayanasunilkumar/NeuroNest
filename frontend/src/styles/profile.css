@@ -236,7 +236,7 @@ body.dark .profile-card {
 ========================= */
 
 body.dark {
-  background: linear-gradient(135deg, #0f172a, #111827);
+  background: linear-gradient(135deg, #0f172a, var(--nn-surface-secondary));
   color: #e2e8f0;
   transition:
     background 0.3s ease,
@@ -245,7 +245,7 @@ body.dark {
 
 /* Page */
 body.dark .profile-page {
-  background: linear-gradient(135deg, #0f172a, #111827);
+  background: linear-gradient(135deg, #0f172a, var(--nn-surface-secondary));
 }
 
 /* Header */

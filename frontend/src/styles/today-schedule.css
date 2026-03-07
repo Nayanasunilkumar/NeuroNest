@@ -621,10 +621,10 @@
 }
 
 .ts-page.dark .ts-modal-card {
-  background: #0d0d0f;
+  background: var(--nn-bg);
   border-color: #1e1e22;
 }
 
 .ts-page.dark .ts-modal-input {
-  background: #16161a;
+  background: var(--nn-surface);
 }

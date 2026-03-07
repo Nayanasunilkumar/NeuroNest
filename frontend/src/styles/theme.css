@@ -43,9 +43,9 @@ body.dark {
      DARK THEME (SLATE — easy on clinical eyes)
      ========================================= */
   --admin-bg:           #0F172A;
-  --admin-panel-bg:     #111827;
+  --admin-panel-bg:     var(--nn-surface-secondary);
   --admin-card-bg:      #1E293B;
-  --admin-header-bg:    #111827;
+  --admin-header-bg:    var(--nn-surface-secondary);
   --admin-text-main:    #F1F5F9;
   --admin-text-muted:   #94A3B8;
   --admin-border:       #334155;
@@ -61,7 +61,7 @@ body.dark {
   --admin-modal-bg: #1E293B;
   --admin-modal-overlay: rgba(0, 0, 0, 0.75);
   --admin-modal-border: #334155;
-  --admin-input-bg: #111827;
+  --admin-input-bg: var(--nn-surface-secondary);
   --admin-terminal-bg: #0F172A;
   --admin-timeline-line: #334155;
   
