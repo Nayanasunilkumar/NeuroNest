@@ -373,6 +373,22 @@ def cancel_appointment(id):
         if appointment.status == "cancelled_by_patient":
             return jsonify({"message": "Appointment already cancelled"}), 200
 
+        # Enforce the doctor's specific cancellation policy before proceeding
+        from database.models import DoctorConsultationSetting
+        consultation_setting = DoctorConsultationSetting.query.filter_by(doctor_user_id=appointment.doctor_id).first()
+        policy_hours = consultation_setting.cancellation_policy_hours if consultation_setting and consultation_setting.cancellation_policy_hours is not None else 24
+
+        if policy_hours > 0:
+            from datetime import datetime, timedelta
+            appt_datetime = datetime.combine(appointment.appointment_date, appointment.appointment_time)
+            # Use naive now because appointment_date/time are naive
+            now = datetime.now()
+            time_difference = appt_datetime - now
+            
+            # If the appointment is in the past, or the time left is less than the policy cutoff
+            if time_difference.total_seconds() < (policy_hours * 3600):
+                return jsonify({"error": f"You cannot cancel this appointment. The doctor requires at least {policy_hours} hours' notice."}), 400
+
         appointment.status = "cancelled_by_patient"
 
         if appointment.slot_id:
