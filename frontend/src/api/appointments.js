@@ -31,7 +31,7 @@ export const confirmReschedule = async (id) => {
 };
 
 export const getDoctors = async () => {
-  const response = await axios.get("/appointments/doctors");
+  const response = await axios.get(`/appointments/doctors?_t=${Date.now()}`);
   return response.data;
 };
 
