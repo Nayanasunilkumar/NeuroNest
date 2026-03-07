@@ -19,6 +19,7 @@ const TodaySchedule = () => {
     const [loading, setLoading] = useState(true);
     const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
     const [statusFilter, setStatusFilter] = useState('all');
+    const [modeFilter, setModeFilter] = useState('all');  // all / online / in_person
     const [imageErrors, setImageErrors] = useState({});
     const [isAddingPin, setIsAddingPin] = useState(false);
     const [newPinData, setNewPinData] = useState({ title: "", date: "", time: "", desc: "" });
@@ -215,34 +216,77 @@ const TodaySchedule = () => {
                     </div>
 
                     <div className="ts-schedule-list">
+                        {/* ── Online / Offline Tabs ── */}
+                        <div style={{
+                            display: 'flex', gap: '8px', marginBottom: '16px',
+                            padding: '4px', background: 'var(--nn-surface-secondary)',
+                            borderRadius: '12px', border: '1px solid var(--nn-border)'
+                        }}>
+                            {[
+                                { key: 'all',       label: 'All',       icon: '📋', color: '#64748B', activeBg: 'var(--nn-surface)', count: schedule.length },
+                                { key: 'online',    label: 'Online',    icon: '💻', color: '#0369A1', activeBg: '#E0F2FE',           count: schedule.filter(a => (a.consultation_type || 'in_person') === 'online').length },
+                                { key: 'in_person', label: 'In-Person', icon: '🏥', color: '#1D4ED8', activeBg: '#DBEAFE',           count: schedule.filter(a => (a.consultation_type || 'in_person') === 'in_person').length },
+                            ].map(tab => (
+                                <button
+                                    key={tab.key}
+                                    type="button"
+                                    onClick={() => setModeFilter(tab.key)}
+                                    style={{
+                                        flex: 1, padding: '8px 12px', borderRadius: '10px',
+                                        border: 'none', cursor: 'pointer',
+                                        background: modeFilter === tab.key ? tab.activeBg : 'transparent',
+                                        color: modeFilter === tab.key ? tab.color : 'var(--nn-text-muted)',
+                                        fontWeight: modeFilter === tab.key ? 700 : 500,
+                                        fontSize: '13px',
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+                                        transition: 'all 0.2s',
+                                        boxShadow: modeFilter === tab.key ? '0 1px 4px rgba(0,0,0,0.12)' : 'none',
+                                    }}
+                                >
+                                    {tab.icon} {tab.label}
+                                    <span style={{
+                                        background: modeFilter === tab.key ? tab.color : 'var(--nn-border)',
+                                        color: modeFilter === tab.key ? '#fff' : 'var(--nn-text-muted)',
+                                        borderRadius: '999px', padding: '1px 7px', fontSize: '11px', fontWeight: 800
+                                    }}>{tab.count}</span>
+                                </button>
+                            ))}
+                        </div>
+
                         {loading ? (
                             <div className="ts-appointment-card justify-content-center p-5 border-0">
                                 <div className="spinner-border text-warning" role="status"></div>
                             </div>
-                        ) : schedule.length === 0 ? (
-                            <div className="ts-appointment-card justify-content-center p-5 text-center border-0">
-                                <Bookmark size={48} className="text-muted opacity-20 mb-3" />
-                                <h3 className="h5 fw-bold">Agenda Clear</h3>
-                                <p className="text-muted small">No consultations linked to this station.</p>
-                            </div>
-                        ) : (
-                            schedule.map((appointment) => {
+                        ) : (() => {
+                            const filtered = modeFilter === 'all'
+                                ? schedule
+                                : schedule.filter(a => (a.consultation_type || 'in_person') === modeFilter);
+                            if (filtered.length === 0) return (
+                                <div className="ts-appointment-card justify-content-center p-5 text-center border-0">
+                                    <Bookmark size={48} className="text-muted opacity-20 mb-3" />
+                                    <h3 className="h5 fw-bold">
+                                        {modeFilter === 'online' ? 'No Online Appointments' : modeFilter === 'in_person' ? 'No In-Person Appointments' : 'Agenda Clear'}
+                                    </h3>
+                                    <p className="text-muted small">No consultations for this mode today.</p>
+                                </div>
+                            );
+                            return filtered.map((appointment) => {
                                 const timeObj = formatDisplayTime(appointment.appointment_time);
                                 const isFocused = appointment.status === 'approved' && Number(appointment.appointment_time?.substring(0, 2)) === new Date().getHours();
-                                
+                                const isOnline = (appointment.consultation_type || 'in_person') === 'online';
                                 return (
                                     <div key={appointment.id} className="ts-appointment-row">
                                         <div className="ts-time-marker">{timeObj.value} {timeObj.period}</div>
-                                        <div 
+                                        <div
                                             className={`ts-appointment-card ${isFocused ? 'ongoing shadow-lg' : ''}`}
                                             onClick={() => navigate(`/doctor/patient-records?patientId=${appointment.patient_id}`)}
                                         >
                                             <div className="ts-card-info">
                                                 <div className="ts-patient-avatar">
                                                     {appointment.patient_image && !imageErrors[appointment.id] ? (
-                                                        <img 
-                                                            src={toAssetUrl(appointment.patient_image)} 
-                                                            alt="" 
+                                                        <img
+                                                            src={toAssetUrl(appointment.patient_image)}
+                                                            alt=""
                                                             onError={() => setImageErrors(p => ({...p, [appointment.id]: true}))}
                                                             className="w-100 h-100 object-fit-cover"
                                                         />
@@ -255,23 +299,29 @@ const TodaySchedule = () => {
                                                     <div className="ts-reason-pill">
                                                         <FileText size={12} /> {appointment.reason || "Routine Clinical Assessment"}
                                                     </div>
+                                                    <span style={{
+                                                        display: 'inline-flex', alignItems: 'center', gap: '4px',
+                                                        fontSize: '11px', fontWeight: 700, marginTop: '4px',
+                                                        padding: '2px 8px', borderRadius: '6px',
+                                                        background: isOnline ? '#E0F2FE' : '#DBEAFE',
+                                                        color: isOnline ? '#0369A1' : '#1D4ED8',
+                                                    }}>
+                                                        {isOnline ? '💻 Online' : '🏥 In-Person'}
+                                                    </span>
                                                 </div>
                                             </div>
-                                            
                                             <div className="ts-card-actions d-flex align-items-center gap-3">
-                                                <div className="ts-slot-badge">
-                                                    {timeObj.value} {timeObj.period}
-                                                </div>
+                                                <div className="ts-slot-badge">{timeObj.value} {timeObj.period}</div>
                                                 {appointment.status === 'approved' && (
                                                     <div className="d-flex gap-2">
-                                                        <button 
+                                                        <button
                                                             className="btn btn-warning rounded-circle p-0 d-flex align-items-center justify-content-center text-white shadow-sm"
                                                             style={{ width: '32px', height: '32px' }}
                                                             onClick={(e) => { e.stopPropagation(); handleAction(appointment.id, 'complete'); }}
                                                         >
                                                             <Check size={16} strokeWidth={3} />
                                                         </button>
-                                                        <button 
+                                                        <button
                                                             className="btn btn-outline-danger border-0 rounded-circle p-0 d-flex align-items-center justify-content-center"
                                                             style={{ width: '32px', height: '32px' }}
                                                             onClick={(e) => { e.stopPropagation(); handleAction(appointment.id, 'cancel'); }}
@@ -284,8 +334,8 @@ const TodaySchedule = () => {
                                         </div>
                                     </div>
                                 );
-                            })
-                        )}
+                            });
+                        })()}
                     </div>
                 </div>
 
