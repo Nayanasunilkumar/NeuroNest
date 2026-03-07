@@ -554,3 +554,316 @@ body.dark .theme-toggle-btn::before {
 .animate-float {
     animation: float 6s ease-in-out infinite;
 }
+
+/* =========================
+   DOCTOR DASHBOARD V2
+========================= */
+
+.nn-dashboard-wrap {
+  min-height: calc(100vh - 80px);
+  background: var(--nn-bg);
+  color: var(--nn-text-main);
+  padding: clamp(1rem, 2.5vw, 2rem);
+}
+
+.nn-dashboard-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.nn-title {
+  margin: 0;
+  font-size: clamp(1.25rem, 2.4vw, 1.7rem);
+  font-weight: 900;
+  letter-spacing: -0.02em;
+}
+
+.nn-subtitle {
+  margin: 0.2rem 0 0;
+  color: var(--nn-text-muted);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.nn-head-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--nn-success) 30%, transparent);
+  background: color-mix(in srgb, var(--nn-success) 10%, transparent);
+  color: var(--nn-success);
+  padding: 0.38rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.nn-panel {
+  background: var(--nn-surface);
+  border: 1px solid var(--nn-border);
+  border-radius: 18px;
+  padding: 1rem;
+  box-shadow: var(--nn-shadow);
+}
+
+.nn-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.9rem;
+}
+
+.nn-panel-head h3 {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 850;
+  color: var(--nn-text-main);
+}
+
+.nn-panel-caption {
+  font-size: 0.75rem;
+  color: var(--nn-text-muted);
+  font-weight: 700;
+}
+
+.nn-stat-card {
+  height: 100%;
+  border-radius: 16px;
+  border: 1px solid var(--nn-border);
+  background: var(--nn-surface);
+  padding: 1rem;
+  box-shadow: var(--nn-shadow);
+}
+
+.nn-stat-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  font-weight: 800;
+  color: var(--nn-text-muted);
+}
+
+.nn-stat-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  display: grid;
+  place-items: center;
+}
+
+.nn-stat-value {
+  font-size: clamp(1.35rem, 2.4vw, 1.9rem);
+  line-height: 1.1;
+  font-weight: 900;
+}
+
+.nn-stat-hint {
+  margin-top: 0.2rem;
+  color: var(--nn-text-muted);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.nn-tone-primary .nn-stat-icon {
+  color: var(--nn-primary);
+  background: color-mix(in srgb, var(--nn-primary) 12%, transparent);
+}
+
+.nn-tone-info .nn-stat-icon {
+  color: var(--nn-info);
+  background: color-mix(in srgb, var(--nn-info) 12%, transparent);
+}
+
+.nn-tone-warning .nn-stat-icon {
+  color: var(--nn-warning);
+  background: color-mix(in srgb, var(--nn-warning) 14%, transparent);
+}
+
+.nn-tone-success .nn-stat-icon {
+  color: var(--nn-success);
+  background: color-mix(in srgb, var(--nn-success) 12%, transparent);
+}
+
+.nn-quick-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.6rem;
+}
+
+.nn-quick-btn {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  border: 1px solid var(--nn-border);
+  background: var(--nn-surface-secondary);
+  color: var(--nn-text-secondary);
+  border-radius: 12px;
+  padding: 0.65rem 0.75rem;
+  font-weight: 700;
+  font-size: 0.82rem;
+}
+
+.nn-quick-btn:hover {
+  border-color: var(--nn-primary);
+  color: var(--nn-primary);
+}
+
+.nn-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.nn-timeline-item {
+  display: grid;
+  grid-template-columns: 52px 10px 1fr;
+  gap: 0.65rem;
+  align-items: center;
+}
+
+.nn-time {
+  font-size: 0.75rem;
+  color: var(--nn-text-muted);
+  font-weight: 700;
+}
+
+.nn-timeline-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--nn-primary);
+}
+
+.nn-timeline-dot[data-tone='success'] { background: var(--nn-success); }
+.nn-timeline-dot[data-tone='warning'] { background: var(--nn-warning); }
+.nn-timeline-dot[data-tone='info'] { background: var(--nn-info); }
+.nn-timeline-dot[data-tone='danger'] { background: var(--nn-danger); }
+
+.nn-timeline-body {
+  border: 1px solid var(--nn-border);
+  background: var(--nn-surface-secondary);
+  border-radius: 11px;
+  padding: 0.45rem 0.65rem;
+}
+
+.nn-patient {
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: var(--nn-text-main);
+}
+
+.nn-status {
+  margin-top: 0.1rem;
+  font-size: 0.72rem;
+  color: var(--nn-text-muted);
+  font-weight: 600;
+}
+
+.nn-chart-box {
+  width: 100%;
+  height: 260px;
+}
+
+.nn-metrics-row {
+  margin-top: 0.5rem;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.55rem;
+}
+
+.nn-metric-pill {
+  border: 1px solid var(--nn-border);
+  background: var(--nn-surface-secondary);
+  border-radius: 10px;
+  padding: 0.55rem 0.65rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.nn-metric-pill span {
+  color: var(--nn-text-muted);
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.nn-metric-pill strong {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  color: var(--nn-text-main);
+  font-size: 0.82rem;
+}
+
+.nn-donut-wrap {
+  display: grid;
+  grid-template-columns: 190px 1fr;
+  gap: 0.7rem;
+  align-items: center;
+}
+
+.nn-donut {
+  width: 190px;
+  height: 190px;
+  margin: 0 auto;
+}
+
+.nn-donut-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.nn-legend-row {
+  display: grid;
+  grid-template-columns: 12px 1fr auto;
+  align-items: center;
+  gap: 0.45rem;
+  border: 1px solid var(--nn-border);
+  background: var(--nn-surface-secondary);
+  border-radius: 10px;
+  padding: 0.45rem 0.6rem;
+  font-size: 0.76rem;
+  color: var(--nn-text-secondary);
+  font-weight: 700;
+}
+
+.nn-legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.nn-notes {
+  margin: 0;
+  padding-left: 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  color: var(--nn-text-secondary);
+}
+
+.nn-notes li {
+  line-height: 1.55;
+  font-size: 0.84rem;
+  font-weight: 600;
+}
+
+@media (max-width: 992px) {
+  .nn-dashboard-head {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .nn-metrics-row {
+    grid-template-columns: 1fr;
+  }
+
+  .nn-donut-wrap {
+    grid-template-columns: 1fr;
+  }
+}
