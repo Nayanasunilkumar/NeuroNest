@@ -31,6 +31,21 @@ const PatientFeedbackPage = () => {
         </div>
       )}
 
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0,1fr))', gap: '0.8rem', marginBottom: '1.2rem' }}>
+        <div style={{ background: 'white', border: '1px solid #e2e8f0', borderRadius: 12, padding: '0.85rem 1rem' }}>
+          <div style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 800, textTransform: 'uppercase' }}>Pending Reviews</div>
+          <div style={{ fontSize: '1.35rem', fontWeight: 900, color: '#6366f1' }}>{appointments.length}</div>
+        </div>
+        <div style={{ background: 'white', border: '1px solid #e2e8f0', borderRadius: 12, padding: '0.85rem 1rem' }}>
+          <div style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 800, textTransform: 'uppercase' }}>Submitted</div>
+          <div style={{ fontSize: '1.35rem', fontWeight: 900, color: '#0ea5e9' }}>{reviews.length}</div>
+        </div>
+        <div style={{ background: 'white', border: '1px solid #e2e8f0', borderRadius: 12, padding: '0.85rem 1rem' }}>
+          <div style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 800, textTransform: 'uppercase' }}>Open Complaints</div>
+          <div style={{ fontSize: '1.35rem', fontWeight: 900, color: '#ef4444' }}>{(complaints || []).filter((c) => c.status !== 'resolved').length}</div>
+        </div>
+      </div>
+
       {/* ── Leave Feedback ─────────────────────────────── */}
       <FeedbackForm appointments={appointments} onSubmit={submitReview} />
 

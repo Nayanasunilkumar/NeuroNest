@@ -1,12 +1,13 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useMemo, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Send, CheckCircle, AlertTriangle, UserX } from 'lucide-react';
 import RatingStars from './RatingStars';
 import TagSelector from './TagSelector';
 
 const FeedbackForm = ({ appointments, onSubmit }) => {
   const navigate = useNavigate();
-  const [selectedAppt, setSelectedAppt] = useState('');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [selectedAppt, setSelectedAppt] = useState(() => searchParams.get('appointmentId') || '');
   const [rating, setRating]             = useState(0);
   const [text, setText]                 = useState('');
   const [tags, setTags]                 = useState([]);
@@ -16,6 +17,7 @@ const FeedbackForm = ({ appointments, onSubmit }) => {
   const [submitting, setSubmitting]     = useState(false);
   const [success, setSuccess]           = useState(false);
   const [error, setError]               = useState('');
+  const textCount = useMemo(() => text.trim().length, [text]);
 
   const reset = () => {
     setSelectedAppt(''); setRating(0); setText(''); setTags([]);
@@ -26,6 +28,10 @@ const FeedbackForm = ({ appointments, onSubmit }) => {
     e.preventDefault();
     if (!selectedAppt) { setError('Please select an appointment.'); return; }
     if (rating === 0)  { setError('Please choose a star rating.'); return; }
+    if (isSerious && complaintReason.trim().length < 10) {
+      setError('Please provide at least 10 characters for serious complaint reason.');
+      return;
+    }
     setError(''); setSubmitting(true);
     try {
       await onSubmit({
@@ -39,6 +45,10 @@ const FeedbackForm = ({ appointments, onSubmit }) => {
       });
       setSuccess(true);
       reset();
+      if (searchParams.get('appointmentId')) {
+        searchParams.delete('appointmentId');
+        setSearchParams(searchParams, { replace: true });
+      }
       setTimeout(() => setSuccess(false), 5000);
     } catch (e) { setError(e.message); }
     setSubmitting(false);
@@ -147,7 +157,11 @@ const FeedbackForm = ({ appointments, onSubmit }) => {
               value={text}
               onChange={e => setText(e.target.value)}
               rows={4}
+              maxLength={600}
             />
+            <div style={{ fontSize: '0.72rem', color: '#94a3b8', textAlign: 'right' }}>
+              {textCount}/600
+            </div>
           </div>
 
           {/* Anonymous toggle */}

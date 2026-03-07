@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Calendar, Hash, ChevronDown, ChevronUp } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import { Calendar, Hash, ChevronDown, ChevronUp, Search } from 'lucide-react';
 
 const SENTIMENT_STYLE = {
   positive: { bg: 'rgba(16,185,129,0.1)', color: '#10b981' },
@@ -65,20 +65,74 @@ const ReviewCard = ({ review }) => {
 };
 
 const ReviewList = ({ reviews }) => {
+  const [query, setQuery] = useState('');
+  const [sentiment, setSentiment] = useState('all');
+  const [minRating, setMinRating] = useState('all');
+  const [sort, setSort] = useState('newest');
+  const filtered = useMemo(() => {
+    if (!reviews) return [];
+    const q = query.trim().toLowerCase();
+    const list = reviews.filter((r) => {
+      const bySentiment = sentiment === 'all' || String(r.sentiment).toLowerCase() === sentiment;
+      const byRating = minRating === 'all' || Number(r.rating || 0) >= Number(minRating);
+      const byQuery =
+        !q ||
+        String(r.review_text || '').toLowerCase().includes(q) ||
+        String(r.patient_anonymized || '').toLowerCase().includes(q) ||
+        (Array.isArray(r.tags) && r.tags.some((t) => String(t).toLowerCase().includes(q)));
+      return bySentiment && byRating && byQuery;
+    });
+    const sorted = [...list];
+    if (sort === 'highest') sorted.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+    else if (sort === 'lowest') sorted.sort((a, b) => (a.rating || 0) - (b.rating || 0));
+    else sorted.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
+    return sorted;
+  }, [reviews, query, sentiment, minRating, sort]);
   if (!reviews) return <div className="df-panel skeleton" style={{ height: 200 }} />;
 
   return (
     <div className="df-panel">
       <div className="df-panel-header">
         <h3 className="df-panel-title">Patient Feedback</h3>
-        <span className="df-panel-sub">{reviews.length} entries — anonymized</span>
+        <span className="df-panel-sub">{filtered.length} of {reviews.length} entries</span>
       </div>
       {reviews.length === 0 ? (
         <p className="df-empty-msg">No reviews have been recorded yet.</p>
       ) : (
-        <div className="df-review-list">
-          {reviews.map((r) => <ReviewCard key={r.id} review={r} />)}
-        </div>
+        <>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr auto auto auto', gap: '0.55rem', marginBottom: '0.9rem' }}>
+            <div style={{ position: 'relative' }}>
+              <Search size={14} style={{ position: 'absolute', left: 10, top: 10, color: '#94a3b8' }} />
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search review text or tags"
+                style={{ width: '100%', padding: '0.5rem 0.75rem 0.5rem 2rem', borderRadius: 10, border: '1px solid var(--df-border)', background: 'var(--df-bg)', color: 'var(--df-text)', fontSize: '0.82rem' }}
+              />
+            </div>
+            <select value={sentiment} onChange={(e) => setSentiment(e.target.value)} style={{ borderRadius: 10, border: '1px solid var(--df-border)', background: 'var(--df-bg)', color: 'var(--df-text)', fontSize: '0.82rem', padding: '0 0.5rem' }}>
+              <option value="all">All</option>
+              <option value="positive">Positive</option>
+              <option value="neutral">Neutral</option>
+              <option value="negative">Negative</option>
+            </select>
+            <select value={minRating} onChange={(e) => setMinRating(e.target.value)} style={{ borderRadius: 10, border: '1px solid var(--df-border)', background: 'var(--df-bg)', color: 'var(--df-text)', fontSize: '0.82rem', padding: '0 0.5rem' }}>
+              <option value="all">All ratings</option>
+              <option value="4">4★ and above</option>
+              <option value="3">3★ and above</option>
+              <option value="2">2★ and above</option>
+            </select>
+            <select value={sort} onChange={(e) => setSort(e.target.value)} style={{ borderRadius: 10, border: '1px solid var(--df-border)', background: 'var(--df-bg)', color: 'var(--df-text)', fontSize: '0.82rem', padding: '0 0.5rem' }}>
+              <option value="newest">Newest</option>
+              <option value="highest">Highest ★</option>
+              <option value="lowest">Lowest ★</option>
+            </select>
+          </div>
+          <div className="df-review-list">
+            {filtered.map((r) => <ReviewCard key={r.id} review={r} />)}
+          </div>
+          {filtered.length === 0 && <p className="df-empty-msg">No reviews match current filters.</p>}
+        </>
       )}
     </div>
   );

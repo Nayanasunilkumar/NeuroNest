@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Clock, Edit2, Check, X, ChevronDown, ChevronUp, Tag } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import { Clock, Edit2, Check, X, ChevronDown, ChevronUp, Tag, Search } from 'lucide-react';
 import RatingStars from './RatingStars';
 import TagSelector from './TagSelector';
 
@@ -127,6 +127,27 @@ const ReviewCard = ({ review, onEdit }) => {
 };
 
 const ReviewHistoryList = ({ reviews, onEdit }) => {
+  const [query, setQuery] = useState('');
+  const [sentiment, setSentiment] = useState('all');
+  const [sort, setSort] = useState('newest');
+  const filtered = useMemo(() => {
+    if (!reviews) return [];
+    const q = query.trim().toLowerCase();
+    const list = reviews.filter((r) => {
+      const matchesSentiment = sentiment === 'all' || String(r.sentiment).toLowerCase() === sentiment;
+      const matchesQuery =
+        !q ||
+        String(r.doctor_name || '').toLowerCase().includes(q) ||
+        String(r.review_text || '').toLowerCase().includes(q) ||
+        (Array.isArray(r.tags) && r.tags.some((t) => String(t).toLowerCase().includes(q)));
+      return matchesSentiment && matchesQuery;
+    });
+    const sorted = [...list];
+    if (sort === 'highest') sorted.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+    else if (sort === 'lowest') sorted.sort((a, b) => (a.rating || 0) - (b.rating || 0));
+    else sorted.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
+    return sorted;
+  }, [reviews, query, sentiment, sort]);
   if (!reviews) return <div className="rhl-skeleton" />;
 
   return (
@@ -137,9 +158,38 @@ const ReviewHistoryList = ({ reviews, onEdit }) => {
           <p>No feedback submitted yet. Your reviews will appear here after appointments.</p>
         </div>
       ) : (
-        <div className="rhl-list">
-          {reviews.map(r => <ReviewCard key={r.id} review={r} onEdit={onEdit} />)}
-        </div>
+        <>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr auto auto', gap: '0.6rem', marginBottom: '0.85rem' }}>
+            <div style={{ position: 'relative' }}>
+              <Search size={14} style={{ position: 'absolute', left: 10, top: 10, color: '#94a3b8' }} />
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search doctor, text, or tags"
+                style={{ width: '100%', padding: '0.5rem 0.75rem 0.5rem 2rem', borderRadius: 10, border: '1px solid #e2e8f0', fontSize: '0.82rem' }}
+              />
+            </div>
+            <select value={sentiment} onChange={(e) => setSentiment(e.target.value)} style={{ borderRadius: 10, border: '1px solid #e2e8f0', padding: '0 0.6rem', fontSize: '0.82rem' }}>
+              <option value="all">All</option>
+              <option value="positive">Positive</option>
+              <option value="neutral">Neutral</option>
+              <option value="negative">Negative</option>
+            </select>
+            <select value={sort} onChange={(e) => setSort(e.target.value)} style={{ borderRadius: 10, border: '1px solid #e2e8f0', padding: '0 0.6rem', fontSize: '0.82rem' }}>
+              <option value="newest">Newest</option>
+              <option value="highest">Highest ★</option>
+              <option value="lowest">Lowest ★</option>
+            </select>
+          </div>
+          <div className="rhl-list">
+            {filtered.map(r => <ReviewCard key={r.id} review={r} onEdit={onEdit} />)}
+          </div>
+          {filtered.length === 0 && (
+            <div className="rhl-empty" style={{ padding: '1.2rem 0' }}>
+              <p>No reviews match your filters.</p>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

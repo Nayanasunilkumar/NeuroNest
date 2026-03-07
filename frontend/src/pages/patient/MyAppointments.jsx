@@ -345,7 +345,7 @@ const MyAppointments = () => {
                                          {!appt.feedback_given && (
                                            <button
                                              title="Leave Feedback"
-                                             onClick={() => navigate('/patient/feedback-reviews')}
+                                             onClick={() => navigate(`/patient/feedback-reviews?appointmentId=${appt.id}`)}
                                              className="feedback-pill-btn"
                                            >
                                              ⭐ Review
