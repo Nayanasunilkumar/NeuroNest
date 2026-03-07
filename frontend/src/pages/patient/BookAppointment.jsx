@@ -21,6 +21,7 @@ const BookAppointment = () => {
           reason: formData.reason,
           notes: formData.notes,
           priority_level: formData.priority_level,
+          consultation_type: formData.consultation_type,
         });
       } else {
         await bookAppointment({

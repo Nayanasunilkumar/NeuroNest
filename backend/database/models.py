@@ -245,6 +245,10 @@ class Appointment(db.Model):
         db.String(50),
         default="routine"  # routine / urgent / emergency
     )
+    consultation_type = db.Column(
+        db.String(20),
+        default="in_person"  # in_person / online
+    )
 
     created_at = db.Column(
         db.DateTime,
@@ -282,6 +286,7 @@ class Appointment(db.Model):
             "reason": self.reason,
             "notes": self.notes,
             "priority_level": self.priority_level,
+            "consultation_type": self.consultation_type or "in_person",
             "status": self.status,
             "booking_mode": self.booking_mode,
             "delay_reason": self.delay_reason,

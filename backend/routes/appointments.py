@@ -61,7 +61,7 @@ def _lock_slot(slot_id: int):
     )
 
 
-def _book_slot_atomic(*, current_user_id: int, doctor_id: int, slot_id: int, reason: str, notes: str, priority_level: str = "routine"):
+def _book_slot_atomic(*, current_user_id: int, doctor_id: int, slot_id: int, reason: str, notes: str, priority_level: str = "routine", consultation_type: str = "in_person"):
     now_utc = _utc_now()
     setting = get_or_create_schedule_setting(doctor_id)
     if not setting.accepting_new_bookings:
@@ -92,6 +92,7 @@ def _book_slot_atomic(*, current_user_id: int, doctor_id: int, slot_id: int, rea
         reason=reason,
         notes=notes,
         priority_level=priority_level,
+        consultation_type=consultation_type,
         status=_appointment_status_for_mode(booking_mode),
         booking_mode=booking_mode,
     )
@@ -220,6 +221,7 @@ def book_by_slot():
         reason = data.get("reason")
         notes = data.get("notes", "")
         priority_level = data.get("priority_level", "routine")
+        consultation_type = data.get("consultation_type", "in_person")
 
         if not doctor_id or not slot_id or not reason:
             return jsonify({"error": "doctor_id, slot_id and reason are required"}), 400
@@ -231,6 +233,7 @@ def book_by_slot():
             reason=reason,
             notes=notes,
             priority_level=priority_level,
+            consultation_type=consultation_type,
         )
         if err_msg:
             db.session.rollback()

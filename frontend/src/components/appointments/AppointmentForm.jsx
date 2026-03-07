@@ -7,13 +7,14 @@ const AppointmentForm = ({ onSubmit, loading }) => {
   const today = new Date().toISOString().split('T')[0];
   const [formData, setFormData] = useState({
     doctor_id: "",
-    doctor_name: "", // To show name in summary
+    doctor_name: "",
     date: today,
     time: "",
     slot_id: "",
     reason: "",
     notes: "",
     priority_level: "routine",
+    consultation_type: "in_person",
   });
 
   const [doctorsList, setDoctorsList] = useState([]);
@@ -287,12 +288,55 @@ const AppointmentForm = ({ onSubmit, loading }) => {
 
                 <span className="form-section-title" style={{ marginTop: '20px' }}>Consultation Details</span>
                 <div className="form-grid">
+
+                  {/* Consultation Type Toggle */}
                   <div className="form-group full-width">
-                    <label>Reason</label>
+                    <label>Consultation Mode</label>
+                    <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
+                      <button
+                        type="button"
+                        onClick={() => setFormData(prev => ({ ...prev, consultation_type: 'in_person' }))}
+                        style={{
+                          flex: 1, padding: '12px', borderRadius: '12px', border: '2px solid',
+                          borderColor: formData.consultation_type === 'in_person' ? 'var(--nn-primary)' : 'var(--nn-border)',
+                          background: formData.consultation_type === 'in_person' ? 'var(--nn-primary-light)' : 'var(--nn-surface)',
+                          color: formData.consultation_type === 'in_person' ? 'var(--nn-primary)' : 'var(--nn-text-muted)',
+                          fontWeight: 700, fontSize: '14px', cursor: 'pointer',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                          transition: 'all 0.2s'
+                        }}
+                      >
+                        🏥 In-Person
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setFormData(prev => ({ ...prev, consultation_type: 'online' }))}
+                        style={{
+                          flex: 1, padding: '12px', borderRadius: '12px', border: '2px solid',
+                          borderColor: formData.consultation_type === 'online' ? '#0EA5E9' : 'var(--nn-border)',
+                          background: formData.consultation_type === 'online' ? '#E0F2FE' : 'var(--nn-surface)',
+                          color: formData.consultation_type === 'online' ? '#0369A1' : 'var(--nn-text-muted)',
+                          fontWeight: 700, fontSize: '14px', cursor: 'pointer',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                          transition: 'all 0.2s'
+                        }}
+                      >
+                        💻 Online
+                      </button>
+                    </div>
+                    {formData.consultation_type === 'online' && (
+                      <p style={{ fontSize: '12px', color: '#0369A1', marginTop: '6px', marginBottom: 0 }}>
+                        📹 A video call link will be shared upon appointment confirmation.
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="form-group full-width">
+                    <label>Reason for Visit</label>
                     <input
                       type="text"
                       name="reason"
-                      placeholder="e.g., Follow-up..."
+                      placeholder="e.g., Follow-up, chest pain, fever..."
                       value={formData.reason}
                       onChange={handleChange}
                       required
@@ -350,6 +394,15 @@ const AppointmentForm = ({ onSubmit, loading }) => {
                   <span className="label"><FileText size={16} /> Reason</span>
                   <span className="value">{formData.reason || "—"}</span>
                 </div>
+                <div className="summary-row">
+                    <span className="label">🏥 Mode</span>
+                    <span className="value" style={{
+                      color: formData.consultation_type === 'online' ? '#0369A1' : 'var(--nn-primary)',
+                      fontWeight: 700
+                    }}>
+                      {formData.consultation_type === 'online' ? '💻 Online' : '🏥 In-Person'}
+                    </span>
+                  </div>
                 <div className="summary-row">
                   <span className="label"><Activity size={16} /> Urgency</span>
                   <span className="value" style={{ 
@@ -420,6 +473,16 @@ const AppointmentForm = ({ onSubmit, loading }) => {
               </div>
 
               <div className="reason-box" style={{ background: '#f8fafc', padding: '16px', borderRadius: '12px', border: '1px solid #e2e8f0', marginBottom: '24px' }}>
+                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                    <span className="pm-slot-label">Mode</span>
+                    <span style={{
+                      fontSize: '11px', fontWeight: 900, padding: '2px 8px', borderRadius: '6px',
+                      background: formData.consultation_type === 'online' ? '#E0F2FE' : '#DBEAFE',
+                      color: formData.consultation_type === 'online' ? '#0369A1' : '#1D4ED8'
+                    }}>
+                      {formData.consultation_type === 'online' ? '💻 Online Consultation' : '🏥 In-Person Visit'}
+                    </span>
+                  </div>
                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
                     <span className="pm-slot-label">Priority</span>
                     <span style={{ 
