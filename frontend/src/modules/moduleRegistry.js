@@ -25,6 +25,7 @@ import assessmentReportsModule from './assessment-reports/index.jsx';
 import performanceAnalyticsModule from './performance-analytics';
 import alertsModule from './alerts';
 import patientChatModule from './patient-chat';
+import patientDoctorProfileModule from './patient-doctor-profile';
 import patientTimelineModule from './patient-timeline';
 import clinicalArchivesModule from './clinical-archives';
 import settingsModule from './settings';
@@ -64,6 +65,7 @@ export const moduleRegistry = [
   performanceAnalyticsModule,
   alertsModule,
   patientChatModule,
+  patientDoctorProfileModule,
   patientTimelineModule,
   clinicalArchivesModule,
   settingsModule,

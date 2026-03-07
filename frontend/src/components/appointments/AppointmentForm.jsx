@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { User, Calendar, Clock, FileText, Activity } from "lucide-react";
 import { getDoctors, getAvailableSlots } from "../../api/appointments";
 import "../../styles/appointments.css";
 
 const AppointmentForm = ({ onSubmit, loading }) => {
+  const navigate = useNavigate();
   const today = new Date().toISOString().split('T')[0];
   const [formData, setFormData] = useState({
     doctor_id: "",
@@ -201,7 +203,19 @@ const AppointmentForm = ({ onSubmit, loading }) => {
                 <span className="form-section-title">Appointment Details</span>
                 <div className="form-grid">
                   <div className="form-group full-width">
-                    <label>Select Doctor</label>
+                    <div className="d-flex align-items-center justify-content-between mb-1">
+                      <label className="mb-0">Select Doctor</label>
+                      {formData.doctor_id && (
+                        <button
+                          type="button"
+                          className="btn btn-link p-0"
+                          onClick={() => navigate(`/patient/doctor/${formData.doctor_id}`)}
+                          style={{ fontSize: "12px", fontWeight: 700, textDecoration: "none" }}
+                        >
+                          View Profile
+                        </button>
+                      )}
+                    </div>
                     <select
                       name="doctor_id"
                       value={formData.doctor_id}

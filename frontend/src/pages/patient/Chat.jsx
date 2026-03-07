@@ -198,6 +198,15 @@ const Chat = () => {
                                         <button className="btn-close shadow-none d-lg-none" onClick={() => setShowInfoPanel(false)}></button>
                                     </div>
                                     <p className="text-secondary small fw-medium mb-0">Care provider profile</p>
+                                    {selectedConv?.other_user?.id && (
+                                        <button
+                                            type="button"
+                                            className="btn btn-sm btn-outline-primary mt-2"
+                                            onClick={() => navigate(`/patient/doctor/${selectedConv.other_user.id}`)}
+                                        >
+                                            Open Full Profile
+                                        </button>
+                                    )}
                                 </div>
                                 <div className="p-4 d-flex flex-column gap-3">
                                     {[

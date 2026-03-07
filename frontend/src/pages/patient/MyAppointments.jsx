@@ -281,6 +281,16 @@ const MyAppointments = () => {
                             <td>
                                 <div className="doctor-info">
                                     <span className="doctor-name">{appt.doctor_name}</span>
+                                    {appt.doctor_id && (
+                                      <button
+                                        type="button"
+                                        className="btn btn-link p-0 ms-2"
+                                        style={{ fontSize: "12px", textDecoration: "none", fontWeight: 700 }}
+                                        onClick={() => navigate(`/patient/doctor/${appt.doctor_id}`)}
+                                      >
+                                        View Profile
+                                      </button>
+                                    )}
                                 </div>
                             </td>
                             <td className="text-muted font-medium">{formatDate(appt.appointment_date)}</td>

@@ -200,6 +200,74 @@ def get_all_doctors():
         return jsonify({"error": str(e)}), 500
 
 
+@appointments_bp.route("/doctors/<int:doctor_id>/profile", methods=["GET"])
+@jwt_required()
+def get_doctor_public_profile(doctor_id):
+    try:
+        if not _is_patient():
+            return jsonify({"error": "Patient access required"}), 403
+
+        from database.models import (
+            User,
+            DoctorProfile,
+            DoctorPrivacySetting,
+            DoctorConsultationSetting,
+        )
+
+        doctor_data = (
+            db.session.query(User, DoctorProfile, DoctorPrivacySetting, DoctorConsultationSetting)
+            .join(DoctorProfile, User.id == DoctorProfile.user_id)
+            .outerjoin(DoctorPrivacySetting, User.id == DoctorPrivacySetting.doctor_user_id)
+            .outerjoin(DoctorConsultationSetting, User.id == DoctorConsultationSetting.doctor_user_id)
+            .filter(User.role == "doctor", User.id == doctor_id)
+            .first()
+        )
+
+        if not doctor_data:
+            return jsonify({"error": "Doctor not found"}), 404
+
+        user, profile, privacy, consultation = doctor_data
+        raw_visibility = getattr(privacy, "show_profile_publicly", True)
+        is_visible = True if raw_visibility is None else bool(raw_visibility)
+        if not is_visible:
+            return jsonify({"error": "Doctor profile is not publicly available"}), 404
+
+        consultation_fee = (
+            consultation.consultation_fee
+            if consultation and consultation.consultation_fee is not None
+            else (profile.consultation_fee or 500.0)
+        )
+        if privacy and privacy.show_consultation_fee is False:
+            consultation_fee = None
+
+        return jsonify(
+            {
+                "id": user.id,
+                "full_name": user.full_name,
+                "email": user.email,
+                "specialization": profile.specialization or "General Physician",
+                "qualification": profile.qualification,
+                "experience_years": profile.experience_years,
+                "department": profile.department,
+                "sector": profile.sector,
+                "bio": profile.bio,
+                "hospital_name": profile.hospital_name,
+                "consultation_mode": (
+                    consultation.consultation_mode
+                    if consultation and consultation.consultation_mode
+                    else (profile.consultation_mode or "Both")
+                ),
+                "consultation_fee": consultation_fee,
+                "profile_image": profile.profile_image,
+                "expertise_tags": [t.to_dict() for t in profile.expertise_tags],
+                "experience": [e.to_dict() for e in profile.experience],
+                "availability": [a.to_dict() for a in profile.availability],
+            }
+        ), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 @appointments_bp.route("/doctors/<int:doctor_id>/available-slots", methods=["GET"])
 @jwt_required()
 def get_available_slots(doctor_id):

@@ -52,6 +52,11 @@ export const getAvailableSlots = async (doctorId, date) => {
   };
 };
 
+export const getDoctorPublicProfile = async (doctorId) => {
+  const response = await axios.get(`/appointments/doctors/${doctorId}/profile`);
+  return response.data;
+};
+
 export const bookAppointmentBySlot = async (data) => {
   const response = await axios.post("/appointments/book-by-slot", data);
   return response.data;
