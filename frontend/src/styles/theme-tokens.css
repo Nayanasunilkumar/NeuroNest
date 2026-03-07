@@ -1,42 +1,98 @@
 /* =========================================================
-   NEURONEST THEME ARCHITECTURE — TOKEN SYSTEM
-   Defining the clear boundary between Light and Dark modes.
+   NEURONEST DESIGN SYSTEM — PROFESSIONAL MEDICAL PALETTE
+   Slate-based dark mode, WCAG-accessible, optimised for
+   long clinical sessions. Consistent across all modules.
    ========================================================= */
 
 :root {
-  /* --- BRAND COLORS (Static) --- */
-  --nn-primary: #2b70ff;
-  --nn-primary-hover: #1e5ade;
-  --nn-success: #10b981;
-  --nn-warning: #f59e0b;
-  --nn-danger: #ef4444;
-  --nn-accent: #6366f1;
+  /* --- BRAND (Static across both themes) --- */
+  --nn-primary:        #2563EB;
+  --nn-primary-hover:  #1D4ED8;
+  --nn-primary-light:  #DBEAFE;
+  --nn-accent:         #6366f1;
 
-  /* --- LIGHT THEME (Core Tokens) --- */
-  --nn-bg: #f8fafc;
-  --nn-surface: #ffffff;
-  --nn-surface-secondary: #f1f5f9;
-  --nn-border: #e2e8f0;
-  --nn-text-main: #0f172a;
-  --nn-text-secondary: #64748b;
-  --nn-text-muted: #94a3b8;
-  --nn-glass: rgba(255, 255, 255, 0.85);
-  --nn-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --nn-nav-bg: rgba(255, 255, 255, 0.9);
-  --nn-card-shadow: 0 20px 40px rgba(0, 0, 0, 0.05);
+  /* --- STATUS COLORS (Same in both themes) --- */
+  --nn-success:        #16A34A;
+  --nn-success-bg:     #DCFCE7;
+  --nn-success-text:   #166534;
+  --nn-warning:        #F59E0B;
+  --nn-warning-bg:     #FEF9C3;
+  --nn-danger:         #EF4444;
+  --nn-danger-bg:      #FEE2E2;
+  --nn-danger-text:    #DC2626;
+  --nn-info:           #0EA5E9;
+  --nn-info-bg:        #DBEAFE;
+  --nn-info-text:      #1D4ED8;
+
+  /* --- LIGHT THEME TOKENS --- */
+  --nn-bg:                  #F8FAFC;
+  --nn-surface:             #FFFFFF;
+  --nn-surface-secondary:   #F1F5F9;
+  --nn-border:              #E2E8F0;
+  --nn-border-strong:       #CBD5E1;
+  --nn-text-main:           #0F172A;
+  --nn-text-secondary:      #334155;
+  --nn-text-muted:          #64748B;
+  --nn-text-disabled:       #94A3B8;
+  --nn-glass:               rgba(255, 255, 255, 0.85);
+  --nn-shadow:              0 4px 6px -1px rgb(0 0 0 / 0.07), 0 2px 4px -2px rgb(0 0 0 / 0.07);
+  --nn-card-shadow:         0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06);
+  --nn-nav-bg:              rgba(255, 255, 255, 0.95);
+  --nn-nav-border:          #E2E8F0;
+
+  /* --- URGENT CASE (Light) --- */
+  --nn-urgent-bg:           #FEE2E2;
+  --nn-urgent-text:         #DC2626;
+
+  /* --- ONLINE CONSULT (Light) --- */
+  --nn-online-bg:           #DBEAFE;
+  --nn-online-text:         #1D4ED8;
+
+  /* --- COMPLETED (Light) --- */
+  --nn-completed-bg:        #DCFCE7;
+  --nn-completed-text:      #166534;
 }
 
-/* --- DARK THEME (Override Tokens) --- */
+/* --- DARK THEME (Slate-based, soft on eyes) --- */
 .dark {
-  --nn-bg: #0d0d0f;
-  --nn-surface: #16161a;
-  --nn-surface-secondary: #111114;
-  --nn-border: #232327;
-  --nn-text-main: #f8fafc;
-  --nn-text-secondary: #94a3b8;
-  --nn-text-muted: #4b5563;
-  --nn-glass: rgba(22, 22, 26, 0.8);
-  --nn-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.5);
-  --nn-nav-bg: rgba(13, 13, 15, 0.9);
-  --nn-card-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+  --nn-bg:                  #0F172A;
+  --nn-surface:             #1E293B;
+  --nn-surface-secondary:   #111827;
+  --nn-border:              #334155;
+  --nn-border-strong:       #475569;
+  --nn-text-main:           #F1F5F9;
+  --nn-text-secondary:      #E2E8F0;
+  --nn-text-muted:          #94A3B8;
+  --nn-text-disabled:       #64748B;
+  --nn-glass:               rgba(30, 41, 59, 0.85);
+  --nn-shadow:              0 10px 15px -3px rgb(0 0 0 / 0.4), 0 4px 6px -4px rgb(0 0 0 / 0.4);
+  --nn-card-shadow:         0 4px 24px rgba(0, 0, 0, 0.35);
+  --nn-nav-bg:              rgba(17, 24, 39, 0.97);
+  --nn-nav-border:          #1F2937;
+
+  /* --- OVERRIDE STATUS COLORS (Dark) --- */
+  --nn-success-bg:          #14532D;
+  --nn-success-text:        #86EFAC;
+  --nn-danger-bg:           #7F1D1D;
+  --nn-danger-text:         #FCA5A5;
+  --nn-info-bg:             #1E3A8A;
+  --nn-info-text:           #93C5FD;
+  --nn-warning-bg:          #78350F;
+
+  /* --- URGENT CASE (Dark) --- */
+  --nn-urgent-bg:           #7F1D1D;
+  --nn-urgent-text:         #FCA5A5;
+
+  /* --- ONLINE CONSULT (Dark) --- */
+  --nn-online-bg:           #1E3A8A;
+  --nn-online-text:         #93C5FD;
+
+  /* --- COMPLETED (Dark) --- */
+  --nn-completed-bg:        #14532D;
+  --nn-completed-text:      #86EFAC;
+
+  /* Override primary-light for dark context */
+  --nn-primary-light:       #1E3A8A;
+  --nn-primary:             #3B82F6;
+  --nn-primary-hover:       #2563EB;
 }

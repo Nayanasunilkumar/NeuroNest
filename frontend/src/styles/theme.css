@@ -40,35 +40,35 @@
 
 body.dark {
   /* =========================================
-     DARK THEME (VANGUARD NAVY)
+     DARK THEME (SLATE — easy on clinical eyes)
      ========================================= */
-  --admin-bg: #0b0e14;
-  --admin-panel-bg: #11141d;
-  --admin-card-bg: #11141d;
-  --admin-header-bg: #0b0e14;
-  --admin-text-main: #f8fafc;
-  --admin-text-muted: #94a3b8;
-  --admin-border: rgba(255, 255, 255, 0.06);
-  --admin-border-strong: rgba(255, 255, 255, 0.12);
+  --admin-bg:           #0F172A;
+  --admin-panel-bg:     #111827;
+  --admin-card-bg:      #1E293B;
+  --admin-header-bg:    #111827;
+  --admin-text-main:    #F1F5F9;
+  --admin-text-muted:   #94A3B8;
+  --admin-border:       #334155;
+  --admin-border-strong:#475569;
   
   /* Primary Axis */
-  --admin-accent: #6366f1;
-  --admin-accent-gradient: linear-gradient(135deg, #6366f1 0%, #818cf8 100%);
-  --admin-accent-soft: rgba(99, 102, 241, 0.08);
-  --admin-accent-glow: rgba(99, 102, 241, 0.3);
+  --admin-accent: #3B82F6;
+  --admin-accent-gradient: linear-gradient(135deg, #2563EB 0%, #3B82F6 100%);
+  --admin-accent-soft: rgba(59, 130, 246, 0.08);
+  --admin-accent-glow: rgba(59, 130, 246, 0.25);
   
   /* Oversight Components */
-  --admin-modal-bg: #111827;
-  --admin-modal-overlay: rgba(0, 0, 0, 0.85);
-  --admin-modal-border: rgba(255, 255, 255, 0.08);
-  --admin-input-bg: #000000;
-  --admin-terminal-bg: #000000;
-  --admin-timeline-line: rgba(255, 255, 255, 0.05);
+  --admin-modal-bg: #1E293B;
+  --admin-modal-overlay: rgba(0, 0, 0, 0.75);
+  --admin-modal-border: #334155;
+  --admin-input-bg: #111827;
+  --admin-terminal-bg: #0F172A;
+  --admin-timeline-line: #334155;
   
   /* Optical Effects */
   --admin-glass: blur(12px) saturate(180%);
-  --admin-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-  --admin-shadow-strong: 0 40px 100px -20px rgba(0, 0, 0, 0.8);
+  --admin-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -4px rgba(0, 0, 0, 0.4);
+  --admin-shadow-strong: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
 }
 
 /* Global Transition Axis */
