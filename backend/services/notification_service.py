@@ -347,34 +347,135 @@ class NotificationService:
     def _generate_message(appointment, event_type, recipient_role="doctor"):
         patient_name = appointment.patient.full_name
         doctor_name = appointment.doctor.full_name
-        apt_date = appointment.appointment_date.strftime("%b %d, %Y")
+        patient_name_full = appointment.patient.full_name
+        apt_date = appointment.appointment_date.strftime("%B %d, %Y")
         apt_time = appointment.appointment_time.strftime("%I:%M %p")
-        
+        reason   = appointment.reason or "General consultation"
+        priority = (appointment.priority_level or "routine").title()
+
         if recipient_role == "doctor":
             if event_type == "new_booking":
-                return f"You have a new appointment request from {patient_name} on {apt_date} at {apt_time}."
+                return (
+                    f"Dear Dr. {doctor_name},\n\n"
+                    f"A new appointment request has been submitted by your patient {patient_name_full}.\n\n"
+                    f"Appointment Details:\n"
+                    f"  • Date       : {apt_date}\n"
+                    f"  • Time       : {apt_time}\n"
+                    f"  • Reason     : {reason}\n"
+                    f"  • Priority   : {priority}\n\n"
+                    f"Please log in to your NeuroNest dashboard to review and approve or reschedule this request at your earliest convenience."
+                )
             elif event_type == "cancelled":
-                return f"Appointment with {patient_name} on {apt_date} at {apt_time} has been cancelled."
+                return (
+                    f"Dear Dr. {doctor_name},\n\n"
+                    f"We would like to inform you that the appointment scheduled with {patient_name_full} "
+                    f"on {apt_date} at {apt_time} has been cancelled.\n\n"
+                    f"Reason for visit was: {reason}.\n\n"
+                    f"The slot is now available for other patients. You may log in to your dashboard to manage your schedule."
+                )
             elif event_type == "rescheduled":
-                return f"Patient {patient_name} has rescheduled their appointment to {apt_date} at {apt_time}."
+                return (
+                    f"Dear Dr. {doctor_name},\n\n"
+                    f"Your patient {patient_name_full} has requested a reschedule of their appointment.\n\n"
+                    f"Updated Appointment Details:\n"
+                    f"  • New Date   : {apt_date}\n"
+                    f"  • New Time   : {apt_time}\n"
+                    f"  • Reason     : {reason}\n\n"
+                    f"Please review the updated schedule in your NeuroNest dashboard and confirm availability."
+                )
             elif event_type == "approved":
-                return f"Appointment with {patient_name} on {apt_date} at {apt_time} is now confirmed."
+                return (
+                    f"Dear Dr. {doctor_name},\n\n"
+                    f"The appointment with {patient_name_full} on {apt_date} at {apt_time} has been confirmed and added to your schedule.\n\n"
+                    f"Appointment Details:\n"
+                    f"  • Date       : {apt_date}\n"
+                    f"  • Time       : {apt_time}\n"
+                    f"  • Reason     : {reason}\n\n"
+                    f"You can review full patient details and clinical notes in your NeuroNest dashboard."
+                )
             elif event_type == "rejected":
-                return f"Appointment request from {patient_name} on {apt_date} at {apt_time} has been rejected."
+                return (
+                    f"Dear Dr. {doctor_name},\n\n"
+                    f"The appointment request from {patient_name_full} scheduled for {apt_date} at {apt_time} has been declined.\n\n"
+                    f"The patient will be notified and may submit a new request at a different time. "
+                    f"No further action is required from your side at this moment."
+                )
             elif event_type == "completed":
-                return f"Appointment with {patient_name} on {apt_date} has been completed."
-        else: # Patient
+                return (
+                    f"Dear Dr. {doctor_name},\n\n"
+                    f"The appointment with {patient_name_full} on {apt_date} has been successfully marked as completed.\n\n"
+                    f"Please ensure that any clinical notes, prescriptions, or follow-up instructions have been recorded "
+                    f"in the patient's profile on your NeuroNest dashboard.\n\n"
+                    f"Thank you for your continued dedication to patient care."
+                )
+
+        else:  # Patient
             if event_type == "new_booking":
-                return f"Your appointment request with {doctor_name} on {apt_date} at {apt_time} has been submitted and is pending approval."
+                return (
+                    f"Dear {patient_name_full},\n\n"
+                    f"Your appointment request has been successfully submitted and is now awaiting approval from Dr. {doctor_name}.\n\n"
+                    f"Appointment Details:\n"
+                    f"  • Doctor     : Dr. {doctor_name}\n"
+                    f"  • Date       : {apt_date}\n"
+                    f"  • Time       : {apt_time}\n"
+                    f"  • Reason     : {reason}\n"
+                    f"  • Priority   : {priority}\n\n"
+                    f"You will receive another notification once the doctor reviews your request. "
+                    f"You can track the status of your appointment in your NeuroNest patient dashboard."
+                )
             elif event_type == "cancelled":
-                return f"Your appointment with {doctor_name} on {apt_date} at {apt_time} has been cancelled."
+                return (
+                    f"Dear {patient_name_full},\n\n"
+                    f"We regret to inform you that your appointment with Dr. {doctor_name} on {apt_date} at {apt_time} has been cancelled.\n\n"
+                    f"If you would like to reschedule, please log in to your NeuroNest dashboard and book a new slot at your convenience. "
+                    f"We apologise for any inconvenience caused."
+                )
             elif event_type == "rescheduled":
-                return f"Your appointment with {doctor_name} has been rescheduled to {apt_date} at {apt_time}."
+                return (
+                    f"Dear {patient_name_full},\n\n"
+                    f"Your appointment with Dr. {doctor_name} has been rescheduled to a new time.\n\n"
+                    f"Updated Appointment Details:\n"
+                    f"  • Doctor     : Dr. {doctor_name}\n"
+                    f"  • New Date   : {apt_date}\n"
+                    f"  • New Time   : {apt_time}\n\n"
+                    f"Please log in to your NeuroNest dashboard to confirm this new schedule. "
+                    f"If this time does not work for you, you may contact the clinic to arrange an alternative."
+                )
             elif event_type == "approved":
-                return f"Great news! Your appointment with {doctor_name} on {apt_date} at {apt_time} has been approved."
+                return (
+                    f"Dear {patient_name_full},\n\n"
+                    f"Great news! Your appointment with Dr. {doctor_name} has been confirmed.\n\n"
+                    f"Appointment Details:\n"
+                    f"  • Doctor     : Dr. {doctor_name}\n"
+                    f"  • Date       : {apt_date}\n"
+                    f"  • Time       : {apt_time}\n"
+                    f"  • Reason     : {reason}\n\n"
+                    f"Please arrive 10 minutes before your scheduled time. You can view full details "
+                    f"and manage your appointments through your NeuroNest patient dashboard."
+                )
             elif event_type == "rejected":
-                return f"We regret to inform you that your appointment request with {doctor_name} on {apt_date} at {apt_time} could not be accepted at this time."
+                return (
+                    f"Dear {patient_name_full},\n\n"
+                    f"We regret to inform you that your appointment request with Dr. {doctor_name} "
+                    f"on {apt_date} at {apt_time} could not be accommodated at this time.\n\n"
+                    f"This may be due to scheduling conflicts or unavailability. "
+                    f"We encourage you to log in to your NeuroNest dashboard and select an alternative date or doctor. "
+                    f"We apologise for the inconvenience."
+                )
             elif event_type == "completed":
-                return f"Your appointment with {doctor_name} on {apt_date} has been marked as completed. We hope you had a good experience."
-        
-        return f"Update on appointment between {patient_name} and {doctor_name} on {apt_date} at {apt_time}."
+                return (
+                    f"Dear {patient_name_full},\n\n"
+                    f"Your appointment with Dr. {doctor_name} on {apt_date} has been successfully completed. "
+                    f"We hope your experience was positive and your health concern was addressed.\n\n"
+                    f"Any prescriptions, clinical notes, or follow-up instructions from Dr. {doctor_name} have been recorded "
+                    f"in your NeuroNest patient profile. You can access them anytime through your dashboard.\n\n"
+                    f"Thank you for choosing NeuroNest for your healthcare needs. "
+                    f"Wishing you good health!"
+                )
+
+        return (
+            f"Dear User,\n\n"
+            f"There has been an update regarding your appointment with Dr. {doctor_name} "
+            f"and patient {patient_name_full} on {apt_date} at {apt_time}.\n\n"
+            f"Please log in to your NeuroNest dashboard for full details."
+        )
