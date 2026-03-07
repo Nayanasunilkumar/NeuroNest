@@ -1,8 +1,8 @@
-import gevent.monkey
-gevent.monkey.patch_all()
-
-import os
 from pathlib import Path
+import os
+import sys
+
+# Standard synchronous mode for guaranteed deployment stability on Render.
 
 from flask import Flask
 from flask_cors import CORS
@@ -120,14 +120,12 @@ def create_app():
     # ================= Home Route =================
     @app.route("/")
     def home():
-        # Updated to V12 with GEVENT fix
-        return {"status": "NeuroNest-V12-GEVENT-LIVE"}
+        return {"status": "NeuroNest-V15-STABLE-LIVE"}
 
     from apscheduler.schedulers.background import BackgroundScheduler
     from services.scheduler_service import check_upcoming_consultations
     
     scheduler = BackgroundScheduler()
-    # Pass the app instance to the job so it can use the app_context
     scheduler.add_job(func=check_upcoming_consultations, trigger="interval", minutes=1, args=[app])
     scheduler.start()
 
@@ -136,5 +134,4 @@ def create_app():
 app = create_app()
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    socketio.run(app, host="0.0.0.0", port=port, debug=True)
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
