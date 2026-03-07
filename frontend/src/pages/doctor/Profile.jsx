@@ -415,22 +415,9 @@ const Profile = () => {
 
                                     <div className="col-12"><hr style={{borderColor:'#333', margin:'10px 0 25px 0'}}/></div>
 
-                                    <div className="col-12 col-md-4 dark-input-group">
-                                        <label className="dark-label">Fee Base Node (₹)</label>
-                                        <input type="number" name="consultation_fee" className="dark-input" value={formData.consultation_fee || ''} onChange={handleChange} />
-                                    </div>
-                                    <div className="col-12 col-md-4 dark-input-group">
+                                    <div className="col-12 dark-input-group">
                                         <label className="dark-label">Hospital Cluster</label>
                                         <input name="hospital_name" className="dark-input" value={formData.hospital_name || ''} onChange={handleChange} />
-                                    </div>
-                                    <div className="col-12 col-md-4 dark-input-group">
-                                        <label className="dark-label">Consultation Proxy</label>
-                                        <select name="consultation_mode" className="dark-input" value={formData.consultation_mode || ''} onChange={handleChange}>
-                                            <option value="">Routing Mode</option>
-                                            <option value="Online">Online Payload</option>
-                                            <option value="Offline">Offline Payload</option>
-                                            <option value="Both">Online and Offline Consultation</option>
-                                        </select>
                                     </div>
 
                                     <div className="col-12 dark-input-group">
