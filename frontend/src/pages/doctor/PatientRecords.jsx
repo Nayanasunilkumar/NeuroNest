@@ -188,7 +188,7 @@ const PatientRecords = () => {
                             {/* Bottom row: Vitals + Tags */}
                             <div className="d-flex flex-wrap flex-xl-nowrap justify-content-between align-items-center gap-4">
                                 {/* Vitals Box */}
-                                <div className="d-flex align-items-center p-3 px-4 rounded-4" style={{border: '1.5px dashed #e2e8f0', gap: '30px', backgroundColor: '#ffffff'}}>
+                                <div className="d-flex flex-wrap justify-content-center align-items-center p-3 px-4 rounded-4 w-100 w-xl-auto" style={{border: '1.5px dashed #e2e8f0', gap: 'max(15px, 2vw)', backgroundColor: '#ffffff'}}>
                                     <div className="text-center">
                                         <div className="d-flex align-items-baseline justify-content-center gap-1">
                                             <span className="fw-black text-dark lh-1" style={{fontSize: '1.25rem'}}>22.4</span>
@@ -229,15 +229,15 @@ const PatientRecords = () => {
                                 </div>
 
                                 {/* Tags */}
-                                <div className="d-flex flex-column align-items-end gap-3 text-end">
-                                    <div className="d-flex flex-column align-items-end gap-1">
+                                <div className="d-flex flex-column align-items-xl-end align-items-center gap-3 w-100 w-xl-auto mt-3 mt-xl-0 text-center text-xl-end">
+                                    <div className="d-flex flex-column align-items-center align-items-xl-end gap-1">
                                         <span className="text-dark fw-bolder mb-1" style={{fontSize: '0.75rem'}}>Own diagnosis</span>
                                         <div className="d-flex gap-2">
                                             <span className="nn-badge nn-badge-warning">Obesity</span>
                                             <span className="nn-badge nn-badge-warning">Uncontrolled Type 2</span>
                                         </div>
                                     </div>
-                                    <div className="d-flex flex-column align-items-end gap-1">
+                                    <div className="d-flex flex-column align-items-center align-items-xl-end gap-1">
                                         <span className="text-dark fw-bolder mb-1" style={{fontSize: '0.75rem'}}>Health barriers</span>
                                         <div className="d-flex gap-2">
                                             <span className="nn-badge nn-badge-info">Fear of medication</span>

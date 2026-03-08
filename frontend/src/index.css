@@ -220,12 +220,14 @@ body {
   background: var(--nn-surface);
   border: 1px solid var(--nn-border);
   border-radius: var(--nn-radius-lg);
-  overflow: hidden;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .nn-table {
   width: 100%;
   border-collapse: collapse;
+  min-width: 650px;
 }
 
 .nn-table th {
@@ -296,3 +298,24 @@ body.dark .btn-toggle { background: var(--nn-primary); }
   text-decoration: none;
 }
 .auth-link:hover { text-decoration: underline; }
+
+/* ---- MOBILE RESPONSIVENESS ------------------------------ */
+@media (max-width: 768px) {
+  .text-page-title {
+    font-size: 22px;
+  }
+  .text-section-title {
+    font-size: 18px;
+  }
+  .nn-card {
+    padding: var(--nn-space-4);
+    border-radius: var(--nn-radius-md);
+  }
+  .nn-metric-card {
+    padding: var(--nn-space-4);
+    border-radius: var(--nn-radius-md);
+  }
+  .nn-table th, .nn-table td {
+    padding: var(--nn-space-3);
+  }
+}
