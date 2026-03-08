@@ -57,60 +57,62 @@ const DoctorFeedbackPage = () => {
 
   return (
     <div className="df-page">
-      {/* ── Header ─────────────────────────────────────────────────── */}
-      <div className="df-header">
-        <div>
-          <h1 className="df-heading">Performance Feedback</h1>
-          <p className="df-subheading">Internal Clinical Quality Monitor · For your eyes only</p>
-        </div>
-        <button className="df-icon-btn" onClick={refresh} disabled={loading} title="Refresh">
-          <RefreshCcw size={17} className={loading ? 'df-spin' : ''} />
-        </button>
-      </div>
-
-      {/* ── Quality Alert ──────────────────────────────────────────── */}
-      <QualityAlert summary={summary} reviews={reviews} />
-
-      {/* ── Overview Cards ─────────────────────────────────────────── */}
-      <FeedbackOverviewCards summary={summary} />
-
-      {/* ── Charts row ─────────────────────────────────────────────── */}
-      <div className="df-charts-row">
-        <RatingDistributionChart distribution={distribution} />
-        <PerformanceTrendChart trend={trend} />
-      </div>
-
-      {/* ── Tag Analytics ──────────────────────────────────────────── */}
-      <TagAnalyticsPanel tags={tags} />
-
-      {/* ── AI-style Insight Summary ───────────────────────────────── */}
-      {summary && summary.total_reviews > 0 && (
-        <div className="df-ai-block">
-          <div className="df-ai-header">
-            <ShieldCheck size={16} />
-            <span>Clinical Insight Summary</span>
+      <div className="df-shell">
+        {/* ── Header ─────────────────────────────────────────────────── */}
+        <div className="df-header">
+          <div>
+            <h1 className="df-heading">Performance Feedback</h1>
+            <p className="df-subheading">Internal Clinical Quality Monitor · For your eyes only</p>
           </div>
-          <p className="df-ai-text">
-            {summary.avg_rating >= 4
-              ? `Patients consistently rate your care highly (avg ${summary.avg_rating}★). Keep maintaining your communication standards.`
-              : summary.avg_rating >= 3
-              ? `Your average rating is ${summary.avg_rating}★. There is room for growth — check the tag analytics to identify recurring concerns.`
-              : `Your average rating is ${summary.avg_rating}★. Immediate attention is recommended. Review feedback patterns and discuss with your department head.`}
-            {summary.negative_reviews_30d > 0 && ` You have ${summary.negative_reviews_30d} negative review(s) in the last 30 days to address.`}
-          </p>
+          <button className="df-icon-btn" onClick={refresh} disabled={loading} title="Refresh">
+            <RefreshCcw size={17} className={loading ? 'df-spin' : ''} />
+          </button>
         </div>
-      )}
 
-      {/* ── Review List ─────────────────────────────────────────────── */}
-      <ReviewList reviews={reviews} />
+        {/* ── Quality Alert ──────────────────────────────────────────── */}
+        <QualityAlert summary={summary} reviews={reviews} />
 
-      {/* ── Loading overlay ──────────────────────────────────────── */}
-      {loading && !summary && (
-        <div className="df-loading-overlay">
-          <div className="df-spinner" />
-          <p>Loading feedback data…</p>
+        {/* ── Overview Cards ─────────────────────────────────────────── */}
+        <FeedbackOverviewCards summary={summary} />
+
+        {/* ── Charts row ─────────────────────────────────────────────── */}
+        <div className="df-charts-row">
+          <RatingDistributionChart distribution={distribution} />
+          <PerformanceTrendChart trend={trend} />
         </div>
-      )}
+
+        {/* ── Tag Analytics ──────────────────────────────────────────── */}
+        <TagAnalyticsPanel tags={tags} />
+
+        {/* ── AI-style Insight Summary ───────────────────────────────── */}
+        {summary && summary.total_reviews > 0 && (
+          <div className="df-ai-block">
+            <div className="df-ai-header">
+              <ShieldCheck size={16} />
+              <span>Clinical Insight Summary</span>
+            </div>
+            <p className="df-ai-text">
+              {summary.avg_rating >= 4
+                ? `Patients consistently rate your care highly (avg ${summary.avg_rating}★). Keep maintaining your communication standards.`
+                : summary.avg_rating >= 3
+                ? `Your average rating is ${summary.avg_rating}★. There is room for growth — check the tag analytics to identify recurring concerns.`
+                : `Your average rating is ${summary.avg_rating}★. Immediate attention is recommended. Review feedback patterns and discuss with your department head.`}
+              {summary.negative_reviews_30d > 0 && ` You have ${summary.negative_reviews_30d} negative review(s) in the last 30 days to address.`}
+            </p>
+          </div>
+        )}
+
+        {/* ── Review List ─────────────────────────────────────────────── */}
+        <ReviewList reviews={reviews} />
+
+        {/* ── Loading overlay ──────────────────────────────────────── */}
+        {loading && !summary && (
+          <div className="df-loading-overlay">
+            <div className="df-spinner" />
+            <p>Loading feedback data…</p>
+          </div>
+        )}
+      </div>
 
       <style>{`
         :root {
@@ -140,6 +142,20 @@ const DoctorFeedbackPage = () => {
           font-family: 'Inter', system-ui, sans-serif;
           color: var(--df-text);
           animation: dfFadeIn 0.4s ease-out;
+        }
+        .df-shell {
+          background: color-mix(in srgb, var(--nn-primary) 6%, var(--nn-surface));
+          border: 1px solid var(--nn-border);
+          border-radius: 24px;
+          box-shadow: var(--nn-shadow-soft);
+          padding: 1.75rem;
+          min-height: calc(100vh - 140px);
+        }
+        @media (max-width: 768px) {
+          .df-shell {
+            padding: 1rem;
+            border-radius: 16px;
+          }
         }
         @keyframes dfFadeIn { from { opacity:0; transform: translateY(8px); } to { opacity:1; transform: translateY(0); } }
 
