@@ -332,8 +332,8 @@ const MyPatients = () => {
                         </p>
                     </div>
                 ) : (
-                    <div className="roster-table-container">
-                        <table className="roster-table">
+                    <div className="nn-table-wrapper">
+                        <table className="nn-table">
                             <thead>
                                 <tr>
                                     <th>Patient Identity</th>

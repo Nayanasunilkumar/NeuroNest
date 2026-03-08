@@ -143,7 +143,7 @@ const PatientRecords = () => {
                         Limited profile mode: full dossier could not be loaded for this patient.
                     </div>
                 )}
-                <div className="card clinical-panel mb-4 border-0">
+                <div className="nn-card mb-6 border-0">
                     <div className="d-flex flex-wrap flex-lg-nowrap gap-4">
                         {/* Avatar Col */}
                         <div className="d-flex flex-column align-items-center gap-3 pe-lg-3">
@@ -155,8 +155,8 @@ const PatientRecords = () => {
                                 )}
                             </div>
                             <div className="d-flex gap-2">
-                                <div className="badge rounded-pill bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 d-flex align-items-center fw-bold" style={{fontSize: '0.65rem', padding: '0.4rem 0.8rem'}}><span className="me-1">🚫</span> Alcohol</div>
-                                <div className="badge rounded-pill bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 d-flex align-items-center fw-bold" style={{fontSize: '0.65rem', padding: '0.4rem 0.8rem'}}><span className="me-1">🚬</span> Smoker</div>
+                                <div className="nn-badge nn-badge-danger d-flex align-items-center fw-bold"><span className="me-1">🚫</span> Alcohol</div>
+                                <div className="nn-badge nn-badge-danger d-flex align-items-center fw-bold"><span className="me-1">🚬</span> Smoker</div>
                             </div>
                         </div>
 
@@ -180,7 +180,7 @@ const PatientRecords = () => {
                                     </div>
                                 </div>
                                 
-                                <button className="btn btn-white border border-light rounded-pill px-4 py-2 fw-bold shadow-sm d-flex align-items-center gap-2 text-dark">
+                                <button className="nn-btn nn-btn-secondary d-flex align-items-center gap-2">
                                     <Edit3 size={14} /> Edit
                                 </button>
                             </div>
@@ -233,15 +233,15 @@ const PatientRecords = () => {
                                     <div className="d-flex flex-column align-items-end gap-1">
                                         <span className="text-dark fw-bolder mb-1" style={{fontSize: '0.75rem'}}>Own diagnosis</span>
                                         <div className="d-flex gap-2">
-                                            <span className="badge bg-warning bg-opacity-10 text-warning rounded-pill px-3 py-2 fw-bold" style={{fontSize: '0.65rem'}}>Obesity</span>
-                                            <span className="badge bg-warning bg-opacity-25 text-warning rounded-pill px-3 py-2 fw-bold" style={{fontSize: '0.65rem'}}>Uncontrolled Type 2</span>
+                                            <span className="nn-badge nn-badge-warning">Obesity</span>
+                                            <span className="nn-badge nn-badge-warning">Uncontrolled Type 2</span>
                                         </div>
                                     </div>
                                     <div className="d-flex flex-column align-items-end gap-1">
                                         <span className="text-dark fw-bolder mb-1" style={{fontSize: '0.75rem'}}>Health barriers</span>
                                         <div className="d-flex gap-2">
-                                            <span className="badge bg-primary bg-opacity-10 text-primary rounded-pill px-3 py-2 fw-bold" style={{fontSize: '0.65rem'}}>Fear of medication</span>
-                                            <span className="badge bg-primary bg-opacity-10 text-primary rounded-pill px-3 py-2 fw-bold" style={{fontSize: '0.65rem'}}>Fear of insulin</span>
+                                            <span className="nn-badge nn-badge-info">Fear of medication</span>
+                                            <span className="nn-badge nn-badge-info">Fear of insulin</span>
                                         </div>
                                     </div>
                                 </div>
@@ -254,8 +254,8 @@ const PatientRecords = () => {
                 <div className="row g-4 mb-4">
                     {/* TIMELINE */}
                     <div className="col-12 col-lg-4">
-                        <div className="clinical-panel h-100">
-                            <div className="panel-header">
+                        <div className="nn-card h-100 p-0 overflow-hidden">
+                            <div className="panel-header px-6 pt-6 pb-2">
                                 <div className="panel-title"><Calendar size={18} /> Timeline</div>
                                 <button className="panel-edit-btn">Edit</button>
                             </div>
@@ -305,8 +305,8 @@ const PatientRecords = () => {
 
                     {/* MEDICAL HISTORY */}
                     <div className="col-12 col-lg-8">
-                        <div className="clinical-panel h-100">
-                            <div className="panel-header">
+                        <div className="nn-card h-100 p-0 overflow-hidden">
+                            <div className="panel-header px-6 pt-6 pb-2">
                                 <div className="panel-title"><Activity size={18} /> Medical history</div>
                                 <button className="panel-edit-btn">Edit</button>
                             </div>
@@ -365,13 +365,13 @@ const PatientRecords = () => {
                 <div className="row g-4 mb-5">
                     {/* MEDICATIONS */}
                     <div className="col-12 col-lg-8">
-                        <div className="clinical-panel h-100 p-0 overflow-hidden d-flex flex-column">
-                            <div className="panel-header p-4 pb-2 m-0">
+                        <div className="nn-card h-100 p-0 overflow-hidden d-flex flex-column">
+                            <div className="panel-header px-6 pt-6 pb-2 m-0 border-0">
                                 <div className="panel-title"><Pill size={18} /> Medications</div>
                                 <button className="panel-edit-btn">Edit</button>
                             </div>
-                            <div className="table-responsive px-2 flex-grow-1">
-                                <table className="table med-table mb-0">
+                            <div className="nn-table-wrapper flex-grow-1 border-top-0 rounded-0">
+                                <table className="nn-table mb-0">
                                     <thead>
                                         <tr>
                                             <th>Name <ChevronRight size={10} style={{transform: 'rotate(90deg)', verticalAlign: 'middle'}}/></th>
@@ -396,10 +396,10 @@ const PatientRecords = () => {
                                                 </div>
                                             </td>
                                             <td><ShieldAlert size={16} className="text-secondary"/></td>
-                                            <td><span className="badge rounded-pill bg-success bg-opacity-10 text-success fw-bold p-2 px-3">Adherent</span></td>
+                                            <td><span className="nn-badge nn-badge-success">Adherent</span></td>
                                             <td>-</td>
                                             <td>-</td>
-                                            <td><span className="badge bg-light text-dark fw-bold border p-2 px-3" style={{borderColor: '#e2e8f0 !important'}}>Patient</span></td>
+                                            <td><span className="nn-badge">Patient</span></td>
                                             <td>-</td>
                                             <td><MoreHorizontal size={16} className="text-secondary" style={{cursor: 'pointer'}}/></td>
                                         </tr>
@@ -414,10 +414,10 @@ const PatientRecords = () => {
                                                 </div>
                                             </td>
                                             <td><ShieldAlert size={16} className="text-primary"/></td>
-                                            <td><span className="badge rounded-pill bg-primary bg-opacity-10 text-primary fw-bold p-2 px-3">Somehow adherent</span></td>
+                                            <td><span className="nn-badge nn-badge-info">Somehow adherent</span></td>
                                             <td>-</td>
                                             <td>-</td>
-                                            <td><span className="badge bg-light text-dark fw-bold border p-2 px-3" style={{borderColor: '#e2e8f0 !important'}}>Patient</span></td>
+                                            <td><span className="nn-badge">Patient</span></td>
                                             <td>-</td>
                                             <td><MoreHorizontal size={16} className="text-secondary" style={{cursor: 'pointer'}}/></td>
                                         </tr>
@@ -432,10 +432,10 @@ const PatientRecords = () => {
                                                 </div>
                                             </td>
                                             <td><ShieldAlert size={16} className="text-secondary"/></td>
-                                            <td><span className="badge rounded-pill bg-danger bg-opacity-10 text-danger fw-bold p-2 px-3">Not adherent</span></td>
+                                            <td><span className="nn-badge nn-badge-danger">Not adherent</span></td>
                                             <td>-</td>
                                             <td>-</td>
-                                            <td><span className="badge bg-light text-dark fw-bold border p-2 px-3" style={{borderColor: '#e2e8f0 !important'}}>Patient</span></td>
+                                            <td><span className="nn-badge">Patient</span></td>
                                             <td>-</td>
                                             <td><MoreHorizontal size={16} className="text-secondary" style={{cursor: 'pointer'}}/></td>
                                         </tr>
@@ -450,10 +450,10 @@ const PatientRecords = () => {
                                                 </div>
                                             </td>
                                             <td><ShieldAlert size={16} className="text-secondary"/></td>
-                                            <td><span className="badge rounded-pill bg-success bg-opacity-10 text-success fw-bold p-2 px-3">Adherent</span></td>
+                                            <td><span className="nn-badge nn-badge-success">Adherent</span></td>
                                             <td>-</td>
                                             <td>-</td>
-                                            <td><span className="badge bg-light text-dark fw-bold border p-2 px-3" style={{borderColor: '#e2e8f0 !important'}}>Patient</span></td>
+                                            <td><span className="nn-badge">Patient</span></td>
                                             <td>-</td>
                                             <td><MoreHorizontal size={16} className="text-secondary" style={{cursor: 'pointer'}}/></td>
                                         </tr>
@@ -465,10 +465,10 @@ const PatientRecords = () => {
 
                     {/* DIET */}
                     <div className="col-12 col-lg-4">
-                        <div className="clinical-panel h-100">
-                            <div className="panel-header mb-3">
+                        <div className="nn-card h-100 p-0 overflow-hidden">
+                            <div className="panel-header px-6 pt-6 pb-2 mb-3">
                                 <div className="panel-title"><Utensils size={18} /> Diet</div>
-                                <button className="btn btn-outline-dark btn-sm rounded-pill fw-bold d-flex align-items-center gap-1 border-secondary border-opacity-25 px-3"><Plus size={14}/> Notes</button>
+                                <button className="nn-btn nn-btn-secondary p-1 px-3 d-flex align-items-center gap-1" style={{fontSize: '0.75rem'}}><Plus size={14}/> Notes</button>
                             </div>
                             <div className="d-flex flex-column pt-1">
                                 <div className="row g-2 mb-2">

@@ -262,12 +262,18 @@ const TodaySchedule = () => {
                                 ? schedule
                                 : schedule.filter(a => (a.consultation_type || 'in_person') === modeFilter);
                             if (filtered.length === 0) return (
-                                <div className="ts-appointment-card justify-content-center p-5 text-center border-0">
-                                    <Bookmark size={48} className="text-muted opacity-20 mb-3" />
-                                    <h3 className="h5 fw-bold">
-                                        {modeFilter === 'online' ? 'No Online Appointments' : modeFilter === 'in_person' ? 'No In-Person Appointments' : 'Agenda Clear'}
+                                <div className="nn-card d-flex flex-column align-items-center justify-content-center p-8 text-center" style={{ minHeight: '300px', borderStyle: 'dashed' }}>
+                                    <div className="mb-4 text-muted" style={{ opacity: 0.5 }}>
+                                        <Calendar size={48} strokeWidth={1} />
+                                    </div>
+                                    <h3 className="text-section-title mb-2">
+                                        {modeFilter === 'online' ? 'No Online Consultations' : modeFilter === 'in_person' ? 'No In-Person Consultations' : 'No consultations today'}
                                     </h3>
-                                    <p className="text-muted small">No consultations for this mode today.</p>
+                                    <p className="text-body mb-6">Your schedule is completely clear for this view.</p>
+                                    <button className="nn-btn nn-btn-secondary" onClick={() => navigate('/doctor/schedule-settings')}>
+                                        <Plus size={16} className="me-2" />
+                                        Add new availability
+                                    </button>
                                 </div>
                             );
                             return filtered.map((appointment) => {
