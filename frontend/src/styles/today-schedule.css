@@ -27,9 +27,7 @@
   background-color: transparent;
   flex: 1;
   min-height: 0;
-  overflow-y: auto;
-  scrollbar-width: none !important; /* Firefox */
-  -ms-overflow-style: none !important; /* IE/Edge */
+  overflow: hidden; /* No scroll on the grid itself */
 }
 
 
@@ -39,6 +37,8 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
+  overflow-y: auto; /* Internal scroll */
+  padding-bottom: 20px;
 }
 
 .ts-section-header {
@@ -74,12 +74,10 @@
 }
 
 .ts-pinned-scroller {
-  overflow-y: auto;
   padding: 12px;
   display: flex;
   flex-direction: column;
   gap: 12px;
-  max-height: 325px; /* Precise height for 2 pins */
 }
 
 
@@ -205,6 +203,9 @@
   display: flex;
   flex-direction: column;
   gap: 24px;
+  overflow-y: auto; /* Internal scroll */
+  padding-right: 4px;
+  padding-bottom: 20px;
 }
 
 .ts-schedule-head {
@@ -355,6 +356,8 @@
   display: flex;
   flex-direction: column;
   gap: 24px;
+  overflow-y: auto; /* Internal scroll */
+  padding-bottom: 20px;
 }
 
 .ts-widget-row {
