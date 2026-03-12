@@ -28,14 +28,11 @@
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE/Edge */
+  scrollbar-width: none !important; /* Firefox */
+  -ms-overflow-style: none !important; /* IE/Edge */
 }
 
-/* Hide scrollbar for Chrome, Safari and Opera */
-.ts-main-container::-webkit-scrollbar {
-  display: none;
-}
+
 
 /* --- LEFT SIDEBAR (WEEKLY PINNED) --- */
 .ts-left-panel {
@@ -85,14 +82,7 @@
   max-height: 325px; /* Precise height for 2 pins */
 }
 
-.ts-pinned-scroller::-webkit-scrollbar {
-  display: none;
-}
 
-.ts-pinned-scroller {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
 
 .ts-pin-item {
   background: var(--nn-surface-secondary);
