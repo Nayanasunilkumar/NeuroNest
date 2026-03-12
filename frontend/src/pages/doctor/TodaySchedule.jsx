@@ -261,7 +261,7 @@ const TodaySchedule = () => {
                                         <div className="ts-time-marker">{timeObj.value} {timeObj.period}</div>
                                         <div
                                             className={`ts-appointment-card ${isFocused ? 'ongoing shadow-lg' : ''}`}
-                                            onClick={() => navigate(`/doctor/patient-records?patientId=${appointment.patient_id}`)}
+                                            onClick={() => navigate(`/doctor/patient-hub?patientId=${appointment.patient_id}`)}
                                         >
                                             <div className="ts-card-info">
                                                 <div className="ts-patient-avatar">

@@ -398,7 +398,7 @@ const MyPatients = () => {
                                                 </button>
                                                 <button 
                                                     className="roster-btn-sm"
-                                                    onClick={() => navigate(`/doctor/patient-records?patientId=${patient.id}`)}
+                                                    onClick={() => navigate(`/doctor/patient-hub?patientId=${patient.id}`)}
                                                     title="Profile"
                                                 >
                                                     <ExternalLink size={16} />
