@@ -8,7 +8,7 @@ import {
     ShieldAlert, ChevronLeft, Check, X, AlertCircle, 
     Activity, Heart, Thermometer, Wind, Pill, 
     FlaskConical, AlertTriangle, Fingerprint, Layers,
-    ChevronDown, Plus, Download, Filter
+    ChevronDown, Plus, Download, Filter, ChevronRight
 } from "lucide-react";
 import '../../styles/dashboard.css';
 
@@ -189,7 +189,7 @@ const PatientTimelinePage = () => {
                 </button>
                 <div>
                     <h4 className="fw-black mb-0">Clinical Timeline</h4>
-                    <div className="small fw-bold text-muted opacity-75">Historical Visit Log • {identity.full_name}</div>
+                    <div className="small fw-bold text-muted opacity-75">Historical Visit Log • {identity?.full_name || 'Patient'}</div>
                 </div>
             </div>
 
