@@ -105,11 +105,11 @@ const PatientHub = () => {
                 
                 {/* Header Section */}
                 <div className="mb-3 mt-n2">
-                    <div className="d-flex justify-content-end">
+                    <div className="d-flex justify-content-end mb-2">
                         <button 
                             onClick={() => navigate('/doctor/patients')}
-                            className="btn btn-link text-decoration-none d-flex align-items-center gap-2 p-0 mb-1 text-muted hover-primary-text transition-all fw-bold"
-                            style={{ fontSize: '0.9rem' }}
+                            className="btn btn-light bg-white border border-light shadow-sm rounded-pill d-flex align-items-center gap-2 px-3 py-2 text-muted hover-primary-text transition-all fw-bold mt-3"
+                            style={{ fontSize: '0.8rem' }}
                         >
                             <ChevronLeft size={16} /> Back to Roster
                         </button>
