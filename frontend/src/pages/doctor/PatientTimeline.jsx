@@ -270,87 +270,88 @@ const PatientTimelinePage = () => {
                     <div className="mx-auto" style={{ maxWidth: '1200px' }}>
                         
                         {/* Patient Profile Header Card */}
-                        <div className="bg-white rounded-5 p-4-5 border shadow-sm-sm mb-4 position-relative overflow-hidden">
-                            <div className="position-absolute top-0 end-0 opacity-02 pointer-events-none p-4"><Activity size={200} /></div>
+                        <div className="bg-white rounded-5 p-4 py-lg-5 border shadow-sm-premium mb-4 position-relative overflow-hidden">
+                            <div className="position-absolute top-0 end-0 opacity-02 pointer-events-none p-4 d-none d-lg-block"><Activity size={240} /></div>
                             
-                            <div className="row g-4 align-items-center position-relative">
-                                <div className="col-12 col-lg-4 border-end-lg pe-lg-5">
+                            <div className="row g-4 align-items-stretch position-relative">
+                                <div className="col-12 col-lg-4 border-end-lg pe-lg-5 d-flex flex-column justify-content-between">
                                     <div className="d-flex align-items-center gap-4 mb-4">
                                         <div className="position-relative">
                                             <img 
                                                 src={identity?.profile_pic} 
                                                 alt="Profile" 
-                                                className="rounded-5 shadow-sm border-2 border-white p-0.5" 
+                                                className="rounded-5 shadow-sm border-2 border-white bg-light p-0.5" 
                                                 style={{ width: '100px', height: '100px', objectFit: 'cover' }} 
                                             />
-                                            <div className="position-absolute bottom-0 end-0 bg-success border border-white border-2 rounded-circle shadow-sm" style={{ width: '16px', height: '16px' }}></div>
+                                            <div className="position-absolute bottom-0 end-0 bg-success border border-white border-3 rounded-circle" style={{ width: '18px', height: '18px' }}></div>
                                         </div>
                                         <div>
-                                            <h3 className="fw-black mb-1 text-dark fs-3">{identity?.full_name}</h3>
-                                            <div className="badge bg-primary bg-opacity-10 text-primary border-0 py-1.5 px-3 rounded-pill fw-black small ls-tight">SYSTEM ID: NN-{String(identity?.id || '---').padStart(4, '0')}</div>
+                                            <h3 className="fw-black mb-1 text-dark fs-3 ls-tight">{identity?.full_name}</h3>
+                                            <div className="badge bg-primary bg-opacity-10 text-primary border-0 py-1.5 px-3 rounded-pill fw-black small ls-tight">Dossier ID: NN-{String(identity?.id || '---').padStart(4, '0')}</div>
                                         </div>
                                     </div>
-                                    <div className="row g-2">
+                                    <div className="row g-2 mt-auto">
                                         <div className="col-6">
-                                            <div className="p-3 bg-light rounded-4 border">
-                                                <div className="mini-label-xs mb-1">BIOLOGY</div>
-                                                <div className="text-dark fw-black small">{identity?.age}Y • {identity?.gender}</div>
+                                            <div className="p-3 bg-light rounded-4 border border-white shadow-sm-sm h-100">
+                                                <div className="mini-label-xs mb-1 opacity-50">BIOLOGY</div>
+                                                <div className="text-dark fw-black" style={{ fontSize: '0.9rem' }}>{identity?.age}Y • {identity?.gender?.charAt(0)}</div>
                                             </div>
                                         </div>
                                         <div className="col-6">
-                                            <div className="p-3 bg-light rounded-4 border-start border-danger border-4">
-                                                <div className="mini-label-xs mb-1">BLOOD GROUP</div>
-                                                <div className="text-danger fw-black small">{identity?.blood_group} Negative</div>
+                                            <div className="p-3 bg-danger bg-opacity-05 rounded-4 border border-danger border-opacity-10 h-100 shadow-sm-sm">
+                                                <div className="mini-label-xs mb-1 text-danger opacity-75">BLOOD TYPE</div>
+                                                <div className="text-danger fw-black" style={{ fontSize: '0.9rem' }}>{identity?.blood_group} NEG</div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
 
-                                <div className="col-12 col-lg-5 px-lg-4">
-                                    <div className="d-flex align-items-center gap-2 mb-3 text-dark op-80">
-                                        <ShieldAlert size={18} />
+                                <div className="col-12 col-lg-5 px-lg-4 border-end-lg d-flex flex-column">
+                                    <div className="d-flex align-items-center gap-2 mb-4 text-dark op-80">
+                                        <ShieldAlert size={18} className="text-danger" />
                                         <h6 className="fw-black mb-0 text-uppercase ls-wide" style={{ fontSize: '0.75rem' }}>Medical Risk Registry</h6>
                                     </div>
-                                    <div className="row g-3">
-                                        <div className="col-12">
-                                            <div className="bg-danger bg-opacity-05 p-3 rounded-4 border border-danger border-opacity-10">
-                                                <div className="d-flex align-items-center gap-2 mb-2">
-                                                    <AlertCircle size={12} className="text-danger" />
-                                                    <div className="text-danger fw-black fs-mini text-uppercase ls-1">Critical Allergies</div>
-                                                </div>
-                                                <div className="small fw-black text-dark-soft">{identity?.alerts?.allergies}</div>
+                                    <div className="d-flex flex-column gap-3 h-100">
+                                        <div className="bg-danger p-3-5 rounded-4 border-start border-white border-3 shadow-glow" style={{ '--glow-color': '#dc3545' }}>
+                                            <div className="d-flex align-items-center gap-2 mb-2">
+                                                <AlertCircle size={14} className="text-white op-80" />
+                                                <div className="text-white fw-black fs-mini text-uppercase ls-1 op-90">Critical Allergies</div>
                                             </div>
+                                            <div className="fw-bold text-white lh-base small">{identity?.alerts?.allergies}</div>
                                         </div>
-                                        <div className="col-12">
-                                            <div className="bg-warning bg-opacity-05 p-3 rounded-4 border border-warning border-opacity-10">
-                                                <div className="d-flex align-items-center gap-2 mb-2">
-                                                    <Activity size={12} className="text-warning" />
-                                                    <div className="text-warning fw-black fs-mini text-uppercase ls-1">Chronic Baseline</div>
-                                                </div>
-                                                <div className="small fw-black text-dark-soft">{identity?.alerts?.chronic}</div>
+                                        <div className="bg-warning p-3-5 rounded-4 border-start border-white border-3 shadow-glow" style={{ '--glow-color': '#ffc107' }}>
+                                            <div className="d-flex align-items-center gap-2 mb-2">
+                                                <Activity size={14} className="text-dark op-60" />
+                                                <div className="text-dark fw-black fs-mini text-uppercase ls-1 op-70">Chronic Baseline</div>
                                             </div>
+                                            <div className="fw-bold text-dark lh-base small">{identity?.alerts?.chronic}</div>
                                         </div>
                                     </div>
                                 </div>
 
                                 <div className="col-12 col-lg-3 mt-lg-0">
-                                    <div className="p-4 bg-primary bg-opacity-05 rounded-5 border border-primary border-opacity-10 h-100 shadow-sm-sm">
-                                        <div className="small text-primary fw-black mb-4 ls-wide text-uppercase d-flex align-items-center gap-2" style={{ fontSize: '0.65rem' }}>
-                                            <Heart size={14} className="animate-pulse" /> Diagnostic Vitals
+                                    <div className="p-4 rounded-5 h-100 shadow-glow-primary border border-primary border-opacity-10 d-flex flex-column justify-content-between" style={{ background: 'linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%)', '--glow-color': '#0d6efd' }}>
+                                        <div>
+                                            <div className="small text-white text-opacity-75 fw-black mb-4 ls-wide text-uppercase d-flex align-items-center gap-2" style={{ fontSize: '0.65rem' }}>
+                                                <Heart size={14} className="animate-pulse" /> Diagnostic Vitals
+                                            </div>
+                                            <div className="d-flex flex-column gap-3">
+                                                <div className="d-flex justify-content-between align-items-center border-bottom border-white border-opacity-10 pb-2">
+                                                    <span className="small text-white text-opacity-50 fw-bold">BP</span>
+                                                    <span className="fw-black text-white fs-5">{identity?.vitals?.bp}</span>
+                                                </div>
+                                                <div className="d-flex justify-content-between align-items-center border-bottom border-white border-opacity-10 pb-2">
+                                                    <span className="small text-white text-opacity-50 fw-bold">H/R</span>
+                                                    <span className="fw-black text-white fs-5">{identity?.vitals?.hr} <small className="fs-mini op-50">BPM</small></span>
+                                                </div>
+                                                <div className="d-flex justify-content-between align-items-center">
+                                                    <span className="small text-white text-opacity-50 fw-bold">TEMP</span>
+                                                    <span className="fw-black text-white fs-5">{identity?.vitals?.temp}°F</span>
+                                                </div>
+                                            </div>
                                         </div>
-                                        <div className="d-flex flex-column gap-3">
-                                            <div className="d-flex justify-content-between align-items-center">
-                                                <span className="small text-muted fw-bold">BP</span>
-                                                <span className="fw-black text-dark">{identity?.vitals?.bp}</span>
-                                            </div>
-                                            <div className="d-flex justify-content-between align-items-center">
-                                                <span className="small text-muted fw-bold">H/R</span>
-                                                <span className="fw-black text-danger">{identity?.vitals?.hr} <small className="fs-mini opacity-30">BPM</small></span>
-                                            </div>
-                                            <div className="d-flex justify-content-between align-items-center">
-                                                <span className="small text-muted fw-bold">TEMP</span>
-                                                <span className="fw-black text-warning">{identity?.vitals?.temp}°F</span>
-                                            </div>
+                                        <div className="mt-4 pt-2 text-white text-opacity-50 fs-mini text-center fw-bold border-top border-white border-opacity-10">
+                                            LAST UPDATED: MAR 12
                                         </div>
                                     </div>
                                 </div>
