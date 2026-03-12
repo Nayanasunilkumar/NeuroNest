@@ -165,6 +165,25 @@ const TodaySchedule = () => {
                         <div className="ts-add-pin-btn" onClick={() => setIsAddingPin(true)}>
                             <Plus size={16} /> Add Clinical Note
                         </div>
+
+                        {/* --- COMPACT STATS LIST --- */}
+                        <div className="ts-compact-stats d-flex flex-column gap-2 mt-4">
+                            <div className="ts-stat-tag">
+                                <span className="ts-stat-key">Pending Slots</span>
+                                <span className="ts-stat-dash">—</span>
+                                <span className="ts-stat-val text-primary">{schedule.filter(a => a.status === 'approved').length}</span>
+                            </div>
+                            <div className="ts-stat-tag">
+                                <span className="ts-stat-key">Completed</span>
+                                <span className="ts-stat-dash">—</span>
+                                <span className="ts-stat-val text-success">{schedule.filter(a => a.status === 'completed').length}</span>
+                            </div>
+                            <div className="ts-stat-tag">
+                                <span className="ts-stat-key">Cancelled</span>
+                                <span className="ts-stat-dash">—</span>
+                                <span className="ts-stat-val text-danger">{schedule.filter(a => a.status === 'cancelled').length}</span>
+                            </div>
+                        </div>
                     </div>
 
 
@@ -193,35 +212,7 @@ const TodaySchedule = () => {
                         </div>
                     </div>
 
-                    <div className="ts-widget-row mb-4">
-                        <div className="ts-widget-square">
-                            <div className="ts-widget-icon bg-primary-subtle text-primary">
-                                <Zap size={20} />
-                            </div>
-                            <div>
-                                <h4 className="fw-bolder fs-3 mb-0">{schedule.filter(a => a.status === 'approved').length}</h4>
-                                <span className="text-muted small fw-bold">Pending Slots</span>
-                            </div>
-                        </div>
-                        <div className="ts-widget-square">
-                            <div className="ts-widget-icon bg-success-subtle text-success">
-                                <Check size={20} />
-                            </div>
-                            <div>
-                                <h4 className="fw-bolder fs-3 mb-0">{schedule.filter(a => a.status === 'completed').length}</h4>
-                                <span className="text-muted small fw-bold">Completed</span>
-                            </div>
-                        </div>
-                        <div className="ts-widget-square">
-                            <div className="ts-widget-icon bg-danger-subtle text-danger">
-                                <X size={20} />
-                            </div>
-                            <div>
-                                <h4 className="fw-bolder fs-3 mb-0">{schedule.filter(a => a.status === 'cancelled').length}</h4>
-                                <span className="text-muted small fw-bold">Cancelled</span>
-                            </div>
-                        </div>
-                    </div>
+
 
                     <div className="ts-schedule-list">
                         {/* ── Online / Offline Tabs ── */}
