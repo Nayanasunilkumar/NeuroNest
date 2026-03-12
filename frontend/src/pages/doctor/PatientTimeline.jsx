@@ -527,6 +527,9 @@ const PatientTimelinePage = () => {
                                 </div>
                             )}
                         </div>
+
+                        {/* Bottom Cushion for scrolling */}
+                        <div className="py-5 mt-5"></div>
                     </div>
                 </div>
             </div>
