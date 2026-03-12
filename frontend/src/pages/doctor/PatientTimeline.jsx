@@ -366,27 +366,37 @@ const PatientTimelinePage = () => {
                         {/* Quick Stats Grid */}
                         <div className="row g-4 mb-5">
                             {[
-                                { label: "Total Visits", val: dossier?.summary?.visits, color: "#0d6efd", icon: <User size={20} />, trend: "+2 this month" },
-                                { label: "Meds Stream", val: dossier?.summary?.meds, color: "#10b981", icon: <Pill size={20} />, trend: "Active" },
-                                { label: "Lab History", val: dossier?.summary?.labs, color: "#8b5cf6", icon: <FlaskConical size={20} />, trend: "Updated" },
-                                { label: "Archive Depth", val: filteredTimeline.length, color: "#f43f5e", icon: <Activity size={20} />, trend: "Filtered" }
+                                { label: "Total Visits", val: dossier?.summary?.visits, color: "#0d6efd", icon: <User size={22} />, trend: "Trending Up", trendIcon: <Zap size={10}/> },
+                                { label: "Meds Stream", val: dossier?.summary?.meds, color: "#10b981", icon: <Pill size={22} />, trend: "Active Stream", trendIcon: <Activity size={10}/> },
+                                { label: "Lab History", val: dossier?.summary?.labs, color: "#8b5cf6", icon: <FlaskConical size={22} />, trend: "Latest Log", trendIcon: <Clock size={10}/> },
+                                { label: "Archive Depth", val: filteredTimeline.length, color: "#f43f5e", icon: <Activity size={22} />, trend: "Dossier Secure", trendIcon: <ShieldAlert size={10}/> }
                             ].map(stat => (
                                 <div key={stat.label} className="col-12 col-sm-6 col-lg-3">
-                                    <div className="bg-white p-4 rounded-5 border shadow-sm-premium d-flex align-items-center gap-4 transition-all hover-glow h-100">
-                                        <div className="rounded-5 d-flex align-items-center justify-content-center text-white shadow-glow" style={{ 
+                                    <div className="bg-white p-4 rounded-5 border-2 border-white shadow-sm-premium d-flex align-items-center gap-4 transition-all hover-glow h-100 position-relative overflow-hidden">
+                                        <div className="position-absolute end-0 bottom-0 opacity-05 p-3 text-dark d-none d-xl-block" style={{ transform: 'translate(10%, 10%)' }}>
+                                            {stat.icon}
+                                        </div>
+                                        <div className="rounded-4 d-flex align-items-center justify-content-center text-white shadow-glow" style={{ 
                                             backgroundColor: stat.color, 
-                                            width: '56px', 
-                                            height: '56px', 
-                                            minWidth: '56px',
+                                            width: '60px', 
+                                            height: '60px', 
+                                            minWidth: '60px',
                                             '--glow-color': stat.color 
                                         }}>
                                             {stat.icon}
                                         </div>
-                                        <div className="overflow-hidden">
-                                            <div className="mini-label-xs mb-1 opacity-50 text-nowrap">{stat.label}</div>
-                                            <div className="d-flex align-items-baseline gap-2">
-                                                <div className="fw-black fs-2 text-dark ls-tight">{stat.val}</div>
-                                                <div className="badge bg-light text-muted fw-bold rounded-pill px-2 py-1 fs-mini opacity-75">{stat.trend}</div>
+                                        <div className="flex-grow-1">
+                                            <div className="mini-label-xs mb-1-5 opacity-80 text-dark-soft fw-bold ls-1">{stat.label}</div>
+                                            <div className="d-flex align-items-center flex-wrap gap-2">
+                                                <div className="fw-black h2 mb-0 text-dark ls-tight lh-1">{stat.val}</div>
+                                                <div className="badge rounded-pill d-flex align-items-center gap-1 border-0 fw-black shadow-sm" style={{ 
+                                                    backgroundColor: stat.color + '15', 
+                                                    color: stat.color,
+                                                    fontSize: '0.6rem',
+                                                    padding: '4px 8px'
+                                                }}>
+                                                    {stat.trendIcon} {stat.trend.toUpperCase()}
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
