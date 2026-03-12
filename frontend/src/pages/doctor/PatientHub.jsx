@@ -105,13 +105,15 @@ const PatientHub = () => {
                 
                 {/* Header Section */}
                 <div className="mb-5">
-                    <button 
-                        onClick={() => navigate('/doctor/patients')}
-                        className="btn btn-link text-decoration-none d-flex align-items-center gap-2 p-0 mb-4 text-muted hover-primary-text transition-all fw-bold"
-                        style={{ fontSize: '0.9rem' }}
-                    >
-                        <ChevronLeft size={16} /> Back to Roster
-                    </button>
+                    <div className="d-flex justify-content-end">
+                        <button 
+                            onClick={() => navigate('/doctor/patients')}
+                            className="btn btn-link text-decoration-none d-flex align-items-center gap-2 p-0 mb-4 text-muted hover-primary-text transition-all fw-bold"
+                            style={{ fontSize: '0.9rem' }}
+                        >
+                            <ChevronLeft size={16} /> Back to Roster
+                        </button>
+                    </div>
                     
                     <h1 className="fw-black text-dark mb-1" style={{ fontSize: '2.4rem', letterSpacing: '-0.02em' }}>Clinical Dossier</h1>
                     <p className="text-secondary fw-medium fs-6 opacity-75">Comprehensive medical archive and longitudinal engagement timeline.</p>
