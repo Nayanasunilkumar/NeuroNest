@@ -5,7 +5,7 @@ import {
     ChevronLeft, Mail, Phone, User, Plus, Folder,
     Settings, MoreHorizontal, Bell, ChevronRight
 } from 'lucide-react';
-import { getPatientDossier } from '../../api/doctor';
+import { getPatientDossier, getPatients } from '../../api/doctor';
 import { toAssetUrl } from '../../utils/media';
 import { useTheme } from "../../context/ThemeContext";
 
@@ -27,10 +27,32 @@ const PatientHub = () => {
 
         const fetchFullDossier = async () => {
             try {
+                setLoading(true);
                 const data = await getPatientDossier(patientId);
                 setDossier(data);
             } catch (err) {
                 console.error("Failed to fetch patient dossier for hub", err);
+                try {
+                    // Fallback to roster info
+                    const roster = await getPatients();
+                    const match = (roster || []).find(p => String(p.id) === String(patientId));
+                    if (match) {
+                        setDossier({
+                            identity: {
+                                id: match.id,
+                                full_name: match.full_name,
+                                email: match.email || "N/A",
+                                phone: match.phone || "N/A",
+                                profile_image: match.patient_image || null,
+                                gender: match.gender || "Not Specified",
+                                dob: match.dob || "N/A",
+                                blood_group: match.blood_group || "N/A"
+                            }
+                        });
+                    }
+                } catch (fallbackErr) {
+                    console.error("Hub fallback failed", fallbackErr);
+                }
             } finally {
                 setLoading(false);
             }

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { 
-    getPatientDossier
+    getPatientDossier, getPatients
 } from "../../api/doctor";
 import { 
     Calendar, User, Mail, Phone, Clock, Bookmark, 
@@ -28,7 +28,30 @@ const PatientTimelinePage = () => {
             setDossier(data);
             setError(null);
         } catch (err) {
-            console.error("Error fetching dossier:", err);
+            console.error("Error fetching dossier for timeline:", err);
+            try {
+                // Fallback to roster
+                const roster = await getPatients();
+                const match = (roster || []).find(p => String(p.id) === String(patientId));
+                if (match) {
+                    setDossier({
+                        identity: {
+                            id: match.id,
+                            full_name: match.full_name,
+                            email: match.email || "N/A",
+                            phone: match.phone || "N/A",
+                            profile_image: match.patient_image || null,
+                            gender: match.gender || "Not Specified",
+                            dob: match.dob || "N/A"
+                        },
+                        timeline: []
+                    });
+                    setError(null);
+                    return;
+                }
+            } catch (fallbackErr) {
+                console.error("Timeline fallback failed", fallbackErr);
+            }
             setError("Dossier localized error. Path integrity failure.");
         } finally {
             setLoading(false);
