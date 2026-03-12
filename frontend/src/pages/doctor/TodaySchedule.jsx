@@ -374,24 +374,22 @@ const TodaySchedule = () => {
                         </div>
                     </div>
 
-                    <div className="ts-pinned-main-container">
-                        <div className="ts-compact-stats d-flex flex-column">
-                            <div className="ts-stat-tag">
-                                <span className="ts-stat-key">Total Appointments</span>
-                                <span className="ts-stat-dash"></span>
-                                <span className="ts-stat-val fw-bold">{schedule.length}</span>
-                            </div>
-                            <div className="ts-stat-tag">
-                                <span className="ts-stat-key">Pending Slots</span>
-                                <span className="ts-stat-dash"></span>
-                                <span className="ts-stat-val text-primary">{schedule.filter(a => a.status === 'approved').length}</span>
-                            </div>
-                            <div className="ts-stat-tag">
-                                <span className="ts-stat-key">Completed</span>
-                                <span className="ts-stat-dash"></span>
-                                <span className="ts-stat-val text-success">{schedule.filter(a => a.status === 'completed').length}</span>
-                            </div>
-
+                    <div className="ts-compact-stats d-flex flex-column gap-4 mt-3">
+                        <div className="ts-stat-tag-simple">
+                            <h3 className="ts-stat-label-h3">Total Appointments</h3>
+                            <span className="ts-stat-val-large">{schedule.length}</span>
+                        </div>
+                        <div className="ts-stat-tag-simple">
+                            <h3 className="ts-stat-label-h3 text-primary">Pending Slots</h3>
+                            <span className="ts-stat-val-large text-primary">{schedule.filter(a => a.status === 'approved').length}</span>
+                        </div>
+                        <div className="ts-stat-tag-simple">
+                            <h3 className="ts-stat-label-h3 text-success">Completed</h3>
+                            <span className="ts-stat-val-large text-success">{schedule.filter(a => a.status === 'completed').length}</span>
+                        </div>
+                        <div className="ts-stat-tag-simple">
+                            <h3 className="ts-stat-label-h3 text-danger">Cancelled</h3>
+                            <span className="ts-stat-val-large text-danger">{schedule.filter(a => a.status === 'cancelled').length}</span>
                         </div>
                     </div>
                 </div>
