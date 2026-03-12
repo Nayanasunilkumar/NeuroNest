@@ -74,7 +74,7 @@
 }
 
 .ts-pinned-scroller {
-  padding: 12px 12px 20px 12px;
+  padding: 12px 12px 0 12px;
   display: flex;
   flex-direction: column;
   gap: 22px;
@@ -173,7 +173,7 @@
 
 .ts-add-pin-btn {
   padding: 14px 16px;
-  margin: 16px;
+  margin: 12px;
   background: var(--nn-primary);
   border-radius: 12px;
   display: flex;
