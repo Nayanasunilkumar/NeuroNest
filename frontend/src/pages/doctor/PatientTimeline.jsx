@@ -364,19 +364,30 @@ const PatientTimelinePage = () => {
                         </div>
 
                         {/* Quick Stats Grid */}
-                        <div className="row g-3 mb-5">
+                        <div className="row g-4 mb-5">
                             {[
-                                { label: "Total Visits", val: dossier?.summary?.visits, color: "#3b82f6", icon: <User size={16} /> },
-                                { label: "Meds Stream", val: dossier?.summary?.meds, color: "#10b981", icon: <Pill size={16} /> },
-                                { label: "Lab History", val: dossier?.summary?.labs, color: "#8b5cf6", icon: <FlaskConical size={16} /> },
-                                { label: "Total Events", val: filteredTimeline.length, color: "#f43f5e", icon: <Activity size={16} /> }
+                                { label: "Total Visits", val: dossier?.summary?.visits, color: "#0d6efd", icon: <User size={20} />, trend: "+2 this month" },
+                                { label: "Meds Stream", val: dossier?.summary?.meds, color: "#10b981", icon: <Pill size={20} />, trend: "Active" },
+                                { label: "Lab History", val: dossier?.summary?.labs, color: "#8b5cf6", icon: <FlaskConical size={20} />, trend: "Updated" },
+                                { label: "Archive Depth", val: filteredTimeline.length, color: "#f43f5e", icon: <Activity size={20} />, trend: "Filtered" }
                             ].map(stat => (
-                                <div key={stat.label} className="col-6 col-md-3">
-                                    <div className="bg-white p-4 rounded-5 border shadow-sm-sm d-flex align-items-center gap-4 transition-all hover-lift">
-                                        <div className="p-3 rounded-4 text-white shadow-sm" style={{ backgroundColor: stat.color }}>{stat.icon}</div>
-                                        <div>
-                                            <div className="small text-muted fw-black ls-tight opacity-50 mb-1" style={{ fontSize: '0.6rem' }}>{stat.label.toUpperCase()}</div>
-                                            <div className="fw-black fs-4 mb-0" style={{ color: stat.color }}>{stat.val}</div>
+                                <div key={stat.label} className="col-12 col-sm-6 col-lg-3">
+                                    <div className="bg-white p-4 rounded-5 border shadow-sm-premium d-flex align-items-center gap-4 transition-all hover-glow h-100">
+                                        <div className="rounded-5 d-flex align-items-center justify-content-center text-white shadow-glow" style={{ 
+                                            backgroundColor: stat.color, 
+                                            width: '56px', 
+                                            height: '56px', 
+                                            minWidth: '56px',
+                                            '--glow-color': stat.color 
+                                        }}>
+                                            {stat.icon}
+                                        </div>
+                                        <div className="overflow-hidden">
+                                            <div className="mini-label-xs mb-1 opacity-50 text-nowrap">{stat.label}</div>
+                                            <div className="d-flex align-items-baseline gap-2">
+                                                <div className="fw-black fs-2 text-dark ls-tight">{stat.val}</div>
+                                                <div className="badge bg-light text-muted fw-bold rounded-pill px-2 py-1 fs-mini opacity-75">{stat.trend}</div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
