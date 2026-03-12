@@ -57,7 +57,6 @@ const DoctorFeedbackPage = () => {
 
   return (
     <div className="df-page">
-      <div className="df-shell">
         {/* ── Header ─────────────────────────────────────────────────── */}
         <div className="df-header">
           <div>
@@ -112,7 +111,6 @@ const DoctorFeedbackPage = () => {
             <p>Loading feedback data…</p>
           </div>
         )}
-      </div>
 
       <style>{`
         :root {
@@ -153,28 +151,19 @@ const DoctorFeedbackPage = () => {
 
         .df-page {
           padding: var(--df-space-7);
-          background: var(--df-bg);
-          border-radius: 28px;
-          overflow: hidden;
+          background: var(--df-panel);
+          border: 1px solid var(--nn-border);
+          border-radius: 24px;
+          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
           min-height: calc(100vh - 70px);
           font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
           color: var(--df-text);
           animation: dfFadeIn 0.4s ease-out;
-        }
-        .df-shell {
-          background: var(--df-shell);
-          border: 1px solid var(--nn-border);
-          border-radius: var(--df-radius-lg);
-          box-shadow: var(--df-shadow);
-          padding: var(--df-space-6);
-          min-height: calc(100vh - 140px);
+          display: flex;
+          flex-direction: column;
         }
         @media (max-width: 768px) {
-          .df-page { padding: var(--df-space-4); }
-          .df-shell {
-            padding: var(--df-space-4);
-            border-radius: var(--df-radius-md);
-          }
+          .df-page { padding: var(--df-space-4); border-radius: 16px; }
         }
         @keyframes dfFadeIn { from { opacity:0; transform: translateY(8px); } to { opacity:1; transform: translateY(0); } }
 
