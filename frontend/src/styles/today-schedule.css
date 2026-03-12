@@ -651,18 +651,19 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 20px;
-  background: white;
-  border: 1px solid var(--nn-border);
-  border-radius: 16px;
+  padding: 16px 20px;
+  background: transparent;
+  border-bottom: 1px solid var(--nn-border);
   transition: all 0.2s ease;
   cursor: default;
 }
 
+.ts-stat-tag:last-child {
+  border-bottom: none;
+}
+
 .ts-stat-tag:hover {
-  border-color: var(--nn-primary-light);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+  background: var(--nn-surface-secondary);
 }
 
 .ts-stat-key {
@@ -676,7 +677,7 @@
   height: 1px;
   background: var(--nn-border);
   margin: 0 16px;
-  opacity: 0.4;
+  opacity: 0.2;
 }
 
 .ts-stat-val {
@@ -684,5 +685,6 @@
   font-weight: 800;
   font-family: 'Inter', sans-serif;
 }
+
 
 
