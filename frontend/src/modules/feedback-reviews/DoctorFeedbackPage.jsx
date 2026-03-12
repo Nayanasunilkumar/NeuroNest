@@ -155,7 +155,7 @@ const DoctorFeedbackPage = () => {
           border: 1px solid var(--nn-border);
           border-radius: 24px;
           box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-          min-height: calc(100vh - 70px);
+          flex: 1 0 auto;
           font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
           color: var(--df-text);
           animation: dfFadeIn 0.4s ease-out;
