@@ -100,23 +100,19 @@ const PatientHub = () => {
     ];
 
     return (
-        <div className={`patient-hub-root min-vh-100 pt-0 pb-4 pb-md-5 px-4 px-md-5 ${isDark ? 'dark' : ''}`}>
-            <div className="container-xl p-0">
+        <div className={`patient-hub-root min-vh-100 p-4 p-md-5 ${isDark ? 'dark' : ''}`}>
+            <div className="container-fluid p-0">
                 
                 {/* Header Section */}
-                <div className="mb-3 mt-n2">
-                    <div className="d-flex justify-content-end mb-2">
-                        <button 
-                            onClick={() => navigate('/doctor/patients')}
-                            className="btn btn-light bg-white border border-light shadow-sm rounded-pill d-flex align-items-center gap-2 px-3 py-2 text-muted hover-primary-text transition-all fw-bold mt-3"
-                            style={{ fontSize: '0.8rem' }}
-                        >
-                            <ChevronLeft size={16} /> Back to Roster
-                        </button>
-                    </div>
-                    
-                    <h1 className="fw-black text-dark mb-1" style={{ fontSize: '2.4rem', letterSpacing: '-0.02em' }}>Clinical Dossier</h1>
-
+                <div className="d-flex justify-content-between align-items-center mb-4">
+                    <h1 className="fw-black text-dark mb-0" style={{ fontSize: '2.2rem', letterSpacing: '-0.02em' }}>Clinical Dossier</h1>
+                    <button 
+                        onClick={() => navigate('/doctor/patients')}
+                        className="btn btn-light bg-white border border-light shadow-sm rounded-pill d-flex align-items-center gap-2 px-3 py-2 text-muted hover-primary-text transition-all fw-bold"
+                        style={{ fontSize: '0.8rem' }}
+                    >
+                        <ChevronLeft size={16} /> Back to Roster
+                    </button>
                 </div>
 
                 <div className="row g-4 pt-2">
@@ -149,7 +145,7 @@ const PatientHub = () => {
                             </div>
 
                             {/* Detailed Info List */}
-                            <div className="clinical-data-list d-flex flex-column gap-3 mb-auto px-1">
+                            <div className="clinical-data-list d-flex flex-column gap-2 mb-auto px-1">
                                 <div className="data-item d-flex align-items-center gap-3">
                                     <div className="data-icon bg-light rounded-3 d-flex align-items-center justify-content-center" style={{ width: '38px', height: '38px' }}>
                                         <Mail size={16} className="text-muted" />
@@ -245,7 +241,11 @@ const PatientHub = () => {
 
             <style>{`
                 .patient-hub-root {
-                    background-color: #f8fafc;
+                    background-color: var(--nn-surface);
+                    border-radius: 24px;
+                    border: 1px solid var(--nn-border);
+                    margin: 20px;
+                    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
                 }
                 
                 .hover-primary-text:hover {
