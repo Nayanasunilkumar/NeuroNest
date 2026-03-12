@@ -167,7 +167,7 @@ const PatientHub = () => {
                             </div>
 
                             {/* Detailed Info List */}
-                            <div className="clinical-data-list d-flex flex-column gap-2 mb-auto px-1">
+                            <div className="clinical-data-list flex-grow-1 d-flex flex-column justify-content-center gap-4 mb-4 px-1">
                                 <div className="data-item d-flex align-items-center gap-3">
                                     <div className="data-icon bg-light rounded-3 d-flex align-items-center justify-content-center" style={{ width: '38px', height: '38px' }}>
                                         <Mail size={16} className="text-muted" />
@@ -210,7 +210,7 @@ const PatientHub = () => {
                             </div>
 
                             {/* Footer Buttons */}
-                            <div className="mt-3">
+                            <div className="mt-auto pt-2">
                                 <button 
                                     onClick={() => navigate(`/doctor/patient-records?patientId=${patientId}&openRemark=true`)}
                                     className="btn btn-primary rounded-pill py-3 w-100 fw-black d-flex align-items-center justify-content-center gap-2 shadow-sm" style={{ fontSize: '0.9rem' }}>
