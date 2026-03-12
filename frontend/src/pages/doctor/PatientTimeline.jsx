@@ -418,8 +418,8 @@ const PatientTimelinePage = () => {
                         </div>
 
                         {/* Timeline List */}
-                        <div className="timeline-trail position-relative">
-                            <div className="position-absolute start-0 top-0 bottom-0 border-start border-3 opacity-05 d-none d-md-block" style={{ left: '1px', background: 'linear-gradient(to bottom, transparent, rgba(13,110,253,0.1), transparent)' }}></div>
+                        <div className="timeline-trail position-relative ps-md-5">
+                            <div className="position-absolute start-0 top-0 bottom-0 d-none d-md-block" style={{ left: '16px', width: '3px', background: 'linear-gradient(to bottom, rgba(13,110,253,0) 0%, rgba(13,110,253,0.15) 5%, rgba(13,110,253,0.15) 95%, rgba(13,110,253,0) 100%)', borderRadius: '10px' }}></div>
                             
                             {filteredTimeline.length > 0 ? (
                                 filteredTimeline.map((event, index) => {
@@ -430,7 +430,7 @@ const PatientTimelinePage = () => {
                                     const showDateHeader = index === 0 || new Date(filteredTimeline[index-1].appointment_date).toLocaleDateString() !== dateStr;
 
                                     return (
-                                        <div key={event.id} className="mb-4">
+                                        <div key={event.id} className="mb-4 position-relative">
                                             {showDateHeader && (
                                                 <div className="date-group-header mb-4 d-flex align-items-center gap-3 cursor-pointer" onClick={() => toggleDateCollapse(dateStr)}>
                                                     <div className="bg-white border text-dark py-2 px-4 rounded-pill fw-black shadow-sm small ls-wide text-uppercase d-flex align-items-center gap-2 hover-lift">
@@ -444,6 +444,9 @@ const PatientTimelinePage = () => {
 
                                             {!isCollapsed && (
                                                 <div className="record-card-container position-relative animate-fade-in mb-3">
+                                                    {/* Connecting Dot */}
+                                                    <div className="position-absolute d-none d-md-block bg-white border border-primary border-3 rounded-circle shadow-sm" style={{ left: '-40.5px', top: '50px', width: '16px', height: '16px', zIndex: 10 }}></div>
+                                                    
                                                     <div className="flex-grow-1 bg-white rounded-5 shadow-sm-premium overflow-hidden border-2 border-transparent transition-all hover-glow" onClick={() => setActiveCard(event.id)}>
                                                         <div className="position-absolute start-0 top-0 bottom-0" style={{ width: '6px', background: `linear-gradient(to bottom, ${event.color}, ${event.color}aa)` }}></div>
                                                         <div className="p-4 ps-5">
