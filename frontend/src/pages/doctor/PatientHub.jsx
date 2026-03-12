@@ -116,7 +116,7 @@ const PatientHub = () => {
                     </div>
                     
                     <h1 className="fw-black text-dark mb-1" style={{ fontSize: '2.4rem', letterSpacing: '-0.02em' }}>Clinical Dossier</h1>
-                    <p className="text-secondary fw-medium fs-6 opacity-75">Comprehensive medical archive and longitudinal engagement timeline.</p>
+
                 </div>
 
                 <div className="row g-4 pt-2">
