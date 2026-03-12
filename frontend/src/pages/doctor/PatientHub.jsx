@@ -100,8 +100,8 @@ const PatientHub = () => {
     ];
 
     return (
-        <div className={`patient-hub-root min-vh-100 px-3 px-md-4 pb-5 pt-0 ${isDark ? 'dark' : ''}`}>
-            <div className="hub-main-card bg-white p-4 p-md-5 mt-n3" style={{ 
+        <div className={`patient-hub-root min-vh-100 px-3 px-md-4 pb-4 pt-0 ${isDark ? 'dark' : ''}`}>
+            <div className="hub-main-card bg-white p-3 p-md-4 mt-n3" style={{ 
                 borderRadius: '24px', 
                 border: '1px solid var(--nn-border)',
                 boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)',
@@ -194,7 +194,7 @@ const PatientHub = () => {
                             </div>
 
                             {/* Footer Buttons */}
-                            <div className="d-flex flex-column gap-2 mt-4">
+                            <div className="d-flex flex-column gap-2 mt-3">
                                 <button className="btn btn-primary rounded-pill py-3 fw-black d-flex align-items-center justify-content-center gap-2 shadow-sm" style={{ fontSize: '0.9rem' }}>
                                     <Edit3 size={18} /> Add Remark
                                 </button>
@@ -214,8 +214,8 @@ const PatientHub = () => {
                                 <div className="col-12 col-md-6" key={action.id}>
                                     <div 
                                         onClick={() => navigate(action.path)}
-                                        className={`action-hub-card p-4 rounded-5 bg-white border-0 shadow-sm d-flex align-items-center gap-4 transition-all group ${action.hoverBlue ? 'hover-blue-glow' : ''}`}
-                                        style={{ cursor: 'pointer', height: '124px' }}
+                                        className={`action-hub-card p-3 rounded-5 bg-white border-0 shadow-sm d-flex align-items-center gap-3 transition-all group ${action.hoverBlue ? 'hover-blue-glow' : ''}`}
+                                        style={{ cursor: 'pointer', height: '110px' }}
                                     >
                                         <div 
                                             className="action-icon-box rounded-4 d-flex align-items-center justify-content-center"
