@@ -74,10 +74,10 @@
 }
 
 .ts-pinned-scroller {
-  padding: 12px;
+  padding: 12px 12px 20px 12px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
 }
 
 
@@ -85,7 +85,7 @@
 .ts-pin-item {
   background: var(--nn-surface-secondary);
   border-radius: 12px;
-  padding: 20px;
+  padding: 24px 20px;
   border: 1px solid transparent;
   transition: all 0.2s ease;
   cursor: pointer;
@@ -155,7 +155,7 @@
   font-weight: 750;
   color: var(--nn-text-main);
   margin: 0;
-  line-height: 1.2;
+  line-height: 1.4;
 }
 
 .ts-pin-time {
@@ -167,8 +167,8 @@
 .ts-pin-desc {
   font-size: 0.78rem;
   color: var(--nn-text-muted);
-  line-height: 1.4;
-  margin: 8px 0 0 0;
+  line-height: 1.6;
+  margin: 12px 0 0 0;
 }
 
 .ts-add-pin-btn {
