@@ -122,11 +122,11 @@ const PatientHub = () => {
                 <div className="row g-4 pt-2">
                     {/* Left Panel: Profile Detail */}
                     <div className="col-12 col-lg-4">
-                        <div className="hub-identity-card p-4 rounded-5 bg-white border-0 shadow-sm h-100 d-flex flex-column">
+                        <div className="hub-identity-card p-3 rounded-5 bg-white border-0 shadow-sm h-100 d-flex flex-column">
                             
-                            {/* Avatar & Basic Info */}
-                            <div className="d-flex flex-column align-items-center text-center mb-5 mt-3">
-                                <div className="avatar-frame rounded-circle mb-3 overflow-hidden shadow-sm" style={{ width: '120px', height: '120px' }}>
+                            {/* Avatar & Basic Info - Horizontal Layout */}
+                            <div className="d-flex align-items-center gap-3 mb-4 mt-2 px-1">
+                                <div className="avatar-frame rounded-circle overflow-hidden shadow-sm flex-shrink-0" style={{ width: '64px', height: '64px' }}>
                                     {identity.profile_image && !imageError ? (
                                         <img 
                                             src={toAssetUrl(identity.profile_image)} 
@@ -136,18 +136,20 @@ const PatientHub = () => {
                                         />
                                     ) : (
                                         <div className="w-100 h-100 transition-all d-flex align-items-center justify-content-center bg-light text-muted">
-                                            <User size={64} strokeWidth={1.5} />
+                                            <User size={32} strokeWidth={1.5} />
                                         </div>
                                     )}
                                 </div>
-                                <h2 className="fw-black text-dark h3 mb-1">{identity.full_name || "Patient Name"}</h2>
-                                <span className="badge px-3 py-1 rounded-pill text-uppercase fw-black letter-spacing-1 bg-light text-secondary border overflow-hidden" style={{ fontSize: '0.65rem' }}>
-                                    Patient ID #{String(patientId).padStart(3, '0')}
-                                </span>
+                                <div className="text-start">
+                                    <h2 className="fw-black text-dark mb-1" style={{ fontSize: '1.2rem', lineHeight: '1.2' }}>{identity.full_name || "Patient Name"}</h2>
+                                    <span className="badge px-2 py-1 rounded-pill text-uppercase fw-black letter-spacing-1 bg-light text-secondary border overflow-hidden" style={{ fontSize: '0.6rem' }}>
+                                        ID #{String(patientId).padStart(3, '0')}
+                                    </span>
+                                </div>
                             </div>
 
                             {/* Detailed Info List */}
-                            <div className="clinical-data-list d-flex flex-column gap-4 mb-auto px-2">
+                            <div className="clinical-data-list d-flex flex-column gap-3 mb-auto px-1">
                                 <div className="data-item d-flex align-items-center gap-3">
                                     <div className="data-icon bg-light rounded-3 d-flex align-items-center justify-content-center" style={{ width: '38px', height: '38px' }}>
                                         <Mail size={16} className="text-muted" />
@@ -190,7 +192,7 @@ const PatientHub = () => {
                             </div>
 
                             {/* Footer Buttons */}
-                            <div className="d-flex flex-column gap-2 mt-5">
+                            <div className="d-flex flex-column gap-2 mt-4">
                                 <button className="btn btn-primary rounded-pill py-3 fw-black d-flex align-items-center justify-content-center gap-2 shadow-sm" style={{ fontSize: '0.9rem' }}>
                                     <Edit3 size={18} /> Add Remark
                                 </button>
