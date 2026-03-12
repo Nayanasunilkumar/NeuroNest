@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { 
     Calendar, FileText, Edit3, ShieldCheck, Activity, MessageSquare, 
-    ChevronLeft, Mail, Phone, User, Plus, Folder, ArrowRight,
-    Settings, MoreHorizontal, Bell
+    ChevronLeft, Mail, Phone, User, Plus, Folder,
+    Settings, MoreHorizontal, Bell, ChevronRight
 } from 'lucide-react';
 import { getPatientDossier } from '../../api/doctor';
 import { toAssetUrl } from '../../utils/media';
@@ -245,11 +245,9 @@ const PatientHub = () => {
                                             <h3 className="fw-black text-dark mb-1 h5 text-truncate">{action.title}</h3>
                                             <p className="text-secondary small fw-bold opacity-75 mb-0 text-truncate">{action.desc}</p>
                                         </div>
-                                        {action.hoverBlue && (
-                                            <div className="action-arrow text-primary opacity-0 group-hover-visible transition-all">
-                                                <ArrowRight size={20} />
-                                            </div>
-                                        )}
+                                        <div className="action-arrow text-secondary opacity-50 group-hover-visible transition-all ms-auto">
+                                            <ChevronRight size={20} />
+                                        </div>
                                     </div>
                                 </div>
                             ))}
@@ -300,7 +298,8 @@ const PatientHub = () => {
                 
                 .action-hub-card:hover .group-hover-visible {
                     opacity: 1;
-                    transform: translateX(0);
+                    transform: translateX(5px);
+                    color: #2b70ff !important;
                 }
 
                 .btn-white:hover {
