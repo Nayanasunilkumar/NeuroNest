@@ -100,15 +100,15 @@ const PatientHub = () => {
     ];
 
     return (
-        <div className={`patient-hub-root min-vh-100 p-4 p-md-5 ${isDark ? 'dark' : ''}`}>
+        <div className={`patient-hub-root min-vh-100 pt-3 pt-md-4 pb-4 pb-md-5 px-4 px-md-5 ${isDark ? 'dark' : ''}`}>
             <div className="container-xl">
                 
                 {/* Header Section */}
-                <div className="mb-5">
+                <div className="mb-4">
                     <div className="d-flex justify-content-end">
                         <button 
                             onClick={() => navigate('/doctor/patients')}
-                            className="btn btn-link text-decoration-none d-flex align-items-center gap-2 p-0 mb-4 text-muted hover-primary-text transition-all fw-bold"
+                            className="btn btn-link text-decoration-none d-flex align-items-center gap-2 p-0 mb-1 text-muted hover-primary-text transition-all fw-bold"
                             style={{ fontSize: '0.9rem' }}
                         >
                             <ChevronLeft size={16} /> Back to Roster
