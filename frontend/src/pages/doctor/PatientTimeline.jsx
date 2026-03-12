@@ -8,7 +8,7 @@ import {
     ShieldAlert, ChevronLeft, Check, X, AlertCircle, 
     Activity, Heart, Thermometer, Wind, Pill, 
     FlaskConical, AlertTriangle, Fingerprint, Layers,
-    ChevronDown, Plus, Download, Filter, ChevronRight
+    ChevronDown, Plus, Download, Filter, ChevronRight, Zap
 } from "lucide-react";
 import '../../styles/dashboard.css';
 
