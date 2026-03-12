@@ -100,11 +100,11 @@ const PatientHub = () => {
     ];
 
     return (
-        <div className={`patient-hub-root min-vh-100 pt-3 pt-md-4 pb-4 pb-md-5 px-4 px-md-5 ${isDark ? 'dark' : ''}`}>
+        <div className={`patient-hub-root min-vh-100 pt-0 pb-4 pb-md-5 px-4 px-md-5 ${isDark ? 'dark' : ''}`}>
             <div className="container-xl">
                 
                 {/* Header Section */}
-                <div className="mb-4">
+                <div className="mb-3 mt-n2">
                     <div className="d-flex justify-content-end">
                         <button 
                             onClick={() => navigate('/doctor/patients')}
