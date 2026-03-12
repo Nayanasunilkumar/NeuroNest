@@ -264,7 +264,7 @@ const PatientTimelinePage = () => {
     const years = [...new Set(timeline.map(e => new Date(e.appointment_date).getFullYear()))].sort((a, b) => b - a);
 
     return (
-        <div className="premium-dashboard-bg min-vh-100 d-flex flex-column pharma-theme">
+        <div className="premium-dashboard-bg vh-100 d-flex flex-column pharma-theme overflow-hidden">
             {/* Main Header */}
             <div className="bg-white border-bottom sticky-top shadow-sm-sm" style={{ zIndex: 1020 }}>
                 <div className="px-4 px-lg-5 py-3">
@@ -417,7 +417,7 @@ const PatientTimelinePage = () => {
                 </div>
             </div>
 
-            <div className="flex-grow-1 overflow-auto bg-light bg-opacity-50 thin-scrollbar relative">
+            <div className="flex-grow-1 overflow-y-auto bg-light bg-opacity-50 thin-scrollbar position-relative">
                 <div className="container py-4 px-lg-5">
                     <div className="mx-auto" style={{ maxWidth: '1000px' }}>
                         {filteredTimeline.length > 0 ? (
@@ -648,6 +648,7 @@ const PatientTimelinePage = () => {
                 
                 .rotate-n90 { transform: rotate(-90deg); }
                 .font-medical { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+                .thin-scrollbar { scrollbar-width: thin; scrollbar-color: #e2e8f0 transparent; }
                 .thin-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
                 .thin-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
                 .thin-scrollbar:hover::-webkit-scrollbar-thumb { background: #cbd5e1; }
