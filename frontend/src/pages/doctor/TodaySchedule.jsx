@@ -164,25 +164,7 @@ const TodaySchedule = () => {
                         </div>
                     </div>
 
-                    <div className="ts-pinned-main-container">
-                        <div className="ts-compact-stats d-flex flex-column">
-                            <div className="ts-stat-tag">
-                                <span className="ts-stat-key">Pending Slots</span>
-                                <span className="ts-stat-dash"></span>
-                                <span className="ts-stat-val text-primary">{schedule.filter(a => a.status === 'approved').length}</span>
-                            </div>
-                            <div className="ts-stat-tag">
-                                <span className="ts-stat-key">Completed</span>
-                                <span className="ts-stat-dash"></span>
-                                <span className="ts-stat-val text-success">{schedule.filter(a => a.status === 'completed').length}</span>
-                            </div>
-                            <div className="ts-stat-tag">
-                                <span className="ts-stat-key">Cancelled</span>
-                                <span className="ts-stat-dash"></span>
-                                <span className="ts-stat-val text-danger">{schedule.filter(a => a.status === 'cancelled').length}</span>
-                            </div>
-                        </div>
-                    </div>
+
 
 
                 </div>
@@ -392,11 +374,29 @@ const TodaySchedule = () => {
                         </div>
                     </div>
 
-                    <div className="ts-summary-card">
-                         <div className="ts-summary-item">
-                             <h2 className="ts-summary-value">{schedule.length}</h2>
-                             <span className="ts-summary-label">Total Appointments</span>
-                         </div>
+                    <div className="ts-pinned-main-container mt-2">
+                        <div className="ts-compact-stats d-flex flex-column">
+                            <div className="ts-stat-tag">
+                                <span className="ts-stat-key">Total Appointments</span>
+                                <span className="ts-stat-dash"></span>
+                                <span className="ts-stat-val fw-bold">{schedule.length}</span>
+                            </div>
+                            <div className="ts-stat-tag">
+                                <span className="ts-stat-key">Pending Slots</span>
+                                <span className="ts-stat-dash"></span>
+                                <span className="ts-stat-val text-primary">{schedule.filter(a => a.status === 'approved').length}</span>
+                            </div>
+                            <div className="ts-stat-tag">
+                                <span className="ts-stat-key">Completed</span>
+                                <span className="ts-stat-dash"></span>
+                                <span className="ts-stat-val text-success">{schedule.filter(a => a.status === 'completed').length}</span>
+                            </div>
+                            <div className="ts-stat-tag">
+                                <span className="ts-stat-key">Cancelled</span>
+                                <span className="ts-stat-dash"></span>
+                                <span className="ts-stat-val text-danger">{schedule.filter(a => a.status === 'cancelled').length}</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
