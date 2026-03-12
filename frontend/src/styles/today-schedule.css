@@ -355,7 +355,7 @@
 .ts-right-panel {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 12px;
   overflow-y: auto; /* Internal scroll */
   padding-bottom: 20px;
 }
@@ -399,7 +399,7 @@
   align-items: center;
   justify-content: space-between;
   border: 1px solid var(--nn-border);
-  margin-bottom: 8px;
+
 }
 
 .ts-clinic-time-label {

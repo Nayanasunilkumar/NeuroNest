@@ -375,7 +375,7 @@ const TodaySchedule = () => {
                         </div>
                     </div>
 
-                    <div className="ts-compact-stats d-flex flex-column gap-1 mt-3">
+                    <div className="ts-compact-stats d-flex flex-column gap-1">
                         <div className="ts-stat-tag-simple">
                             <h3 className="ts-stat-label-h3">Total Appointments</h3>
                             <span className="ts-stat-dash"></span>
