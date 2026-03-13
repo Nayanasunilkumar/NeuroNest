@@ -314,12 +314,7 @@ const PatientRecords = () => {
         <div className="patient-dashboard-grid-bg py-4 px-3 px-md-5">
             <div className="mx-auto" style={{ maxWidth: '1440px' }}>
                 
-                {/* MATERIALLY MATCHED IDENTITY CARD */}
-                {usingFallbackDossier && (
-                    <div className="alert alert-warning border-0 rounded-4 shadow-sm mb-4" role="alert">
-                        Limited profile mode: full dossier could not be loaded for this patient.
-                    </div>
-                )}
+
                 <div className="nn-card mb-6 border-0">
                     <div className="d-flex flex-wrap flex-lg-nowrap gap-4">
                         {/* Avatar Col */}
