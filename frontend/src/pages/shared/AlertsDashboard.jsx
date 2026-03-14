@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAlerts } from '../../context/AlertContext';
 import { fetchAlerts } from '../../api/alertsApi';
+import { getSocket } from '../../services/socket';
 import {
   Activity,
   AlertTriangle,
@@ -10,6 +11,8 @@ import {
   Clock,
   FileText,
   Info,
+  Wifi,
+  WifiOff,
 } from 'lucide-react';
 
 const SEVERITY_COLORS = {
@@ -114,6 +117,10 @@ const AlertsDashboard = () => {
   const [historyPatient, setHistoryPatient] = useState(searchParams.get('patientId') || '');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
+  const [lastUpdatedAt, setLastUpdatedAt] = useState(null);
+  const [secondsSinceUpdate, setSecondsSinceUpdate] = useState(0);
+  const [isSocketConnected, setIsSocketConnected] = useState(false);
+  const [historyTimeFilter, setHistoryTimeFilter] = useState('all');
 
   const mergeAndSortAlerts = useCallback((incoming, existing = []) => {
     const mergedMap = new Map(existing.map((item) => [item.id, item]));
@@ -126,6 +133,8 @@ const AlertsDashboard = () => {
       const data = await fetchAlerts(false);
       setAllAlerts((prev) => mergeAndSortAlerts(Array.isArray(data) ? data : [], prev));
       setError('');
+      setLastUpdatedAt(new Date());
+      setSecondsSinceUpdate(0);
     } catch (loadError) {
       setError('Failed to load alert history.');
       console.error('Failed to load alerts history:', loadError);
@@ -143,7 +152,35 @@ const AlertsDashboard = () => {
   useEffect(() => {
     if (!liveAlerts?.length) return;
     setAllAlerts((prev) => mergeAndSortAlerts(liveAlerts, prev));
+    setLastUpdatedAt(new Date());
+    setSecondsSinceUpdate(0);
   }, [liveAlerts, mergeAndSortAlerts]);
+
+  useEffect(() => {
+    const socket = getSocket();
+    if (!socket) return undefined;
+
+    const syncConnection = () => setIsSocketConnected(Boolean(socket.connected));
+    const handleConnect = () => setIsSocketConnected(true);
+    const handleDisconnect = () => setIsSocketConnected(false);
+
+    syncConnection();
+    socket.on('connect', handleConnect);
+    socket.on('disconnect', handleDisconnect);
+
+    return () => {
+      socket.off('connect', handleConnect);
+      socket.off('disconnect', handleDisconnect);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!lastUpdatedAt) return undefined;
+    const ticker = setInterval(() => {
+      setSecondsSinceUpdate(Math.max(0, Math.floor((Date.now() - new Date(lastUpdatedAt).getTime()) / 1000)));
+    }, 1000);
+    return () => clearInterval(ticker);
+  }, [lastUpdatedAt]);
 
   const scopedAlerts = useMemo(() => {
     const hours = TIME_WINDOWS[timeFilter] || 24;
@@ -170,6 +207,36 @@ const AlertsDashboard = () => {
   );
   const timelineAlerts = useMemo(() => scopedAlerts.slice(0, 10), [scopedAlerts]);
 
+  const previousWindowCriticalCount = useMemo(() => {
+    const hours = TIME_WINDOWS[timeFilter] || 24;
+    const now = Date.now();
+    const currentStart = now - hours * 60 * 60 * 1000;
+    const previousStart = currentStart - hours * 60 * 60 * 1000;
+    return allAlerts.filter((alert) => {
+      const ts = new Date(alert.created_at).getTime();
+      return ts >= previousStart && ts < currentStart && !alert.is_acknowledged && normalizeSeverity(alert) === 'critical';
+    }).length;
+  }, [allAlerts, timeFilter]);
+
+  const criticalTrendText = useMemo(() => {
+    if (criticalAlerts.length === previousWindowCriticalCount) return 'No change vs prior window';
+    if (previousWindowCriticalCount === 0 && criticalAlerts.length > 0) return `Up ${criticalAlerts.length} from prior window`;
+    if (previousWindowCriticalCount > 0 && criticalAlerts.length === 0) return 'Down 100% vs prior window';
+    const delta = criticalAlerts.length - previousWindowCriticalCount;
+    const percent = Math.round((Math.abs(delta) / previousWindowCriticalCount) * 100);
+    return delta > 0 ? `Up ${percent}% vs prior window` : `Down ${percent}% vs prior window`;
+  }, [criticalAlerts.length, previousWindowCriticalCount]);
+
+  const lastDetectedAt = useMemo(() => {
+    if (!allAlerts.length) return null;
+    return allAlerts[0]?.created_at || null;
+  }, [allAlerts]);
+
+  const safetyScore = useMemo(() => {
+    const score = 100 - criticalAlerts.length * 18 - warningAlerts.length * 8 - deviceAlerts.length * 10;
+    return Math.max(0, Math.min(100, score));
+  }, [criticalAlerts.length, warningAlerts.length, deviceAlerts.length]);
+
   useEffect(() => {
     if (!selectedAlertId && criticalAlerts.length) {
       setSelectedAlertId(criticalAlerts[0].id);
@@ -188,6 +255,11 @@ const AlertsDashboard = () => {
     return allAlerts
       .filter((alert) => alert.is_acknowledged)
       .filter((alert) => {
+        if (historyTimeFilter === 'all') return true;
+        const hours = TIME_WINDOWS[historyTimeFilter] || 24;
+        return new Date(alert.created_at).getTime() >= Date.now() - hours * 60 * 60 * 1000;
+      })
+      .filter((alert) => {
         if (historySeverity !== 'all' && normalizeSeverity(alert) !== historySeverity) return false;
         if (historyPatient && String(alert.patient_id) !== String(historyPatient).trim()) return false;
         if (historyDate) {
@@ -197,7 +269,7 @@ const AlertsDashboard = () => {
         return true;
       })
       .slice(0, 50);
-  }, [allAlerts, historyDate, historySeverity, historyPatient]);
+  }, [allAlerts, historyDate, historySeverity, historyPatient, historyTimeFilter]);
 
   const handleAcknowledge = async (alertId) => {
     await markAcknowledged(alertId);
@@ -277,6 +349,32 @@ const AlertsDashboard = () => {
             Alerts
           </h2>
           <p className="text-muted mb-0">Monitor critical health events and device warnings in real time.</p>
+          <div className="d-flex align-items-center gap-3 mt-2">
+            <div className="d-flex align-items-center gap-2 small fw-semibold">
+              <span
+                className="rounded-circle d-inline-block"
+                style={{
+                  width: 10,
+                  height: 10,
+                  background: isSocketConnected ? '#16a34a' : '#dc2626',
+                  boxShadow: isSocketConnected ? '0 0 0 0 rgba(22, 163, 74, 0.7)' : 'none',
+                  animation: isSocketConnected ? 'pulseDot 1.6s infinite' : 'none',
+                }}
+              />
+              {isSocketConnected ? (
+                <>
+                  <Wifi size={14} className="text-success" />
+                  Live Monitoring Active
+                </>
+              ) : (
+                <>
+                  <WifiOff size={14} className="text-danger" />
+                  Live Monitoring Disconnected
+                </>
+              )}
+            </div>
+            <div className="small text-muted">Last Update: {lastUpdatedAt ? `${secondsSinceUpdate}s ago` : 'N/A'}</div>
+          </div>
         </div>
         <div className="d-flex flex-wrap gap-2 align-items-center">
           <span className="badge rounded-pill text-bg-dark d-flex align-items-center gap-2 px-3 py-2">
@@ -316,7 +414,12 @@ const AlertsDashboard = () => {
             <div className="card-body">
               <div className="small text-uppercase fw-bold text-danger mb-1">Critical Alerts</div>
               <div className="h3 mb-0 fw-black">{criticalAlerts.length}</div>
-              <div className="small text-muted">Active</div>
+              <div className="small text-muted">
+                {criticalAlerts.length ? 'Immediate clinical attention required' : 'No critical alerts'}
+              </div>
+              <div className={`small mt-1 fw-semibold ${criticalAlerts.length <= previousWindowCriticalCount ? 'text-success' : 'text-danger'}`}>
+                {criticalTrendText}
+              </div>
             </div>
           </div>
         </div>
@@ -325,7 +428,10 @@ const AlertsDashboard = () => {
             <div className="card-body">
               <div className="small text-uppercase fw-bold" style={{ color: '#9a3412' }}>Warnings</div>
               <div className="h3 mb-0 fw-black">{warningAlerts.length}</div>
-              <div className="small text-muted">Active</div>
+              <div className="small text-muted">Vitals slightly outside baseline ranges</div>
+              <div className="small mt-1 fw-semibold" style={{ color: '#9a3412' }}>
+                {warningAlerts.length ? 'Review to prevent escalation' : 'No warning alerts'}
+              </div>
             </div>
           </div>
         </div>
@@ -343,7 +449,8 @@ const AlertsDashboard = () => {
             <div className="card-body">
               <div className="small text-uppercase fw-bold text-dark mb-1">Resolved</div>
               <div className="h3 mb-0 fw-black">{resolvedCount}</div>
-              <div className="small text-muted">Acknowledged</div>
+              <div className="small text-muted">Alerts reviewed by doctor</div>
+              <div className="small mt-1 fw-semibold text-success">Clinical workflow updated</div>
             </div>
           </div>
         </div>
@@ -361,7 +468,14 @@ const AlertsDashboard = () => {
             </div>
             <div className="card-body">
               {criticalAlerts.length ? criticalAlerts.map((alert) => renderAlertCard(alert, 'critical')) : (
-                <p className="text-muted mb-0">No critical alerts in this time window.</p>
+                <div className="border rounded-3 p-3 bg-success bg-opacity-10">
+                  <div className="fw-bold text-success mb-2">System Status: Stable</div>
+                  <div className="small text-muted d-flex flex-column gap-1">
+                    <span><CheckCircle2 size={14} className="me-1 text-success" /> Oxygen levels normal</span>
+                    <span><CheckCircle2 size={14} className="me-1 text-success" /> Heart rate within range</span>
+                    <span><CheckCircle2 size={14} className="me-1 text-success" /> Temperature stable</span>
+                  </div>
+                </div>
               )}
             </div>
           </section>
@@ -463,6 +577,16 @@ const AlertsDashboard = () => {
                   <option value="warning">Warning</option>
                   <option value="info">Info</option>
                 </select>
+                <select
+                  className="form-select form-select-sm"
+                  value={historyTimeFilter}
+                  onChange={(event) => setHistoryTimeFilter(event.target.value)}
+                >
+                  <option value="all">All Time</option>
+                  <option value="1h">Last 1 hour</option>
+                  <option value="24h">Last 24 hours</option>
+                  <option value="7d">Last 7 days</option>
+                </select>
                 <input
                   type="text"
                   className="form-control form-control-sm"
@@ -511,6 +635,33 @@ const AlertsDashboard = () => {
         </div>
 
         <div className="col-xl-4">
+          <div className="card border-0 shadow-sm mb-4">
+            <div className="card-body">
+              <h6 className="fw-bold mb-3">Patient Safety Score</h6>
+              <div className="d-flex align-items-end gap-2 mb-2">
+                <span className="display-6 fw-black mb-0">{safetyScore}</span>
+                <span className="text-muted mb-2">/ 100</span>
+              </div>
+              <div className={`fw-semibold ${safetyScore >= 85 ? 'text-success' : safetyScore >= 65 ? 'text-warning' : 'text-danger'}`}>
+                Status: {safetyScore >= 85 ? 'Stable' : safetyScore >= 65 ? 'Watch' : 'High Risk'}
+              </div>
+              <div className="small text-muted mt-2">
+                Last detected alert: {lastDetectedAt ? new Date(lastDetectedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'None'}
+              </div>
+            </div>
+          </div>
+
+          <div className="card border-0 shadow-sm mb-4">
+            <div className="card-body">
+              <h6 className="fw-bold mb-3">Severity Legend</h6>
+              <div className="d-flex flex-column gap-2 small">
+                <div><span className="me-2">🔴</span>Critical</div>
+                <div><span className="me-2">🟠</span>Warning</div>
+                <div><span className="me-2">🔵</span>Info</div>
+              </div>
+            </div>
+          </div>
+
           <aside className="card border-0 shadow-sm sticky-top" style={{ top: '1rem' }}>
             <div className="card-header bg-white">
               <h5 className="mb-0 fw-bold">Alert Details</h5>
@@ -575,6 +726,13 @@ const AlertsDashboard = () => {
           </aside>
         </div>
       </div>
+      <style>{`
+        @keyframes pulseDot {
+          0% { box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.7); }
+          70% { box-shadow: 0 0 0 8px rgba(22, 163, 74, 0); }
+          100% { box-shadow: 0 0 0 0 rgba(22, 163, 74, 0); }
+        }
+      `}</style>
     </div>
   );
 };
