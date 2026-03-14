@@ -232,25 +232,6 @@ function AssessmentPage() {
     return Math.max(0, Math.min(100, score));
   }, [latest, history]);
 
-  const alerts = useMemo(() => {
-    if (!latest) return [];
-    const list = [];
-    const hrStatus = statusForVital("hr", latest.hr);
-    const spo2Status = statusForVital("spo2", latest.spo2);
-    const tempStatus = statusForVital("temp", latest.temp);
-
-    if (hrStatus.level === "warning") list.push(`⚠ Heart rate elevated (${latest.hr} BPM)`);
-    if (hrStatus.level === "critical") list.push(`⚠ Critical heart rate (${latest.hr} BPM)`);
-
-    if (spo2Status.level === "warning") list.push(`⚠ SpO₂ slightly low (${latest.spo2}%)`);
-    if (spo2Status.level === "critical") list.push(`⚠ Critical SpO₂ (${latest.spo2}%)`);
-
-    if (tempStatus.level === "warning") list.push(`⚠ Temperature elevated (${latest.temp}°C)`);
-    if (tempStatus.level === "critical") list.push(`⚠ High fever detected (${latest.temp}°C)`);
-
-    return list;
-  }, [latest]);
-
   const deviceStatus = useMemo(() => {
     if (!latest) return "Offline";
     if (latest.signal === "ok") return "Connected";
@@ -368,23 +349,7 @@ function AssessmentPage() {
         </div>
 
         <div className="row g-4">
-          <div className="col-12 col-md-6">
-            <div className="card border-0 shadow-sm rounded-4 p-4 h-100">
-              <h3 className="h6 fw-bold mb-3">Alerts</h3>
-              {alerts.length ? (
-                <ul className="mb-0 ps-3">
-                  {alerts.map((a, idx) => (
-                    <li key={idx} className="text-danger" style={{ marginBottom: 6 }}>
-                      <AlertTriangle size={16} className="me-2" /> {a}
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="text-success mb-0">No alerts detected. Vitals are stable.</p>
-              )}
-            </div>
-          </div>
-          <div className="col-12 col-md-6">
+          <div className="col-12">
             <div className="card border-0 shadow-sm rounded-4 p-4 h-100">
               <h3 className="h6 fw-bold mb-3">Recent History</h3>
               <div style={{ maxHeight: 220, overflowY: "auto" }}>
