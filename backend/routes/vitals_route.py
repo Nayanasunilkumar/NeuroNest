@@ -27,7 +27,8 @@ def receive_vitals():
     if not data:
         return jsonify({"error": "No data"}), 400
 
-    patient_id = int(data.get("patient_id", 1))
+    # Attach optional patient_id if provided (useful for multi-patient routing)
+    patient_id = int(data.get("patient_id", 0) or 0)
 
     _latest.update({
         "patient_id": patient_id,
@@ -41,8 +42,11 @@ def receive_vitals():
         "ts":         datetime.utcnow().isoformat()
     })
 
-    # Emit real-time update to all connected clients in the vitals room for this patient
-    socketio.emit("vitals_update", _latest, room=f"patient_vitals_{patient_id}")
+    # Debug log: show incoming vitals
+    print("[VITALS] Received", _latest)
+
+    # Emit to all connected clients (fallback for missing room joins)
+    socketio.emit("vitals_update", _latest)
 
     # Save to history only when signal is valid
     if data.get("signal") in ("ok", "weak"):
