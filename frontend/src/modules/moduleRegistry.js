@@ -5,7 +5,6 @@ import myAppointmentsModule from './my-appointments';
 import medicalRecordsModule from './medical-records';
 import prescriptionsModule from './prescriptions';
 import assessmentModule from './assessment';
-import progressTrackerModule from './progress-tracker';
 import feedbackReviewsModule from './feedback-reviews';
 import adminManagePatientsModule from './admin-manage-patients';
 import adminManageDoctorsModule from './admin-manage-doctors';
@@ -45,7 +44,6 @@ export const moduleRegistry = [
   medicalRecordsModule,
   prescriptionsModule,
   assessmentModule,
-  progressTrackerModule,
   feedbackReviewsModule,
   adminManagePatientsModule,
   adminManageDoctorsModule,
