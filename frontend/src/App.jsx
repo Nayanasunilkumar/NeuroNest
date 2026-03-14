@@ -6,6 +6,7 @@ import ModuleRouteGuard from "./routes/ModuleRouteGuard";
 import { ModuleConfigProvider } from "./context/ModuleConfigContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import { AlertProvider } from "./context/AlertContext";
+import { CallProvider } from "./context/CallContext";
 import SessionManager from "./components/SessionManager";
 import AlertPopup from "./components/shared/AlertPopup";
 
@@ -53,9 +54,10 @@ export default function App() {
       <ThemeProvider>
         <BrowserRouter>
           <AlertProvider>
-            <AlertPopup />
-            <SessionManager />
-            <Routes>
+            <CallProvider>
+              <AlertPopup />
+              <SessionManager />
+              <Routes>
             {/* Default */}
             <Route path="/" element={<Navigate to="/login" />} />
 
@@ -115,8 +117,9 @@ export default function App() {
               } 
             />
 
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </CallProvider>
           </AlertProvider>
         </BrowserRouter>
       </ThemeProvider>
