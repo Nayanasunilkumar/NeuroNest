@@ -46,7 +46,8 @@ def receive_vitals():
         "hr_alert":   int(data.get("hr_alert", 0)),
         "spo2_alert": int(data.get("spo2_alert", 0)),
         "temp_alert": int(data.get("temp_alert", 0)),
-        "ts":         datetime.utcnow().isoformat()
+        # Include Z so JS treats this as UTC (avoids local timezone skew)
+        "ts":         datetime.utcnow().isoformat() + "Z"
     })
 
     # Debug log: show incoming vitals

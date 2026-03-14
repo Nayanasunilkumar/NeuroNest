@@ -3,10 +3,20 @@ import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianG
 import { Heart, Droplets, Thermometer, Clock, Activity, AlertTriangle } from "lucide-react";
 import { getLatestVitals, getVitalsHistory } from "../../api/vitals";
 
-function formatAgo(ts) {
-  if (!ts) return "—";
+function parseTimestamp(ts) {
+  if (!ts) return null;
+  // ISO strings without timezone are treated as local by JS Date.
+  // Ensure we treat vitals timestamps as UTC when timezone is missing.
+  if (typeof ts === "string" && !ts.endsWith("Z") && !/[+-]\d{2}:?\d{2}$/.test(ts)) {
+    ts = `${ts}Z`;
+  }
   const d = new Date(ts);
-  if (Number.isNaN(d.getTime())) return "—";
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
+function formatAgo(ts) {
+  const d = parseTimestamp(ts);
+  if (!d) return "—";
   const diff = Date.now() - d.getTime();
   const seconds = Math.floor(diff / 1000);
   if (seconds < 60) return `${seconds}s ago`;
@@ -129,6 +139,7 @@ function TrendChart({ title, data, dataKey, unit, color }) {
 function AssessmentPage() {
   const [latest, setLatest] = useState(null);
   const [history, setHistory] = useState([]);
+  const [historyLimit, setHistoryLimit] = useState(60);
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState(null);
   const [error, setError] = useState(null);
@@ -164,16 +175,22 @@ function AssessmentPage() {
 
   const transformedHistory = useMemo(() => {
     if (!history || !history.length) return [];
-    return history
+    const sliced = history.slice(-historyLimit);
+    return sliced
       .slice()
       .reverse()
-      .map((item) => ({
-        label: new Date(item.ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-        hr: item.hr,
-        spo2: item.spo2,
-        temp: item.temp,
-      }));
-  }, [history]);
+      .map((item) => {
+        const d = parseTimestamp(item.ts);
+        return {
+          label: d
+            ? d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+            : "--",
+          hr: item.hr,
+          spo2: item.spo2,
+          temp: item.temp,
+        };
+      });
+  }, [history, historyLimit]);
 
   const baseline = useMemo(() => {
     if (!history || !history.length) return { hr: null, spo2: null, temp: null };
@@ -312,13 +329,15 @@ function AssessmentPage() {
               Filter:
             </span>
             <select
-              className="form-select form-select-sm"
-              style={{ width: "160px" }}
-              value={history.length}
-              disabled
-            >
-              <option value="60">Last 60 readings</option>
-            </select>
+            className="form-select form-select-sm"
+            style={{ width: "160px" }}
+            value={historyLimit}
+            onChange={(e) => setHistoryLimit(Number(e.target.value))}
+          >
+            <option value={15}>Last 15 readings</option>
+            <option value={30}>Last 30 readings</option>
+            <option value={60}>Last 60 readings</option>
+          </select>
           </div>
         </div>
 
