@@ -1,11 +1,5 @@
 import { Bell } from 'lucide-react';
-import ModuleComingSoon from '../../pages/shared/ModuleComingSoon';
-
-const AlertsPage = () =>
-  ModuleComingSoon({
-    title: 'Alerts',
-    description: 'Centralized alerting is wired and can be enabled from configuration.',
-  });
+import AlertsDashboard from '../../pages/shared/AlertsDashboard';
 
 const alertsModule = {
   key: 'alerts',
@@ -15,10 +9,10 @@ const alertsModule = {
   rolesAllowed: ['doctor', 'patient'],
   enabledByDefault: true,
   componentsByRole: {
-    doctor: AlertsPage,
-    patient: AlertsPage,
+    doctor: AlertsDashboard,
+    patient: AlertsDashboard,
   },
-  showInSidebarByRole: ['patient'],
+  showInSidebarByRole: ['patient', 'doctor'],
   orderByRole: { doctor: 90, patient: 80 },
 };
 

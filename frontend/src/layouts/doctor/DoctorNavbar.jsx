@@ -9,9 +9,11 @@ import { getUser } from '../../utils/auth';
 import { getMyNotifications, markNotificationRead } from '../../api/profileApi';
 import DynamicIslandNav from '../../components/DynamicIslandNav';
 import { Bell, Info, AlertTriangle } from 'lucide-react';
+import { useAlerts } from '../../context/AlertContext';
 
 const DoctorNavbar = ({ darkMode, toggleTheme }) => {
   const navigate = useNavigate();
+  const { alerts, unreadCount, markAcknowledged } = useAlerts() || { alerts: [], unreadCount: 0, markAcknowledged: () => {} };
   const [doctorInfo, setDoctorInfo] = useState({
     name: 'Dr. Nayana',
     specialization: 'Neurologist',
@@ -135,7 +137,9 @@ const DoctorNavbar = ({ darkMode, toggleTheme }) => {
     return () => clearInterval(interval);
   }, []);
 
-  const hasNotifications = notifications.length > 0;
+  const hasNotifications = notifications.length > 0 || unreadCount > 0;
+  const totalNotifications = notifications.length + unreadCount;
+  const unacknowledgedAlerts = alerts?.filter(a => !a.is_acknowledged) || [];
 
   return (
     <div className={`d-flex align-items-center justify-content-between px-3 px-md-4 border-bottom shadow-sm ${darkMode ? 'bg-dark border-secondary' : 'bg-white'}`} style={{ height: '80px', zIndex: 1060, flexShrink: 0, flexWrap: 'nowrap' }}>
@@ -186,9 +190,25 @@ const DoctorNavbar = ({ darkMode, toggleTheme }) => {
             }}>
               <div className="d-flex align-items-center justify-content-between p-2 mb-1 border-bottom border-opacity-10 pb-2">
                 <span className={`fw-bold small ${darkMode ? 'text-light' : 'text-dark'}`}>Notifications</span>
-                {notifications.length > 0 && <span className="badge bg-danger rounded-pill px-2 py-1" style={{ fontSize: '0.6rem' }}>{notifications.length} NEW</span>}
+                {totalNotifications > 0 && <span className="badge bg-danger rounded-pill px-2 py-1" style={{ fontSize: '0.6rem' }}>{totalNotifications} NEW</span>}
               </div>
               <div className="p-1 max-vh-50 overflow-auto">
+                {unacknowledgedAlerts.map(a => (
+                    <div 
+                      key={`alert-${a.id}`} 
+                      onClick={() => navigate('/alerts')} 
+                      className={`d-flex gap-3 p-2 rounded-3 cursor-pointer mb-1 transition-all border border-danger bg-danger bg-opacity-10 ${darkMode ? 'text-light' : 'text-dark'}`}
+                    >
+                      <div className="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0 shadow-sm bg-danger text-white pulse-active" style={{ width: '38px', height: '38px' }}>
+                        <AlertTriangle size={18} />
+                      </div>
+                      <div className="flex-grow-1">
+                         <div className="fw-bold fs-6 mb-0 lh-sm text-danger">CRITICAL ALERT</div>
+                         <div className={`small fw-bold ${darkMode ? 'text-secondary' : 'text-muted'}`}>{a.vital_type} - {a.message}</div>
+                         <button onClick={(e) => { e.stopPropagation(); markAcknowledged(a.id); }} className="btn btn-sm btn-danger mt-1 py-0 px-2" style={{ fontSize: '0.7rem' }}>Acknowledge</button>
+                      </div>
+                    </div>
+                ))}
                 {notifications.length > 0 ? (
                   notifications.map(n => (
                     <div 
@@ -210,7 +230,9 @@ const DoctorNavbar = ({ darkMode, toggleTheme }) => {
                       </div>
                     </div>
                   ))
-                ) : (
+                ) : null}
+
+                {totalNotifications === 0 && (
                   <div className={`p-4 text-center small fw-medium ${darkMode ? 'text-secondary' : 'text-muted'}`}>You're all caught up!</div>
                 )}
               </div>

@@ -81,14 +81,14 @@ class NotificationService:
                 NotificationService.send_sms(phone, patient_msg)
 
     @staticmethod
-    def send_in_app(user_id, title, message, payload=None):
+    def send_in_app(user_id, title, message, payload=None, notif_type="appointment"):
         from database.models import db, InAppNotification
         notif = InAppNotification(
             user_id=user_id,
             title=title,
             message=message,
             payload=payload,
-            type="appointment"
+            type=notif_type
         )
         db.session.add(notif)
         db.session.commit()
@@ -111,6 +111,7 @@ class NotificationService:
             "cancelled":    {"accent": "#F59E0B", "badge_bg": "#FEF9C3", "badge_text": "#92400E", "label": "Cancelled"},
             "rescheduled":  {"accent": "#7C3AED", "badge_bg": "#EDE9FE", "badge_text": "#5B21B6", "label": "Rescheduled"},
             "completed":    {"accent": "#0EA5E9", "badge_bg": "#E0F2FE", "badge_text": "#0369A1", "label": "Completed"},
+            "critical":     {"accent": "#EF4444", "badge_bg": "#FEE2E2", "badge_text": "#B91C1C", "label": "Critical Alert 🔴"},
         }
         c = colour_map.get(event_type, {"accent": "#2563EB", "badge_bg": "#DBEAFE", "badge_text": "#1D4ED8", "label": "Update"})
 

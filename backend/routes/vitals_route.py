@@ -2,10 +2,11 @@ import json
 
 from flask import Blueprint, request, jsonify, send_file
 from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
-from database.models import db, User
-from datetime import datetime
+from database.models import db, User, Alert, Appointment
+from datetime import datetime, timedelta
 from collections import deque
 from extensions.socket import socketio
+from services.notification_service import NotificationService
 from utils.pdf_generator import generate_assessment_report
 
 vitals_bp = Blueprint("vitals", __name__)
@@ -18,6 +19,93 @@ _latest = {
     "ts": None
 }
 _history = deque(maxlen=60)  # last 60 valid readings
+
+
+# ─── Alert State Tracking ───────────
+_last_alert_time = {}
+ALERT_COOLDOWN_MINUTES = 5
+
+def check_and_trigger_alerts(patient_id, data):
+    # Thresholds
+    thresholds = [
+        {"type": "SPO2", "val": data.get("spo2"), "is_crit": lambda v: v < 90, "msg": "Oxygen level below safe threshold ({}%)"},
+        {"type": "Heart Rate", "val": data.get("hr"), "is_crit": lambda v: v > 120 or v < 40, "msg": "Heart rate critical ({} BPM)"},
+        {"type": "Temperature", "val": data.get("temp"), "is_crit": lambda v: v > 39.0 or v < 35.0, "msg": "Temperature critical ({}°C)"}
+    ]
+
+    now = datetime.utcnow()
+
+    for t in thresholds:
+        val = t["val"]
+        if val is None:
+            continue
+        try:
+            val = float(val)
+        except ValueError:
+            continue
+            
+        if t["is_crit"](val):
+            vital_type = t["type"]
+            key = (patient_id, vital_type)
+            
+            # Check cooldown
+            if key in _last_alert_time:
+                last_time = _last_alert_time[key]
+                if now - last_time < timedelta(minutes=ALERT_COOLDOWN_MINUTES):
+                    continue # Skip, in cooldown
+            
+            # Trigger alert
+            _last_alert_time[key] = now
+            msg = t["msg"].format(val)
+            
+            try:
+                alert = Alert(
+                    patient_id=patient_id,
+                    vital_type=vital_type,
+                    value=val,
+                    severity="CRITICAL",
+                    message=msg,
+                    created_at=now
+                )
+                db.session.add(alert)
+                db.session.commit()
+                
+                # Emit WebSocket
+                socketio.emit("critical_alert", alert.to_dict())
+                
+                # Send Email
+                send_critical_alert_email(patient_id, alert)
+                
+            except Exception as e:
+                db.session.rollback()
+                print(f"[VITALS ALERT ERROR] {e}")
+
+def send_critical_alert_email(patient_id, alert):
+    patient = User.query.get(patient_id)
+    if not patient:
+        return
+        
+    appointment = Appointment.query.filter_by(patient_id=patient_id).order_by(Appointment.created_at.desc()).first()
+    doctor_email = appointment.doctor.email if appointment and appointment.doctor else None
+        
+    subject = f"🚨 NeuroNest Critical Alert – Patient {alert.vital_type} Critical"
+    body = (
+        f"Critical Health Alert Detected\n\n"
+        f"Patient: {patient.full_name or 'Unknown'}\n"
+        f"Vital: {alert.vital_type}\n"
+        f"Alert Message: {alert.message}\n"
+        f"Current Value: {alert.value}\n\n"
+        f"Time: {alert.created_at.strftime('%b %d, %I:%M %p')} UTC\n\n"
+        f"Immediate medical attention may be required.\n\n"
+        f"View patient dashboard:\n"
+        f"https://neuronest.app/alerts"
+    )
+    
+    if doctor_email:
+        NotificationService.send_email(doctor_email, subject, body, event_type="critical")
+        
+    if patient.email:
+        NotificationService.send_email(patient.email, subject, body, event_type="critical")
 
 
 # =========================================
@@ -60,6 +148,10 @@ def receive_vitals():
     # Save to history only when signal is valid
     if data.get("signal") in ("ok", "weak"):
         _history.append({**_latest})
+
+    # Trigger Critical Alerts based on thresholds
+    if patient_id > 0 and data.get("signal") in ("ok", "weak"):
+        check_and_trigger_alerts(patient_id, data)
 
     # Optionally persist to DB (uncomment if you want DB storage)
     # try:
