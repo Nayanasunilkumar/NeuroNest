@@ -178,7 +178,8 @@ function VitalsSection() {
     const token = localStorage.getItem("neuronest_token");
     socketRef.current = io(BACKEND_API, {
       query: { token },
-      transports: ['websocket', 'polling']
+      transports: ['websocket', 'polling'],
+      withCredentials: true,
     });
 
     socketRef.current.on('connect', () => {
@@ -208,7 +209,7 @@ function VitalsSection() {
         socketRef.current.disconnect();
       }
     };
-  }, [user.id]);
+  }, [patientId]);
 
   const tempHistory = history.map(h => h.temp).filter(Boolean);
   const signal = data?.signal || "na";

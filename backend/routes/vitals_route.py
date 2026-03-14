@@ -1,3 +1,5 @@
+import json
+
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
 from database.models import db
@@ -25,7 +27,12 @@ _history = deque(maxlen=60)  # last 60 valid readings
 def receive_vitals():
     data = request.get_json(silent=True)
     if not data:
-        return jsonify({"error": "No data"}), 400
+        raw = request.get_data(as_text=True) or ""
+        try:
+            data = json.loads(raw)
+        except Exception:
+            print("[VITALS] Invalid payload:", raw)
+            return jsonify({"error": "No data"}), 400
 
     # Attach optional patient_id if provided (useful for multi-patient routing)
     patient_id = int(data.get("patient_id", 0) or 0)

@@ -16,6 +16,7 @@ export const initSocket = () => {
             query: { token },
             transports: ["websocket"],
             reconnection: true,
+            withCredentials: true,
         });
 
         socket.on("connect", () => {
