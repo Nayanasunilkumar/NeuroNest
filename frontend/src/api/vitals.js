@@ -1,26 +1,31 @@
-import axios from "./axios";
+const BACKEND_API = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
-export const getLatestVitals = async (patientId = null) => {
-  const suffix = patientId ? `?patient_id=${patientId}` : "";
-  const response = await axios.get(`/api/vitals/latest${suffix}`);
-  return response.data;
-};
+const authHeader = () => ({
+  Authorization: `Bearer ${localStorage.getItem("neuronest_token")}`,
+});
 
-export const getVitalsHistory = async (patientId = null, limit = 60) => {
-  const params = new URLSearchParams();
-  if (patientId) params.append("patient_id", patientId);
-  if (limit) params.append("limit", String(limit));
-  const query = params.toString();
-  const response = await axios.get(`/api/vitals/history${query ? `?${query}` : ""}`);
-  return response.data;
-};
+export async function getMonitoredPatients() {
+  const res = await fetch(`${BACKEND_API}/api/vitals/patients`, {
+    headers: authHeader(),
+  });
+  if (!res.ok) throw new Error("Failed to fetch monitored patients");
+  return res.json();
+}
 
-export const getMonitoredPatients = async () => {
-  const response = await axios.get("/api/vitals/monitored-patients");
-  return response.data;
-};
+export async function getLatestVitals(patientId) {
+  const url = patientId
+    ? `${BACKEND_API}/api/vitals/latest?patient_id=${patientId}`
+    : `${BACKEND_API}/api/vitals/latest`;
+  const res = await fetch(url, { headers: authHeader() });
+  if (!res.ok) throw new Error("Failed to fetch vitals");
+  return res.json();
+}
 
-export const getVitalsDevices = async () => {
-  const response = await axios.get("/api/vitals/devices");
-  return response.data;
-};
+export async function getVitalsHistory(patientId) {
+  const url = patientId
+    ? `${BACKEND_API}/api/vitals/history?patient_id=${patientId}`
+    : `${BACKEND_API}/api/vitals/history`;
+  const res = await fetch(url, { headers: authHeader() });
+  if (!res.ok) throw new Error("Failed to fetch vitals history");
+  return res.json();
+}

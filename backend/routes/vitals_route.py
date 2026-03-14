@@ -84,3 +84,19 @@ def get_history():
     if claims.get("role") not in ("patient", "doctor", "admin"):
         return jsonify({"message": "Access denied"}), 403
     return jsonify(list(_history)), 200
+
+
+# =========================================
+# Doctor → GET /api/vitals/patients
+# Returns list of monitored patients
+# =========================================
+@vitals_bp.route("/api/vitals/patients", methods=["GET"])
+@jwt_required()
+def get_monitored_patients():
+    claims = get_jwt()
+    if claims.get("role") not in ("doctor", "admin"):
+        return jsonify({"message": "Access denied"}), 403
+    # Return current patient if vitals are active
+    if _latest.get("ts"):
+        return jsonify([{"patient_id": 1, "patient_name": "Jane (ESP32)"}]), 200
+    return jsonify([]), 200
