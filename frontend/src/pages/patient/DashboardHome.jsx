@@ -155,8 +155,11 @@ function VitalsSection() {
   const [online, setOnline] = useState(false);
   const socketRef = useRef(null);
   const user = getUser();
+  const patientId = user?.id;
 
   useEffect(() => {
+    if (!patientId) return;
+
     // Initial fetch
     const fetch_ = async () => {
       try {
@@ -181,7 +184,7 @@ function VitalsSection() {
     socketRef.current.on('connect', () => {
       console.log('Connected to vitals socket');
       // Join vitals room
-      socketRef.current.emit('join_vitals_room', { patient_id: user.id });
+      socketRef.current.emit('join_vitals_room', { patient_id: patientId });
     });
 
     socketRef.current.on('vitals_update', (update) => {
