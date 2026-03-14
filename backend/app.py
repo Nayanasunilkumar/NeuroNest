@@ -115,6 +115,7 @@ def create_app():
 
     # Import socket events to register handlers
     import modules.chat.socket_events
+    import routes.vitals_socket_events
     
     from sockets.video_socket import register_video_events
     register_video_events(socketio)
@@ -141,4 +142,4 @@ def create_app():
 app = create_app()
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
+    socketio.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
