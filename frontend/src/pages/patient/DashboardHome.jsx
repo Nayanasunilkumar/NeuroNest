@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from "react";
 import { Activity, Calendar, Heart, TrendingUp, ShieldCheck, Clock, Bell, X, Wifi, WifiOff, Thermometer, Droplets } from "lucide-react";
 import { getMyNotifications, markNotificationRead } from "../../api/profileApi";
 import { Link } from "react-router-dom";
+import { io } from 'socket.io-client';
+import { getUser } from "../../utils/auth";
 
 const BACKEND_API = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
@@ -149,9 +151,11 @@ function VitalsSection() {
   const [data, setData] = useState(null);
   const [history, setHistory] = useState([]);
   const [online, setOnline] = useState(false);
-  const timer = useRef();
+  const socketRef = useRef(null);
+  const user = getUser();
 
   useEffect(() => {
+    // Initial fetch
     const fetch_ = async () => {
       try {
         const [lr, hr] = await Promise.all([
@@ -164,9 +168,42 @@ function VitalsSection() {
       } catch { setOnline(false); }
     };
     fetch_();
-    timer.current = setInterval(fetch_, 1000);
-    return () => clearInterval(timer.current);
-  }, []);
+
+    // Socket connection
+    const token = localStorage.getItem("neuronest_token");
+    socketRef.current = io(BACKEND_API, {
+      auth: { token },
+      transports: ['websocket', 'polling']
+    });
+
+    socketRef.current.on('connect', () => {
+      console.log('Connected to vitals socket');
+      // Join vitals room
+      socketRef.current.emit('join_vitals_room', { patient_id: user.id });
+    });
+
+    socketRef.current.on('vitals_update', (update) => {
+      setData(update);
+      // Update history if signal is valid
+      if (update.signal === 'ok' || update.signal === 'weak') {
+        setHistory(prev => {
+          const newHistory = [...prev, update];
+          return newHistory.slice(-60); // Keep last 60
+        });
+      }
+      setOnline(true);
+    });
+
+    socketRef.current.on('disconnect', () => {
+      setOnline(false);
+    });
+
+    return () => {
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+      }
+    };
+  }, [user.id]);
 
   const tempHistory = history.map(h => h.temp).filter(Boolean);
   const signal = data?.signal || "na";

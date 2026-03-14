@@ -29,6 +29,7 @@ from routes.modules_config import modules_config_bp
 from routes.vitals_route import vitals_bp
 
 from extensions.socket import socketio
+from routes.vitals_socket_events import *
 
 def create_app():
     app = Flask(__name__)

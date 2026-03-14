@@ -3,6 +3,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
 from database.models import db
 from datetime import datetime
 from collections import deque
+from extensions.socket import socketio
 
 vitals_bp = Blueprint("vitals", __name__)
 
@@ -36,6 +37,9 @@ def receive_vitals():
         "temp_alert": int(data.get("temp_alert", 0)),
         "ts":         datetime.utcnow().isoformat()
     })
+
+    # Emit real-time update to all connected clients in the vitals room
+    socketio.emit("vitals_update", _latest, room="patient_vitals_1")  # Assuming patient_id=1 for now
 
     # Save to history only when signal is valid
     if data.get("signal") in ("ok", "weak"):
