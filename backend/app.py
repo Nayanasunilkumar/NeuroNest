@@ -124,11 +124,6 @@ def create_app():
     def home():
         return {"status": "NeuroNest-V15-STABLE-LIVE"}
     
-    @app.after_request
-    def add_ngrok_header(response):
-        response.headers['ngrok-skip-browser-warning'] = 'true'
-        return response
-
     from apscheduler.schedulers.background import BackgroundScheduler
     from services.scheduler_service import check_upcoming_consultations
     
