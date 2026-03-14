@@ -1,11 +1,5 @@
 import { ClipboardCheck } from 'lucide-react';
-import ModuleComingSoon from '../../pages/shared/ModuleComingSoon';
-
-const AssessmentPage = () =>
-  ModuleComingSoon({
-    title: 'Assessment',
-    description: 'Patient assessment workflows are prepared for the next rollout phase.',
-  });
+import AssessmentPage from '../../pages/patient/Assessment';
 
 const assessmentModule = {
   key: 'assessment',
