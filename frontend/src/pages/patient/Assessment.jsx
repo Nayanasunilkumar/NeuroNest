@@ -1,6 +1,25 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
-import { Heart, Droplets, Thermometer, Clock, Activity, AlertTriangle } from "lucide-react";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  CartesianGrid,
+  Area,
+  ReferenceLine,
+} from "recharts";
+import {
+  Heart,
+  Droplets,
+  Thermometer,
+  Clock,
+  Activity,
+  AlertTriangle,
+  ArrowUp,
+  ArrowDown,
+} from "lucide-react";
 import { getLatestVitals, getVitalsHistory } from "../../api/vitals";
 
 function parseTimestamp(ts) {
@@ -55,55 +74,80 @@ function statusForVital(key, value) {
   return { label: "Unknown", level: "neutral" };
 }
 
-function VitalCard({ title, icon, value, unit, status, helper }) {
+function getTrendInfo(value, baseline) {
+  if (value == null || baseline == null) return { direction: "", percent: null };
+  if (baseline === 0) return { direction: "", percent: null };
+  const diff = value - baseline;
+  const percent = Math.round((diff / baseline) * 100);
+  const direction = diff === 0 ? "" : diff > 0 ? "up" : "down";
+  return { direction, percent: Math.abs(percent) };
+}
+
+function VitalCard({ title, icon, value, unit, status, baseline, trend }) {
   const colors = {
-    normal: { border: "#22c55e", text: "#166534" },
-    warning: { border: "#f97316", text: "#9a3412" },
-    critical: { border: "#dc2626", text: "#7f1d1d" },
-    neutral: { border: "#94a3b8", text: "#334155" },
+    normal: { border: "#22c55e", bg: "#ECFDF5", text: "#166534" },
+    warning: { border: "#f97316", bg: "#FFEDD5", text: "#9a3412" },
+    critical: { border: "#dc2626", bg: "#FEE2E2", text: "#7f1d1d" },
+    neutral: { border: "#94a3b8", bg: "#F1F5F9", text: "#334155" },
   };
   const theme = colors[status.level] || colors.neutral;
 
+  const arrow = trend?.direction === "up" ? <ArrowUp size={16} /> : trend?.direction === "down" ? <ArrowDown size={16} /> : null;
+  const trendLabel = trend?.percent != null ? `${trend.percent}% ${trend.direction === "up" ? "↑" : trend.direction === "down" ? "↓" : ""}` : "";
+
   return (
-    <div className="card border-0 shadow-sm rounded-4 h-100" style={{ borderLeft: `5px solid ${theme.border}` }}>
+    <div
+      className="card border-0 shadow-sm rounded-4 h-100"
+      style={{ borderLeft: `5px solid ${theme.border}`, background: theme.bg }}
+    >
       <div className="card-body p-4">
         <div className="d-flex justify-content-between align-items-start mb-3">
           <div>
-            <div className="small fw-bold text-uppercase text-secondary mb-0" style={{ fontSize: "0.68rem", letterSpacing: "1px" }}>
-              {title}
+            <div className="d-flex align-items-center gap-2 mb-1">
+              <div className="p-2 rounded-3" style={{ background: "rgba(15,23,42,0.06)" }}>
+                {icon}
+              </div>
+              <div className="fw-bold" style={{ fontSize: "0.9rem" }}>
+                {title}
+              </div>
             </div>
-            <div className="text-muted" style={{ fontSize: "0.68rem" }}>
-              {helper}
+            <div className="text-muted" style={{ fontSize: "0.75rem" }}>
+              Baseline: {baseline ?? "--"} {unit}
             </div>
           </div>
-          <div className="d-flex align-items-center gap-2">
-            <div className="p-2 rounded-3" style={{ background: "rgba(15,23,42,0.06)" }}>
-              {icon}
+          <div className="text-end">
+            <div className="fw-black" style={{ fontSize: "2.4rem", letterSpacing: "-1px", color: theme.text }}>
+              {value != null ? value : "--"}
+            </div>
+            <div className="text-secondary" style={{ fontSize: "0.8rem" }}>
+              {unit}
             </div>
           </div>
         </div>
-        <div className="d-flex align-items-baseline gap-2 mb-2">
-          <span className="fw-black" style={{ fontSize: "2.4rem", letterSpacing: "-1px" }}>
-            {value != null ? value : "--"}
-          </span>
-          <span className="text-secondary fw-bold" style={{ fontSize: "0.85rem" }}>
-            {unit}
-          </span>
-        </div>
+
         <div className="d-flex justify-content-between align-items-center">
-          <span className="text-secondary" style={{ fontSize: "0.72rem" }}>
-            {status.label}
-          </span>
+          <div className="d-flex align-items-center gap-1" style={{ fontSize: "0.85rem", color: theme.text }}>
+            {arrow}
+            {trendLabel}
+          </div>
           <span className="badge" style={{ background: theme.border + "20", color: theme.text, fontSize: "0.65rem" }}>
             {status.label}
           </span>
         </div>
+
+        {status.label && (
+          <div className="mt-2" style={{ fontSize: "0.72rem", color: theme.text }}>
+            {status.label === "Critical" && "⚠ Critical — please review immediately."}
+            {status.label === "Warning" && "⚠ Warning — check trends."}
+            {status.label === "Normal" && "✔ Within normal range."}
+          </div>
+        )}
       </div>
     </div>
   );
 }
 
-function TrendChart({ title, data, dataKey, unit, color }) {
+function TrendChart({ title, data, dataKey, unit, color, rangeMin, rangeMax }) {
   return (
     <div className="card border-0 shadow-sm rounded-4 h-100">
       <div className="card-body p-4">
@@ -112,22 +156,32 @@ function TrendChart({ title, data, dataKey, unit, color }) {
             <div className="small fw-bold text-uppercase text-secondary" style={{ fontSize: "0.68rem", letterSpacing: "1px" }}>
               {title}
             </div>
+            <div className="text-secondary" style={{ fontSize: "0.75rem" }}>
+              Last {data.length} readings
+            </div>
           </div>
           <div className="text-secondary" style={{ fontSize: "0.75rem" }}>
             {unit}
           </div>
         </div>
-        <div style={{ height: 180 }}>
+        <div style={{ height: 200 }}>
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={data}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
+              <CartesianGrid strokeDasharray="3 3" stroke="#CBD5E1" opacity={0.3} />
               <XAxis dataKey="label" tick={{ fill: "#64748B", fontSize: 11 }} />
               <YAxis tick={{ fill: "#64748B", fontSize: 11 }} />
               <Tooltip
                 labelStyle={{ color: "#0F172A" }}
                 contentStyle={{ borderRadius: 12, border: "1px solid #E2E8F0" }}
               />
-              <Line type="monotone" dataKey={dataKey} stroke={color} strokeWidth={2} dot={false} />
+              {rangeMin != null && (
+                <ReferenceLine y={rangeMin} stroke="#A3E635" strokeDasharray="4 4" label={{ position: "left", value: "Normal min", fill: "#64748B", fontSize: 10 }} />
+              )}
+              {rangeMax != null && (
+                <ReferenceLine y={rangeMax} stroke="#A3E635" strokeDasharray="4 4" label={{ position: "left", value: "Normal max", fill: "#64748B", fontSize: 10 }} />
+              )}
+              <Area type="monotone" dataKey={dataKey} stroke="none" fill={color} fillOpacity={0.12} />
+              <Line type="monotone" dataKey={dataKey} stroke={color} strokeWidth={3} dot={false} />
             </LineChart>
           </ResponsiveContainer>
         </div>
@@ -139,7 +193,7 @@ function TrendChart({ title, data, dataKey, unit, color }) {
 function AssessmentPage() {
   const [latest, setLatest] = useState(null);
   const [history, setHistory] = useState([]);
-  const [historyLimit, setHistoryLimit] = useState(60);
+  const [timeRangeMinutes, setTimeRangeMinutes] = useState(10);
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState(null);
   const [error, setError] = useState(null);
@@ -175,8 +229,16 @@ function AssessmentPage() {
 
   const transformedHistory = useMemo(() => {
     if (!history || !history.length) return [];
-    const sliced = history.slice(-historyLimit);
-    return sliced
+
+    const cutoff = Date.now() - timeRangeMinutes * 60 * 1000;
+    const filtered = history
+      .filter((item) => {
+        const d = parseTimestamp(item.ts);
+        return d ? d.getTime() >= cutoff : false;
+      })
+      .slice(-60);
+
+    return filtered
       .slice()
       .reverse()
       .map((item) => {
@@ -190,7 +252,7 @@ function AssessmentPage() {
           temp: item.temp,
         };
       });
-  }, [history, historyLimit]);
+  }, [history, timeRangeMinutes]);
 
   const baseline = useMemo(() => {
     if (!history || !history.length) return { hr: null, spo2: null, temp: null };
@@ -239,6 +301,33 @@ function AssessmentPage() {
     return "Disconnected";
   }, [latest]);
 
+  const vitalsSummary = useMemo(() => {
+    if (!latest) return { critical: false, warning: false, messages: [] };
+
+    const specs = [
+      { key: "hr", value: latest.hr, label: "Heart rate" },
+      { key: "spo2", value: latest.spo2, label: "SpO₂" },
+      { key: "temp", value: latest.temp, label: "Temperature" },
+    ];
+
+    const messages = [];
+    let critical = false;
+    let warning = false;
+
+    specs.forEach(({ key, value, label }) => {
+      const status = statusForVital(key, value);
+      if (status.level === "critical") {
+        critical = true;
+        messages.push(`⚠ ${label} ${value != null ? value : "--"} is critical`);
+      } else if (status.level === "warning") {
+        warning = true;
+        messages.push(`⚠ ${label} ${value != null ? value : "--"} is outside normal range`);
+      }
+    });
+
+    return { critical, warning, messages };
+  }, [latest]);
+
   return (
     <div style={{ padding: "0 32px 32px" }}>
       <header style={{ padding: "24px 0" }}>
@@ -258,10 +347,34 @@ function AssessmentPage() {
               Last updated: {formatAgo(latest?.ts)}
             </div>
           </div>
-          <div className="badge rounded-pill" style={{ background: latest ? "#DCFCE7" : "#F8FAFC", color: latest ? "#166534" : "#64748B" }}>
-            <Activity size={14} className="me-1" /> {deviceStatus}
+          <div className="d-flex flex-column align-items-end text-end">
+            <div className="badge rounded-pill" style={{ background: latest ? "#DCFCE7" : "#F8FAFC", color: latest ? "#166534" : "#64748B" }}>
+              <Activity size={14} className="me-1" /> Device Status
+            </div>
+            <div className="text-secondary" style={{ fontSize: "0.75rem" }}>
+              {deviceStatus === "Connected" ? "🟢 ESP32 Sensor Connected" : deviceStatus}
+            </div>
+            <div className="text-secondary" style={{ fontSize: "0.75rem" }}>
+              Last Sync: {formatAgo(latest?.ts)}
+            </div>
           </div>
         </div>
+
+        {vitalsSummary.messages.length > 0 && (
+          <div className="alert alert-warning rounded-4" role="alert" style={{ marginBottom: 24 }}>
+            <div className="d-flex align-items-center gap-2 mb-1">
+              <span className="fw-semibold">⚠ Patient vitals outside safe range</span>
+              <span className="text-muted" style={{ fontSize: "0.85rem" }}>
+                Please review the latest readings.
+              </span>
+            </div>
+            <ul className="mb-0 ps-4" style={{ fontSize: "0.9rem" }}>
+              {vitalsSummary.messages.map((msg, idx) => (
+                <li key={idx}>{msg}</li>
+              ))}
+            </ul>
+          </div>
+        )}
 
         <div className="row g-4 mt-3">
           <div className="col-12 col-md-4">
@@ -271,7 +384,8 @@ function AssessmentPage() {
               value={latest?.hr}
               unit="BPM"
               status={statusForVital("hr", latest?.hr)}
-              helper={`Baseline ${baseline.hr ?? "--"} BPM`}
+              baseline={baseline.hr}
+              trend={getTrendInfo(latest?.hr, baseline.hr)}
             />
           </div>
           <div className="col-12 col-md-4">
@@ -281,7 +395,8 @@ function AssessmentPage() {
               value={latest?.spo2}
               unit="%"
               status={statusForVital("spo2", latest?.spo2)}
-              helper={`Baseline ${baseline.spo2 ?? "--"}%`}
+              baseline={baseline.spo2}
+              trend={getTrendInfo(latest?.spo2, baseline.spo2)}
             />
           </div>
           <div className="col-12 col-md-4">
@@ -291,7 +406,8 @@ function AssessmentPage() {
               value={latest?.temp}
               unit="°C"
               status={statusForVital("temp", latest?.temp)}
-              helper={`Baseline ${baseline.temp ?? "--"}°C`}
+              baseline={baseline.temp}
+              trend={getTrendInfo(latest?.temp, baseline.temp)}
             />
           </div>
         </div>
@@ -307,30 +423,55 @@ function AssessmentPage() {
           </div>
           <div className="d-flex align-items-center gap-2">
             <span className="text-secondary" style={{ fontSize: "0.85rem" }}>
-              Filter:
+              Time Range:
             </span>
             <select
-            className="form-select form-select-sm"
-            style={{ width: "160px" }}
-            value={historyLimit}
-            onChange={(e) => setHistoryLimit(Number(e.target.value))}
-          >
-            <option value={15}>Last 15 readings</option>
-            <option value={30}>Last 30 readings</option>
-            <option value={60}>Last 60 readings</option>
-          </select>
+              className="form-select form-select-sm"
+              style={{ width: "180px" }}
+              value={timeRangeMinutes}
+              onChange={(e) => setTimeRangeMinutes(Number(e.target.value))}
+            >
+              <option value={10}>Last 10 min</option>
+              <option value={30}>Last 30 min</option>
+              <option value={60}>Last 60 min</option>
+              <option value={1440}>Last 24 hours</option>
+            </select>
           </div>
         </div>
 
         <div className="row g-4">
           <div className="col-12 col-lg-4">
-            <TrendChart title="Heart Rate" data={transformedHistory} dataKey="hr" unit="BPM" color="#dc2626" />
+            <TrendChart
+            title="Heart Rate Trend"
+            data={transformedHistory}
+            dataKey="hr"
+            unit="BPM"
+            color="#dc2626"
+            rangeMin={60}
+            rangeMax={100}
+          />
           </div>
           <div className="col-12 col-lg-4">
-            <TrendChart title="SpO₂" data={transformedHistory} dataKey="spo2" unit="%" color="#0d6efd" />
+            <TrendChart
+              title="SpO₂ Trend"
+              data={transformedHistory}
+              dataKey="spo2"
+              unit="%"
+              color="#0d6efd"
+              rangeMin={95}
+              rangeMax={100}
+            />
           </div>
           <div className="col-12 col-lg-4">
-            <TrendChart title="Temperature" data={transformedHistory} dataKey="temp" unit="°C" color="#16a34a" />
+            <TrendChart
+              title="Temperature Trend"
+              data={transformedHistory}
+              dataKey="temp"
+              unit="°C"
+              color="#16a34a"
+              rangeMin={36.1}
+              rangeMax={37.2}
+            />
           </div>
         </div>
       </section>
@@ -343,8 +484,15 @@ function AssessmentPage() {
               A quick snapshot of stability and trends.
             </div>
           </div>
-          <div className="badge rounded-pill" style={{ background: "#eef2ff", color: "#3730a3" }}>
-            Score: {healthScore ?? "—"} / 100
+          <div className="d-flex flex-column align-items-end">
+            <div className="badge rounded-pill" style={{ background: "#eef2ff", color: "#3730a3" }}>
+              Score: {healthScore ?? "—"} / 100
+            </div>
+            <div className="mt-2 d-flex gap-2" style={{ fontSize: "0.75rem" }}>
+              <span className="badge" style={{ background: "#DCFCE7", color: "#166534" }}>Normal</span>
+              <span className="badge" style={{ background: "#FFEDD5", color: "#9a3412" }}>Warning</span>
+              <span className="badge" style={{ background: "#FEE2E2", color: "#7f1d1d" }}>Critical</span>
+            </div>
           </div>
         </div>
 
@@ -353,7 +501,7 @@ function AssessmentPage() {
             <div className="card border-0 shadow-sm rounded-4 p-4 h-100">
               <h3 className="h6 fw-bold mb-3">Recent History</h3>
               <div style={{ maxHeight: 220, overflowY: "auto" }}>
-                <table className="table table-borderless mb-0">
+                <table className="table table-borderless table-hover mb-0">
                   <thead>
                     <tr>
                       <th className="text-secondary small" style={{ position: "sticky", top: 0, background: "#fff", zIndex: 1 }}>
@@ -371,14 +519,26 @@ function AssessmentPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {transformedHistory.slice(0, 10).map((v, idx) => (
-                      <tr key={idx} style={{ borderBottom: "1px solid #F1F5F9" }}>
-                        <td className="small text-secondary" style={{ width: 100 }}>{v.label}</td>
-                        <td className="small" style={{ width: 80 }}>{v.hr ?? "--"}</td>
-                        <td className="small" style={{ width: 80 }}>{v.spo2 ?? "--"}</td>
-                        <td className="small" style={{ width: 80 }}>{v.temp ?? "--"}</td>
-                      </tr>
-                    ))}
+                    {transformedHistory.slice(0, 10).map((v, idx) => {
+                      const hrStatus = statusForVital("hr", v.hr);
+                      const spo2Status = statusForVital("spo2", v.spo2);
+                      const tempStatus = statusForVital("temp", v.temp);
+                      const isCritical = [hrStatus, spo2Status, tempStatus].some((s) => s.level === "critical");
+                      const isWarning = [hrStatus, spo2Status, tempStatus].some((s) => s.level === "warning");
+                      const rowStyle = {
+                        borderBottom: "1px solid #F1F5F9",
+                        background: isCritical ? "rgba(254,226,226,0.3)" : isWarning ? "rgba(255,247,237,0.5)" : "transparent",
+                      };
+
+                      return (
+                        <tr key={idx} style={rowStyle}>
+                          <td className="small text-secondary" style={{ width: 100 }}>{v.label}</td>
+                          <td className="small" style={{ width: 80 }}>{v.hr ?? "--"}</td>
+                          <td className="small" style={{ width: 80 }}>{v.spo2 ?? "--"}</td>
+                          <td className="small" style={{ width: 80 }}>{v.temp ?? "--"}</td>
+                        </tr>
+                      );
+                    })}
                     {!transformedHistory.length && (
                       <tr>
                         <td colSpan={4} className="text-center text-secondary py-4">
