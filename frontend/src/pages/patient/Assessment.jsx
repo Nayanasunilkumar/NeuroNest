@@ -356,10 +356,18 @@ function AssessmentPage() {
                 <table className="table table-borderless mb-0">
                   <thead>
                     <tr>
-                      <th className="text-secondary small">Time</th>
-                      <th className="text-secondary small">HR</th>
-                      <th className="text-secondary small">SpO₂</th>
-                      <th className="text-secondary small">Temp</th>
+                      <th className="text-secondary small" style={{ position: "sticky", top: 0, background: "#fff", zIndex: 1 }}>
+                        Time
+                      </th>
+                      <th className="text-secondary small" style={{ position: "sticky", top: 0, background: "#fff", zIndex: 1 }}>
+                        HR
+                      </th>
+                      <th className="text-secondary small" style={{ position: "sticky", top: 0, background: "#fff", zIndex: 1 }}>
+                        SpO₂
+                      </th>
+                      <th className="text-secondary small" style={{ position: "sticky", top: 0, background: "#fff", zIndex: 1 }}>
+                        Temp
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
