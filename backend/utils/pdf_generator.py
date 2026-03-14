@@ -153,3 +153,147 @@ def generate_patient_report(data):
     doc.build(elements)
     buffer.seek(0)
     return buffer
+
+
+def generate_assessment_report(data):
+    """
+    data schema:
+    {
+      "patient": { "full_name": "...", "email": "..." },
+      "latest": { "hr": ..., "spo2": ..., "temp": ..., "signal": "...", "ts": "..." },
+      "history": [ { "hr": ..., "spo2": ..., "temp": ..., "signal": "...", "ts": "..." }, ... ],
+      "summary": { "hr_avg": ..., "spo2_avg": ..., "temp_avg": ..., "alerts": [...] }
+    }
+    """
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4, rightMargin=50, leftMargin=50, topMargin=50, bottomMargin=50)
+    styles = getSampleStyleSheet()
+    
+    # Custom Styles
+    title_style = ParagraphStyle(
+        'MainTitle',
+        parent=styles['Heading1'],
+        fontSize=24,
+        textColor=colors.HexColor("#4f46e5"),
+        spaceAfter=20,
+        alignment=1 # Center
+    )
+    
+    section_style = ParagraphStyle(
+        'SectionHeader',
+        parent=styles['Heading2'],
+        fontSize=14,
+        textColor=colors.HexColor("#1e293b"),
+        spaceBefore=15,
+        spaceAfter=10,
+    )
+    
+    normal_style = styles['Normal']
+    label_style = ParagraphStyle('Label', parent=styles['Normal'], fontWeight='bold', textColor=colors.HexColor("#64748b"))
+
+    elements = []
+    
+    # Header
+    elements.append(Paragraph("NeuroNest Vitals Assessment Report", title_style))
+    elements.append(Paragraph(f"Generated on {datetime.now().strftime('%B %d, %Y at %H:%M')}", styles['Italic']))
+    elements.append(Spacer(1, 0.3 * inch))
+    
+    # Patient Info
+    patient = data.get("patient", {})
+    elements.append(Paragraph("Patient Information", section_style))
+    patient_data = [
+        ["Name:", patient.get("full_name", "N/A")],
+        ["Email:", patient.get("email", "N/A")],
+    ]
+    patient_table = Table(patient_data, colWidths=[1.2*inch, 4.8*inch])
+    patient_table.setStyle(TableStyle([
+        ('FONTNAME', (0,0), (-1,-1), 'Helvetica'),
+        ('FONTSIZE', (0,0), (-1,-1), 10),
+        ('TEXTCOLOR', (0,0), (0,-1), colors.HexColor("#64748b")),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 6),
+    ]))
+    elements.append(patient_table)
+    elements.append(Spacer(1, 0.2 * inch))
+    
+    # Latest Vitals
+    latest = data.get("latest", {})
+    if latest:
+        elements.append(Paragraph("Current Vitals Reading", section_style))
+        latest_data = [
+            ["Heart Rate (BPM):", f"{latest.get('hr', 'N/A')} BPM"],
+            ["SpO2 (%):", f"{latest.get('spo2', 'N/A')}%"],
+            ["Temperature (°C):", f"{latest.get('temp', 'N/A')}°C"],
+            ["Signal Quality:", latest.get('signal', 'N/A').capitalize()],
+            ["Timestamp:", latest.get('ts', 'N/A')],
+        ]
+        latest_table = Table(latest_data, colWidths=[2*inch, 3*inch])
+        latest_table.setStyle(TableStyle([
+            ('FONTSIZE', (0,0), (-1,-1), 10),
+            ('TEXTCOLOR', (0,0), (0,-1), colors.HexColor("#64748b")),
+            ('BOTTOMPADDING', (0,0), (-1,-1), 6),
+        ]))
+        elements.append(latest_table)
+        elements.append(Spacer(1, 0.2 * inch))
+    
+    # Summary
+    summary = data.get("summary", {})
+    if summary:
+        elements.append(Paragraph("Vitals Summary", section_style))
+        summary_data = [
+            ["Average Heart Rate:", f"{summary.get('hr_avg', 'N/A')} BPM"],
+            ["Average SpO2:", f"{summary.get('spo2_avg', 'N/A')}%"],
+            ["Average Temperature:", f"{summary.get('temp_avg', 'N/A')}°C"],
+        ]
+        summary_table = Table(summary_data, colWidths=[2*inch, 3*inch])
+        summary_table.setStyle(TableStyle([
+            ('FONTSIZE', (0,0), (-1,-1), 10),
+            ('TEXTCOLOR', (0,0), (0,-1), colors.HexColor("#64748b")),
+            ('BOTTOMPADDING', (0,0), (-1,-1), 6),
+        ]))
+        elements.append(summary_table)
+        
+        alerts = summary.get("alerts", [])
+        if alerts:
+            elements.append(Paragraph("Alerts:", label_style))
+            for alert in alerts:
+                elements.append(Paragraph(f"• {alert}", normal_style))
+        elements.append(Spacer(1, 0.2 * inch))
+    
+    # History Table
+    history = data.get("history", [])
+    if history:
+        elements.append(Paragraph(f"Vitals History (Last {len(history)} Readings)", section_style))
+        header = ["Timestamp", "HR (BPM)", "SpO2 (%)", "Temp (°C)", "Signal"]
+        rows = [header]
+        for h in history[-20:]:  # Last 20 readings
+            rows.append([
+                h.get('ts', 'N/A')[:19],  # Truncate timestamp
+                str(h.get('hr', 'N/A')),
+                str(h.get('spo2', 'N/A')),
+                str(h.get('temp', 'N/A')),
+                h.get('signal', 'N/A').capitalize()
+            ])
+        
+        t = Table(rows, colWidths=[1.5*inch, 0.8*inch, 0.8*inch, 0.8*inch, 0.8*inch])
+        t.setStyle(TableStyle([
+            ('BACKGROUND', (0,0), (-1,0), colors.HexColor("#f8fafc")),
+            ('TEXTCOLOR', (0,0), (-1,0), colors.HexColor("#475569")),
+            ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+            ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0,0), (-1,-1), 9),
+            ('BOTTOMPADDING', (0,0), (-1,-1), 8),
+            ('TOPPADDING', (0,0), (-1,-1), 8),
+            ('INNERGRID', (0,0), (-1,-1), 0.5, colors.HexColor("#e2e8f0")),
+            ('BOX', (0,0), (-1,-1), 0.5, colors.HexColor("#e2e8f0")),
+        ]))
+        elements.append(t)
+    
+    # Footer Notice
+    elements.append(Spacer(1, 0.5 * inch))
+    notice = "Confidential: This document contains sensitive medical information. " \
+             "Authorized patient use only. (c) 2026 NeuroNest Health Systems."
+    elements.append(Paragraph(notice, ParagraphStyle('Footer', parent=styles['Italic'], fontSize=8, textColor=colors.gray, alignment=1)))
+    
+    doc.build(elements)
+    buffer.seek(0)
+    return buffer

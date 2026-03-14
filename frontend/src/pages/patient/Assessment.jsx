@@ -19,8 +19,9 @@ import {
   AlertTriangle,
   ArrowUp,
   ArrowDown,
+  Download,
 } from "lucide-react";
-import { getLatestVitals, getVitalsHistory } from "../../api/vitals";
+import { getLatestVitals, getVitalsHistory, downloadAssessmentReport } from "../../api/vitals";
 
 function parseTimestamp(ts) {
   if (!ts) return null;
@@ -227,6 +228,22 @@ function AssessmentPage() {
     };
   }, []);
 
+  const handleDownloadReport = async () => {
+    try {
+      const blob = await downloadAssessmentReport();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `NeuroNest_Assessment_${new Date().toISOString().split('T')[0]}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      setError(err.message || "Failed to download report");
+    }
+  };
+
   const transformedHistory = useMemo(() => {
     if (!history || !history.length) return [];
 
@@ -331,12 +348,24 @@ function AssessmentPage() {
   return (
     <div style={{ padding: "0 32px 32px" }}>
       <header style={{ padding: "24px 0" }}>
-        <h1 style={{ margin: 0, fontSize: "1.8rem", fontWeight: 800, letterSpacing: "-0.02em" }}>
-          Assessment
-        </h1>
-        <p style={{ margin: "8px 0 0", color: "#64748B" }}>
-          Analyze vitals trends and generate a quick health summary based on recent readings.
-        </p>
+        <div className="d-flex justify-content-between align-items-start">
+          <div>
+            <h1 style={{ margin: 0, fontSize: "1.8rem", fontWeight: 800, letterSpacing: "-0.02em" }}>
+              Assessment
+            </h1>
+            <p style={{ margin: "8px 0 0", color: "#64748B" }}>
+              Analyze vitals trends and generate a quick health summary based on recent readings.
+            </p>
+          </div>
+          <button
+            className="btn btn-primary d-flex align-items-center gap-2"
+            onClick={handleDownloadReport}
+            disabled={loading}
+          >
+            <Download size={16} />
+            Download Report
+          </button>
+        </div>
       </header>
 
       <section className="mb-4">

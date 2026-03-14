@@ -31,3 +31,11 @@ export async function getVitalsHistory(patientId) {
   if (!res.ok) throw new Error("Failed to fetch vitals history");
   return res.json();
 }
+
+export async function downloadAssessmentReport() {
+  const res = await fetch(`${baseUrl}/api/vitals/assessment-report`, {
+    headers: authHeader(),
+  });
+  if (!res.ok) throw new Error("Failed to download assessment report");
+  return res.blob();
+}

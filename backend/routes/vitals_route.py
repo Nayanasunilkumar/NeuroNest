@@ -1,11 +1,12 @@
 import json
 
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, send_file
 from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
-from database.models import db
+from database.models import db, User
 from datetime import datetime
 from collections import deque
 from extensions.socket import socketio
+from utils.pdf_generator import generate_assessment_report
 
 vitals_bp = Blueprint("vitals", __name__)
 
@@ -119,3 +120,74 @@ def get_monitored_patients():
     if _latest.get("ts"):
         return jsonify([{"patient_id": 1, "patient_name": "Jane (ESP32)"}]), 200
     return jsonify([]), 200
+
+
+# =========================================
+# Patient → GET /api/vitals/assessment-report
+# Generates and downloads PDF assessment report
+# =========================================
+@vitals_bp.route("/api/vitals/assessment-report", methods=["GET"])
+@jwt_required()
+def get_assessment_report():
+    claims = get_jwt()
+    if claims.get("role") not in ("patient", "doctor", "admin"):
+        return jsonify({"message": "Access denied"}), 403
+    
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({"message": "User not found"}), 404
+    
+    # Prepare data for PDF
+    patient_data = {
+        "full_name": user.full_name or "N/A",
+        "email": user.email
+    }
+    
+    # Calculate summary
+    history_list = list(_history)
+    alerts = []
+    if history_list:
+        hrs = [h['hr'] for h in history_list if h.get('hr')]
+        spo2s = [h['spo2'] for h in history_list if h.get('spo2')]
+        temps = [h['temp'] for h in history_list if h.get('temp')]
+        
+        hr_avg = round(sum(hrs) / len(hrs), 1) if hrs else None
+        spo2_avg = round(sum(spo2s) / len(spo2s), 1) if spo2s else None
+        temp_avg = round(sum(temps) / len(temps), 1) if temps else None
+        
+        # Simple alert logic
+        if hr_avg and (hr_avg < 60 or hr_avg > 100):
+            alerts.append(f"Average heart rate ({hr_avg} BPM) is outside normal range (60-100 BPM)")
+        if spo2_avg and spo2_avg < 95:
+            alerts.append(f"Average SpO2 ({spo2_avg}%) is below normal (≥95%)")
+        if temp_avg and (temp_avg < 36.1 or temp_avg > 37.5):
+            alerts.append(f"Average temperature ({temp_avg}°C) is outside normal range (36.1-37.5°C)")
+    else:
+        hr_avg = spo2_avg = temp_avg = None
+    
+    summary_data = {
+        "hr_avg": hr_avg,
+        "spo2_avg": spo2_avg,
+        "temp_avg": temp_avg,
+        "alerts": alerts
+    }
+    
+    data = {
+        "patient": patient_data,
+        "latest": _latest,
+        "history": history_list,
+        "summary": summary_data
+    }
+    
+    # Generate PDF
+    pdf_buffer = generate_assessment_report(data)
+    
+    # Return PDF
+    filename = f"NeuroNest_Assessment_{user.full_name.replace(' ', '_')}_{datetime.now().strftime('%Y%m%d')}.pdf"
+    return send_file(
+        pdf_buffer,
+        mimetype='application/pdf',
+        as_attachment=True,
+        download_name=filename
+    )
