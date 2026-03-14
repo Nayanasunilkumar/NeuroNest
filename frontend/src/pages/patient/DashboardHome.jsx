@@ -174,7 +174,7 @@ function VitalsSection() {
     // Socket connection
     const token = localStorage.getItem("neuronest_token");
     socketRef.current = io(BACKEND_API, {
-      auth: { token },
+      query: { token },
       transports: ['websocket', 'polling']
     });
 
