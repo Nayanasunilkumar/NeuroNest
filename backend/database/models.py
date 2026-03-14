@@ -1320,3 +1320,116 @@ class ClinicalPin(db.Model):
             "completed": self.completed,
             "created_at": self.created_at.isoformat() if self.created_at else None
         }
+
+
+# =========================================
+# REMOTE VITALS DEVICE REGISTRY
+# =========================================
+class MedicalDevice(db.Model):
+    __tablename__ = "medical_devices"
+    __table_args__ = (
+        Index("idx_medical_device_patient_status", "patient_id", "device_status"),
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+    device_id = db.Column(db.String(120), nullable=False, unique=True, index=True)
+    device_name = db.Column(db.String(150), nullable=False)
+    device_token_hash = db.Column(db.String(255), nullable=False)
+    patient_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False, index=True)
+    last_seen_timestamp = db.Column(db.DateTime(timezone=True), nullable=True, index=True)
+    device_status = db.Column(db.String(20), nullable=False, default="offline", index=True)
+    created_at = db.Column(db.DateTime(timezone=True), default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime(timezone=True), default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    patient = db.relationship("User", foreign_keys=[patient_id], backref="medical_devices")
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "device_id": self.device_id,
+            "device_name": self.device_name,
+            "patient_id": self.patient_id,
+            "patient_name": self.patient.full_name if self.patient else None,
+            "last_seen_timestamp": self.last_seen_timestamp.isoformat() if self.last_seen_timestamp else None,
+            "device_status": self.device_status,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+
+# =========================================
+# HISTORICAL VITALS STREAM
+# =========================================
+class VitalStreamRecord(db.Model):
+    __tablename__ = "vital_stream_records"
+    __table_args__ = (
+        Index("idx_vitals_patient_recorded", "patient_id", "recorded_timestamp"),
+        Index("idx_vitals_device_recorded", "device_id", "recorded_timestamp"),
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+    patient_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False, index=True)
+    device_id = db.Column(db.String(120), db.ForeignKey("medical_devices.device_id"), nullable=False, index=True)
+    heart_rate = db.Column(db.Float, nullable=True)
+    spo2 = db.Column(db.Float, nullable=True)
+    temperature = db.Column(db.Float, nullable=True)
+    ecg_data = db.Column(db.JSON, nullable=True)
+    recorded_timestamp = db.Column(db.DateTime(timezone=True), nullable=False, index=True, default=datetime.utcnow)
+    signal = db.Column(db.String(20), nullable=False, default="ok")
+    created_at = db.Column(db.DateTime(timezone=True), default=datetime.utcnow, nullable=False)
+
+    patient = db.relationship("User", foreign_keys=[patient_id], backref="vital_stream_records")
+    device = db.relationship("MedicalDevice", foreign_keys=[device_id], backref="vital_stream_records")
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "patient_id": self.patient_id,
+            "device_id": self.device_id,
+            "heart_rate": self.heart_rate,
+            "spo2": self.spo2,
+            "temperature": self.temperature,
+            "ecg_data": self.ecg_data or [],
+            "recorded_timestamp": self.recorded_timestamp.isoformat() if self.recorded_timestamp else None,
+            "signal": self.signal,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+        }
+
+
+# =========================================
+# LATEST VITALS CACHE
+# =========================================
+class LatestVitalState(db.Model):
+    __tablename__ = "latest_vital_states"
+
+    id = db.Column(db.Integer, primary_key=True)
+    patient_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False, unique=True, index=True)
+    device_id = db.Column(db.String(120), db.ForeignKey("medical_devices.device_id"), nullable=False, index=True)
+    heart_rate = db.Column(db.Float, nullable=True)
+    spo2 = db.Column(db.Float, nullable=True)
+    temperature = db.Column(db.Float, nullable=True)
+    ecg_data = db.Column(db.JSON, nullable=True)
+    recorded_timestamp = db.Column(db.DateTime(timezone=True), nullable=False, index=True, default=datetime.utcnow)
+    signal = db.Column(db.String(20), nullable=False, default="ok")
+    updated_at = db.Column(db.DateTime(timezone=True), default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    patient = db.relationship("User", foreign_keys=[patient_id], backref=db.backref("latest_vital_state", uselist=False))
+    device = db.relationship("MedicalDevice", foreign_keys=[device_id], backref="latest_vital_states")
+
+    def to_dict(self):
+        device_payload = self.device.to_dict() if self.device else None
+        return {
+            "patient_id": self.patient_id,
+            "patient_name": self.patient.full_name if self.patient else None,
+            "device_id": self.device_id,
+            "heart_rate": self.heart_rate,
+            "spo2": self.spo2,
+            "temperature": self.temperature,
+            "ecg_data": self.ecg_data or [],
+            "recorded_timestamp": self.recorded_timestamp.isoformat() if self.recorded_timestamp else None,
+            "signal": self.signal,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+            "device_status": device_payload["device_status"] if device_payload else "offline",
+            "last_seen_timestamp": device_payload["last_seen_timestamp"] if device_payload else None,
+            "device_name": device_payload["device_name"] if device_payload else None,
+        }
