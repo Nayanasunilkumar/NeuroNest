@@ -5,7 +5,9 @@ import { Link } from "react-router-dom";
 import { io } from 'socket.io-client';
 import { getUser } from "../../utils/auth";
 
-const BACKEND_API = import.meta.env.VITE_API_URL || "http://localhost:5000";
+import { API_BASE_URL } from "../../config/env";
+
+const BACKEND_API = API_BASE_URL;
 
 // ── ECG Waveform ───────────────────────────────────────────────
 function ECGWave({ bpm, color, height = 56 }) {

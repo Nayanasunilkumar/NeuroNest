@@ -27,7 +27,10 @@ def receive_vitals():
     if not data:
         return jsonify({"error": "No data"}), 400
 
+    patient_id = int(data.get("patient_id", 1))
+
     _latest.update({
+        "patient_id": patient_id,
         "hr":         data.get("hr"),
         "spo2":       data.get("spo2"),
         "temp":       data.get("temp"),
@@ -38,8 +41,8 @@ def receive_vitals():
         "ts":         datetime.utcnow().isoformat()
     })
 
-    # Emit real-time update to all connected clients in the vitals room
-    socketio.emit("vitals_update", _latest, room="patient_vitals_1")  # Assuming patient_id=1 for now
+    # Emit real-time update to all connected clients in the vitals room for this patient
+    socketio.emit("vitals_update", _latest, room=f"patient_vitals_{patient_id}")
 
     # Save to history only when signal is valid
     if data.get("signal") in ("ok", "weak"):
