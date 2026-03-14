@@ -5,7 +5,9 @@ import ProtectedRoute from "./routes/ProtectedRoute";
 import ModuleRouteGuard from "./routes/ModuleRouteGuard";
 import { ModuleConfigProvider } from "./context/ModuleConfigContext";
 import { ThemeProvider } from "./context/ThemeContext";
+import { AlertProvider } from "./context/AlertContext";
 import SessionManager from "./components/SessionManager";
+import AlertPopup from "./components/shared/AlertPopup";
 
 import PatientLayout from "./layouts/PatientLayout";
 import AdminLayout from "./layouts/AdminLayout";
@@ -50,8 +52,10 @@ export default function App() {
     <ModuleConfigProvider>
       <ThemeProvider>
         <BrowserRouter>
-          <SessionManager />
-          <Routes>
+          <AlertProvider>
+            <AlertPopup />
+            <SessionManager />
+            <Routes>
             {/* Default */}
             <Route path="/" element={<Navigate to="/login" />} />
 
@@ -113,6 +117,7 @@ export default function App() {
 
             <Route path="*" element={<NotFound />} />
           </Routes>
+          </AlertProvider>
         </BrowserRouter>
       </ThemeProvider>
     </ModuleConfigProvider>

@@ -614,6 +614,41 @@ class InAppNotification(db.Model):
 
 
 
+# =========================================
+# CRITICAL ALERTS TABLE
+# =========================================
+class Alert(db.Model):
+    __tablename__ = "alerts"
+
+    id = db.Column(db.Integer, primary_key=True)
+    patient_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False, index=True)
+    vital_type = db.Column(db.String(50), nullable=False)
+    value = db.Column(db.Float, nullable=True)
+    severity = db.Column(db.String(20), nullable=False, default="critical")
+    message = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime(timezone=True), default=datetime.utcnow, nullable=False)
+    is_acknowledged = db.Column(db.Boolean, default=False, nullable=False)
+    acknowledged_by = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=True)
+    acknowledged_at = db.Column(db.DateTime(timezone=True), nullable=True)
+
+    patient = db.relationship("User", foreign_keys=[patient_id], backref=db.backref("alerts", lazy=True))
+    acknowledged_user = db.relationship("User", foreign_keys=[acknowledged_by])
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "patient_id": self.patient_id,
+            "vital_type": self.vital_type,
+            "value": self.value,
+            "severity": self.severity,
+            "message": self.message,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "is_acknowledged": self.is_acknowledged,
+            "acknowledged_by": self.acknowledged_by,
+            "acknowledged_at": self.acknowledged_at.isoformat() if self.acknowledged_at else None,
+        }
+
+
 
 # =========================================
 # MEDICAL RECORDS TABLE
