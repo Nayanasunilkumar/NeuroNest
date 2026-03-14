@@ -29,15 +29,13 @@ body.dark {
     --input-border: #334155;
 }
 
-.patient-profile-page-wrapper {
+body {
     background-color: var(--bg-color);
     background-image: var(--bg-gradient);
     background-size: 100% 100%;
     background-attachment: fixed;
     color: var(--text-primary);
     transition: background-color 0.3s ease, color 0.3s ease;
-    min-height: 100vh;
-    padding-top: 1px; /* Prevent margin collapse */
 }
 
 /* --- BACKGROUND DECORATION --- */
@@ -93,7 +91,7 @@ body.dark {
 }
 
 /* Subtle Grid Pattern Overlay */
-.patient-profile-page-wrapper::before {
+body::before {
     content: "";
     position: fixed;
     top: 0;
@@ -104,11 +102,11 @@ body.dark {
         linear-gradient(rgba(0, 0, 0, 0.03) 1px, transparent 1px),
         linear-gradient(90deg, rgba(0, 0, 0, 0.03) 1px, transparent 1px);
     background-size: 40px 40px;
-    z-index: -2; /* Behind blobs, but gradient is on page wrapper */
+    z-index: -2; /* Behind blobs, but gradient is on body */
     pointer-events: none;
 }
 /* Ensure dark mode adapts grid */
-body.dark .patient-profile-page-wrapper::before {
+body.dark::before {
     background-image: 
         linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
         linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);

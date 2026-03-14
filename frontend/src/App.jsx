@@ -13,7 +13,6 @@ import DoctorLayout from "./layouts/doctor/DoctorLayout";
 import Forbidden from "./pages/Forbidden";
 import NotFound from "./pages/NotFound";
 import VideoConsultation from "./pages/shared/VideoConsultation";
-import PatientHub from "./pages/doctor/PatientHub";
 import {
   getModuleChildRouteForRole,
   getModuleComponentForRole,
@@ -84,7 +83,6 @@ export default function App() {
               }
             >
               <Route index element={<Navigate to="dashboard" replace />} />
-              <Route path="patient-hub" element={<PatientHub />} />
               {renderRoleRoutes("doctor")}
             </Route>
 

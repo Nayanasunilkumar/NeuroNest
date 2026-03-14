@@ -332,8 +332,8 @@ const MyPatients = () => {
                         </p>
                     </div>
                 ) : (
-                    <div className="nn-table-wrapper">
-                        <table className="nn-table">
+                    <div className="roster-table-container">
+                        <table className="roster-table">
                             <thead>
                                 <tr>
                                     <th>Patient Identity</th>
@@ -398,7 +398,7 @@ const MyPatients = () => {
                                                 </button>
                                                 <button 
                                                     className="roster-btn-sm"
-                                                    onClick={() => navigate(`/doctor/patient-hub?patientId=${patient.id}`)}
+                                                    onClick={() => navigate(`/doctor/patient-records?patientId=${patient.id}`)}
                                                     title="Profile"
                                                 >
                                                     <ExternalLink size={16} />

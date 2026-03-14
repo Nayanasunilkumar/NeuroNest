@@ -7,7 +7,6 @@ const appointmentRequestsModule = {
   icon: ClipboardCheck,
   route: '/appointment-requests',
   rolesAllowed: ['doctor', 'admin'],
-  showInSidebarByRole: ['admin', 'doctor'],
   enabledByDefault: true,
   componentsByRole: {
     doctor: AppointmentRequests,

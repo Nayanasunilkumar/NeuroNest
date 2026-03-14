@@ -8,7 +8,6 @@ const profileModule = {
   icon: User,
   route: '/profile',
   rolesAllowed: ['patient', 'doctor'],
-  showInSidebarByRole: ['patient', 'doctor'],
   enabledByDefault: true,
   componentsByRole: {
     patient: PatientProfile,

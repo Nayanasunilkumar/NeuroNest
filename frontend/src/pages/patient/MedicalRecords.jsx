@@ -34,7 +34,6 @@ const MedicalRecords = ({ patientId: propPatientId = null }) => {
   const [identity, setIdentity] = useState(null);
   const [currentUser] = useState(() => getUser()); // logged-in user
   const isDoctor = currentUser?.role === 'doctor';
-  const canManageClinical = isDoctor && Boolean(patientId);
   const [doctorDefaults, setDoctorDefaults] = useState({ name: '', hospital: '' });
 
   const formatDate = (value) => {
@@ -352,11 +351,9 @@ const MedicalRecords = ({ patientId: propPatientId = null }) => {
                   <h3>Severe Allergies</h3>
                   <p>{severeAllergyCount} Severe / {allergies.length} Total</p>
                 </div>
-                {canManageClinical && (
-                  <button className="card-action-btn-prm" onClick={() => setAllergyFormOpen(true)}>
-                    <Plus size={16} />
-                  </button>
-                )}
+                <button className="card-action-btn-prm" onClick={() => setAllergyFormOpen(true)}>
+                  <Plus size={16} />
+                </button>
               </div>
               <div className="structured-list-premium custom-scrollbar">
                 {allergies.length === 0 ? (
@@ -384,13 +381,11 @@ const MedicalRecords = ({ patientId: propPatientId = null }) => {
                            </div>
                         </div>
                       </div>
-                      {canManageClinical && (
-                        <div className="item-premium-actions">
-                          <button onClick={() => medicalRecordService.deleteAllergy(item.id, patientId).then(fetchRecords)} className="btn-icon-tiny">
-                            <X size={14} />
-                          </button>
-                        </div>
-                      )}
+                      <div className="item-premium-actions">
+                        <button onClick={() => medicalRecordService.deleteAllergy(item.id, patientId).then(fetchRecords)} className="btn-icon-tiny">
+                          <X size={14} />
+                        </button>
+                      </div>
                     </div>
                   ))
                 )}
@@ -404,11 +399,9 @@ const MedicalRecords = ({ patientId: propPatientId = null }) => {
                   <h3>Active Conditions</h3>
                   <p>{conditions.filter(c => c.status === 'active').length} Active / {conditions.length} Total</p>
                 </div>
-                {canManageClinical && (
-                  <button className="card-action-btn-prm" onClick={() => setConditionFormOpen(true)}>
-                    <Plus size={16} />
-                  </button>
-                )}
+                <button className="card-action-btn-prm" onClick={() => setConditionFormOpen(true)}>
+                  <Plus size={16} />
+                </button>
               </div>
               <div className="structured-list-premium custom-scrollbar">
                 {conditions.length === 0 ? (
@@ -436,13 +429,11 @@ const MedicalRecords = ({ patientId: propPatientId = null }) => {
                            </div>
                         </div>
                       </div>
-                      {canManageClinical && (
-                        <div className="item-premium-actions">
-                          <button onClick={() => medicalRecordService.deleteCondition(item.id, patientId).then(fetchRecords)} className="btn-icon-tiny">
-                            <X size={14} />
-                          </button>
-                        </div>
-                      )}
+                      <div className="item-premium-actions">
+                        <button onClick={() => medicalRecordService.deleteCondition(item.id, patientId).then(fetchRecords)} className="btn-icon-tiny">
+                          <X size={14} />
+                        </button>
+                      </div>
                     </div>
                   ))
                 )}
@@ -455,11 +446,9 @@ const MedicalRecords = ({ patientId: propPatientId = null }) => {
                   <h3>Medications</h3>
                   <p>{activeMedsCount} Active • {pastMedsCount} Past</p>
                 </div>
-                {canManageClinical && (
-                  <button className="card-action-btn-prm" onClick={openMedicationForm}>
-                    <Plus size={16} />
-                  </button>
-                )}
+                <button className="card-action-btn-prm" onClick={openMedicationForm}>
+                  <Plus size={16} />
+                </button>
               </div>
               <div className="structured-list-premium custom-scrollbar">
                 {medications.length === 0 && (
@@ -490,7 +479,7 @@ const MedicalRecords = ({ patientId: propPatientId = null }) => {
                       </div>
                     </div>
                     <div className="item-premium-actions">
-                      {canManageClinical && !item.read_only && (
+                      {!item.read_only && (
                         <button onClick={() => medicalRecordService.deleteMedication(item.id, patientId).then(fetchRecords)} className="btn-icon-tiny">
                           <X size={14} />
                         </button>
@@ -570,7 +559,7 @@ const MedicalRecords = ({ patientId: propPatientId = null }) => {
         record={recordToView}
       />
 
-      {canManageClinical && allergyFormOpen && (
+      {allergyFormOpen && (
         <SimpleMedicalModal
           title="Add Severe Allergy"
           onClose={() => setAllergyFormOpen(false)}
@@ -621,7 +610,7 @@ const MedicalRecords = ({ patientId: propPatientId = null }) => {
         </SimpleMedicalModal>
       )}
 
-      {canManageClinical && conditionFormOpen && (
+      {conditionFormOpen && (
         <SimpleMedicalModal
           title="Add Active Condition"
           onClose={() => setConditionFormOpen(false)}
@@ -704,7 +693,7 @@ const MedicalRecords = ({ patientId: propPatientId = null }) => {
       )}
 
 
-      {canManageClinical && medicationFormOpen && (
+      {medicationFormOpen && (
         <SimpleMedicalModal
           title="Add Medication"
           onClose={() => setMedicationFormOpen(false)}
