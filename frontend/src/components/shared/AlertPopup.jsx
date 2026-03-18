@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useAlerts } from "../../context/AlertContext";
 import { useNavigate } from "react-router-dom";
-import { BellAlertIcon, XMarkIcon } from "@heroicons/react/24/solid";
+import { BellRing, X } from "lucide-react";
 
 const AlertPopup = () => {
   const { alerts, markAcknowledged } = useAlerts();
@@ -24,11 +24,11 @@ const AlertPopup = () => {
     <div className="fixed bottom-4 right-4 z-50 flex max-w-sm flex-col rounded-xl bg-red-600 p-4 text-white shadow-2xl animate-in slide-in-from-bottom-5">
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-2">
-          <BellAlertIcon className="h-6 w-6 animate-pulse" />
+          <BellRing className="h-6 w-6 animate-pulse" />
           <h3 className="font-bold text-lg">CRITICAL ALERT</h3>
         </div>
         <button onClick={() => setActiveAlert(null)} className="rounded-full p-1 hover:bg-red-700 transition-colors">
-          <XMarkIcon className="h-5 w-5" />
+          <X className="h-5 w-5" />
         </button>
       </div>
 
