@@ -1,14 +1,42 @@
+import React from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import DynamicIslandNav from "../components/DynamicIslandNav";
 import { logout } from "../utils/auth";
 import { useTheme } from "../context/ThemeContext";
 import { Sun, Moon, LogOut, Bell } from "lucide-react";
+import { getAlerts } from "../api/alerts";
+import { initSocket } from "../services/socket";
 
 const PatientLayout = () => {
     const { isDark: darkMode, toggleTheme } = useTheme();
     const location = useLocation();
 
+    const [alertCount, setAlertCount] = React.useState(0);
+
     const isMessagePath = location.pathname.includes('/messages');
+
+    React.useEffect(() => {
+        const fetchCount = async () => {
+            try {
+                const alerts = await getAlerts(true);
+                setAlertCount(alerts.length);
+            } catch {
+                // ignore
+            }
+        };
+
+        fetchCount();
+
+        const socket = initSocket();
+        if (!socket) return;
+
+        const onCritical = () => setAlertCount((prev) => prev + 1);
+        socket.on("critical_alert", onCritical);
+
+        return () => {
+            socket.off("critical_alert", onCritical);
+        };
+    }, []);
 
     return (
         <div className="vh-100 d-flex flex-column overflow-hidden" style={{ transition: 'all 0.3s' }}>
@@ -39,8 +67,13 @@ const PatientLayout = () => {
                             {darkMode ? <Sun size={20} /> : <Moon size={20} />}
                         </button>
 
-                        <button className={`btn p-2 rounded-circle border-0 d-none d-sm-flex align-items-center justify-content-center ${darkMode ? 'btn-outline-light' : 'btn-outline-secondary opacity-75'}`} style={{ width: '40px', height: '40px' }}>
+                        <button className={`btn p-2 rounded-circle border-0 d-none d-sm-flex align-items-center justify-content-center position-relative ${darkMode ? 'btn-outline-light' : 'btn-outline-secondary opacity-75'}`} style={{ width: '40px', height: '40px' }}>
                             <Bell size={20} />
+                            {alertCount > 0 && (
+                                <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style={{ fontSize: '0.6rem' }}>
+                                    {alertCount}
+                                </span>
+                            )}
                         </button>
 
                         <button 

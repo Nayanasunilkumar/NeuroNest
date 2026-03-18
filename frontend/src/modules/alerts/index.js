@@ -1,5 +1,5 @@
 import { Bell } from 'lucide-react';
-import AlertsDashboard from '../../pages/shared/AlertsDashboard';
+import AlertsPage from './AlertsPage';
 
 const alertsModule = {
   key: 'alerts',
@@ -9,8 +9,8 @@ const alertsModule = {
   rolesAllowed: ['doctor', 'patient'],
   enabledByDefault: true,
   componentsByRole: {
-    doctor: AlertsDashboard,
-    patient: AlertsDashboard,
+    doctor: AlertsPage,
+    patient: AlertsPage,
   },
   showInSidebarByRole: ['patient', 'doctor'],
   orderByRole: { doctor: 90, patient: 80 },

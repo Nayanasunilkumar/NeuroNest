@@ -9,6 +9,7 @@ import PatientInfoPanel from '../../components/chat/PatientInfoPanel';
 import { ChevronLeft } from 'lucide-react';
 import { getUser } from '../../utils/auth';
 import { toEpochMs } from '../../utils/time';
+import { useCall } from '../../context/CallContext';
 
 const DOCTOR_TEMPLATES = [
     { label: "Follow-up", text: "Please book a follow-up appointment through your dashboard for further evaluation." },
@@ -34,6 +35,7 @@ const DoctorChat = ({ isEmbedded = false }) => {
     const startVideoParam = searchParams.get('startVideo') === '1';
     const isFocusedMode = Boolean(patientIdParam); // Single-patient focused view
     const hasAutoStartedVideoRef = useRef(false);
+    const { startVideoCall } = useCall();
 
     const fetchConversations = useCallback(async () => {
         try {
@@ -195,8 +197,12 @@ const DoctorChat = ({ isEmbedded = false }) => {
         if (!selectedConv) return;
         const roleStr = currentUser?.role === 'doctor' ? 'Doctor' : 'Patient';
         await handleSendMessage(`${roleStr} is initiating a secure video consultation.`, 'call_request');
-        navigate(`/consultation/${selectedConv.id}`);
-    }, [selectedConv, currentUser?.role, handleSendMessage, navigate]);
+        await startVideoCall({
+            receiverId: selectedConv.other_user?.id,
+            conversationId: selectedConv.id,
+            callType: 'video',
+        });
+    }, [selectedConv, currentUser?.role, handleSendMessage, startVideoCall]);
 
     useEffect(() => {
         if (!startVideoParam || hasAutoStartedVideoRef.current) return;

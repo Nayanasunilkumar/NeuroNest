@@ -124,7 +124,8 @@ def receive_vitals():
             return jsonify({"error": "No data"}), 400
 
     # Attach optional patient_id if provided (useful for multi-patient routing)
-    patient_id = int(data.get("patient_id", 0) or 0)
+    # Default to patient 1 if not provided by ESP32 so alerts always trigger
+    patient_id = int(data.get("patient_id", 1) or 1)
 
     _latest.update({
         "patient_id": patient_id,
@@ -150,7 +151,8 @@ def receive_vitals():
         _history.append({**_latest})
 
     # Trigger Critical Alerts based on thresholds
-    if patient_id > 0 and data.get("signal") in ("ok", "weak"):
+    # (Do not require a signal field so alerts show even when signal is 'na' or missing)
+    if patient_id > 0:
         check_and_trigger_alerts(patient_id, data)
 
     # Optionally persist to DB (uncomment if you want DB storage)
@@ -182,7 +184,20 @@ def get_latest():
     claims = get_jwt()
     if claims.get("role") not in ("patient", "doctor", "admin"):
         return jsonify({"message": "Access denied"}), 403
-    return jsonify(_latest), 200
+
+    # If the device hasn't sent an update recently, treat it as disconnected.
+    latest = dict(_latest)
+    ts = latest.get("ts")
+    if ts:
+        try:
+            last_update = datetime.fromisoformat(ts.replace("Z", "+00:00"))
+            if datetime.utcnow() - last_update > timedelta(seconds=30):
+                latest["signal"] = "disconnected"
+        except Exception:
+            # If parsing fails, fall back to the stored status
+            pass
+
+    return jsonify(latest), 200
 
 
 # =========================================

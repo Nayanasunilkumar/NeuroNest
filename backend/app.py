@@ -31,6 +31,7 @@ from routes.vitals_route import vitals_bp
 from extensions.socket import socketio
 from routes.vitals_socket_events import *
 from routes.alerts_route import alerts_bp
+from routes.calls_route import calls_bp
 
 def create_app():
     app = Flask(__name__)
@@ -74,6 +75,7 @@ def create_app():
     app.register_blueprint(modules_config_bp, url_prefix="/api/modules")
     app.register_blueprint(vitals_bp)
     app.register_blueprint(alerts_bp)
+    app.register_blueprint(calls_bp)
     
     # New Doctor Profile Route
     app.register_blueprint(doctor_profile_bp, url_prefix="/api/doctor/profile")

@@ -1,12 +1,13 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { initSocket, getSocket, disconnectSocket } from '../../services/socket';
+import { initSocket, getSocket } from '../../services/socket';
 import chatAPI from '../../services/chatAPI';
 import ConversationList from '../../components/chat/ConversationList';
 import ChatWindow from '../../components/chat/ChatWindow';
 import ChatHeader from '../../components/chat/ChatHeader';
 import { getUser } from '../../utils/auth';
 import { formatDateTimeIST, toEpochMs } from '../../utils/time';
+import { useCall } from '../../context/CallContext';
 
 const Chat = () => {
     const navigate = useNavigate();
@@ -17,6 +18,7 @@ const Chat = () => {
     const [loadingMessages, setLoadingMessages] = useState(false);
     const [messagesLoadError, setMessagesLoadError] = useState('');
     const [showInfoPanel, setShowInfoPanel] = useState(false);
+    const { startVideoCall } = useCall();
 
     const fetchConversations = useCallback(async () => {
         try {
@@ -128,9 +130,6 @@ const Chat = () => {
             });
         }
 
-        return () => {
-            disconnectSocket();
-        };
     }, [fetchConversations, handleNewMessage]);
 
     const handleSendMessage = async (content, type = 'text') => {
@@ -156,7 +155,11 @@ const Chat = () => {
     const handleVideoCall = async () => {
         if (!selectedConv) return;
         await handleSendMessage(`${currentUser?.full_name || 'Patient'} is requesting a secure video consultation.`, 'call_request');
-        navigate(`/consultation/${selectedConv.id}`);
+        await startVideoCall({
+            receiverId: selectedConv.other_user?.id,
+            conversationId: selectedConv.id,
+            callType: 'video',
+        });
     };
 
     return (
