@@ -23,6 +23,8 @@ const AlertsPage = () => {
   const [alerts, setAlerts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [activeCategory, setActiveCategory] = useState("All");
   const user = getUser();
 
   const fetchAlerts = async () => {
@@ -46,6 +48,15 @@ const AlertsPage = () => {
       console.error(err);
     }
   };
+
+  const filteredAlerts = useMemo(() => {
+    return alerts.filter((alert) => {
+      const matchesSearch = alert.message?.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                            alert.vital_type?.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesCategory = activeCategory === "All" || alert.vital_type === activeCategory;
+      return matchesSearch && matchesCategory;
+    });
+  }, [alerts, searchQuery, activeCategory]);
 
   const counts = useMemo(() => {
     const summary = { critical: 0, warning: 0, info: 0, acknowledged: 0 };
@@ -82,6 +93,7 @@ const AlertsPage = () => {
           <p className="text-secondary mb-0">Real-time patient monitoring and critical events.</p>
         </div>
         <div className="d-flex gap-2">
+          {/* Stat Cards (unchanged) */}
           <div className="card border-0 shadow-sm rounded-4 p-3" style={{ minWidth: 160, background: "#FEE2E2" }}>
             <div className="d-flex align-items-center justify-content-between mb-2">
               <div className="text-uppercase fw-bold small">Active Critical</div>
@@ -114,22 +126,54 @@ const AlertsPage = () => {
         </div>
       </header>
 
+      {/* Filter Bar */}
+      <div className="d-flex flex-column flex-md-row justify-content-between align-items-center gap-3 mb-4">
+        <div className="d-flex gap-2 flex-wrap">
+          {["All", "Temperature", "Heart Rate", "SPO2"].map((cat) => (
+            <button
+              key={cat}
+              onClick={() => setActiveCategory(cat)}
+              className={`btn btn-sm rounded-pill px-3 transition-all ${activeCategory === cat ? 'btn-primary' : 'btn-light border text-secondary'}`}
+              style={{ fontWeight: 600 }}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
+        <div className="position-relative" style={{ minWidth: "300px" }}>
+          <span className="position-absolute translate-middle-y" style={{ left: "12px", top: "50%", zIndex: 10 }}>
+            <Bell size={16} className="text-muted" />
+          </span>
+          <input 
+            type="text" 
+            className="form-control border-0 shadow-sm rounded-pill" 
+            placeholder="Filter by vital type or message..." 
+            style={{ paddingLeft: "38px", fontSize: "14px" }}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
+      </div>
+
       <div className="row g-4">
         <div className="col-12 col-lg-7">
           <div className="card border-0 shadow-sm rounded-4 h-100 d-flex flex-column">
             <div className="card-body p-4 d-flex flex-column" style={{ minHeight: 0 }}>
-              <h3 className="h5 fw-bold mb-3 flex-shrink-0">Active Critical Alerts</h3>
-              <div className="flex-grow-1 overflow-auto" style={{ maxHeight: "calc(100vh - 450px)", scrollBehavior: "smooth" }}>
+              <div className="d-flex justify-content-between align-items-center mb-3 flex-shrink-0">
+                <h3 className="h5 fw-bold mb-0">Active Critical Alerts</h3>
+                <span className="badge rounded-pill bg-danger bg-opacity-10 text-danger">{filteredAlerts.filter(a => a.severity.toLowerCase() === 'critical' && !a.is_acknowledged).length} Matches</span>
+              </div>
+              <div className="flex-grow-1 overflow-auto custom-scrollbar" style={{ maxHeight: "calc(100vh - 450px)", scrollBehavior: "smooth" }}>
                 {loading ? (
                   <div className="text-center text-secondary py-5">Loading alerts…</div>
-                ) : alerts.filter((a) => a.severity.toLowerCase() === "critical" && !a.is_acknowledged).length === 0 ? (
+                ) : filteredAlerts.filter((a) => a.severity.toLowerCase() === "critical" && !a.is_acknowledged).length === 0 ? (
                   <div className="text-center text-secondary py-5">
                     <div className="display-6 mb-2 text-success">✔</div>
-                    <div className="fw-bold">Monitoring Stable</div>
-                    <div>No critical alerts requiring immediate attention.</div>
+                    <div className="fw-bold">No Matches Found</div>
+                    <div>Try adjusting your filters or search query.</div>
                   </div>
                 ) : (
-                  alerts
+                  filteredAlerts
                     .filter((a) => a.severity.toLowerCase() === "critical" && !a.is_acknowledged)
                     .map((alert) => {
                       const style = severityStyles[alert.severity.toLowerCase()] || severityStyles.info;
@@ -165,15 +209,18 @@ const AlertsPage = () => {
         <div className="col-12 col-lg-5">
           <div className="card border-0 shadow-sm rounded-4 h-100 d-flex flex-column">
             <div className="card-body p-4 d-flex flex-column" style={{ minHeight: 0 }}>
-              <h3 className="h5 fw-bold mb-3 flex-shrink-0">Alert History</h3>
-              <div className="flex-grow-1 overflow-auto" style={{ maxHeight: "calc(100vh - 450px)", scrollBehavior: "smooth" }}>
+              <div className="d-flex justify-content-between align-items-center mb-3 flex-shrink-0">
+                <h3 className="h5 fw-bold mb-0">Alert History</h3>
+                <span className="text-muted small">{filteredAlerts.length} Total</span>
+              </div>
+              <div className="flex-grow-1 overflow-auto custom-scrollbar" style={{ maxHeight: "calc(100vh - 450px)", scrollBehavior: "smooth" }}>
                 {loading ? (
                   <div className="text-center text-secondary py-5">Loading alerts…</div>
-                ) : alerts.length === 0 ? (
+                ) : filteredAlerts.length === 0 ? (
                   <div className="text-center text-secondary py-5">No historic alerts</div>
                 ) : (
                   <div className="list-group">
-                    {alerts.slice(0, 20).map((alert) => {
+                    {filteredAlerts.slice(0, 30).map((alert) => {
                       const style = severityStyles[alert.severity.toLowerCase()] || severityStyles.info;
                       return (
                         <div key={alert.id} className="list-group-item list-group-item-action d-flex justify-content-between align-items-start">
