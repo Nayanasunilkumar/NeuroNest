@@ -1,18 +1,27 @@
 import React, { useEffect, useState } from "react";
 import { useAlerts } from "../../context/AlertContext";
 import { useNavigate } from "react-router-dom";
-import { BellRing, X } from "lucide-react";
+import { BellRing, X, ToggleRight, ToggleLeft } from "lucide-react";
 
-const STORAGE_KEY = "neuronest_alert_popup_dismissed";
+const DISMISSED_KEY = "neuronest_alert_popup_dismissed";
+const ENABLED_KEY = "neuronest_alert_popup_enabled";
 
 const toIdString = (id) => (id == null ? "" : String(id));
 
 const AlertPopup = () => {
   const { alerts, markAcknowledged } = useAlerts();
   const [activeAlert, setActiveAlert] = useState(null);
+  const [isEnabled, setIsEnabled] = useState(() => {
+    try {
+      // Default to true if not set (enable by default)
+      return localStorage.getItem(ENABLED_KEY) !== "false";
+    } catch (e) {
+      return true;
+    }
+  });
   const [dismissed, setDismissed] = useState(() => {
     try {
-      const arr = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+      const arr = JSON.parse(localStorage.getItem(DISMISSED_KEY) || "[]");
       if (!Array.isArray(arr)) return new Set();
       return new Set(arr.map(toIdString).filter(Boolean));
     } catch (e) {
@@ -22,6 +31,12 @@ const AlertPopup = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    // If alerts are disabled globally, don't show anything
+    if (!isEnabled) {
+      setActiveAlert(null);
+      return;
+    }
+
     const unacknowledged = alerts
       .filter((a) => !a.is_acknowledged)
       .filter((a) => !dismissed.has(toIdString(a.id)));
@@ -32,9 +47,15 @@ const AlertPopup = () => {
     } else {
       setActiveAlert(null);
     }
-  }, [alerts, dismissed]);
+  }, [alerts, dismissed, isEnabled]);
 
-  if (!activeAlert) return null;
+  const handleToggleAlerts = () => {
+    const newState = !isEnabled;
+    setIsEnabled(newState);
+    localStorage.setItem(ENABLED_KEY, String(newState));
+  };
+
+  if (!isEnabled || !activeAlert) return null;
 
   return (
     <div className="fixed bottom-4 right-4 z-50 flex max-w-sm flex-col rounded-xl bg-red-600 p-4 text-white shadow-2xl animate-in slide-in-from-bottom-5">
@@ -43,23 +64,31 @@ const AlertPopup = () => {
           <BellRing className="h-6 w-6 animate-pulse" />
           <h3 className="font-bold text-lg">CRITICAL ALERT</h3>
         </div>
-        <button
-          onClick={() => {
-            if (!activeAlert?.id) {
+        <div className="flex gap-2">
+          <button
+            onClick={handleToggleAlerts}
+            className="rounded-full p-1 hover:bg-red-700 transition-colors"
+            title="Disable critical alert popups"
+          >
+            {isEnabled ? <ToggleRight className="h-5 w-5" /> : <ToggleLeft className="h-5 w-5" />}
+          </button>
+          <button
+            onClick={() => {
+              if (activeAlert?.id) {
+                const id = toIdString(activeAlert.id);
+                const updated = new Set(dismissed);
+                updated.add(id);
+                setDismissed(updated);
+                localStorage.setItem(DISMISSED_KEY, JSON.stringify(Array.from(updated)));
+              }
               setActiveAlert(null);
-              return;
-            }
-            const id = toIdString(activeAlert.id);
-            const updated = new Set(dismissed);
-            updated.add(id);
-            setDismissed(updated);
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(Array.from(updated)));
-            setActiveAlert(null);
-          }}
-          className="rounded-full p-1 hover:bg-red-700 transition-colors"
-        >
-          <X className="h-5 w-5" />
-        </button>
+            }}
+            className="rounded-full p-1 hover:bg-red-700 transition-colors"
+            title="Close this alert"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
       </div>
 
       <div className="mt-3">
@@ -71,7 +100,7 @@ const AlertPopup = () => {
       <div className="mt-4 flex gap-3">
         <button
           onClick={() => {
-            navigate("/doctor/alerts"); // We'll map this route later or just /alerts depending on role
+            navigate("/doctor/alerts");
             setActiveAlert(null);
           }}
           className="flex-1 rounded-lg bg-white px-3 py-2 text-sm font-semibold text-red-600 hover:bg-red-50 transition-colors"
@@ -80,13 +109,14 @@ const AlertPopup = () => {
         </button>
         <button
           onClick={() => {
-            if (!activeAlert?.id) return;
-            const id = toIdString(activeAlert.id);
-            const updated = new Set(dismissed);
-            updated.delete(id);
-            setDismissed(updated);
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(Array.from(updated)));
-            markAcknowledged(activeAlert.id);
+            if (activeAlert?.id) {
+              const id = toIdString(activeAlert.id);
+              const updated = new Set(dismissed);
+              updated.delete(id);
+              setDismissed(updated);
+              localStorage.setItem(DISMISSED_KEY, JSON.stringify(Array.from(updated)));
+              markAcknowledged(activeAlert.id);
+            }
           }}
           className="flex-1 rounded-lg bg-red-700 px-3 py-2 text-sm font-semibold text-white hover:bg-red-800 transition-colors"
         >
