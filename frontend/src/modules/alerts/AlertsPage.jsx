@@ -114,72 +114,76 @@ const AlertsPage = () => {
 
       <div className="row g-4">
         <div className="col-12 col-lg-7">
-          <div className="card border-0 shadow-sm rounded-4 h-100">
-            <div className="card-body p-4">
-              <h3 className="h5 fw-bold mb-3">Active Critical Alerts</h3>
-              {loading ? (
-                <div className="text-center text-secondary py-5">Loading alerts…</div>
-              ) : alerts.filter((a) => a.severity.toLowerCase() === "critical" && !a.is_acknowledged).length === 0 ? (
-                <div className="text-center text-secondary py-5">
-                  <div className="display-6 mb-2 text-success">✔</div>
-                  <div className="fw-bold">Monitoring Stable</div>
-                  <div>No critical alerts requiring immediate attention.</div>
-                </div>
-              ) : (
-                alerts
-                  .filter((a) => a.severity.toLowerCase() === "critical" && !a.is_acknowledged)
-                  .map((alert) => {
-                    const style = severityStyles[alert.severity.toLowerCase()] || severityStyles.info;
-                    return (
-                      <div key={alert.id} className="d-flex align-items-start gap-3 mb-3 p-3 rounded-4" style={{ background: style.bg, borderLeft: `6px solid ${style.border}` }}>
-                        <div className="mt-1">{style.icon}</div>
-                        <div className="flex-grow-1">
-                          <div className="d-flex justify-content-between align-items-start">
-                            <div>
-                              <div className="fw-bold">{alert.vital_type} Critical</div>
-                              <div className="text-secondary small">{formatTime(alert.created_at)}</div>
+          <div className="card border-0 shadow-sm rounded-4 h-100 d-flex flex-column">
+            <div className="card-body p-4 d-flex flex-column" style={{ minHeight: 0 }}>
+              <h3 className="h5 fw-bold mb-3 flex-shrink-0">Active Critical Alerts</h3>
+              <div className="flex-grow-1 overflow-auto" style={{ maxHeight: "calc(100vh - 450px)", scrollBehavior: "smooth" }}>
+                {loading ? (
+                  <div className="text-center text-secondary py-5">Loading alerts…</div>
+                ) : alerts.filter((a) => a.severity.toLowerCase() === "critical" && !a.is_acknowledged).length === 0 ? (
+                  <div className="text-center text-secondary py-5">
+                    <div className="display-6 mb-2 text-success">✔</div>
+                    <div className="fw-bold">Monitoring Stable</div>
+                    <div>No critical alerts requiring immediate attention.</div>
+                  </div>
+                ) : (
+                  alerts
+                    .filter((a) => a.severity.toLowerCase() === "critical" && !a.is_acknowledged)
+                    .map((alert) => {
+                      const style = severityStyles[alert.severity.toLowerCase()] || severityStyles.info;
+                      return (
+                        <div key={alert.id} className="d-flex align-items-start gap-3 mb-3 p-3 rounded-4" style={{ background: style.bg, borderLeft: `6px solid ${style.border}` }}>
+                          <div className="mt-1">{style.icon}</div>
+                          <div className="flex-grow-1">
+                            <div className="d-flex justify-content-between align-items-start">
+                              <div>
+                                <div className="fw-bold">{alert.vital_type} Critical</div>
+                                <div className="text-secondary small">{formatTime(alert.created_at)}</div>
+                              </div>
+                              <button className="btn btn-sm btn-outline-secondary" onClick={() => handleAck(alert.id)}>
+                                Acknowledge
+                              </button>
                             </div>
-                            <button className="btn btn-sm btn-outline-secondary" onClick={() => handleAck(alert.id)}>
-                              Acknowledge
-                            </button>
+                            <div className="text-secondary mt-2">{alert.message}</div>
                           </div>
-                          <div className="text-secondary mt-2">{alert.message}</div>
                         </div>
-                      </div>
-                    );
-                  })
-              )}
+                      );
+                    })
+                )}
+              </div>
             </div>
           </div>
         </div>
 
         <div className="col-12 col-lg-5">
-          <div className="card border-0 shadow-sm rounded-4 h-100">
-            <div className="card-body p-4">
-              <h3 className="h5 fw-bold mb-3">Alert History</h3>
-              {loading ? (
-                <div className="text-center text-secondary py-5">Loading alerts…</div>
-              ) : alerts.length === 0 ? (
-                <div className="text-center text-secondary py-5">No historic alerts</div>
-              ) : (
-                <div className="list-group">
-                  {alerts.slice(0, 20).map((alert) => {
-                    const style = severityStyles[alert.severity.toLowerCase()] || severityStyles.info;
-                    return (
-                      <div key={alert.id} className="list-group-item list-group-item-action d-flex justify-content-between align-items-start">
-                        <div>
-                          <div className="fw-bold">{alert.vital_type}</div>
-                          <div className="small text-secondary">{formatTime(alert.created_at)}</div>
-                          <div className="small mt-1">{alert.message}</div>
+          <div className="card border-0 shadow-sm rounded-4 h-100 d-flex flex-column">
+            <div className="card-body p-4 d-flex flex-column" style={{ minHeight: 0 }}>
+              <h3 className="h5 fw-bold mb-3 flex-shrink-0">Alert History</h3>
+              <div className="flex-grow-1 overflow-auto" style={{ maxHeight: "calc(100vh - 450px)", scrollBehavior: "smooth" }}>
+                {loading ? (
+                  <div className="text-center text-secondary py-5">Loading alerts…</div>
+                ) : alerts.length === 0 ? (
+                  <div className="text-center text-secondary py-5">No historic alerts</div>
+                ) : (
+                  <div className="list-group">
+                    {alerts.slice(0, 20).map((alert) => {
+                      const style = severityStyles[alert.severity.toLowerCase()] || severityStyles.info;
+                      return (
+                        <div key={alert.id} className="list-group-item list-group-item-action d-flex justify-content-between align-items-start">
+                          <div>
+                            <div className="fw-bold">{alert.vital_type}</div>
+                            <div className="small text-secondary">{formatTime(alert.created_at)}</div>
+                            <div className="small mt-1">{alert.message}</div>
+                          </div>
+                          <span className="badge rounded-pill" style={{ background: style.border, color: "white" }}>
+                            {alert.is_acknowledged ? "ACK" : style.label}
+                          </span>
                         </div>
-                        <span className="badge rounded-pill" style={{ background: style.border, color: "white" }}>
-                          {alert.is_acknowledged ? "ACK" : style.label}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
