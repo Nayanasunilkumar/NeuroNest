@@ -68,9 +68,9 @@ function TempSparkline({ history, color, height = 56 }) {
   );
 }
 
-const LiveVitalsPanel = ({ title, subtitle, latest, history, loading, error }) => {
+const LiveVitalsPanel = ({ title, subtitle, latest, history, loading, error, isOffline }) => {
   const signal = latest?.signal || "na";
-  const isOnline = !!latest && signal !== "na";
+  const isOnline = !isOffline;
   const isLive = signal === "ok";
   const isWeak = signal === "weak";
   const tempHistory = (history || []).map(h => h.temp).filter(Boolean);
@@ -109,12 +109,12 @@ const LiveVitalsPanel = ({ title, subtitle, latest, history, loading, error }) =
           {isOnline ? (
             <span className="badge rounded-pill d-flex align-items-center gap-1"
               style={{ background:"#d1fae5", color:"#065f46", fontSize:"0.7rem" }}>
-              <Wifi size={10}/> Connected
+              <Wifi size={10}/> CONNECTED
             </span>
           ) : (
             <span className="badge rounded-pill d-flex align-items-center gap-1"
               style={{ background:"#fee2e2", color:"#991b1b", fontSize:"0.7rem" }}>
-              <WifiOff size={10}/> Device Offline
+              <WifiOff size={10}/> DISCONNECTED
             </span>
           )}
           {isLive && <span className="badge rounded-pill bg-success" style={{fontSize:"0.7rem"}}>● LIVE</span>}
@@ -122,7 +122,7 @@ const LiveVitalsPanel = ({ title, subtitle, latest, history, loading, error }) =
           {signal === "no_finger" && <span className="badge rounded-pill bg-danger" style={{fontSize:"0.7rem"}}>○ NO FINGER</span>}
           {signal === "initialising" && <span className="badge rounded-pill bg-info" style={{fontSize:"0.7rem"}}>◌ INITIALISING</span>}
           <span className="small text-secondary">
-            LAST UPDATE {latest?.ts ? new Date(latest.ts + "Z").toLocaleTimeString() : "--"}
+            LAST UPDATE {latest?.ts ? new Date(latest.ts).toLocaleTimeString() : "--"}
           </span>
         </div>
       </div>

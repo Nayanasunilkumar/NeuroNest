@@ -153,6 +153,8 @@ function VitalsSection() {
   const [data, setData] = useState(null);
   const [history, setHistory] = useState([]);
   const [online, setOnline] = useState(false);
+  const [isStale, setIsStale] = useState(true);
+  const lastUpdateRef = useRef(0);
   const socketRef = useRef(null);
   const user = getUser();
   const patientId = user?.id;
@@ -167,12 +169,27 @@ function VitalsSection() {
           fetch(`${BACKEND_API}/api/vitals/latest`, { headers: { Authorization: `Bearer ${localStorage.getItem("neuronest_token")}` } }),
           fetch(`${BACKEND_API}/api/vitals/history`, { headers: { Authorization: `Bearer ${localStorage.getItem("neuronest_token")}` } }),
         ]);
-        setData(await lr.json());
+        const lJson = await lr.json();
+        setData(lJson);
         setHistory(await hr.json());
-        setOnline(true);
+        if (lJson.signal !== "na") {
+          lastUpdateRef.current = Date.now();
+          setOnline(true);
+          setIsStale(false);
+        } else {
+          setOnline(true); // API is up, but h/w not yet heard from
+        }
       } catch { setOnline(false); }
     };
     fetch_();
+
+    // Stale check interval
+    const staleTimer = setInterval(() => {
+      if (lastUpdateRef.current > 0) {
+        const diff = Date.now() - lastUpdateRef.current;
+        setIsStale(diff > 15000); // 15s timeout
+      }
+    }, 5000);
 
     // Socket connection
     const token = localStorage.getItem("neuronest_token");
@@ -190,6 +207,8 @@ function VitalsSection() {
 
     socketRef.current.on('vitals_update', (update) => {
       setData(update);
+      lastUpdateRef.current = Date.now();
+      setIsStale(false);
       // Update history if signal is valid
       if (update.signal === 'ok' || update.signal === 'weak') {
         setHistory(prev => {
@@ -205,6 +224,7 @@ function VitalsSection() {
     });
 
     return () => {
+      clearInterval(staleTimer);
       if (socketRef.current) {
         socketRef.current.disconnect();
       }
@@ -271,15 +291,15 @@ function VitalsSection() {
         </div>
         <div className="d-flex align-items-center gap-2">
           {/* Device status */}
-          {online ? (
+          {online && signal !== "na" && !isStale ? (
             <span className="badge rounded-pill d-flex align-items-center gap-1"
               style={{ background: "#d1fae5", color: "#065f46", fontSize: "0.7rem" }}>
-              <Wifi size={10} /> Connected
+              <Wifi size={10} /> CONNECTED
             </span>
           ) : (
             <span className="badge rounded-pill d-flex align-items-center gap-1"
               style={{ background: "#fee2e2", color: "#991b1b", fontSize: "0.7rem" }}>
-              <WifiOff size={10} /> Device Offline
+              <WifiOff size={10} /> DISCONNECTED
             </span>
           )}
           {/* Signal status */}

@@ -6,6 +6,7 @@ export function useLiveVitals({ patientId, enabled = true } = {}) {
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isOffline, setIsOffline] = useState(true);
   const timer = useRef();
 
   useEffect(() => {
@@ -20,8 +21,16 @@ export function useLiveVitals({ patientId, enabled = true } = {}) {
         setLatest(lat);
         setHistory(hist);
         setError(null);
+
+        if (lat && lat.ts) {
+          const diff = Date.now() - new Date(lat.ts).getTime();
+          setIsOffline(diff > 15000); // 15s threshold
+        } else {
+          setIsOffline(true);
+        }
       } catch (err) {
         setError(err.message);
+        setIsOffline(true);
       } finally {
         setLoading(false);
       }
@@ -32,5 +41,5 @@ export function useLiveVitals({ patientId, enabled = true } = {}) {
     return () => clearInterval(timer.current);
   }, [patientId, enabled]);
 
-  return { latest, history, loading, error };
+  return { latest, history, loading, error, isOffline };
 }

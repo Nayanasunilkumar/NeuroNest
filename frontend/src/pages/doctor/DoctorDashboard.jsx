@@ -92,7 +92,7 @@ const DoctorDashboard = () => {
   const [monitoredPatients, setMonitoredPatients] = useState([]);
   const [selectedPatientId, setSelectedPatientId] = useState(null);
 
-  const { latest, history, loading: vitalsLoading, error: vitalsError } = useLiveVitals({
+  const { latest, history, loading: vitalsLoading, error: vitalsError, isOffline } = useLiveVitals({
     patientId: selectedPatientId,
     enabled: Boolean(selectedPatientId),
   });
@@ -248,6 +248,7 @@ const DoctorDashboard = () => {
             history={history}
             loading={vitalsLoading}
             error={selectedPatientId ? vitalsError : ''}
+            isOffline={isOffline}
           />
         </div>
 
