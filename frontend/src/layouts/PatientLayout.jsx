@@ -168,18 +168,16 @@ const PatientLayout = () => {
                                             </div>
                                         )}
                                     </div>
-                                    {alerts.length > 0 && (
-                                        <div className="p-2 text-center bg-light bg-opacity-5">
-                                            <Link 
-                                                to="/patient/alerts" 
-                                                onClick={() => setShowNotifications(false)}
-                                                className="btn btn-link btn-sm text-secondary text-decoration-none fw-bold" 
-                                                style={{ fontSize: '0.7rem' }}
-                                            >
-                                                View all activity
-                                            </Link>
-                                        </div>
-                                    )}
+                                    <div className="p-2 text-center bg-light bg-opacity-5 border-top" style={{ borderColor: darkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }}>
+                                        <Link 
+                                            to="/patient/alerts" 
+                                            onClick={() => setShowNotifications(false)}
+                                            className="btn btn-link btn-sm text-secondary text-decoration-none fw-bold w-100" 
+                                            style={{ fontSize: '0.7rem' }}
+                                        >
+                                            View all activity
+                                        </Link>
+                                    </div>
                                 </div>
                             )}
                         </div>
