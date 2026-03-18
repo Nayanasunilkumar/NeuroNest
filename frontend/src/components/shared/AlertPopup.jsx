@@ -5,14 +5,18 @@ import { BellRing, X } from "lucide-react";
 
 const STORAGE_KEY = "neuronest_alert_popup_dismissed";
 
+const toIdString = (id) => (id == null ? "" : String(id));
+
 const AlertPopup = () => {
   const { alerts, markAcknowledged } = useAlerts();
   const [activeAlert, setActiveAlert] = useState(null);
   const [dismissed, setDismissed] = useState(() => {
     try {
-      return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+      const arr = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+      if (!Array.isArray(arr)) return new Set();
+      return new Set(arr.map(toIdString).filter(Boolean));
     } catch (e) {
-      return [];
+      return new Set();
     }
   });
   const navigate = useNavigate();
@@ -20,7 +24,7 @@ const AlertPopup = () => {
   useEffect(() => {
     const unacknowledged = alerts
       .filter((a) => !a.is_acknowledged)
-      .filter((a) => !dismissed.includes(a.id));
+      .filter((a) => !dismissed.has(toIdString(a.id)));
 
     if (unacknowledged.length > 0) {
       // Show the most recent one that hasn't been acknowledged or dismissed
@@ -41,11 +45,15 @@ const AlertPopup = () => {
         </div>
         <button
           onClick={() => {
-            if (activeAlert) {
-              const updated = [...dismissed, activeAlert.id];
-              setDismissed(updated);
-              localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+            if (!activeAlert?.id) {
+              setActiveAlert(null);
+              return;
             }
+            const id = toIdString(activeAlert.id);
+            const updated = new Set(dismissed);
+            updated.add(id);
+            setDismissed(updated);
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(Array.from(updated)));
             setActiveAlert(null);
           }}
           className="rounded-full p-1 hover:bg-red-700 transition-colors"
@@ -72,13 +80,13 @@ const AlertPopup = () => {
         </button>
         <button
           onClick={() => {
-            if (activeAlert) {
-              // Remove from dismissed so it can reappear if it remains unacknowledged later
-              const updated = dismissed.filter((id) => id !== activeAlert.id);
-              setDismissed(updated);
-              localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-              markAcknowledged(activeAlert.id);
-            }
+            if (!activeAlert?.id) return;
+            const id = toIdString(activeAlert.id);
+            const updated = new Set(dismissed);
+            updated.delete(id);
+            setDismissed(updated);
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(Array.from(updated)));
+            markAcknowledged(activeAlert.id);
           }}
           className="flex-1 rounded-lg bg-red-700 px-3 py-2 text-sm font-semibold text-white hover:bg-red-800 transition-colors"
         >
