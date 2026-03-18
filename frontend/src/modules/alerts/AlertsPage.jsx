@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Bell, AlertTriangle, CheckCircle2, Clock } from "lucide-react";
 import { getAlerts, acknowledgeAlert } from "../../api/alerts";
 import { initSocket, getSocket } from "../../services/socket";
+import { getUser } from "../../utils/auth";
 
 const severityStyles = {
   critical: { bg: "#FEE2E2", border: "#DC2626", label: "Critical", icon: <AlertTriangle size={18} className="me-2" /> },
@@ -22,6 +23,7 @@ const AlertsPage = () => {
   const [alerts, setAlerts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const user = getUser();
 
   const fetchAlerts = async () => {
     setLoading(true);
@@ -140,9 +142,14 @@ const AlertsPage = () => {
                                 <div className="fw-bold">{alert.vital_type} Critical</div>
                                 <div className="text-secondary small">{formatTime(alert.created_at)}</div>
                               </div>
-                              <button className="btn btn-sm btn-outline-secondary" onClick={() => handleAck(alert.id)}>
-                                Acknowledge
-                              </button>
+                                {user?.role !== "patient" && (
+                                  <button
+                                    className="btn btn-sm btn-outline-secondary"
+                                    onClick={() => handleAck(alert.id)}
+                                  >
+                                    Acknowledge
+                                  </button>
+                                )}
                             </div>
                             <div className="text-secondary mt-2">{alert.message}</div>
                           </div>
