@@ -81,8 +81,10 @@ class NotificationService:
                 NotificationService.send_sms(phone, patient_msg)
 
     @staticmethod
-    def send_in_app(user_id, title, message, payload=None, notif_type="appointment"):
-        from database.models import db, InAppNotification
+    def send_in_app(user_id, title, message, payload=None, notif_type="appointment", email_subject=None, email_event_type=None):
+        from database.models import db, InAppNotification, User, NotificationPreference, DoctorNotificationSetting
+        
+        # 1. Create In-App record
         notif = InAppNotification(
             user_id=user_id,
             title=title,
@@ -93,12 +95,118 @@ class NotificationService:
         db.session.add(notif)
         db.session.commit()
         
-        # Real-time broadcast if socketio is available
+        # 2. Real-time broadcast
         try:
             from extensions.socket import socketio
             socketio.emit('new_in_app_notification', notif.to_dict(), room=f"user_{user_id}")
         except Exception:
             pass
+
+        # 3. Optional Automated Email (Respecting Preferences)
+        if email_subject:
+            user = User.query.get(user_id)
+            if user and user.email:
+                should_send = False
+                if user.role == "patient":
+                    pref = NotificationPreference.query.filter_by(user_id=user_id).first()
+                    if not pref:
+                        pref = NotificationPreference(user_id=user_id)
+                        db.session.add(pref)
+                        db.session.commit()
+                    
+                    # Choose preference field based on notif_type or event_type
+                    if notif_type == "vitals_alert": 
+                        should_send = pref.email_alerts
+                    elif notif_type == "prescription":
+                        should_send = pref.email_prescriptions
+                    elif notif_type == "appointment":
+                        should_send = pref.email_appointments
+                    else:
+                        should_send = True # Default for others
+                else: # Doctor/Admin
+                    d_pref = DoctorNotificationSetting.query.filter_by(doctor_user_id=user_id).first()
+                    if not d_pref:
+                        d_pref = DoctorNotificationSetting(doctor_user_id=user_id)
+                        db.session.add(d_pref)
+                        db.session.commit()
+                    
+                    if notif_type == "vitals_alert":
+                        should_send = d_pref.email_on_alerts
+                    else:
+                        should_send = d_pref.email_on_booking # Default for others
+
+                if should_send:
+                    try:
+                        NotificationService.send_email(user.email, email_subject, message, event_type=email_event_type)
+                    except Exception as e:
+                        print(f"[NOTIFICATION] Auto-email failed: {e}")
+
+    @staticmethod
+    def notify_critical_vitals(patient_id, alert):
+        """Standardized notification for clinical vital alerts."""
+        from database.models import User, Appointment
+        patient = User.query.get(patient_id)
+        if not patient: return
+
+        subject = f"🚨 Critical Health Alert: {alert.vital_type} - {patient.full_name}"
+        msg = (
+            f"A critical health alert has been triggered for {patient.full_name}.\n\n"
+            f"Vital: {alert.vital_type}\n"
+            f"Value: {alert.value}\n"
+            f"Message: {alert.message}\n"
+            f"Time: {alert.created_at.strftime('%b %d, %I:%M %p')}\n\n"
+            f"Immediate review is required."
+        )
+
+        # 1. Notify Patient (Respecting Prefs)
+        NotificationService.send_in_app(
+            user_id=patient_id,
+            title=f"Critical {alert.vital_type} Alert",
+            message=msg,
+            notif_type="vitals_alert",
+            email_subject=subject,
+            email_event_type="critical"
+        )
+
+        # 2. Notify Assigned Doctor
+        appointment = Appointment.query.filter_by(patient_id=patient_id).order_by(Appointment.created_at.desc()).first()
+        if appointment and appointment.doctor:
+            NotificationService.send_in_app(
+                user_id=appointment.doctor_id,
+                title=f"Patient Vital Critical: {patient.full_name}",
+                message=msg,
+                notif_type="vitals_alert",
+                email_subject=subject,
+                email_event_type="critical"
+            )
+
+    @staticmethod
+    def notify_prescription_event(prescription_id):
+        from database.models import db, User
+        from models.prescription_models import Prescription
+        p = Prescription.query.get(prescription_id)
+        if not p: return
+
+        patient = User.query.get(p.patient_id)
+        doctor = User.query.get(p.doctor_id)
+        if not patient or not doctor: return
+
+        msg = (
+            f"Dear {patient.full_name},\n\n"
+            f"Dr. {doctor.full_name} has issued a new medical prescription for you.\n\n"
+            f"Diagnosis: {p.diagnosis}\n"
+            f"Notes: {p.notes or 'None'}\n\n"
+            f"Please log in to your dashboard to view the full medication schedule and instructions."
+        )
+
+        NotificationService.send_in_app(
+            user_id=patient.id,
+            title="New Prescription Issued",
+            message=msg,
+            notif_type="prescription",
+            email_subject="New Prescription from NeuroNest",
+            email_event_type="approved"
+        )
 
     @staticmethod
     def _build_html_email(subject, body, event_type=None):

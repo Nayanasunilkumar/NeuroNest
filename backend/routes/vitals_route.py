@@ -74,40 +74,14 @@ def check_and_trigger_alerts(patient_id, data):
                 # Emit WebSocket
                 socketio.emit("critical_alert", alert.to_dict())
                 
-                # Send Email in background (don't block response)
-                thread = threading.Thread(target=send_critical_alert_email, args=(patient_id, alert), daemon=True)
-                thread.start()
+                # Standardized Notification (In-App + Email/SMS)
+                NotificationService.notify_critical_vitals(patient_id, alert)
                 
             except Exception as e:
                 db.session.rollback()
                 print(f"[VITALS ALERT ERROR] {e}")
 
-def send_critical_alert_email(patient_id, alert):
-    patient = User.query.get(patient_id)
-    if not patient:
-        return
-        
-    appointment = Appointment.query.filter_by(patient_id=patient_id).order_by(Appointment.created_at.desc()).first()
-    doctor_email = appointment.doctor.email if appointment and appointment.doctor else None
-        
-    subject = f"🚨 NeuroNest Critical Alert – Patient {alert.vital_type} Critical"
-    body = (
-        f"Critical Health Alert Detected\n\n"
-        f"Patient: {patient.full_name or 'Unknown'}\n"
-        f"Vital: {alert.vital_type}\n"
-        f"Alert Message: {alert.message}\n"
-        f"Current Value: {alert.value}\n\n"
-        f"Time: {alert.created_at.strftime('%b %d, %I:%M %p')} UTC\n\n"
-        f"Immediate medical attention may be required.\n\n"
-        f"View patient dashboard:\n"
-        f"https://neuronest.app/alerts"
-    )
-    
-    if doctor_email:
-        NotificationService.send_email(doctor_email, subject, body, event_type="critical")
-        
-    if patient.email:
-        NotificationService.send_email(patient.email, subject, body, event_type="critical")
+# (send_critical_alert_email function removed and consolidated into NotificationService)
 
 
 # =========================================

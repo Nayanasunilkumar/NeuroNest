@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Bell, Mail, MessageSquare, Megaphone, Star, Smartphone, Monitor, ShieldCheck } from 'lucide-react';
+import { Bell, Mail, MessageSquare, Megaphone, Star, Smartphone, Monitor, ShieldCheck, AlertCircle } from 'lucide-react';
 
 const Toggle = ({ checked, onChange, disabled }) => (
   <button 
@@ -18,6 +18,7 @@ const ROWS = [
   { key: 'messages',     icon: MessageSquare, label: 'Direct Messages', hint: 'Real-time replies and follow-ups from your providers', color: '#0ea5e9' },
   { key: 'announcements',icon: Megaphone,     label: 'System Updates', hint: 'Essential maintenance and feature announcements', color: '#8b5cf6' },
   { key: 'feedback',     icon: Star,          label: 'Health Surveys', hint: 'Periodic check-ins and appointment feedback requests', emailOnly: true, color: '#f59e0b' },
+  { key: 'alerts',       icon: AlertCircle,   label: 'Clinical Alerts', hint: 'High-priority vitals monitoring and health events', color: '#ef4444' },
 ];
 
 export default function NotificationPreferences({ data, saving, onSave }) {

@@ -169,6 +169,7 @@ class NotificationPreference(db.Model):
     email_messages = db.Column(db.Boolean, default=True)
     email_announcements = db.Column(db.Boolean, default=True)
     email_feedback = db.Column(db.Boolean, default=True)
+    email_alerts = db.Column(db.Boolean, default=True)
 
     # SMS
     sms_appointments = db.Column(db.Boolean, default=False)
@@ -181,6 +182,7 @@ class NotificationPreference(db.Model):
     inapp_prescriptions = db.Column(db.Boolean, default=True)
     inapp_messages = db.Column(db.Boolean, default=True)
     inapp_announcements = db.Column(db.Boolean, default=True)
+    inapp_alerts = db.Column(db.Boolean, default=True)
 
     allow_doctor_followup = db.Column(db.Boolean, default=True)
     allow_promotions = db.Column(db.Boolean, default=False)
@@ -499,6 +501,7 @@ class DoctorNotificationSetting(db.Model):
     email_on_booking = db.Column(db.Boolean, default=True)
     sms_on_booking = db.Column(db.Boolean, default=False)
     in_app_notifications = db.Column(db.Boolean, default=True)
+    email_on_alerts = db.Column(db.Boolean, default=True)
 
     reminder_before_minutes = db.Column(db.Integer, default=30)
 
@@ -512,6 +515,7 @@ class DoctorNotificationSetting(db.Model):
             "email_on_booking": self.email_on_booking,
             "sms_on_booking": self.sms_on_booking,
             "in_app_notifications": self.in_app_notifications,
+            "email_on_alerts": self.email_on_alerts,
             "reminder_before_minutes": self.reminder_before_minutes,
         }
 

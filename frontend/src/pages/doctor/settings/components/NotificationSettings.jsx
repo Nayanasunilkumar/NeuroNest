@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { Mail, BellRing, Clock, Save } from 'lucide-react';
+import { Mail, BellRing, Clock, Save, Activity } from 'lucide-react';
 import { updateDoctorNotificationSettings } from '../../../../api/doctor';
 
 const NotificationSettings = ({ data, onSaveSuccess }) => {
     const [formData, setFormData] = useState({
         email_on_booking: data?.email_on_booking ?? true,
+        email_on_alerts: data?.email_on_alerts ?? true,
         in_app_notifications: data?.in_app_notifications ?? true,
         reminder_before_minutes: data?.reminder_before_minutes || 30,
     });
@@ -81,6 +82,22 @@ const NotificationSettings = ({ data, onSaveSuccess }) => {
                                 <div className="card-content">
                                     <h4 className="flex items-center gap-2"><BellRing size={14}/> In-App Badge</h4>
                                     <p>Silent visual notifications on your dashboard.</p>
+                                </div>
+                                <div className="card-indicator"></div>
+                            </label>
+
+                            {/* Clinical Alerts Email */}
+                            <label className={`radio-card ${formData.email_on_alerts ? 'active' : ''}`}>
+                                <input 
+                                    type="checkbox" 
+                                    name="email_on_alerts"
+                                    checked={formData.email_on_alerts}
+                                    onChange={handleChange}
+                                    style={{ display: 'none' }}
+                                />
+                                <div className="card-content">
+                                    <h4 className="flex items-center gap-2 text-danger"><Activity size={14}/> Emergency Email</h4>
+                                    <p>Real-time vitals alerts delivered to your inbox.</p>
                                 </div>
                                 <div className="card-indicator"></div>
                             </label>
