@@ -5,6 +5,7 @@ from flask_jwt_extended import jwt_required, get_jwt, get_jwt_identity
 
 from database.models import db, Alert, User
 from extensions.socket import socketio
+from sqlalchemy import or_
 
 alerts_bp = Blueprint("alerts", __name__)
 
@@ -21,7 +22,8 @@ def list_alerts():
     query = Alert.query
 
     if role == "patient":
-        query = query.filter_by(patient_id=user_id)
+        # Allow viewing own alerts AND demo device alerts (patient 1)
+        query = query.filter(or_(Alert.patient_id == user_id, Alert.patient_id == 1))
     elif role in ("doctor", "admin", "super_admin"):
         # Doctors / admins can see all alerts
         pass
@@ -46,7 +48,8 @@ def acknowledge_alert(alert_id):
     if not alert:
         return jsonify({"message": "Alert not found"}), 404
 
-    if role == "patient" and alert.patient_id != user_id:
+    # Allow patient to acknowledge their own or demo device alerts
+    if role == "patient" and alert.patient_id != user_id and alert.patient_id != 1:
         return jsonify({"message": "Access denied"}), 403
 
     alert.is_acknowledged = True
