@@ -3,20 +3,32 @@ import { useAlerts } from "../../context/AlertContext";
 import { useNavigate } from "react-router-dom";
 import { BellRing, X } from "lucide-react";
 
+const STORAGE_KEY = "neuronest_alert_popup_dismissed";
+
 const AlertPopup = () => {
   const { alerts, markAcknowledged } = useAlerts();
   const [activeAlert, setActiveAlert] = useState(null);
+  const [dismissed, setDismissed] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+    } catch (e) {
+      return [];
+    }
+  });
   const navigate = useNavigate();
 
   useEffect(() => {
-    const unacknowledged = alerts.filter(a => !a.is_acknowledged);
+    const unacknowledged = alerts
+      .filter((a) => !a.is_acknowledged)
+      .filter((a) => !dismissed.includes(a.id));
+
     if (unacknowledged.length > 0) {
-      // Show the most recent one that hasn't been acknowledged
+      // Show the most recent one that hasn't been acknowledged or dismissed
       setActiveAlert(unacknowledged[0]);
     } else {
       setActiveAlert(null);
     }
-  }, [alerts]);
+  }, [alerts, dismissed]);
 
   if (!activeAlert) return null;
 
@@ -27,7 +39,17 @@ const AlertPopup = () => {
           <BellRing className="h-6 w-6 animate-pulse" />
           <h3 className="font-bold text-lg">CRITICAL ALERT</h3>
         </div>
-        <button onClick={() => setActiveAlert(null)} className="rounded-full p-1 hover:bg-red-700 transition-colors">
+        <button
+          onClick={() => {
+            if (activeAlert) {
+              const updated = [...dismissed, activeAlert.id];
+              setDismissed(updated);
+              localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+            }
+            setActiveAlert(null);
+          }}
+          className="rounded-full p-1 hover:bg-red-700 transition-colors"
+        >
           <X className="h-5 w-5" />
         </button>
       </div>
@@ -49,7 +71,15 @@ const AlertPopup = () => {
           View Alert
         </button>
         <button
-          onClick={() => markAcknowledged(activeAlert.id)}
+          onClick={() => {
+            if (activeAlert) {
+              // Remove from dismissed so it can reappear if it remains unacknowledged later
+              const updated = dismissed.filter((id) => id !== activeAlert.id);
+              setDismissed(updated);
+              localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+              markAcknowledged(activeAlert.id);
+            }
+          }}
           className="flex-1 rounded-lg bg-red-700 px-3 py-2 text-sm font-semibold text-white hover:bg-red-800 transition-colors"
         >
           Acknowledge
