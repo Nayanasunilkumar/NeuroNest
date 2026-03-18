@@ -18,7 +18,22 @@ const PatientLayout = () => {
     const notificationRef = React.useRef(null);
 
     const isMessagePath = location.pathname.includes('/messages');
+    const READ_ALERTS_KEY = 'neuronest_read_alerts';
 
+    const getReadAlerts = () => {
+        try {
+            return JSON.parse(localStorage.getItem(READ_ALERTS_KEY) || '[]');
+        } catch {
+            return [];
+        }
+    };
+
+    const markAlertAsReadLocally = (id) => {
+        const read = getReadAlerts();
+        if (!read.includes(id)) {
+            localStorage.setItem(READ_ALERTS_KEY, JSON.stringify([...read, id]));
+        }
+    };
     React.useEffect(() => {
         const fetchCount = async () => {
             try {
@@ -27,8 +42,11 @@ const PatientLayout = () => {
                     getMyNotifications(true)
                 ]);
                 
+                const readAlertIds = getReadAlerts();
+                const filteredAlertsData = (alertsData || []).filter(a => !readAlertIds.includes(a.id));
+                
                 const merged = [
-                    ...(alertsData || []).map(a => ({ ...a, type: 'alert' })),
+                    ...filteredAlertsData.map(a => ({ ...a, type: 'alert' })),
                     ...(notificationsData || []).map(n => ({ ...n, type: 'notification' }))
                 ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
@@ -70,7 +88,9 @@ const PatientLayout = () => {
     const handleAcknowledge = async (item) => {
         try {
             if (item.type === 'alert') {
-                await acknowledgeAlert(item.id);
+                // For patients, we only "mark as read" locally to hide from bell,
+                // but we DON'T acknowledge in the backend (doctors must do that).
+                markAlertAsReadLocally(item.id);
             } else {
                 await markNotificationRead(item.id);
             }
