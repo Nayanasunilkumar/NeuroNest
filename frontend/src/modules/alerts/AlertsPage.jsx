@@ -25,6 +25,7 @@ const AlertsPage = () => {
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState("All");
+  const [dateFilter, setDateFilter] = useState("All Time");
   const user = getUser();
 
   const fetchAlerts = async () => {
@@ -54,9 +55,28 @@ const AlertsPage = () => {
       const matchesSearch = alert.message?.toLowerCase().includes(searchQuery.toLowerCase()) || 
                             alert.vital_type?.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesCategory = activeCategory === "All" || alert.vital_type === activeCategory;
-      return matchesSearch && matchesCategory;
+      
+      // Date filtering
+      const alertDate = new Date(alert.created_at);
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
+      const sevenDaysAgo = new Date(today);
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+      let matchesDate = true;
+      if (dateFilter === "Today") {
+        matchesDate = alertDate >= today;
+      } else if (dateFilter === "Yesterday") {
+        matchesDate = alertDate >= yesterday && alertDate < today;
+      } else if (dateFilter === "Last 7 Days") {
+        matchesDate = alertDate >= sevenDaysAgo;
+      }
+
+      return matchesSearch && matchesCategory && matchesDate;
     });
-  }, [alerts, searchQuery, activeCategory]);
+  }, [alerts, searchQuery, activeCategory, dateFilter]);
 
   const counts = useMemo(() => {
     const summary = { critical: 0, warning: 0, info: 0, acknowledged: 0 };
@@ -127,31 +147,49 @@ const AlertsPage = () => {
       </header>
 
       {/* Filter Bar */}
-      <div className="d-flex flex-column flex-md-row justify-content-between align-items-center gap-3 mb-4">
-        <div className="d-flex gap-2 flex-wrap">
-          {["All", "Temperature", "Heart Rate", "SPO2"].map((cat) => (
-            <button
-              key={cat}
-              onClick={() => setActiveCategory(cat)}
-              className={`btn btn-sm rounded-pill px-3 transition-all ${activeCategory === cat ? 'btn-primary' : 'btn-light border text-secondary'}`}
-              style={{ fontWeight: 600 }}
-            >
-              {cat}
-            </button>
-          ))}
-        </div>
-        <div className="position-relative" style={{ minWidth: "300px" }}>
-          <span className="position-absolute translate-middle-y" style={{ left: "12px", top: "50%", zIndex: 10 }}>
-            <Bell size={16} className="text-muted" />
-          </span>
-          <input 
-            type="text" 
-            className="form-control border-0 shadow-sm rounded-pill" 
-            placeholder="Filter by vital type or message..." 
-            style={{ paddingLeft: "38px", fontSize: "14px" }}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
+      <div className="card border-0 shadow-sm rounded-4 p-3 mb-4">
+        <div className="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3">
+          <div className="d-flex flex-column gap-2">
+            <div className="d-flex gap-2 flex-wrap mb-1">
+              <span className="text-muted small fw-bold text-uppercase pt-1 me-2" style={{ width: "80px" }}>Vital:</span>
+              {["All", "Temperature", "Heart Rate", "SPO2"].map((cat) => (
+                <button
+                  key={cat}
+                  onClick={() => setActiveCategory(cat)}
+                  className={`btn btn-sm rounded-pill px-3 transition-all ${activeCategory === cat ? 'btn-primary' : 'btn-light border text-secondary'}`}
+                  style={{ fontWeight: 600, fontSize: "12px" }}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
+            <div className="d-flex gap-2 flex-wrap">
+              <span className="text-muted small fw-bold text-uppercase pt-1 me-2" style={{ width: "80px" }}>Time:</span>
+              {["All Time", "Today", "Yesterday", "Last 7 Days"].map((date) => (
+                <button
+                  key={date}
+                  onClick={() => setDateFilter(date)}
+                  className={`btn btn-sm rounded-pill px-3 transition-all ${dateFilter === date ? 'btn-dark' : 'btn-light border text-secondary'}`}
+                  style={{ fontWeight: 600, fontSize: "12px" }}
+                >
+                  {date}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="position-relative" style={{ minWidth: "300px" }}>
+            <span className="position-absolute translate-middle-y" style={{ left: "12px", top: "50%", zIndex: 10 }}>
+              <Bell size={16} className="text-muted" />
+            </span>
+            <input 
+              type="text" 
+              className="form-control border-0 bg-light rounded-pill" 
+              placeholder="Search by vital or message..." 
+              style={{ paddingLeft: "38px", fontSize: "14px", height: "42px" }}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
         </div>
       </div>
 
