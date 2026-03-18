@@ -138,7 +138,7 @@ const PatientLayout = () => {
                                         <h6 className="mb-0 fw-black text-uppercase small tracking-wider" style={{ color: darkMode ? '#cbd5e1' : '#475569' }}>Notifications</h6>
                                         <span className="badge rounded-pill bg-primary bg-opacity-10 text-primary small fw-bold" style={{ fontSize: '0.65rem' }}>{alertCount} New</span>
                                     </div>
-                                    <div className="overflow-auto" style={{ maxH: '380px' }}>
+                                    <div className="overflow-y-auto custom-scrollbar" style={{ maxHeight: '380px' }}>
                                         {alerts.length > 0 ? (
                                             alerts.map((item) => (
                                                 <div key={item.id} className="p-3 border-bottom hover-bg transition-all" style={{ borderColor: darkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)', background: item.severity === 'CRITICAL' ? (darkMode ? 'rgba(220,53,69,0.05)' : 'rgba(220,53,69,0.02)') : 'transparent' }}>
