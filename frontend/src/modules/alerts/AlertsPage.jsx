@@ -310,8 +310,8 @@ const AlertsPage = () => {
                             <div className="small text-secondary">{formatTime(alert.created_at)}</div>
                             <div className="small mt-1">{alert.message}</div>
                           </div>
-                          <span className="badge rounded-pill" style={{ background: style.border, color: "white" }}>
-                            {alert.is_acknowledged ? "ACK" : style.label}
+                          <span className="badge rounded-pill" style={{ background: alert.is_acknowledged ? "#16A34A" : style.border, color: "white" }}>
+                            {alert.is_acknowledged ? "ACKNOWLEDGED" : "CRITICAL"}
                           </span>
                         </div>
                       );

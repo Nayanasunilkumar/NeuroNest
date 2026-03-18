@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useAlerts } from "../../context/AlertContext";
 import { useNavigate } from "react-router-dom";
 import { BellRing, X, ToggleRight, ToggleLeft } from "lucide-react";
+import { getUser } from "../../utils/auth";
 
 const DISMISSED_KEY = "neuronest_alert_popup_dismissed";
 const ENABLED_KEY = "neuronest_alert_popup_enabled";
@@ -166,20 +167,40 @@ const AlertPopup = () => {
         >
           Detailed View
         </button>
-        <button
-          onClick={() => {
-            if (activeAlert?.id) {
-              markAcknowledged(activeAlert.id);
-            }
-          }}
-          style={{ 
-            flex: 1, padding: '10px', borderRadius: '10px', border: 'none', 
-            background: 'rgba(0,0,0,0.2)', color: 'white', fontWeight: 700, fontSize: '13px',
-            cursor: 'pointer', transition: 'all 0.2s'
-          }}
-        >
-          Acknowledge
-        </button>
+        {getUser()?.role === "patient" ? (
+          <button
+            onClick={() => {
+              const id = toIdString(activeAlert.id);
+              const updated = new Set(dismissed);
+              updated.add(id);
+              setDismissed(updated);
+              localStorage.setItem(DISMISSED_KEY, JSON.stringify(Array.from(updated)));
+              setActiveAlert(null);
+            }}
+            style={{ 
+              flex: 1, padding: '10px', borderRadius: '10px', border: 'none', 
+              background: 'rgba(0,0,0,0.1)', color: 'white', fontWeight: 700, fontSize: '13px',
+              cursor: 'pointer', transition: 'all 0.2s'
+            }}
+          >
+            Dismiss
+          </button>
+        ) : (
+          <button
+            onClick={() => {
+              if (activeAlert?.id) {
+                markAcknowledged(activeAlert.id);
+              }
+            }}
+            style={{ 
+              flex: 1, padding: '10px', borderRadius: '10px', border: 'none', 
+              background: 'rgba(255,255,255,0.2)', color: 'white', fontWeight: 700, fontSize: '13px',
+              cursor: 'pointer', transition: 'all 0.2s'
+            }}
+          >
+            Acknowledge
+          </button>
+        )}
       </div>
 
       <style>{`

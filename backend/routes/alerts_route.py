@@ -48,9 +48,10 @@ def acknowledge_alert(alert_id):
     if not alert:
         return jsonify({"message": "Alert not found"}), 404
 
-    # Allow patient to acknowledge their own or demo device alerts
-    if role == "patient" and alert.patient_id != user_id and alert.patient_id != 1:
-        return jsonify({"message": "Access denied"}), 403
+    # Restrict acknowledgment to medical staff only (Doctors/Admins). 
+    # Patients should only be able to dismiss notifications locally, not clear clinical alerts.
+    if role == "patient":
+        return jsonify({"message": "Clinical alerts can only be acknowledged by authorized medical staff."}), 403
 
     alert.is_acknowledged = True
     alert.acknowledged_by = user_id
