@@ -1,5 +1,5 @@
 import React from "react";
-import { Outlet, useLocation } from "react-router-dom";
+import { Outlet, useLocation, Link } from "react-router-dom";
 import DynamicIslandNav from "../components/DynamicIslandNav";
 import { logout } from "../utils/auth";
 import { useTheme } from "../context/ThemeContext";
@@ -45,7 +45,8 @@ const PatientLayout = () => {
         if (!socket) return;
 
         const onCritical = (alert) => {
-            setAlerts((prev) => [alert, ...prev]);
+            const alertWithType = { ...alert, type: 'alert' };
+            setAlerts((prev) => [alertWithType, ...prev]);
             setAlertCount((prev) => prev + 1);
         };
         socket.on("critical_alert", onCritical);
@@ -169,9 +170,14 @@ const PatientLayout = () => {
                                     </div>
                                     {alerts.length > 0 && (
                                         <div className="p-2 text-center bg-light bg-opacity-5">
-                                            <button className="btn btn-link btn-sm text-secondary text-decoration-none fw-bold" style={{ fontSize: '0.7rem' }}>
+                                            <Link 
+                                                to="/patient/alerts" 
+                                                onClick={() => setShowNotifications(false)}
+                                                className="btn btn-link btn-sm text-secondary text-decoration-none fw-bold" 
+                                                style={{ fontSize: '0.7rem' }}
+                                            >
                                                 View all activity
-                                            </button>
+                                            </Link>
                                         </div>
                                     )}
                                 </div>
