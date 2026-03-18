@@ -4,7 +4,12 @@ from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image
 from reportlab.lib.units import inch
-from datetime import datetime
+from datetime import datetime, timezone
+
+try:
+    from zoneinfo import ZoneInfo
+except ImportError:  # Python older than 3.9
+    from backports.zoneinfo import ZoneInfo  # type: ignore
 
 def generate_patient_report(data):
     """
@@ -155,19 +160,22 @@ def generate_patient_report(data):
     return buffer
 
 
-def generate_assessment_report(data):
-    """
-    data schema:
-    {
-      "patient": { "full_name": "...", "email": "..." },
-      "latest": { "hr": ..., "spo2": ..., "temp": ..., "signal": "...", "ts": "..." },
-      "history": [ { "hr": ..., "spo2": ..., "temp": ..., "signal": "...", "ts": "..." }, ... ],
-      "summary": { "hr_avg": ..., "spo2_avg": ..., "temp_avg": ..., "alerts": [...] }
-    }
+def generate_assessment_report(data, tz_name: str = "UTC"):
+    """Generate a PDF for vitals assessment.
+
+    Args:
+        data: Data mapping for patient/latest/history/summary.
+        tz_name: IANA timezone name used to render timestamps in the PDF.
+            When passed from the frontend, this will match the user's local timezone.
     """
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=A4, rightMargin=50, leftMargin=50, topMargin=50, bottomMargin=50)
     styles = getSampleStyleSheet()
+
+    try:
+        tz_info = ZoneInfo(tz_name)
+    except Exception:
+        tz_info = datetime.now(timezone.utc).astimezone().tzinfo or timezone.utc
     
     # Custom Styles
     title_style = ParagraphStyle(
@@ -195,7 +203,8 @@ def generate_assessment_report(data):
     
     # Header
     elements.append(Paragraph("NeuroNest Vitals Assessment Report", title_style))
-    elements.append(Paragraph(f"Generated on {datetime.now().strftime('%B %d, %Y at %H:%M')}", styles['Italic']))
+    generated_ts = datetime.now(tz_info).strftime('%B %d, %Y at %H:%M')
+    elements.append(Paragraph(f"Generated on {generated_ts}", styles['Italic']))
     elements.append(Spacer(1, 0.3 * inch))
     
     # Patient Info
@@ -215,6 +224,35 @@ def generate_assessment_report(data):
     elements.append(patient_table)
     elements.append(Spacer(1, 0.2 * inch))
     
+    def _format_timestamp(ts):
+        """Convert UTC ISO timestamp to local time string.
+
+        The vitals stream is sent in UTC (often as a bare ISO string without timezone).
+        The frontend treats those as UTC (it appends 'Z' before parsing). We do the
+        same here so the PDF shows the same local-time timestamps as the UI.
+        """
+        if not ts:
+            return "N/A"
+
+        try:
+            # If we got a datetime already, treat naive datetimes as UTC
+            if isinstance(ts, datetime):
+                dt = ts
+                if dt.tzinfo is None:
+                    dt = dt.replace(tzinfo=datetime.timezone.utc)
+            else:
+                # Some vitals timestamps are sent as ISO strings WITHOUT timezone info.
+                # Treat those as UTC (same behavior as the frontend).
+                ts_str = str(ts)
+                if not ts_str.endswith("Z") and not any(sign in ts_str[-6:] for sign in ["+", "-"]):
+                    ts_str = ts_str + "Z"
+                dt = datetime.fromisoformat(ts_str.replace("Z", "+00:00"))
+
+            local_dt = dt.astimezone(tz_info)  # convert to requested timezone
+            return local_dt.strftime("%Y-%m-%d %H:%M:%S")
+        except Exception:
+            return str(ts)
+
     # Latest Vitals
     latest = data.get("latest", {})
     if latest:
@@ -224,7 +262,7 @@ def generate_assessment_report(data):
             ["SpO2 (%):", f"{latest.get('spo2', 'N/A')}%"],
             ["Temperature (°C):", f"{latest.get('temp', 'N/A')}°C"],
             ["Signal Quality:", latest.get('signal', 'N/A').capitalize()],
-            ["Timestamp:", latest.get('ts', 'N/A')],
+            ["Timestamp:", _format_timestamp(latest.get('ts'))],
         ]
         latest_table = Table(latest_data, colWidths=[2*inch, 3*inch])
         latest_table.setStyle(TableStyle([
@@ -267,7 +305,7 @@ def generate_assessment_report(data):
         rows = [header]
         for h in history[-20:]:  # Last 20 readings
             rows.append([
-                h.get('ts', 'N/A')[:19],  # Truncate timestamp
+                _format_timestamp(h.get('ts')),
                 str(h.get('hr', 'N/A')),
                 str(h.get('spo2', 'N/A')),
                 str(h.get('temp', 'N/A')),

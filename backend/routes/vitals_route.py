@@ -287,9 +287,15 @@ def get_assessment_report():
         "summary": summary_data
     }
     
+    # Determine timezone (passed from browser so report matches what the user sees)
+    tz = request.args.get("tz", "UTC")
+
     # Generate PDF
-    pdf_buffer = generate_assessment_report(data)
-    
+    try:
+        pdf_buffer = generate_assessment_report(data, tz_name=tz)
+    except Exception as e:
+        # If PDF generation fails, return a helpful JSON error for easier debugging.
+        return jsonify({"message": "Failed to generate assessment report", "error": str(e)}), 500
     # Return PDF
     filename = f"NeuroNest_Assessment_{user.full_name.replace(' ', '_')}_{datetime.now().strftime('%Y%m%d')}.pdf"
     return send_file(

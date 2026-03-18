@@ -240,7 +240,8 @@ function AssessmentPage() {
       document.body.removeChild(a);
       window.URL.revokeObjectURL(url);
     } catch (err) {
-      setError(err.message || "Failed to download report");
+      console.error("Download report failed:", err);
+      setError((err && err.message) || "Failed to download report");
     }
   };
 

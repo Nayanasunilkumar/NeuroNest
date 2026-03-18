@@ -33,9 +33,26 @@ export async function getVitalsHistory(patientId) {
 }
 
 export async function downloadAssessmentReport() {
-  const res = await fetch(`${baseUrl}/api/vitals/assessment-report`, {
-    headers: authHeader(),
-  });
-  if (!res.ok) throw new Error("Failed to download assessment report");
-  return res.blob();
+  const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+  const urlWithTz = `${baseUrl}/api/vitals/assessment-report?tz=${encodeURIComponent(tz)}`;
+  
+  const fetchBlob = async (url) => {
+    const res = await fetch(url, { headers: authHeader() });
+    if (!res.ok) {
+      const tex = await res.text().catch(() => "");
+      throw new Error(`Failed to download assessment report (${res.status}): ${tex}`);
+    }
+    return res.blob();
+  };
+
+  try {
+    return await fetchBlob(urlWithTz);
+  } catch (err) {
+    // If timezone caused an issue, retry without tz parameter.
+    try {
+      return await fetchBlob(`${baseUrl}/api/vitals/assessment-report`);
+    } catch (err2) {
+      throw err;
+    }
+  }
 }
