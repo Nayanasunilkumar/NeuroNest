@@ -58,19 +58,53 @@ const AlertPopup = () => {
   if (!isEnabled || !activeAlert) return null;
 
   return (
-    <div className="fixed bottom-4 right-4 z-50 flex max-w-sm flex-col rounded-xl bg-red-600 p-4 text-white shadow-2xl animate-in slide-in-from-bottom-5">
-      <div className="flex items-start justify-between">
-        <div className="flex items-center gap-2">
-          <BellRing className="h-6 w-6 animate-pulse" />
-          <h3 className="font-bold text-lg">CRITICAL ALERT</h3>
+    <div 
+      className="nn-alert-popup-floating"
+      style={{
+        position: 'fixed',
+        bottom: '24px',
+        right: '24px',
+        zIndex: 9999,
+        width: '360px',
+        background: 'rgba(239, 68, 68, 0.95)',
+        backdropFilter: 'blur(12px)',
+        borderRadius: '16px',
+        padding: '20px',
+        boxShadow: '0 20px 50px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.1)',
+        color: 'white',
+        animation: 'nn-slide-up 0.5s cubic-bezier(0.16, 1, 0.3, 1)',
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '16px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{ 
+            background: 'rgba(255, 255, 255, 0.2)', 
+            padding: '8px', 
+            borderRadius: '10px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            animation: 'nn-pulse-icon 2s infinite'
+          }}>
+            <BellRing size={20} strokeWidth={2.5} />
+          </div>
+          <div>
+            <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 900, letterSpacing: '0.05em', textTransform: 'uppercase', opacity: 0.9 }}>
+              Critical Alert
+            </h3>
+            <span style={{ fontSize: '10px', opacity: 0.7, fontWeight: 700 }}>NEURONEST SAFETY ENGINE</span>
+          </div>
         </div>
-        <div className="flex gap-2">
+        <div style={{ display: 'flex', gap: '8px' }}>
           <button
             onClick={handleToggleAlerts}
-            className="rounded-full p-1 hover:bg-red-700 transition-colors"
-            title="Disable critical alert popups"
+            style={{ 
+              background: 'transparent', border: 'none', color: 'white', opacity: 0.6, cursor: 'pointer', padding: '4px',
+              transition: 'opacity 0.2s' 
+            }}
+            title="Disable floating alerts"
           >
-            {isEnabled ? <ToggleRight className="h-5 w-5" /> : <ToggleLeft className="h-5 w-5" />}
+            {isEnabled ? <ToggleRight size={20} /> : <ToggleLeft size={20} />}
           </button>
           <button
             onClick={() => {
@@ -83,46 +117,82 @@ const AlertPopup = () => {
               }
               setActiveAlert(null);
             }}
-            className="rounded-full p-1 hover:bg-red-700 transition-colors"
-            title="Close this alert"
+            style={{ 
+              background: 'rgba(0,0,0,0.1)', border: 'none', color: 'white', cursor: 'pointer', padding: '4px', borderRadius: '6px',
+              transition: 'background 0.2s' 
+            }}
           >
-            <X className="h-5 w-5" />
+            <X size={18} />
           </button>
         </div>
       </div>
 
-      <div className="mt-3">
-        <p className="font-semibold text-red-100">Patient needs attention!</p>
-        <p className="mt-1 text-sm">{activeAlert.message}</p>
-        <p className="mt-1 text-xs text-red-200 uppercase tracking-widest">{activeAlert.vital_type} • {activeAlert.value}</p>
+      <div style={{ marginBottom: '20px' }}>
+        <div style={{ fontSize: '15px', fontWeight: 800, marginBottom: '6px' }}>
+          Vital Signs Exception
+        </div>
+        <p style={{ margin: 0, fontSize: '13px', opacity: 0.9, lineHeight: 1.4, fontWeight: 500 }}>
+          {activeAlert.message || "Patient vitals have reached a critical threshold requiring immediate review."}
+        </p>
+        <div style={{ 
+          marginTop: '12px', 
+          padding: '10px 14px', 
+          background: 'rgba(0,0,0,0.15)', 
+          borderRadius: '10px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between'
+        }}>
+          <span style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.02em', opacity: 0.8 }}>
+            {activeAlert.vital_type || 'Unknown Type'}
+          </span>
+          <span style={{ fontSize: '16px', fontWeight: 900, color: '#fff' }}>
+            {activeAlert.value || '--'}
+          </span>
+        </div>
       </div>
 
-      <div className="mt-4 flex gap-3">
+      <div style={{ display: 'flex', gap: '10px' }}>
         <button
           onClick={() => {
             navigate("/doctor/alerts");
             setActiveAlert(null);
           }}
-          className="flex-1 rounded-lg bg-white px-3 py-2 text-sm font-semibold text-red-600 hover:bg-red-50 transition-colors"
+          style={{ 
+            flex: 1, padding: '10px', borderRadius: '10px', border: 'none', 
+            background: 'white', color: '#EF4444', fontWeight: 700, fontSize: '13px',
+            cursor: 'pointer', transition: 'all 0.2s'
+          }}
         >
-          View Alert
+          Detailed View
         </button>
         <button
           onClick={() => {
             if (activeAlert?.id) {
-              const id = toIdString(activeAlert.id);
-              const updated = new Set(dismissed);
-              updated.delete(id);
-              setDismissed(updated);
-              localStorage.setItem(DISMISSED_KEY, JSON.stringify(Array.from(updated)));
               markAcknowledged(activeAlert.id);
             }
           }}
-          className="flex-1 rounded-lg bg-red-700 px-3 py-2 text-sm font-semibold text-white hover:bg-red-800 transition-colors"
+          style={{ 
+            flex: 1, padding: '10px', borderRadius: '10px', border: 'none', 
+            background: 'rgba(0,0,0,0.2)', color: 'white', fontWeight: 700, fontSize: '13px',
+            cursor: 'pointer', transition: 'all 0.2s'
+          }}
         >
           Acknowledge
         </button>
       </div>
+
+      <style>{`
+        @keyframes nn-slide-up {
+          from { opacity: 0; transform: translateY(20px) scale(0.95); }
+          to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @keyframes nn-pulse-icon {
+          0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255,255,255,0.4); }
+          70% { transform: scale(1.1); box-shadow: 0 0 0 10px rgba(255,255,255,0); }
+          100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255,255,255,0); }
+        }
+      `}</style>
     </div>
   );
 };
