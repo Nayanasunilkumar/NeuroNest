@@ -7,6 +7,6 @@ export const getAlerts = async (unacknowledged = false) => {
 };
 
 export const acknowledgeAlert = async (id) => {
-  const response = await axios.patch(`/alerts/${id}/acknowledge`);
+  const response = await axios.patch(`/api/alerts/${id}/acknowledge`);
   return response.data;
 };

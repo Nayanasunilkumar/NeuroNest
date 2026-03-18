@@ -151,7 +151,8 @@ def receive_vitals():
         _history.append({**_latest})
 
     # Trigger Critical Alerts based on thresholds
-    if patient_id > 0 and data.get("signal") in ("ok", "weak"):
+    # (Do not require a signal field so alerts show even when signal is 'na' or missing)
+    if patient_id > 0:
         check_and_trigger_alerts(patient_id, data)
 
     # Optionally persist to DB (uncomment if you want DB storage)
