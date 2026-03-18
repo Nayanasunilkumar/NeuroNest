@@ -191,21 +191,27 @@ const AlertsPage = () => {
               {dateFilter === "Custom Range" && (
                 <div className="d-flex gap-2 align-items-center mt-1 animate-in slide-in-from-top-2" style={{ marginLeft: "92px" }}>
                   <div className="d-flex align-items-center gap-2">
-                    <input 
-                      type="date" 
-                      className="form-control form-control-sm border rounded-3 bg-light" 
-                      style={{ width: "140px", fontSize: "12px" }}
-                      value={startDate}
-                      onChange={(e) => setStartDate(e.target.value)}
-                    />
-                    <span className="text-muted small">to</span>
-                    <input 
-                      type="date" 
-                      className="form-control form-control-sm border rounded-3 bg-light" 
-                      style={{ width: "140px", fontSize: "12px" }}
-                      value={endDate}
-                      onChange={(e) => setEndDate(e.target.value)}
-                    />
+                    <div className="d-flex flex-column">
+                      <span className="text-muted" style={{ fontSize: '10px' }}>START</span>
+                      <input 
+                        type="datetime-local" 
+                        className="form-control form-control-sm border rounded-3 bg-light" 
+                        style={{ width: "200px", fontSize: "12px" }}
+                        value={startDate}
+                        onChange={(e) => setStartDate(e.target.value)}
+                      />
+                    </div>
+                    <span className="text-muted small mt-3">to</span>
+                    <div className="d-flex flex-column">
+                      <span className="text-muted" style={{ fontSize: '10px' }}>END</span>
+                      <input 
+                        type="datetime-local" 
+                        className="form-control form-control-sm border rounded-3 bg-light" 
+                        style={{ width: "200px", fontSize: "12px" }}
+                        value={endDate}
+                        onChange={(e) => setEndDate(e.target.value)}
+                      />
+                    </div>
                   </div>
                 </div>
               )}
