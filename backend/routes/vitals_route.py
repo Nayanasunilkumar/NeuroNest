@@ -1,4 +1,5 @@
 import json
+import threading
 
 from flask import Blueprint, request, jsonify, send_file
 from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
@@ -73,8 +74,9 @@ def check_and_trigger_alerts(patient_id, data):
                 # Emit WebSocket
                 socketio.emit("critical_alert", alert.to_dict())
                 
-                # Send Email
-                send_critical_alert_email(patient_id, alert)
+                # Send Email in background (don't block response)
+                thread = threading.Thread(target=send_critical_alert_email, args=(patient_id, alert), daemon=True)
+                thread.start()
                 
             except Exception as e:
                 db.session.rollback()
