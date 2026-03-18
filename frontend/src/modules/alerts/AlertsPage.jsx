@@ -26,6 +26,8 @@ const AlertsPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState("All");
   const [dateFilter, setDateFilter] = useState("All Time");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
   const user = getUser();
 
   const fetchAlerts = async () => {
@@ -72,11 +74,16 @@ const AlertsPage = () => {
         matchesDate = alertDate >= yesterday && alertDate < today;
       } else if (dateFilter === "Last 7 Days") {
         matchesDate = alertDate >= sevenDaysAgo;
+      } else if (dateFilter === "Custom Range" && startDate && endDate) {
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999); // End of the day
+        matchesDate = alertDate >= start && alertDate <= end;
       }
 
       return matchesSearch && matchesCategory && matchesDate;
     });
-  }, [alerts, searchQuery, activeCategory, dateFilter]);
+  }, [alerts, searchQuery, activeCategory, dateFilter, startDate, endDate]);
 
   const counts = useMemo(() => {
     const summary = { critical: 0, warning: 0, info: 0, acknowledged: 0 };
@@ -148,47 +155,77 @@ const AlertsPage = () => {
 
       {/* Filter Bar */}
       <div className="card border-0 shadow-sm rounded-4 p-3 mb-4">
-        <div className="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3">
-          <div className="d-flex flex-column gap-2">
-            <div className="d-flex gap-2 flex-wrap mb-1">
-              <span className="text-muted small fw-bold text-uppercase pt-1 me-2" style={{ width: "80px" }}>Vital:</span>
-              {["All", "Temperature", "Heart Rate", "SPO2"].map((cat) => (
-                <button
-                  key={cat}
-                  onClick={() => setActiveCategory(cat)}
-                  className={`btn btn-sm rounded-pill px-3 transition-all ${activeCategory === cat ? 'btn-primary' : 'btn-light border text-secondary'}`}
-                  style={{ fontWeight: 600, fontSize: "12px" }}
-                >
-                  {cat}
-                </button>
-              ))}
-            </div>
-            <div className="d-flex gap-2 flex-wrap">
-              <span className="text-muted small fw-bold text-uppercase pt-1 me-2" style={{ width: "80px" }}>Time:</span>
-              {["All Time", "Today", "Yesterday", "Last 7 Days"].map((date) => (
-                <button
-                  key={date}
-                  onClick={() => setDateFilter(date)}
-                  className={`btn btn-sm rounded-pill px-3 transition-all ${dateFilter === date ? 'btn-dark' : 'btn-light border text-secondary'}`}
-                  style={{ fontWeight: 600, fontSize: "12px" }}
-                >
-                  {date}
-                </button>
-              ))}
+        <div className="row g-3 align-items-end">
+          <div className="col-12 col-lg-8">
+            <div className="d-flex flex-column gap-3">
+              <div className="d-flex gap-2 flex-wrap align-items-center">
+                <span className="text-muted small fw-bold text-uppercase me-2" style={{ width: "80px" }}>Vital:</span>
+                {["All", "Temperature", "Heart Rate", "SPO2"].map((cat) => (
+                  <button
+                    key={cat}
+                    onClick={() => setActiveCategory(cat)}
+                    className={`btn btn-sm rounded-pill px-3 transition-all ${activeCategory === cat ? 'btn-primary' : 'btn-light border text-secondary'}`}
+                    style={{ fontWeight: 600, fontSize: "12px" }}
+                  >
+                    {cat}
+                  </button>
+                ))}
+              </div>
+              
+              <div className="d-flex gap-2 flex-wrap align-items-center">
+                <span className="text-muted small fw-bold text-uppercase me-2" style={{ width: "80px" }}>Time:</span>
+                <div className="d-flex gap-2 flex-wrap">
+                  {["All Time", "Today", "Yesterday", "Last 7 Days", "Custom Range"].map((date) => (
+                    <button
+                      key={date}
+                      onClick={() => setDateFilter(date)}
+                      className={`btn btn-sm rounded-pill px-3 transition-all ${dateFilter === date ? 'btn-dark' : 'btn-light border text-secondary'}`}
+                      style={{ fontWeight: 600, fontSize: "12px" }}
+                    >
+                      {date}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {dateFilter === "Custom Range" && (
+                <div className="d-flex gap-2 align-items-center mt-1 animate-in slide-in-from-top-2" style={{ marginLeft: "92px" }}>
+                  <div className="d-flex align-items-center gap-2">
+                    <input 
+                      type="date" 
+                      className="form-control form-control-sm border rounded-3 bg-light" 
+                      style={{ width: "140px", fontSize: "12px" }}
+                      value={startDate}
+                      onChange={(e) => setStartDate(e.target.value)}
+                    />
+                    <span className="text-muted small">to</span>
+                    <input 
+                      type="date" 
+                      className="form-control form-control-sm border rounded-3 bg-light" 
+                      style={{ width: "140px", fontSize: "12px" }}
+                      value={endDate}
+                      onChange={(e) => setEndDate(e.target.value)}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
           </div>
-          <div className="position-relative" style={{ minWidth: "300px" }}>
-            <span className="position-absolute translate-middle-y" style={{ left: "12px", top: "50%", zIndex: 10 }}>
-              <Bell size={16} className="text-muted" />
-            </span>
-            <input 
-              type="text" 
-              className="form-control border-0 bg-light rounded-pill" 
-              placeholder="Search by vital or message..." 
-              style={{ paddingLeft: "38px", fontSize: "14px", height: "42px" }}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
+          
+          <div className="col-12 col-lg-4">
+            <div className="position-relative">
+              <span className="position-absolute translate-middle-y" style={{ left: "12px", top: "50%", zIndex: 10 }}>
+                <Bell size={16} className="text-muted" />
+              </span>
+              <input 
+                type="text" 
+                className="form-control border-0 bg-light rounded-pill" 
+                placeholder="Search by vital or message..." 
+                style={{ paddingLeft: "38px", fontSize: "14px", height: "42px" }}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
           </div>
         </div>
       </div>
