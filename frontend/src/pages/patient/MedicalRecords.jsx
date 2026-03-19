@@ -394,7 +394,7 @@ const MedicalRecords = ({ patientId: propPatientId = null }) => {
     return (
       <div className="medical-records-dashboard-premium">
         <h2 className="section-title-premium mt-0 mb-4 px-0" style={{fontSize: '1.8rem', fontWeight: 900}}>Medical Summary</h2>
-        {(summary?.severe_allergy_count ?? 0) > 0 && (
+        {patientId && (summary?.severe_allergy_count ?? 0) > 0 && (
           <div className="critical-allergy-banner-premium">
             <div className="banner-icon-ring">
               <Flame size={20} className="text-red-600" />
@@ -402,8 +402,8 @@ const MedicalRecords = ({ patientId: propPatientId = null }) => {
             <div className="banner-text-stack">
               <span className="banner-headline">Critical Safety Alert</span>
               <p className="banner-subline">
-                {summary.severe_allergy_count} severe{" "}
-                {summary.severe_allergy_count === 1 ? "allergy" : "allergies"}{" "}
+                {severeAllergyCount} severe{" "}
+                {severeAllergyCount === 1 ? "allergy" : "allergies"}{" "}
                 recorded. Ensure clinical data is cross-referenced during treatment.
               </p>
             </div>
