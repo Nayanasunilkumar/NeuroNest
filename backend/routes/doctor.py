@@ -14,6 +14,7 @@ from database.models import (
     MedicalRecord,
     ClinicalPin,
 )
+from models.prescription_models import Prescription
 from utils.slot_engine import (
     apply_override_to_existing_slots,
     get_or_create_schedule_setting,
@@ -837,7 +838,37 @@ def get_patient_clinical_dossier(patient_id):
     # 4. Fetch Clinical Data
     allergies = PatientAllergy.query.filter_by(patient_id=patient_id).all()
     conditions = PatientCondition.query.filter_by(patient_id=patient_id).all()
-    medications = PatientMedication.query.filter_by(patient_id=patient_id).all()
+    
+    # Combined medications (Manual + Prescriptions)
+    manual_meds = [m.to_dict() for m in PatientMedication.query.filter_by(patient_id=patient_id).all()]
+    
+    # Prescription medications
+    prescriptions = Prescription.query.filter_by(patient_id=patient_id).all()
+    rx_meds = []
+    today = datetime.utcnow().date()
+    for rx in prescriptions:
+        # Determine status based on expiration
+        is_active = rx.status == "active" and (not rx.valid_until or rx.valid_until >= today)
+        status_label = "active" if is_active else "inactive"
+        
+        for item in rx.items:
+            rx_meds.append({
+                "id": f"rx-{rx.id}-{item.id}",
+                "patient_id": patient_id,
+                "drug_name": item.medicine_name,
+                "dosage": item.dosage,
+                "frequency": item.frequency,
+                "status": status_label,
+                "created_by_role": "doctor",
+                "prescribed_by": "Doctor", # Can be improved by fetching doctor name
+                "medication_origin": "current_doctor",
+                "start_date": str(rx.created_at.date()) if rx.created_at else None,
+                "end_date": str(rx.valid_until) if rx.valid_until else None,
+                "read_only": True
+            })
+    
+    all_meds = manual_meds + rx_meds
+    all_meds.sort(key=lambda x: x.get('created_at', x.get('start_date')) or "", reverse=True)
 
     # Calculate BMI if possible
     bmi = None
@@ -863,7 +894,7 @@ def get_patient_clinical_dossier(patient_id):
         },
         "allergies": [a.to_dict() for a in allergies],
         "conditions": [c.to_dict() for c in conditions],
-        "medications": [m.to_dict() for m in medications],
+        "medications": all_meds,
         "timeline": [appt.to_dict() for appt in history]
     }
     
