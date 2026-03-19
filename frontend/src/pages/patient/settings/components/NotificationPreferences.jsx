@@ -49,7 +49,6 @@ export default function NotificationPreferences({ data, saving, onSave }) {
         <div className="pset-notif-header" style={{ background: 'transparent', border: 'none', padding: '0 1.5rem 1rem 1.5rem' }}>
           <div style={{ flex:1 }}>Channel Support</div>
           <div className="pset-notif-col"><Mail size={12}/> Email</div>
-          <div className="pset-notif-col"><Smartphone size={12}/> SMS</div>
           <div className="pset-notif-col"><Monitor size={12}/> Desktop</div>
         </div>
 
@@ -69,10 +68,6 @@ export default function NotificationPreferences({ data, saving, onSave }) {
               <div style={{ display: 'flex', gap: '0.5rem' }}>
                 <div className="pset-notif-col">
                   <Toggle checked={prefs[`email_${key}`]} onChange={v => set(`email_${key}`, v)} disabled={saving} />
-                </div>
-                <div className="pset-notif-col">
-                  {!emailOnly ? <Toggle checked={prefs[`sms_${key}`]} onChange={v => set(`sms_${key}`, v)} disabled={saving} />
-                    : <div style={{ height: '26px', display: 'flex', alignItems: 'center', fontSize: '0.65rem', color: '#cbd5e1', fontWeight: 800 }}>N/A</div>}
                 </div>
                 <div className="pset-notif-col">
                   {!emailOnly ? <Toggle checked={prefs[`inapp_${key}`]} onChange={v => set(`inapp_${key}`, v)} disabled={saving} />
