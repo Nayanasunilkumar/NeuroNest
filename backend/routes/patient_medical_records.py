@@ -43,7 +43,11 @@ def _verify_patient_access(patient_id):
     if actor_role == "patient" and actor_id != patient_id:
         return False, "Access denied"
     if actor_role == "doctor":
-        # Check clinical relationship
+        # Allow doctors to view their OWN medical summary (if they have one)
+        if actor_id == patient_id:
+            return True, None
+            
+        # Check clinical relationship for other patients
         from database.models import Appointment
         exists = Appointment.query.filter_by(doctor_id=actor_id, patient_id=patient_id).first()
         if not exists:
