@@ -313,7 +313,13 @@ const MedicalRecords = ({ patientId: propPatientId = null }) => {
         status: "active",
       });
       setAllergyFormOpen(false);
-      fetchRecords();
+      // Explicitly fetch and then show success count to confirm sync
+      const [updatedData] = await Promise.all([
+          medicalRecordService.getAllergies(patientId)
+      ]);
+      setAllergies(updatedData || []);
+      alert("Allergy saved successfully! Total records found on server: " + (updatedData?.length || 0));
+      fetchRecords(); 
     } catch (err) {
       console.error("Failed to add allergy:", err);
       alert(err.response?.data?.message || "We encountered an error saving this allergy. Please check your internet connection and try again.");
