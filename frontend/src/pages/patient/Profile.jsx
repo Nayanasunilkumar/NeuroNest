@@ -29,6 +29,7 @@ const PROFILE_KEYS = [
   "allergies",
   "chronic_conditions",
   "profile_image",
+  "email",
 ];
 
 const normalizeProfile = (data = {}) =>
@@ -275,6 +276,7 @@ const Profile = () => {
                                         <span className="d-flex align-items-center gap-2"><MapPin size={14} className="text-secondary"/> {profile.city || 'Elshiekh zayed, Giza'}</span>
                                         <span className="d-flex align-items-center gap-2"><Calendar size={14} className="text-secondary"/> {profile.date_of_birth} ({age} years)</span>
                                         <span className="d-flex align-items-center gap-2"><Phone size={14} className="text-secondary"/> {profile.phone}</span>
+                                        <span className="d-flex align-items-center gap-2"><Mail size={14} className="text-secondary"/> {profile.email}</span>
                                     </div>
                                 </div>
                                 <button onClick={startEditing} className="btn btn-white border border-light rounded-pill px-4 py-2 fw-bold shadow-sm d-flex align-items-center gap-2 text-dark">

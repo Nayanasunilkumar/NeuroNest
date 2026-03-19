@@ -277,6 +277,7 @@ def get_my_clinical_summary():
         "id": user.id,
         "full_name": user.full_name,
         "role": user.role,
+        "email": user.email,
         "profile_image": None,
         "city": None,
         "gender": None,
