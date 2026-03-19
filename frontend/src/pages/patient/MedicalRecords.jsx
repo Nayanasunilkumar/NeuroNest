@@ -173,6 +173,12 @@ const MedicalRecords = ({ patientId: propPatientId = null }) => {
       setAllergies(allergyData || []);
       setConditions(conditionData || []);
       setMedications(medicationData || []);
+      console.log("Medical Records Data Update:", {
+        recordsCount: data?.length,
+        allergiesCount: allergyData?.length,
+        conditionsCount: conditionData?.length,
+        medicationsCount: medicationData?.length
+      });
       setError(null);
     } catch (err) {
       console.error("Error fetching medical records:", err);
