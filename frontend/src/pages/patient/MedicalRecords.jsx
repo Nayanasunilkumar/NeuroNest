@@ -66,17 +66,23 @@ const MedicalRecords = ({ patientId: propPatientId = null }) => {
     return (weight / (heightMeters * heightMeters)).toFixed(1);
   };
   const medicationSourceLabel = (item) => {
-    if (item.read_only) {
-      return "Doctor Prescription";
+    if (item.read_only) return "Doctor Prescription";
+    if (item.medication_origin === "current_doctor" || item.created_by_role === "doctor") {
+      return item.added_by_name ? `Dr. ${item.added_by_name}` : "Doctor Verified";
     }
-    if (
-      item.medication_origin === "current_doctor" ||
-      item.created_by_role === "doctor"
-    ) {
-      return "Current Doctor";
+    return "Patient Entered";
+  };
+  
+  const allergySourceLabel = (item) => {
+    if (item.added_by_role === 'doctor' || item.created_by_role === 'doctor') {
+      return item.added_by_name ? `Dr. ${item.added_by_name}` : "Doctor Documented";
     }
-    if (item.medication_origin === "past_external") {
-      return "Past (Other Hospital)";
+    return "Patient Entered";
+  };
+
+  const conditionSourceLabel = (item) => {
+    if (item.added_by_role === 'doctor' || item.created_by_role === 'doctor') {
+      return item.added_by_name ? `Dr. ${item.added_by_name}` : "Doctor Diagnosed";
     }
     return "Patient Entered";
   };
@@ -404,9 +410,14 @@ const MedicalRecords = ({ patientId: propPatientId = null }) => {
                       <div className="item-premium-body">
                         <div className="item-premium-main">
                           <p className="item-title-prm">{item.allergy_name}</p>
-                          <span className={`pill-badge-tiny prm-severity-${item.severity || 'mild'}`}>
-                            {item.severity}
-                          </span>
+                          <div className="item-premium-badges">
+                            <span className={`pill-badge-tiny ${allergySourceLabel(item).includes("Dr.") ? "prm-source-doc" : "prm-source-past"}`}>
+                              {allergySourceLabel(item)}
+                            </span>
+                            <span className={`pill-badge-tiny prm-severity-${item.severity || 'mild'}`}>
+                              {item.severity}
+                            </span>
+                          </div>
                         </div>
                         <div className="item-premium-meta-grid">
                            <div className="meta-cell">
@@ -456,9 +467,12 @@ const MedicalRecords = ({ patientId: propPatientId = null }) => {
                       <div className="item-premium-body">
                         <div className="item-premium-main">
                           <p className="item-title-prm">{item.condition_name}</p>
-                          {item.under_treatment && (
-                            <span className="pill-badge-tiny prm-status-active">Treating</span>
-                          )}
+                          <div className="item-premium-badges">
+                            <span className={`pill-badge-tiny ${conditionSourceLabel(item).includes("Dr.") ? "prm-source-doc" : "prm-source-past"}`}>
+                              {conditionSourceLabel(item)}
+                            </span>
+                            {item.status === 'active' && <span className="pill-badge-tiny prm-source-active">Active</span>}
+                          </div>
                         </div>
                         <div className="item-premium-meta-grid">
                            <div className="meta-cell">
