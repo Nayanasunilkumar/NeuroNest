@@ -58,11 +58,12 @@ const AdminLayout = () => {
                  </button>
 
                  <button 
-                  className="btn btn-danger-soft rounded-pill px-3 py-2 fw-bold d-flex align-items-center gap-2 border-0 shadow-sm transition-all"
+                  className="btn btn-danger-soft rounded-circle p-2 border-0 shadow-sm transition-all d-flex align-items-center justify-content-center"
                   onClick={logout}
+                  title="Logout"
+                  style={{ width: '40px', height: '40px' }}
                 >
                   <LogOut size={20} />
-                  <span className="d-none d-md-inline">Logout</span>
                 </button>
             </div>
         </div>
