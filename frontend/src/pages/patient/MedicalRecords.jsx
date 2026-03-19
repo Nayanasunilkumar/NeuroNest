@@ -717,34 +717,35 @@ const MedicalRecords = ({ patientId: propPatientId = null }) => {
                             </div>
                           </div>
                         </div>
-
-                        {/* High-level tags */}
-                        <div className="d-flex flex-column align-items-end gap-2 text-end">
-                           <div className="d-flex flex-column align-items-end gap-1">
-                             <span className="text-muted small fw-bold text-uppercase" style={{letterSpacing: '0.05em'}}>Own diagnosis</span>
-                             <div className="d-flex gap-2">
-                               {conditions.filter(c => c.status === 'active').length > 0 ? (
-                                 conditions.filter(c => c.status === 'active').slice(0, 2).map((c, i) => (
-                                   <span key={i} className="nn-badge nn-badge-warning">{c.condition_name}</span>
-                                 ))
-                                ) : (
-                                  <span className="text-muted small">None</span>
-                                )}
+                        {/* High-level tags: Only shown in Doctor View or if specific patientId is in URL */}
+                        {patientId && (
+                          <div className="d-flex flex-column align-items-end gap-2 text-end">
+                             <div className="d-flex flex-column align-items-end gap-1">
+                               <span className="text-muted small fw-bold text-uppercase" style={{letterSpacing: '0.05em'}}>Own diagnosis</span>
+                               <div className="d-flex gap-2">
+                                 {conditions.filter(c => c.status === 'active').length > 0 ? (
+                                   conditions.filter(c => c.status === 'active').slice(0, 2).map((c, i) => (
+                                     <span key={i} className="nn-badge nn-badge-warning">{c.condition_name}</span>
+                                   ))
+                                  ) : (
+                                    <span className="text-muted small">None</span>
+                                  )}
+                               </div>
                              </div>
-                           </div>
-                           <div className="d-flex flex-column align-items-end gap-1">
-                             <span className="text-muted small fw-bold text-uppercase" style={{letterSpacing: '0.05em'}}>Known Allergies</span>
-                             <div className="d-flex gap-2">
-                               {allergies.length > 0 ? (
-                                 allergies.slice(0, 2).map((a, i) => (
-                                   <span key={i} className="nn-badge nn-badge-danger">{a.allergy_name}</span>
-                                 ))
-                                ) : (
-                                  <span className="text-muted small">None documented</span>
-                                )}
+                             <div className="d-flex flex-column align-items-end gap-1">
+                               <span className="text-muted small fw-bold text-uppercase" style={{letterSpacing: '0.05em'}}>Known Allergies</span>
+                               <div className="d-flex gap-2">
+                                 {allergies.length > 0 ? (
+                                   allergies.slice(0, 2).map((a, i) => (
+                                     <span key={i} className="nn-badge nn-badge-danger">{a.allergy_name}</span>
+                                   ))
+                                  ) : (
+                                    <span className="text-muted small">None documented</span>
+                                  )}
+                               </div>
                              </div>
-                           </div>
-                        </div>
+                          </div>
+                        )}
                     </div>
                   </div>
                 </div>
