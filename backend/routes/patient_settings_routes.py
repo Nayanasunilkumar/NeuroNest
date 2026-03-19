@@ -51,39 +51,43 @@ def get_settings():
     if not _require_patient(get_jwt()):
         return jsonify({"error": "Access denied"}), 403
 
-    user = User.query.get_or_404(uid)
-    _ensure_patient_profile(uid)
-    profile = _get_patient_profile(uid)
-    _ensure_notification_prefs(uid)
-    notif = _get_notification_prefs(uid)
+    try:
+        user = User.query.get_or_404(uid)
+        _ensure_patient_profile(uid)
+        profile = _get_patient_profile(uid)
+        _ensure_notification_prefs(uid)
+        notif = _get_notification_prefs(uid)
 
-    # emergency contact
-    from sqlalchemy import text
-    ec = db.session.execute(
-        text("SELECT * FROM emergency_contacts WHERE patient_id = :uid AND is_primary = TRUE LIMIT 1"),
-        {"uid": uid}
-    ).mappings().fetchone()
+        # emergency contact
+        from sqlalchemy import text
+        ec = db.session.execute(
+            text("SELECT * FROM emergency_contacts WHERE patient_id = :uid AND is_primary = TRUE LIMIT 1"),
+            {"uid": uid}
+        ).mappings().fetchone()
 
-    return jsonify({
-        "account": {
-            "full_name":  user.full_name,
-            "email":      user.email,
-            "phone":      profile.get("phone", ""),
-            "date_of_birth": str(profile.get("date_of_birth", "")) if profile.get("date_of_birth") else "",
-            "gender":     profile.get("gender", ""),
-            "address":    profile.get("address", ""),
-            "city":       profile.get("city", ""),
-            "state":      profile.get("state", ""),
-            "profile_image": profile.get("profile_image", ""),
-            "preferred_language": getattr(user, "preferred_language", "en") or "en",
-        },
-        "emergency_contact": dict(ec) if ec else {},
-        "security": {
-            "is_two_factor_enabled": getattr(user, "is_two_factor_enabled", False) or False,
-            "email_verified": user.email_verified or False,
-        },
-        "notifications": {k: v for k, v in notif.items() if k not in ("id", "user_id", "created_at", "updated_at")},
-    }), 200
+        return jsonify({
+            "account": {
+                "full_name":  user.full_name,
+                "email":      user.email,
+                "phone":      profile.get("phone", ""),
+                "date_of_birth": str(profile.get("date_of_birth", "")) if profile.get("date_of_birth") else "",
+                "gender":     profile.get("gender", ""),
+                "address":    profile.get("address", ""),
+                "city":       profile.get("city", ""),
+                "state":      profile.get("state", ""),
+                "profile_image": profile.get("profile_image", ""),
+                "preferred_language": getattr(user, "preferred_language", "en") or "en",
+            },
+            "emergency_contact": dict(ec) if ec else {},
+            "security": {
+                "is_two_factor_enabled": getattr(user, "is_two_factor_enabled", False) or False,
+                "email_verified": user.email_verified or False,
+            },
+            "notifications": {k: v for k, v in notif.items() if k not in ("id", "user_id", "created_at", "updated_at")},
+        }), 200
+    except Exception as e:
+        print(f"Error in get_settings: {e}")
+        return jsonify({"error": f"Internal server error: {str(e)}"}), 500
 
 
 # ── PUT /patient/settings/account ────────────────────────────────────────────
@@ -203,9 +207,13 @@ def update_privacy():
 @patient_settings_bp.route("/security-activity", methods=["GET"])
 @jwt_required()
 def get_security_activity():
-    uid = int(get_jwt_identity())
-    activities = SecurityActivity.query.filter_by(user_id=uid).order_by(SecurityActivity.created_at.desc()).limit(10).all()
-    return jsonify([a.to_dict() for a in activities]), 200
+    try:
+        uid = int(get_jwt_identity())
+        activities = SecurityActivity.query.filter_by(user_id=uid).order_by(SecurityActivity.created_at.desc()).limit(10).all()
+        return jsonify([a.to_dict() for a in activities]), 200
+    except Exception as e:
+        print(f"Error in get_security_activity: {e}")
+        return jsonify({"error": str(e)}), 500
 
 @patient_settings_bp.route("/change-password", methods=["POST"])
 @jwt_required()
@@ -268,7 +276,6 @@ def update_email():
     if not new_email or not password:
         return jsonify({"error": "Email and password confirmation are required"}), 400
 
-    from database.models import User
     user = User.query.get(uid)
     if not user:
         return jsonify({"error": "User session expired or invalid"}), 401
