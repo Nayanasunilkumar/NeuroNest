@@ -109,8 +109,22 @@ const PatientRecords = () => {
             setUsingFallbackDossier(false);
             const data = await getPatientDossier(patientId);
             setDossier(data);
+            
+            // Populate individual states from dossier data immediately
+            if (data) {
+                setAllergies(data.allergies || []);
+                setConditions(data.conditions || []);
+                setMedications(data.medications || []);
+                setSummary({
+                    severe_allergy_count: (data.allergies || []).filter(a => String(a.severity).toLowerCase() === 'severe' && a.status === 'active').length,
+                    active_condition_count: (data.conditions || []).filter(c => c.status === 'active').length,
+                    active_medication_count: (data.medications || []).filter(m => m.status === 'active').length,
+                    total_records_uploaded: 0 // Will be updated by fetchRecords
+                });
+            }
+            
             setError(null);
-            // Also fetch the structured records
+            // Also fetch the archive records and refreshed summary
             fetchRecords();
         } catch (err) {
 

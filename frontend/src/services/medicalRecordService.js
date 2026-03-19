@@ -35,7 +35,8 @@ const getSummary = async (patientId = null) => {
 
 const getAllergies = async (patientId = null) => {
   const url = patientId ? `/api/patient/doctor/patients/${patientId}/allergies` : "/api/patient/allergies";
-  const response = await api.get(url);
+  const separator = url.includes('?') ? '&' : '?';
+  const response = await api.get(`${url}${separator}include_inactive=true`);
   return response.data;
 };
 
@@ -53,7 +54,8 @@ const deleteAllergy = async (id, patientId = null) => {
 
 const getConditions = async (patientId = null) => {
   const url = patientId ? `/api/patient/doctor/patients/${patientId}/conditions` : "/api/patient/conditions";
-  const response = await api.get(url);
+  const separator = url.includes('?') ? '&' : '?';
+  const response = await api.get(`${url}${separator}include_inactive=true`);
   return response.data;
 };
 
