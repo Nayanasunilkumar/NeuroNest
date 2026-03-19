@@ -443,10 +443,7 @@ def create_allergy(patient_id=None):
     if not is_allowed:
         return jsonify({"message": msg}), 403
 
-    actor_id, doctor_only_error = _doctor_only_clinical_write()
-    if doctor_only_error:
-        return doctor_only_error
-    actor_role = "doctor"
+    actor_id, actor_role = _actor_info()
     data = request.get_json(silent=True) or {}
 
     allergy_name = str(data.get("allergy_name") or "").strip()
@@ -525,9 +522,7 @@ def delete_allergy(allergy_id, patient_id=None):
     is_allowed, msg = _verify_patient_access(patient_id)
     if not is_allowed:
         return jsonify({"message": msg}), 403
-    _, doctor_only_error = _doctor_only_clinical_write()
-    if doctor_only_error:
-        return doctor_only_error
+    actor_id, actor_role = _actor_info()
 
     row = PatientAllergy.query.filter_by(id=allergy_id, patient_id=patient_id).first()
     if not row:
@@ -594,10 +589,7 @@ def create_condition(patient_id=None):
 
     actor_id, doctor_only_error = _doctor_only_clinical_write()
     if doctor_only_error:
-        return doctor_only_error
-    actor_role = "doctor"
-    data = request.get_json(silent=True) or {}
-    condition_name = str(data.get("condition_name") or "").strip()
+    actor_id, actor_role = _actor_info()
     if not condition_name:
         return jsonify({"message": "condition_name is required"}), 400
     if len(condition_name) < 3:
@@ -673,9 +665,7 @@ def delete_condition(condition_id, patient_id=None):
     is_allowed, msg = _verify_patient_access(patient_id)
     if not is_allowed:
         return jsonify({"message": msg}), 403
-    _, doctor_only_error = _doctor_only_clinical_write()
-    if doctor_only_error:
-        return doctor_only_error
+    actor_id, actor_role = _actor_info()
 
     row = PatientCondition.query.filter_by(id=condition_id, patient_id=patient_id).first()
     if not row:
@@ -726,10 +716,7 @@ def create_medication(patient_id=None):
         return doctor_only_error
     actor_role = "doctor"
     data = request.get_json(silent=True) or {}
-    drug_name = str(data.get("drug_name") or "").strip()
-    if not drug_name:
-        return jsonify({"message": "drug_name is required"}), 400
-    if len(drug_name) < 3:
+    actor_id, actor_role = _actor_info()
         return jsonify({"message": "drug_name must be at least 3 characters"}), 400
 
     medication_origin = str(data.get("medication_origin") or "past_external").strip().lower()
@@ -824,5 +811,4 @@ def delete_medication(medication_id, patient_id=None):
     if not row:
         return jsonify({"message": "Medication not found"}), 404
     row.status = "inactive"
-    db.session.commit()
-    return jsonify({"message": "Medication marked inactive"}), 200
+    actor_id, actor_role = _actor_info()
