@@ -47,6 +47,7 @@ export const usePatientSettings = () => {
   };
 
   const updateNotifications= (data) => save(() => patientSettingsService.updateNotifications(data), 'Notification preferences saved!');
+  const updateEmail        = (data) => save(() => patientSettingsService.updateEmail(data), 'Email address updated!');
   const changePassword     = (data) => save(() => patientSettingsService.changePassword(data), 'Password changed!');
   const exportData         = ()     => save(() => patientSettingsService.exportData(), 'Data export ready!');
   const exportReport       = ()     => save(() => patientSettingsService.exportReport(), 'Medical report ready!');
@@ -54,5 +55,5 @@ export const usePatientSettings = () => {
   const exportPresc        = ()     => save(() => patientSettingsService.exportPrescriptions(), 'Prescription list ready!');
   const deleteAccount      = (data) => patientSettingsService.deleteAccount(data);
 
-  return { settings, securityActivity, loading, saving, error, success, updateNotifications, changePassword, exportData, exportReport, exportAppts, exportPresc, deleteAccount, reload: load };
+  return { settings, securityActivity, loading, saving, error, success, updateNotifications, updateEmail, changePassword, exportData, exportReport, exportAppts, exportPresc, deleteAccount, reload: load };
 };

@@ -89,10 +89,13 @@ const formatRelativeTime = (dateStr) => {
   return date.toLocaleDateString();
 };
 
-export default function SecuritySection({ activity = [], saving, onChangePassword }) {
+export default function SecuritySection({ activity = [], saving, onChangePassword, onUpdateEmail }) {
   const [form, setForm] = useState({ current_password: '', new_password: '', confirm_password: '' });
   const [show, setShow] = useState({ cur: false, new: false, con: false });
   const [pwError, setPwError] = useState('');
+
+  const [emailForm, setEmailForm] = useState({ new_email: '', confirm_password: '' });
+  const [showEmailPw, setShowEmailPw] = useState(false);
 
   const requirements = [
     { met: form.new_password.length >= 8, text: "At least 8 characters" },
@@ -114,83 +117,121 @@ export default function SecuritySection({ activity = [], saving, onChangePasswor
     setForm({ current_password: '', new_password: '', confirm_password: '' });
   };
 
+  const handleEmailSubmit = (e) => {
+    e.preventDefault();
+    onUpdateEmail({ email: emailForm.new_email, password: emailForm.confirm_password });
+    setEmailForm({ new_email: '', confirm_password: '' });
+  };
+
   return (
     <div className="pset-section">
-      <div className="pset-section-header">
+      <div className="pset-section-header" style={{ marginBottom: '3.5rem' }}>
         <Shield size={18} />
         <div>
-          <h3>Security Settings</h3>
-          <p>Protect your account with advanced credentials and activity monitoring</p>
+          <div style={{ display:'flex', alignItems:'center', gap:'1rem', marginBottom:'0.25rem' }}>
+             <h3>Security & Account</h3>
+             <div style={{ background:'#eff6ff', color:'#4f46e5', padding:'2px 10px', borderRadius:'99px', fontSize:'0.65rem', fontWeight:900, textTransform:'uppercase', letterSpacing:'0.05em' }}>End-to-End Encrypted</div>
+          </div>
+          <p>Protect your account credentials and manage your primary login email</p>
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '3rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '4rem' }}>
         
-        {/* LEFT: FORM */}
-        <div>
-          <div className="pset-subsection-title" style={{ marginTop: 0 }}>
-            <KeyRound size={16} /> Update Password
-          </div>
-          
-          <form onSubmit={handleSubmit} className="pset-grid1">
-            <SecurityInput label="Current Password" placeholder="••••••••" value={form.current_password} show={show.cur} onToggleShow={() => setShow(p=>({...p, cur:!p.cur}))} onChange={v=>setForm(p=>({...p, current_password:v}))} />
+        {/* LEFT COMPACT */}
+        <div style={{ display:'flex', flexDirection:'column', gap:'4rem' }}>
+          {/* PASSWORD */}
+          <div>
+            <div className="pset-subsection-title" style={{ marginTop: 0 }}>
+              <KeyRound size={16} /> Update Password
+            </div>
             
-            <SecurityInput label="New Password" placeholder="••••••••" value={form.new_password} show={show.new} onToggleShow={() => setShow(p=>({...p, new:!p.new}))} onChange={v=>setForm(p=>({...p, new_password:v}))} error={pwError && form.new_password !== form.confirm_password ? 'Mismatch' : ''} />
-            
-            {form.new_password && (
-              <div style={{ marginBottom: '1rem' }}>
-                <div style={{ display:'flex', gap:'4px', marginBottom:'8px' }}>
-                  {[1,2,3,4].map(i => (
-                    <div key={i} style={{ height:'6px', flex:1, borderRadius:'3px', background: i <= strength ? strengthColor[strength] : '#f1f5f9', transition:'background 0.3s' }} />
-                  ))}
+            <form onSubmit={handleSubmit} className="pset-grid1">
+              <SecurityInput label="Current Password" placeholder="••••••••" value={form.current_password} show={show.cur} onToggleShow={() => setShow(p=>({...p, cur:!p.cur}))} onChange={v=>setForm(p=>({...p, current_password:v}))} />
+              <SecurityInput label="New Password" placeholder="••••••••" value={form.new_password} show={show.new} onToggleShow={() => setShow(p=>({...p, new:!p.new}))} onChange={v=>setForm(p=>({...p, new_password:v}))} error={pwError && form.new_password !== form.confirm_password ? 'Mismatch' : ''} />
+              
+              {form.new_password && (
+                <div style={{ marginBottom: '1rem' }}>
+                  <div style={{ display:'flex', gap:'4px', marginBottom:'8px' }}>
+                    {[1,2,3,4].map(i => (
+                      <div key={i} style={{ height:'6px', flex:1, borderRadius:'3px', background: i <= strength ? strengthColor[strength] : '#f1f5f9', transition:'background 0.3s' }} />
+                    ))}
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize:'0.75rem', color: strengthColor[strength], fontWeight:800 }}>{strengthLabel[strength]} Security</span>
+                  </div>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize:'0.75rem', color: strengthColor[strength], fontWeight:800 }}>{strengthLabel[strength]} Security</span>
-                  <p style={{ fontSize:'0.7rem', color: '#94a3b8', margin: 0 }}>NeuroNest Strength Index</p>
+              )}
+
+              <SecurityInput label="Confirm New Password" placeholder="••••••••" value={form.confirm_password} show={show.con} onToggleShow={() => setShow(p=>({...p, con:!p.con}))} onChange={v=>setForm(p=>({...p, confirm_password:v}))} />
+
+              <button className="pset-save-btn" style={{ width: '100%', marginTop:'1rem' }} disabled={saving || !form.current_password || strength < 4}>
+                {saving ? 'Processing...' : 'Update Password'}
+              </button>
+            </form>
+          </div>
+
+          {/* EMAIL */}
+          <div style={{ padding:'2.5rem', background:'#f8fafc', borderRadius:'28px', border:'1px solid #f1f5f9' }}>
+            <div className="pset-subsection-title" style={{ marginTop: 0, marginBottom:'1.5rem' }}>
+              <Monitor size={16} /> Account Email
+            </div>
+            <p style={{ fontSize:'0.85rem', color:'#64748b', marginBottom:'2rem', lineHeight:1.5 }}>Update your primary email for login and critical medical alerts.</p>
+            
+            <form onSubmit={handleEmailSubmit} className="pset-grid1">
+              <div className="pset-field">
+                <label>New Email Address</label>
+                <div className="pset-icon-input">
+                  <Monitor size={14} style={{ position:'absolute', left:'1.1rem', top:'50%', transform:'translateY(-50%)', color:'#94a3b8' }} />
+                   <input type="email" placeholder="new.email@example.com" value={emailForm.new_email} onChange={v=>setEmailForm(p=>({...p, new_email:v.target.value}))} required />
                 </div>
               </div>
-            )}
-
-            <SecurityInput label="Confirm New Password" placeholder="••••••••" value={form.confirm_password} show={show.con} onToggleShow={() => setShow(p=>({...p, con:!p.con}))} onChange={v=>setForm(p=>({...p, confirm_password:v}))} />
-
-            <button className="pset-save-btn" style={{ width: '100%' }} disabled={saving || !form.current_password || strength < 4}>
-              {saving ? 'Processing...' : 'Secure & Update Password'}
-            </button>
-          </form>
+              
+              <SecurityInput 
+                label="Confirm Identity (Current Password)" 
+                placeholder="••••••••" 
+                value={emailForm.confirm_password} 
+                show={showEmailPw} 
+                onToggleShow={() => setShowEmailPw(!showEmailPw)} 
+                onChange={v=>setEmailForm(p=>({...p, confirm_password:v}))} 
+              />
+              
+              <button className="pset-save-btn" style={{ width: '100%', marginTop:'1rem' }} disabled={saving || !emailForm.new_email || !emailForm.confirm_password}>
+                {saving ? 'Verifying...' : 'Change Email Address'}
+              </button>
+            </form>
+          </div>
         </div>
 
         {/* RIGHT: REQUIREMENTS & ACTIVITY */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '3rem' }}>
           
           {/* PASSWORD TIPS */}
-          <div style={{ background: '#f8fafc', padding: '2rem', borderRadius: '24px', border: '1px solid #f1f5f9' }}>
-            <h4 style={{ fontSize: '0.9rem', fontWeight: 900, color: '#0f172a', marginBottom: '1.25rem', marginTop: 0 }}>Requirement Checklist</h4>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <div style={{ background: '#f8fafc', padding: '2.5rem', borderRadius: '28px', border: '1px solid #f1f5f9' }}>
+            <h4 style={{ fontSize: '0.9rem', fontWeight: 950, color: '#0f172a', marginBottom: '1.5rem', marginTop: 0, textTransform:'uppercase', letterSpacing:'0.05em' }}>Requirement Checklist</h4>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
               {requirements.map((req, idx) => <PasswordRequirement key={idx} {...req} />)}
-            </div>
-            <div style={{ marginTop: '2rem', padding: '1rem', background: '#eff6ff', borderRadius: '14px', fontSize: '0.75rem', color: '#1e40af', fontWeight: '500', lineHeight: '1.4' }}>
-              💡 Pro Tip: Use a phrase with mixed characters like "Brain-Scan-2026!"
             </div>
           </div>
 
           {/* ACTIVITY COMPACT */}
           <div>
-            <div className="pset-subsection-title" style={{ marginBottom: '1rem' }}>
-              <Activity size={16} /> Device Activity
+            <div className="pset-subsection-title" style={{ marginBottom: '1.5rem' }}>
+              <Activity size={16} /> Recent Security Events
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              {activity.slice(0, 3).map((item, i) => (
-                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '1rem', background: '#fff', border: '1px solid #f1f5f9', borderRadius: '16px', transition: 'all 0.2s' }}>
-                  <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: item.event_type?.includes('failed') ? '#fef2f2' : '#f0fdf4', color: item.event_type?.includes('failed') ? '#ef4444' : '#10b981', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    {item.event_type?.includes('failed') ? <AlertTriangle size={14}/> : <Monitor size={14}/>}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              {activity.slice(0, 4).map((item, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', padding: '1.25rem', background: '#fff', border: '1px solid #f1f5f9', borderRadius: '20px', transition: 'all 0.2s' }}>
+                  <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: item.event_type?.includes('failed') ? '#fef2f2' : '#f0fdf4', color: item.event_type?.includes('failed') ? '#ef4444' : '#10b981', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    {item.event_type?.includes('failed') ? <AlertTriangle size={16}/> : <Monitor size={16}/>}
                   </div>
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: '0.85rem', fontWeight: 750, color: '#1e293b' }}>{item.description}</div>
-                    <div style={{ fontSize: '0.7rem', color: '#94a3b8' }}>{formatRelativeTime(item.created_at)} • India</div>
+                    <div style={{ fontSize: '0.85rem', fontWeight: 800, color: '#1e293b' }}>{item.description}</div>
+                    <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{formatRelativeTime(item.created_at)} • NeuroNest Auth</div>
                   </div>
                 </div>
               ))}
-              {activity.length === 0 && <p style={{ fontSize: '0.8rem', color: '#94a3b8', textAlign: 'center' }}>No recent activity to show.</p>}
+              {activity.length === 0 && <p style={{ fontSize: '0.875rem', color: '#94a3b8', textAlign: 'center', padding:'2rem' }}>No recent activity to show.</p>}
             </div>
           </div>
 

@@ -246,6 +246,54 @@ def change_password():
     return jsonify({"message": "Password changed successfully"}), 200
 
 
+# ── PUT /patient/settings/email ─────────────────────────────────────────────
+
+@patient_settings_bp.route("/email", methods=["PUT"])
+@jwt_required()
+def update_email():
+    uid = int(get_jwt_identity())
+    if not _require_patient(get_jwt()):
+        return jsonify({"error": "Access denied"}), 403
+
+    data = request.get_json()
+    new_email = (data.get("email") or "").strip().lower()
+    password = data.get("password", "")
+
+    if not new_email or not password:
+        return jsonify({"error": "Email and password confirmation are required"}), 400
+
+    user = User.query.get_or_404(uid)
+    
+    # Verify password
+    if not verify_password(password, user.password_hash):
+        return jsonify({"error": "Incorrect password"}), 400
+
+    # Check if new email is already in use
+    if User.query.filter_by(email=new_email).first():
+        if new_email != user.email:
+            return jsonify({"error": "Email is already taken by another account"}), 400
+
+    # Update email
+    old_email = user.email
+    user.email = new_email
+    
+    # Log activity
+    try:
+        activity = SecurityActivity(
+            user_id=uid,
+            event_type="email_change",
+            description=f"Email changed from {old_email} to {new_email}",
+            ip_address=request.remote_addr,
+            user_agent=request.headers.get('User-Agent')
+        )
+        db.session.add(activity)
+    except Exception as e:
+        print(f"Error logging email change: {e}")
+
+    db.session.commit()
+    return jsonify({"message": "Email updated successfully"}), 200
+
+
 # ── POST /patient/settings/export-data ───────────────────────────────────────
 
 @patient_settings_bp.route("/export-data", methods=["POST"])
