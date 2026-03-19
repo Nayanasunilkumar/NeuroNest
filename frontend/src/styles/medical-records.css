@@ -20,6 +20,14 @@
   to { transform: rotate(360deg); }
 }
 
+.section-title-premium {
+  font-size: 1.6rem;
+  font-weight: 900;
+  color: #1e293b;
+  margin: 32px 0 20px 0;
+  letter-spacing: -0.02em;
+}
+
 /* ========================================= */
 /* 💎 PREMIUM  STYLES */
 /* ========================================= */

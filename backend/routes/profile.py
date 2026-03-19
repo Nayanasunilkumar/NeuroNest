@@ -264,15 +264,33 @@ def mark_notification_read(id):
 @profile_bp.route("/clinical-summary", methods=["GET"])
 @jwt_required()
 def get_my_clinical_summary():
-    claims = get_jwt()
-    if claims.get("role") != "patient":
-        return jsonify({"message": "Patient access required"}), 403
-
+    # Allow any role to view their own summary (useful for doctors navigating to their profile)
     user_id = int(get_jwt_identity())
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({"message": "User not found"}), 404
+        
     profile = PatientProfile.query.filter_by(user_id=user_id).first()
-
-    if not profile:
-        return jsonify({"message": "Profile not found"}), 404
+    
+    # Construct basic identity even if profile is missing
+    identity = {
+        "id": user.id,
+        "full_name": user.full_name,
+        "role": user.role,
+        "profile_image": None,
+        "city": None,
+        "gender": None,
+        "occupation": None,
+        "dob": None,
+        "weight_kg": None,
+        "height_cm": None
+    }
+    
+    if profile:
+        identity.update(profile.to_dict())
+    
+    # Use user_id as fallback for patient_id if profile is missing
+    target_id = profile.id if profile else user_id
 
     # Fetch Clinical History
     medications = PatientMedication.query.filter_by(patient_id=user_id, status='active').all()
@@ -283,7 +301,7 @@ def get_my_clinical_summary():
     appointments = Appointment.query.filter_by(patient_id=user_id).order_by(Appointment.appointment_date.desc()).limit(10).all()
 
     summary = {
-        "identity": profile.to_dict(),
+        "identity": identity,
         "medications": [m.to_dict() for m in medications],
         "conditions": [c.to_dict() for c in conditions],
         "allergies": [a.to_dict() for a in allergies],
