@@ -655,10 +655,12 @@ const MedicalRecords = ({ patientId: propPatientId = null }) => {
                         </div>
                       )}
                     </div>
-                    <div className="d-flex gap-2">
-                       <span className="badge rounded-pill bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 py-1 px-3 d-flex align-items-center font-weight-bold" style={{fontSize: '11px'}}><span className="me-1">🚫</span> ALCOHOL</span>
-                       <span className="badge rounded-pill bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 py-1 px-3 d-flex align-items-center font-weight-bold" style={{fontSize: '11px'}}><span className="me-1">🚬</span> SMOKER</span>
-                    </div>
+                    {patientId && (
+                      <div className="d-flex gap-2">
+                        <span className="badge rounded-pill bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 py-1 px-3 d-flex align-items-center font-weight-bold" style={{fontSize: '11px'}}><span className="me-1">🚫</span> ALCOHOL</span>
+                        <span className="badge rounded-pill bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 py-1 px-3 d-flex align-items-center font-weight-bold" style={{fontSize: '11px'}}><span className="me-1">🚬</span> SMOKER</span>
+                      </div>
+                    )}
                   </div>
 
                   {/* Details Col */}
