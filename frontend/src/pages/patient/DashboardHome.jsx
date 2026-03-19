@@ -562,7 +562,7 @@ const DashboardHome = () => {
           <div className="card border-0 shadow-sm rounded-4 h-100">
             <div className="card-body p-4">
               <h2 className="h5 fw-black text-dark mb-4">Reminders & Alerts</h2>
-              <div className="d-flex flex-column gap-3">
+              <div className="d-flex flex-column gap-3 dashboard-scroll-container">
                 {notifications.length > 0 ? (
                   notifications.map(n => {
                     const isUrgent = n.message.toLowerCase().includes("urgent") ||
@@ -638,6 +638,29 @@ const DashboardHome = () => {
         .hover-translate-y { transition: transform 0.2s; }
         .hover-translate-y:hover { transform: translateY(-4px); }
         .border-dashed { border-style: dashed !important; }
+
+        .dashboard-scroll-container {
+          max-height: 480px;
+          min-height: 380px;
+          overflow-y: auto;
+          overflow-x: hidden;
+          padding-right: 8px;
+        }
+
+        .dashboard-scroll-container::-webkit-scrollbar {
+          width: 5px;
+        }
+        .dashboard-scroll-container::-webkit-scrollbar-track {
+          background: #f1f5f9;
+          border-radius: 10px;
+        }
+        .dashboard-scroll-container::-webkit-scrollbar-thumb {
+          background: #cbd5e1;
+          border-radius: 10px;
+        }
+        .dashboard-scroll-container::-webkit-scrollbar-thumb:hover {
+          background: #94a3b8;
+        }
       `}</style>
     </div>
   );
