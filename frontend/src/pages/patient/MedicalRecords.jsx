@@ -307,7 +307,12 @@ const MedicalRecords = ({ patientId: propPatientId = null }) => {
       setAllergyFormOpen(false);
       fetchRecords();
     } catch (err) {
-      alert(err.response?.data?.message || "Failed to add allergy.");
+      console.error("Failed to add allergy:", err);
+      Swal.fire({
+        title: "Submission Failed",
+        text: err.response?.data?.message || "We encountered an error saving this allergy. Please check your internet connection and try again.",
+        icon: "error",
+      });
     }
   };
 
@@ -331,7 +336,12 @@ const MedicalRecords = ({ patientId: propPatientId = null }) => {
       setConditionFormOpen(false);
       fetchRecords();
     } catch (err) {
-      alert(err.response?.data?.message || "Failed to add condition.");
+      console.error("Failed to add condition:", err);
+      Swal.fire({
+        title: "Entry Error",
+        text: err.response?.data?.message || "Unable to save this medical condition at the moment.",
+        icon: "error",
+      });
     }
   };
 
@@ -358,7 +368,12 @@ const MedicalRecords = ({ patientId: propPatientId = null }) => {
       setMedicationFormOpen(false);
       fetchRecords();
     } catch (err) {
-      alert(err.response?.data?.message || "Failed to add medication.");
+      console.error("Failed to add medication:", err);
+      Swal.fire({
+        title: "Update Error",
+        text: err.response?.data?.message || "There was a problem adding this medication to the clinical summary.",
+        icon: "error",
+      });
     }
   };
 
@@ -773,48 +788,52 @@ const MedicalRecords = ({ patientId: propPatientId = null }) => {
           onClose={() => setAllergyFormOpen(false)}
           onSave={addAllergy}
         >
-          <input
-            value={allergyForm.allergy_name}
-            onChange={(e) =>
-              setAllergyForm((prev) => ({
-                ...prev,
-                allergy_name: e.target.value,
-              }))
-            }
-            placeholder="Allergy name"
-          />
-          <select
-            value={allergyForm.reaction}
-            onChange={(e) =>
-              setAllergyForm((prev) => ({ ...prev, reaction: e.target.value }))
-            }
-          >
-            {ALLERGY_REACTIONS.map((r) => (
-              <option key={r} value={r}>
-                {r}
-              </option>
-            ))}
-          </select>
-          <select
-            value={allergyForm.severity}
-            onChange={(e) =>
-              setAllergyForm((prev) => ({ ...prev, severity: e.target.value }))
-            }
-          >
-            <option value="mild">Mild</option>
-            <option value="moderate">Moderate</option>
-            <option value="severe">Severe</option>
-          </select>
-          <input
-            type="date"
-            value={allergyForm.diagnosed_date}
-            onChange={(e) =>
-              setAllergyForm((prev) => ({
-                ...prev,
-                diagnosed_date: e.target.value,
-              }))
-            }
-          />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', gridColumn: '1 / -1' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <label style={{ fontSize: '12px', fontWeight: 700, color: '#64748B', textTransform: 'uppercase' }}>
+                Allergy Name <span style={{ color: '#EF4444' }}>*</span>
+              </label>
+              <input
+                value={allergyForm.allergy_name}
+                onChange={(e) => setAllergyForm((prev) => ({ ...prev, allergy_name: e.target.value }))}
+                placeholder="e.g. Peanuts, Penicillin"
+                style={{ border: '1px solid #E2E8F0', borderRadius: '10px', padding: '10px 14px', fontSize: '14px', background: '#F8FAFC', outline: 'none' }}
+              />
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <label style={{ fontSize: '12px', fontWeight: 700, color: '#64748B', textTransform: 'uppercase' }}>Reaction</label>
+                <select
+                  value={allergyForm.reaction}
+                  onChange={(e) => setAllergyForm((prev) => ({ ...prev, reaction: e.target.value }))}
+                  style={{ border: '1px solid #E2E8F0', borderRadius: '10px', padding: '10px 12px', fontSize: '14px', background: '#F8FAFC' }}
+                >
+                  {ALLERGY_REACTIONS.map((r) => <option key={r} value={r}>{r}</option>)}
+                </select>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <label style={{ fontSize: '12px', fontWeight: 700, color: '#64748B', textTransform: 'uppercase' }}>Severity</label>
+                <select
+                  value={allergyForm.severity}
+                  onChange={(e) => setAllergyForm((prev) => ({ ...prev, severity: e.target.value }))}
+                  style={{ border: '1px solid #E2E8F0', borderRadius: '10px', padding: '10px 12px', fontSize: '14px', background: '#F8FAFC' }}
+                >
+                  <option value="mild">Mild</option>
+                  <option value="moderate">Moderate</option>
+                  <option value="severe">Severe</option>
+                </select>
+              </div>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <label style={{ fontSize: '12px', fontWeight: 700, color: '#64748B', textTransform: 'uppercase' }}>Date Diagnosed</label>
+              <input
+                type="date"
+                value={allergyForm.diagnosed_date}
+                onChange={(e) => setAllergyForm((prev) => ({ ...prev, diagnosed_date: e.target.value }))}
+                style={{ border: '1px solid #E2E8F0', borderRadius: '10px', padding: '10px 14px', fontSize: '14px', background: '#F8FAFC' }}
+              />
+            </div>
+          </div>
         </SimpleMedicalModal>
       )}
 
