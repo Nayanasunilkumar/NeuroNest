@@ -4,8 +4,8 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 class Config:
-    SECRET_KEY = os.getenv("SECRET_KEY") or os.urandom(32).hex()
-    JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY") or SECRET_KEY
+    SECRET_KEY = os.getenv("SECRET_KEY") or os.getenv("JWT_SECRET") or os.urandom(32).hex()
+    JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY") or os.getenv("JWT_SECRET") or SECRET_KEY
     # No forced access-token timeout. Frontend inactivity manager handles session logout.
     JWT_ACCESS_TOKEN_EXPIRES = False
 
