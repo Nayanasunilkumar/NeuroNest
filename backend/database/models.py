@@ -720,6 +720,7 @@ class MedicalRecord(db.Model):
             "appointment_id": self.appointment_id,
             "description": self.description,
             "notes": self.notes,
+            "record_date": str(self.record_date) if self.record_date else None,
             "status": self.status,
             "uploaded_by": self.uploaded_by,
             "tags": [tag.tag_name for tag in self.tags],
