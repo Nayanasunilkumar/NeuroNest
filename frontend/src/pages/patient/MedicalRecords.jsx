@@ -631,96 +631,94 @@ const MedicalRecords = ({ patientId: propPatientId = null }) => {
         style={patientId ? { padding: '20px' } : { padding: '20px' }}
       >
         <div className="mx-auto" style={{ maxWidth: '1440px' }}>
-          {/* PATIENT PROFILE HEADER - Restored Classic Style for Patient View */}
-          <div className="clinical-panel mb-4 border-0 shadow-sm" style={{ borderRadius: '24px', overflow: 'hidden' }}>
-            {!identity && loading ? (
-              <div className="d-flex align-items-center gap-4 animate-pulse p-4">
-                <div className="bg-light rounded-4" style={{ width: '120px', height: '120px' }}></div>
-                <div className="flex-grow-1">
-                  <div className="bg-light h4 mb-3" style={{ width: '40%', height: '24px' }}></div>
-                  <div className="bg-light" style={{ width: '60%', height: '16px' }}></div>
+          {/* PATIENT PROFILE HEADER - Only shown in Doctor View or if specific patientId is in URL */}
+          {patientId && (
+            <div className="clinical-panel mb-4 border-0 shadow-sm" style={{ borderRadius: '24px', overflow: 'hidden' }}>
+              {!identity && loading ? (
+                <div className="d-flex align-items-center gap-4 animate-pulse p-4">
+                  <div className="bg-light rounded-4" style={{ width: '120px', height: '120px' }}></div>
+                  <div className="flex-grow-1">
+                    <div className="bg-light h4 mb-3" style={{ width: '40%', height: '24px' }}></div>
+                    <div className="bg-light" style={{ width: '60%', height: '16px' }}></div>
+                  </div>
                 </div>
-              </div>
-            ) : identity ? (
-              <div className="p-4">
-                <div className="d-flex flex-wrap flex-lg-nowrap gap-4 mb-4">
-                  {/* Avatar Col */}
-                  <div className="d-flex flex-column align-items-center gap-3">
-                    <div className="patient-img-large overflow-hidden shadow-sm" style={{ border: '4px solid #fff' }}>
-                      {identity.profile_image ? (
-                        <img src={toAssetUrl(identity.profile_image)} alt={identity.full_name} className="w-100 h-100 object-fit-cover" />
-                      ) : (
-                        <div className="w-100 h-100 d-flex align-items-center justify-content-center bg-primary bg-opacity-10 text-primary">
-                          <User size={48} />
-                        </div>
-                      )}
-                    </div>
-                    {patientId && (
+              ) : identity ? (
+                <div className="p-4">
+                  <div className="d-flex flex-wrap flex-lg-nowrap gap-4 mb-4">
+                    {/* Avatar Col */}
+                    <div className="d-flex flex-column align-items-center gap-3">
+                      <div className="patient-img-large overflow-hidden shadow-sm" style={{ border: '4px solid #fff' }}>
+                        {identity.profile_image ? (
+                          <img src={toAssetUrl(identity.profile_image)} alt={identity.full_name} className="w-100 h-100 object-fit-cover" />
+                        ) : (
+                          <div className="w-100 h-100 d-flex align-items-center justify-content-center bg-primary bg-opacity-10 text-primary">
+                            <User size={48} />
+                          </div>
+                        )}
+                      </div>
                       <div className="d-flex gap-2">
                         <span className="badge rounded-pill bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 py-1 px-3 d-flex align-items-center font-weight-bold" style={{fontSize: '11px'}}><span className="me-1">🚫</span> ALCOHOL</span>
                         <span className="badge rounded-pill bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 py-1 px-3 d-flex align-items-center font-weight-bold" style={{fontSize: '11px'}}><span className="me-1">🚬</span> SMOKER</span>
                       </div>
-                    )}
-                  </div>
+                    </div>
 
-                  {/* Details Col */}
-                  <div className="flex-grow-1">
-                    <div className="d-flex justify-content-between align-items-start mb-3">
-                      <div className="d-flex align-items-center gap-3">
-                        <h1 className="fw-black mb-0" style={{ fontSize: '2rem', color: '#1e293b' }}>{identity.full_name}</h1>
+                    {/* Details Col */}
+                    <div className="flex-grow-1">
+                      <div className="d-flex justify-content-between align-items-start mb-3">
+                        <div className="d-flex align-items-center gap-3">
+                          <h1 className="fw-black mb-0" style={{ fontSize: '2rem', color: '#1e293b' }}>{identity.full_name}</h1>
+                          <div className="d-flex gap-2">
+                             <button className="btn btn-outline-secondary btn-sm rounded-circle p-2 border-0 bg-light"><Phone size={14}/></button>
+                             <button className="btn btn-outline-secondary btn-sm rounded-circle p-2 border-0 bg-light"><Mail size={14}/></button>
+                          </div>
+                        </div>
                         <div className="d-flex gap-2">
-                           <button className="btn btn-outline-secondary btn-sm rounded-circle p-2 border-0 bg-light"><Phone size={14}/></button>
-                           <button className="btn btn-outline-secondary btn-sm rounded-circle p-2 border-0 bg-light"><Mail size={14}/></button>
+                           {isDoctor && patientId ? (
+                              <button onClick={handleStartVideoCall} className="btn btn-dark rounded-pill px-4 py-2 font-weight-bold d-flex align-items-center gap-2 shadow-sm"><Video size={16}/> Video Call</button>
+                           ) : (
+                              <button onClick={() => navigate('/patient/profile')} className="btn btn-outline-secondary rounded-pill px-4 py-2 font-weight-bold d-flex align-items-center gap-2 border-light shadow-sm bg-white"><Edit3 size={16}/> Edit profile</button>
+                           )}
                         </div>
                       </div>
-                      <div className="d-flex gap-2">
-                         {isDoctor && patientId ? (
-                            <button onClick={handleStartVideoCall} className="btn btn-dark rounded-pill px-4 py-2 font-weight-bold d-flex align-items-center gap-2 shadow-sm"><Video size={16}/> Video Call</button>
-                         ) : (
-                            <button onClick={() => navigate('/patient/profile')} className="btn btn-outline-secondary rounded-pill px-4 py-2 font-weight-bold d-flex align-items-center gap-2 border-light shadow-sm bg-white"><Edit3 size={16}/> Edit profile</button>
-                         )}
+                      <div className="d-flex flex-wrap gap-4 text-muted fw-bold mb-4" style={{fontSize: '13px'}}>
+                         <span className="d-flex align-items-center gap-2"><User size={14}/> {identity.gender || 'Female'}</span>
+                         <span className="d-flex align-items-center gap-2"><MapPin size={14}/> {identity.city || 'Kasaragod'}</span>
+                         <span className="d-flex align-items-center gap-2"><Briefcase size={14}/> {identity.occupation || 'Consultant'}</span>
+                         <span className="d-flex align-items-center gap-2"><Calendar size={14}/> {identity.dob || identity.date_of_birth || '2026-02-06'} ({calculateAge(identity.dob || identity.date_of_birth)} years)</span>
                       </div>
-                    </div>
-                    <div className="d-flex flex-wrap gap-4 text-muted fw-bold mb-4" style={{fontSize: '13px'}}>
-                       <span className="d-flex align-items-center gap-2"><User size={14}/> {identity.gender || 'Female'}</span>
-                       <span className="d-flex align-items-center gap-2"><MapPin size={14}/> {identity.city || 'Kasaragod'}</span>
-                       <span className="d-flex align-items-center gap-2"><Briefcase size={14}/> {identity.occupation || 'Consultant'}</span>
-                       <span className="d-flex align-items-center gap-2"><Calendar size={14}/> {identity.dob || identity.date_of_birth || '2026-02-06'} ({calculateAge(identity.dob || identity.date_of_birth)} years)</span>
-                    </div>
 
-                    <div className="d-flex flex-wrap flex-xl-nowrap justify-content-between align-items-center gap-4">
-                        {/* Vitals Stats Strip */}
-                        <div className="d-flex align-items-center p-3 px-4 rounded-4" style={{border: '1.5px dashed #e2e8f0', gap: '30px', backgroundColor: '#fcfdfe'}}>
-                          <div className="text-center">
-                            <span className="d-block fw-black text-dark h4 mb-1">{calculateBMI(identity.weight_kg, identity.height_cm)}</span>
-                            <div className="text-muted fw-bold text-uppercase" style={{fontSize: '10px', letterSpacing: '0.05em'}}>
-                              BMI <span className="text-success ms-1">▼ 1.2</span>
+                      <div className="d-flex flex-wrap flex-xl-nowrap justify-content-between align-items-center gap-4">
+                          {/* Vitals Stats Strip */}
+                          <div className="d-flex align-items-center p-3 px-4 rounded-4" style={{border: '1.5px dashed #e2e8f0', gap: '30px', backgroundColor: '#fcfdfe'}}>
+                            <div className="text-center">
+                              <span className="d-block fw-black text-dark h4 mb-1">{calculateBMI(identity.weight_kg, identity.height_cm)}</span>
+                              <div className="text-muted fw-bold text-uppercase" style={{fontSize: '10px', letterSpacing: '0.05em'}}>
+                                BMI <span className="text-success ms-1">▼ 1.2</span>
+                              </div>
+                            </div>
+                            <div style={{width: '1.5px', height: '36px', backgroundColor: '#e2e8f0'}}></div>
+                            <div className="text-center">
+                              <span className="d-block fw-black text-dark h4 mb-1">{identity.weight_kg || '23'} <span className="small text-muted" style={{fontSize: '12px'}}>kg</span></span>
+                              <div className="text-muted fw-bold text-uppercase" style={{fontSize: '10px', letterSpacing: '0.05em'}}>
+                                Weight <span className="text-success ms-1">▼ 0.5 kg</span>
+                              </div>
+                            </div>
+                            <div style={{width: '1.5px', height: '36px', backgroundColor: '#e2e8f0'}}></div>
+                            <div className="text-center">
+                              <span className="d-block fw-black text-dark h4 mb-1">{identity.height_cm || '126'} <span className="small text-muted" style={{fontSize: '12px'}}>Cm</span></span>
+                              <div className="text-muted fw-bold text-uppercase" style={{fontSize: '10px', letterSpacing: '0.05em'}}>
+                                Height
+                              </div>
+                            </div>
+                            <div style={{width: '1.5px', height: '36px', backgroundColor: '#e2e8f0'}}></div>
+                            <div className="text-center">
+                              <span className="d-block fw-black text-dark h4 mb-1">124/80</span>
+                              <div className="text-muted fw-bold text-uppercase" style={{fontSize: '10px', letterSpacing: '0.05em'}}>
+                                Blood pressure <span className="text-danger ms-1">▲ 5</span>
+                              </div>
                             </div>
                           </div>
-                          <div style={{width: '1.5px', height: '36px', backgroundColor: '#e2e8f0'}}></div>
-                          <div className="text-center">
-                            <span className="d-block fw-black text-dark h4 mb-1">{identity.weight_kg || '23'} <span className="small text-muted" style={{fontSize: '12px'}}>kg</span></span>
-                            <div className="text-muted fw-bold text-uppercase" style={{fontSize: '10px', letterSpacing: '0.05em'}}>
-                              Weight <span className="text-success ms-1">▼ 0.5 kg</span>
-                            </div>
-                          </div>
-                          <div style={{width: '1.5px', height: '36px', backgroundColor: '#e2e8f0'}}></div>
-                          <div className="text-center">
-                            <span className="d-block fw-black text-dark h4 mb-1">{identity.height_cm || '126'} <span className="small text-muted" style={{fontSize: '12px'}}>Cm</span></span>
-                            <div className="text-muted fw-bold text-uppercase" style={{fontSize: '10px', letterSpacing: '0.05em'}}>
-                              Height
-                            </div>
-                          </div>
-                          <div style={{width: '1.5px', height: '36px', backgroundColor: '#e2e8f0'}}></div>
-                          <div className="text-center">
-                            <span className="d-block fw-black text-dark h4 mb-1">124/80</span>
-                            <div className="text-muted fw-bold text-uppercase" style={{fontSize: '10px', letterSpacing: '0.05em'}}>
-                              Blood pressure <span className="text-danger ms-1">▲ 5</span>
-                            </div>
-                          </div>
-                        </div>
-                        {/* High-level tags: Only shown in Doctor View or if specific patientId is in URL */}
-                        {patientId && (
+                          
                           <div className="d-flex flex-column align-items-end gap-2 text-end">
                              <div className="d-flex flex-column align-items-end gap-1">
                                <span className="text-muted small fw-bold text-uppercase" style={{letterSpacing: '0.05em'}}>Own diagnosis</span>
@@ -747,19 +745,19 @@ const MedicalRecords = ({ patientId: propPatientId = null }) => {
                                </div>
                              </div>
                           </div>
-                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ) : (
-              <div className="p-5 text-center bg-light rounded-4">
-                <User size={48} className="text-muted mb-3" />
-                <h5 className="fw-bold">Clinical Profile Unavailable</h5>
-                <p className="text-muted">Could not retrieve core patient identity data.</p>
-              </div>
-            )}
-          </div>
+              ) : (
+                <div className="p-5 text-center bg-light rounded-4">
+                  <User size={48} className="text-muted mb-3" />
+                  <h5 className="fw-bold">Clinical Profile Unavailable</h5>
+                  <p className="text-muted">Could not retrieve core patient identity data.</p>
+                </div>
+              )}
+            </div>
+          )}
 
           <div className="fade-in">
             {loading && !summary ? (
