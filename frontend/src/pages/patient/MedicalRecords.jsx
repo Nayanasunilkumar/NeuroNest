@@ -106,6 +106,7 @@ const MedicalRecords = ({ patientId: propPatientId = null }) => {
     diagnosed_date: "",
     status: "active",
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [conditionForm, setConditionForm] = useState({
     condition_name: "",
     diagnosed_date: "",
@@ -289,6 +290,7 @@ const MedicalRecords = ({ patientId: propPatientId = null }) => {
 
   const addAllergy = async () => {
     if (!allergyForm.allergy_name.trim()) return;
+    setIsSubmitting(true);
     try {
       await medicalRecordService.addAllergy({
         allergy_name: allergyForm.allergy_name.trim(),
@@ -308,16 +310,15 @@ const MedicalRecords = ({ patientId: propPatientId = null }) => {
       fetchRecords();
     } catch (err) {
       console.error("Failed to add allergy:", err);
-      Swal.fire({
-        title: "Submission Failed",
-        text: err.response?.data?.message || "We encountered an error saving this allergy. Please check your internet connection and try again.",
-        icon: "error",
-      });
+      alert(err.response?.data?.message || "We encountered an error saving this allergy. Please check your internet connection and try again.");
+    } finally {
+       setIsSubmitting(false);
     }
   };
 
   const addCondition = async () => {
     if (!conditionForm.condition_name.trim()) return;
+    setIsSubmitting(true);
     try {
       await medicalRecordService.addCondition({
         condition_name: conditionForm.condition_name.trim(),
@@ -337,16 +338,15 @@ const MedicalRecords = ({ patientId: propPatientId = null }) => {
       fetchRecords();
     } catch (err) {
       console.error("Failed to add condition:", err);
-      Swal.fire({
-        title: "Entry Error",
-        text: err.response?.data?.message || "Unable to save this medical condition at the moment.",
-        icon: "error",
-      });
+      alert(err.response?.data?.message || "Unable to save this medical condition at the moment.");
+    } finally {
+       setIsSubmitting(false);
     }
   };
 
   const addMedication = async () => {
     if (!medicationForm.drug_name.trim()) return;
+    setIsSubmitting(true);
     try {
       await medicalRecordService.addMedication({
         ...medicationForm,
@@ -369,11 +369,9 @@ const MedicalRecords = ({ patientId: propPatientId = null }) => {
       fetchRecords();
     } catch (err) {
       console.error("Failed to add medication:", err);
-      Swal.fire({
-        title: "Update Error",
-        text: err.response?.data?.message || "There was a problem adding this medication to the clinical summary.",
-        icon: "error",
-      });
+      alert(err.response?.data?.message || "There was a problem adding this medication to the clinical summary.");
+    } finally {
+       setIsSubmitting(false);
     }
   };
 
@@ -1048,8 +1046,8 @@ const SimpleMedicalModal = ({ title, children, onClose, onSave }) => (
         <button className="structured-cancel-btn" onClick={onClose}>
           Cancel
         </button>
-        <button className="structured-save-btn" onClick={onSave}>
-          Save
+        <button className="structured-save-btn" onClick={onSave} disabled={isSubmitting}>
+          {isSubmitting ? "Saving..." : "Save"}
         </button>
       </div>
     </div>
