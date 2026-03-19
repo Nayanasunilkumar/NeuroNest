@@ -15,15 +15,18 @@ export const usePatientSettings = () => {
     setLoading(true);
     setError(null);
     try {
-      const [settingsData, activityData] = await Promise.all([
-        patientSettingsService.getSettings(),
-        patientSettingsService.getSecurityActivity()
-      ]);
+      const settingsData = await patientSettingsService.getSettings();
       setSettings(settingsData);
+    } catch (e) {
+      const msg = e?.response?.data?.error || e?.response?.data?.message || e?.response?.data?.msg || 'Could not connect to settings server';
+      setError(msg);
+    }
+
+    try {
+      const activityData = await patientSettingsService.getSecurityActivity();
       setSecurityActivity(activityData);
     } catch (e) {
-      const msg = e?.response?.data?.error || e?.response?.data?.message || e?.response?.data?.msg || 'Unable to sync settings with server';
-      setError(msg);
+      console.warn('Security activity failed to load:', e);
     } finally {
       setLoading(false);
     }
