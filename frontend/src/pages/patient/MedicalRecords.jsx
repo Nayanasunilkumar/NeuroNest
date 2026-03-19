@@ -785,6 +785,7 @@ const MedicalRecords = ({ patientId: propPatientId = null }) => {
           title="Add Severe Allergy"
           onClose={() => setAllergyFormOpen(false)}
           onSave={addAllergy}
+          isSubmitting={isSubmitting}
         >
           <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', gridColumn: '1 / -1' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
@@ -840,6 +841,7 @@ const MedicalRecords = ({ patientId: propPatientId = null }) => {
           title="Add Active Condition"
           onClose={() => setConditionFormOpen(false)}
           onSave={addCondition}
+          isSubmitting={isSubmitting}
         >
           <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', gridColumn: '1 / -1' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
@@ -912,6 +914,7 @@ const MedicalRecords = ({ patientId: propPatientId = null }) => {
           title="Add Medication"
           onClose={() => setMedicationFormOpen(false)}
           onSave={addMedication}
+          isSubmitting={isSubmitting}
         >
           {!isDoctor && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '8px', marginTop: '4px', gridColumn: '1 / -1' }}>
@@ -1029,7 +1032,7 @@ const MedicalRecords = ({ patientId: propPatientId = null }) => {
   );
 };
 
-const SimpleMedicalModal = ({ title, children, onClose, onSave }) => (
+const SimpleMedicalModal = ({ title, children, onClose, onSave, isSubmitting }) => (
   <div className="modal-overlay" onClick={onClose}>
     <div
       className="modal-content structured-modal"
