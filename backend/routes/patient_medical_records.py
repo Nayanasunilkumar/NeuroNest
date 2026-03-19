@@ -200,6 +200,7 @@ def medical_summary(patient_id=None):
     manual_total_meds = PatientMedication.query.filter_by(patient_id=patient_id).count()
     prescription_total_meds = len(_get_prescription_medications(patient_id, active_only=False))
     total_medications = manual_total_meds + prescription_total_meds
+    total_records = MedicalRecord.query.filter_by(patient_id=patient_id).count()
 
     return jsonify(
         {
