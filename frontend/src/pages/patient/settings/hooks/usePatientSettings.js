@@ -39,7 +39,8 @@ export const usePatientSettings = () => {
       flash(successMsg || 'Saved successfully');
       return result;
     } catch (e) {
-      setError(e?.response?.data?.error || 'Failed to save');
+      const msg = e?.response?.data?.error || e?.response?.data?.message || 'Failed to save preference';
+      setError(msg);
       throw e;
     } finally {
       setSaving(false);

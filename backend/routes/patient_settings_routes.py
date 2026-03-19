@@ -242,7 +242,13 @@ def change_password():
     except Exception as e:
         print(f"Error logging password change: {e}")
 
-    db.session.commit()
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        print(f"Password change commit error: {e}")
+        return jsonify({"error": "Failed to update security credentials"}), 500
+    
     return jsonify({"message": "Password changed successfully"}), 200
 
 
@@ -262,36 +268,45 @@ def update_email():
     if not new_email or not password:
         return jsonify({"error": "Email and password confirmation are required"}), 400
 
-    user = User.query.get_or_404(uid)
+    from database.models import User
+    user = User.query.get(uid)
+    if not user:
+        return jsonify({"error": "User session expired or invalid"}), 401
     
-    # Verify password
+    # 1. Verify password
     if not verify_password(password, user.password_hash):
-        return jsonify({"error": "Incorrect password"}), 400
+        return jsonify({"error": "Identity verification failed: Incorrect password"}), 400
 
-    # Check if new email is already in use
-    if User.query.filter_by(email=new_email).first():
-        if new_email != user.email:
-            return jsonify({"error": "Email is already taken by another account"}), 400
+    # 2. Check if new email is exactly the same
+    if new_email == user.email:
+        return jsonify({"message": "Email is already set to this address"}), 200
 
-    # Update email
+    # 3. Check for duplicates
+    existing = User.query.filter_by(email=new_email).first()
+    if existing and existing.id != uid:
+        return jsonify({"error": "This email address is already linked to another NeuroNest account"}), 400
+
+    # 4. Perform Update
     old_email = user.email
-    user.email = new_email
-    
-    # Log activity
     try:
+        user.email = new_email
+        
+        # Log activity
         activity = SecurityActivity(
             user_id=uid,
             event_type="email_change",
-            description=f"Email changed from {old_email} to {new_email}",
+            description=f"Email updated from {old_email} to {new_email}",
             ip_address=request.remote_addr,
             user_agent=request.headers.get('User-Agent')
         )
         db.session.add(activity)
+        db.session.commit()
     except Exception as e:
-        print(f"Error logging email change: {e}")
+        db.session.rollback()
+        print(f"[ERROR] Email update failed for UID {uid}: {e}")
+        return jsonify({"error": "Database error: Could not save new email address"}), 500
 
-    db.session.commit()
-    return jsonify({"message": "Email updated successfully"}), 200
+    return jsonify({"message": "Email address updated successfully"}), 200
 
 
 # ── POST /patient/settings/export-data ───────────────────────────────────────
