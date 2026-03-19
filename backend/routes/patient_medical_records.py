@@ -13,9 +13,12 @@ from database.models import (
     PatientCondition,
     PatientMedication,
     User,
+    DoctorProfile,
+    PatientProfile,
+    ClinicalPin,
     db,
 )
-from models.prescription_models import Prescription
+from models.prescription_models import Prescription, PrescriptionItem
 
 
 patient_medical_bp = Blueprint("patient_medical_bp", __name__, url_prefix="/api/patient")
