@@ -466,19 +466,24 @@ def create_allergy(patient_id=None):
         db.session.commit()
         return jsonify(existing.to_dict()), 200
 
-    row = PatientAllergy(
-        patient_id=patient_id,
-        allergy_name=allergy_name[:120],
-        created_by_user_id=actor_id,
-        created_by_role=actor_role[:20],
-        reaction=(data.get("reaction") or None),
-        severity=(data.get("severity") or "mild")[:20],
-        diagnosed_date=_parse_date(data.get("diagnosed_date")),
-        status=(data.get("status") or "active")[:30],
-    )
-    db.session.add(row)
-    db.session.commit()
-    return jsonify(row.to_dict()), 201
+    try:
+        row = PatientAllergy(
+            patient_id=patient_id,
+            allergy_name=allergy_name[:120],
+            created_by_user_id=actor_id,
+            created_by_role=actor_role[:20],
+            reaction=(data.get("reaction") or None),
+            severity=(data.get("severity") or "mild")[:20],
+            diagnosed_date=_parse_date(data.get("diagnosed_date")),
+            status=(data.get("status") or "active")[:30],
+        )
+        db.session.add(row)
+        db.session.commit()
+        return jsonify(row.to_dict()), 201
+    except Exception as e:
+        db.session.rollback()
+        print(f"FAILED TO CREATE ALLERGY: {str(e)}")
+        return jsonify({"message": f"Critical Database Error: {str(e)}"}), 500
 
 
 @patient_medical_bp.route("/allergies/<int:allergy_id>", methods=["PUT"])
