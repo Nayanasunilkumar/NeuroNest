@@ -37,7 +37,8 @@ const MedicalRecords = ({ patientId: propPatientId = null }) => {
   const [identity, setIdentity] = useState(null);
   const [currentUser] = useState(() => getUser()); // logged-in user
   const isDoctor = currentUser?.role === 'doctor';
-  const canManageClinical = isDoctor && Boolean(patientId);
+  // Allow management if it's the user's own profile (no patientId) OR if they are a doctor viewing a patient
+  const canManageClinical = !patientId || isDoctor;
   const [doctorDefaults, setDoctorDefaults] = useState({ name: '', hospital: '' });
 
   const formatDate = (value) => {
