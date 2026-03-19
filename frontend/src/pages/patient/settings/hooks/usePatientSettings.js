@@ -22,7 +22,8 @@ export const usePatientSettings = () => {
       setSettings(settingsData);
       setSecurityActivity(activityData);
     } catch (e) {
-      setError(e?.response?.data?.error || 'Failed to load data');
+      const msg = e?.response?.data?.error || e?.response?.data?.message || e?.response?.data?.msg || 'Unable to sync settings with server';
+      setError(msg);
     } finally {
       setLoading(false);
     }
