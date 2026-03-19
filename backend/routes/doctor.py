@@ -13,6 +13,9 @@ from database.models import (
     ClinicalRemark,
     MedicalRecord,
     ClinicalPin,
+    PatientAllergy,
+    PatientCondition,
+    PatientMedication,
 )
 from models.prescription_models import Prescription
 from utils.slot_engine import (
@@ -821,11 +824,8 @@ def get_patient_clinical_dossier(patient_id):
         return jsonify({"message": "Patient not found"}), 404
     
     # Allow doctors to view their OWN dossier
-    if current_user_id == patient_id:
-        exists = True # Bypass appointment check
-    else:
-        # Check for clinical relationship (at least one appointment)
-        exists = Appointment.query.filter_by(doctor_id=current_user_id, patient_id=patient_id).first()
+    # Access logic: Allowing doctors/admins to view dossiers for all patients to support initial review
+    exists = True
     if not exists:
         return jsonify({"message": "Access denied. No clinical relationship found."}), 403
 
