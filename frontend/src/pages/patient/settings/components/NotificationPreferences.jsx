@@ -25,7 +25,6 @@ export default function NotificationPreferences({ data, saving, onSave }) {
   const basePrefs = useMemo(() => ({
     email_appointments: true, email_prescriptions: true, email_messages: true,
     email_announcements: true, email_feedback: true,
-    sms_appointments: false, sms_prescriptions: false,
     inapp_appointments: true, inapp_prescriptions: true,
     inapp_messages: true, inapp_announcements: true,
     allow_doctor_followup: true, allow_promotions: false,
