@@ -1,3 +1,4 @@
+// NeuroNest Clinical Dashboard - Final Layout Refresh (State: 0672be9)
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
