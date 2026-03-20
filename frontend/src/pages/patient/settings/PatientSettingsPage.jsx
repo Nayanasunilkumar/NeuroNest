@@ -42,9 +42,9 @@ export default function PatientSettingsPage() {
       <style>{`
         .pset-root { 
           max-width: 1300px; 
-          margin: 3rem auto; 
+          margin: 1.5rem auto; 
           background: #ffffff;
-          padding: 4rem; 
+          padding: 2.5rem; 
           border-radius: 32px;
           border: 1px solid #e2e8f0;
           box-shadow: 0 10px 30px rgba(0,0,0,0.04);
@@ -58,7 +58,7 @@ export default function PatientSettingsPage() {
           border-radius: 20px;
           border: 1px solid #e2e8f0;
           padding: 0.5rem;
-          margin-bottom: 3rem;
+          margin-bottom: 2rem;
           display: flex;
           align-items: center;
           gap: 0.5rem;
@@ -72,7 +72,7 @@ export default function PatientSettingsPage() {
           display:flex; 
           align-items:center; 
           gap:0.75rem; 
-          padding:0.75rem 1.25rem; 
+          padding:0.65rem 1.15rem; 
           border-radius:14px; 
           cursor:pointer; 
           transition:all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
@@ -99,14 +99,14 @@ export default function PatientSettingsPage() {
 
         /* Header / Profile Area */
         .pset-page-header { 
-          margin-bottom:2rem; 
+          margin-bottom:1.5rem; 
           display: flex;
           justify-content: space-between;
           align-items: center;
           gap: 2rem;
         }
-        .pset-title-wrap h1 { font-size:2.25rem; font-weight:950; color:#0f172a; margin:0 0 0.5rem 0; letter-spacing: -0.03em; }
-        .pset-title-wrap p { font-size:1rem; color:#64748b; margin:0; }
+        .pset-title-wrap h1 { font-size:2rem; font-weight:950; color:#0f172a; margin:0 0 0.35rem 0; letter-spacing: -0.03em; }
+        .pset-title-wrap p { font-size:0.875rem; color:#64748b; margin:0; }
 
         .pset-user-chip {
           display: flex;
