@@ -214,15 +214,22 @@ export default function SecuritySection({ activity = [], saving, onChangePasswor
             </div>
           </div>
 
-          {/* ACTIVITY COMPACT */}
+          {/* ACTIVITY COMPACT LIST */}
           <div>
             <div className="pset-subsection-title" style={{ marginBottom: '1.5rem' }}>
-              <Activity size={16} /> Recent Security Events
+              <Activity size={16} /> Recent Security History
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              {activity.slice(0, 4).map((item, i) => (
-                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', padding: '1.25rem', background: '#fff', border: '1px solid #f1f5f9', borderRadius: '20px', transition: 'all 0.2s' }}>
-                  <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: item.event_type?.includes('failed') ? '#fef2f2' : '#f0fdf4', color: item.event_type?.includes('failed') ? '#ef4444' : '#10b981', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', background: '#fff', border: '1px solid #f1f5f9', borderRadius: '24px', overflow: 'hidden' }}>
+              {activity.slice(0, 6).map((item, i) => (
+                <div key={i} style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '1.25rem', 
+                  padding: '1.25rem', 
+                  borderBottom: i === Math.min(activity.length, 6) - 1 ? 'none' : '1px solid #f8fafc',
+                  background: i % 2 === 0 ? 'transparent' : '#fcfdfe'
+                }}>
+                  <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: item.event_type?.includes('failed') ? '#fef2f2' : '#f0fdf4', color: item.event_type?.includes('failed') ? '#ef4444' : '#10b981', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                     {item.event_type?.includes('failed') ? <AlertTriangle size={16}/> : <Monitor size={16}/>}
                   </div>
                   <div style={{ flex: 1 }}>
@@ -231,7 +238,7 @@ export default function SecuritySection({ activity = [], saving, onChangePasswor
                   </div>
                 </div>
               ))}
-              {activity.length === 0 && <p style={{ fontSize: '0.875rem', color: '#94a3b8', textAlign: 'center', padding:'2rem' }}>No recent activity to show.</p>}
+              {activity.length === 0 && <p style={{ fontSize: '0.875rem', color: '#94a3b8', textAlign: 'center', padding:'3rem' }}>No recent security records found.</p>}
             </div>
           </div>
 
