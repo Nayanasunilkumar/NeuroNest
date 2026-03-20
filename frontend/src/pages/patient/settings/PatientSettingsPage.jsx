@@ -41,9 +41,13 @@ export default function PatientSettingsPage() {
     <>
       <style>{`
         .pset-root { 
-          max-width:1100px; 
-          margin:0 auto; 
-          padding:3rem 1.5rem; 
+          max-width: 1300px; 
+          margin: 3rem auto; 
+          background: #ffffff;
+          padding: 4rem; 
+          border-radius: 32px;
+          border: 1px solid #e2e8f0;
+          box-shadow: 0 10px 30px rgba(0,0,0,0.04);
           font-family:'Inter', system-ui, -apple-system, sans-serif; 
           color: #1e293b;
         }
