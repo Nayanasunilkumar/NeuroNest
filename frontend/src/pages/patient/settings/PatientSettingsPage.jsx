@@ -389,15 +389,6 @@ export default function PatientSettingsPage() {
             <h1>Settings</h1>
             <p>Configure your account security and application preferences</p>
           </div>
-          <div className="pset-user-chip">
-            <div className="pset-user-avatar">
-              {settings?.account?.full_name?.charAt(0) || 'U'}
-            </div>
-            <div className="pset-user-info">
-              <span className="pset-user-name">{settings?.account?.full_name || 'Loading...'}</span>
-              <span className="pset-user-email">{settings?.account?.email || ''}</span>
-            </div>
-          </div>
         </div>
 
         {/* Top Navigation Bar */}
