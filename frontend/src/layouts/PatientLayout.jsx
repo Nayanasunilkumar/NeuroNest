@@ -18,6 +18,7 @@ const PatientLayout = () => {
     const notificationRef = React.useRef(null);
 
     const isMessagePath = location.pathname.includes('/messages');
+    const isSettingsPath = location.pathname.includes('/settings');
     const READ_ALERTS_KEY = 'neuronest_read_alerts';
 
     const getReadAlerts = () => {
@@ -222,7 +223,7 @@ const PatientLayout = () => {
             <div className="d-flex flex-grow-1 overflow-hidden" style={{ position: 'relative' }}>
                 {/* Main Content Area - Full width now */}
                 <main 
-                    className={`flex-grow-1 d-flex flex-column ${isMessagePath ? 'overflow-hidden' : 'overflow-auto'} position-relative ${isMessagePath ? 'p-0' : 'p-3 p-md-4 p-lg-5'}`}
+                    className={`flex-grow-1 d-flex flex-column ${isMessagePath ? 'overflow-hidden' : 'overflow-auto'} position-relative ${isMessagePath ? 'p-0' : (isSettingsPath ? 'p-1 p-md-2 p-lg-3' : 'p-3 p-md-4 p-lg-5')}`}
                     style={{ transition: 'all 0.4s' }}
                 >
                     <div className={isMessagePath ? 'h-100' : 'container-fluid max-w-1400 mx-auto pb-5 pb-lg-0'}>

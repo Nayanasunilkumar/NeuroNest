@@ -41,10 +41,10 @@ export default function PatientSettingsPage() {
     <>
       <style>{`
         .pset-root { 
-          max-width: 1300px; 
-          margin: 1.5rem auto; 
+          max-width: 1400px; 
+          margin: 0 auto; 
           background: #ffffff;
-          padding: 2.5rem; 
+          padding: 1.5rem; 
           border-radius: 32px;
           border: 1px solid #e2e8f0;
           box-shadow: 0 10px 30px rgba(0,0,0,0.04);
