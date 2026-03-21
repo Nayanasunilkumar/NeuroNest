@@ -14,6 +14,8 @@ const PatientFeedbackPage = () => {
 
   return (
     <div className="pfp-page">
+      <div className="pfp-bg-square" />
+      <div className="pfp-bg-square-2" />
       {/* ── Header ─────────────────────────────────────── */}
       <div className="pfp-header">
         <div>
@@ -71,8 +73,40 @@ const PatientFeedbackPage = () => {
           font-family: 'Inter', system-ui, sans-serif;
           color: var(--nn-text-main);
           animation: pfpIn 0.4s ease-out;
+          position: relative;
+          overflow: hidden;
         }
+
+        .pfp-bg-square {
+          position: absolute;
+          width: 500px;
+          height: 500px;
+          background: linear-gradient(135deg, var(--nn-primary) 0%, transparent 100%);
+          opacity: 0.03;
+          top: -150px;
+          right: -150px;
+          transform: rotate(15deg);
+          border-radius: 80px;
+          z-index: 0;
+          pointer-events: none;
+        }
+        .pfp-bg-square-2 {
+          position: absolute;
+          width: 300px;
+          height: 300px;
+          background: linear-gradient(135deg, var(--nn-secondary) 0%, transparent 100%);
+          opacity: 0.02;
+          bottom: -100px;
+          left: -100px;
+          transform: rotate(-15deg);
+          border-radius: 60px;
+          z-index: 0;
+          pointer-events: none;
+        }
+
         body.dark .pfp-page { background: var(--nn-bg); color: var(--nn-text-main); }
+        body.dark .pfp-bg-square { opacity: 0.05; }
+        body.dark .pfp-bg-square-2 { opacity: 0.04; }
         @keyframes pfpIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
 
         .pfp-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:1.75rem; }
