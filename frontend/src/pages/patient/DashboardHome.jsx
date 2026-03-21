@@ -407,7 +407,7 @@ function VitalsSection() {
                     background: v.alert
                       ? `rgba(220,53,69,0.04)`
                       : `rgba(${v.bsColor === "danger" ? "220,53,69" : v.bsColor === "primary" ? "13,110,253" : "25,135,84"},0.04)`,
-                    borderRadius: 10,
+                    borderRadius: 16,
                     overflow: "hidden",
                     padding: "4px 2px",
                     marginBottom: 8,
