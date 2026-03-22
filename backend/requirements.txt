@@ -24,3 +24,4 @@ gunicorn==21.2.0
 requests==2.32.3
 APScheduler==3.11.2
 twilio==9.10.2
+Pillow==11.1.0

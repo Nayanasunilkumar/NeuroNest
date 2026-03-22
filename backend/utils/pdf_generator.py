@@ -62,7 +62,11 @@ def generate_patient_report(data):
     def get_icon(name):
         path = ICONS_DIR / f"{name}.png"
         if path.exists():
-            return Image(str(path), width=20, height=20)
+            try:
+                from reportlab.platypus import Image
+                return Image(str(path), width=20, height=20)
+            except Exception:
+                return "● " # Fallback bullet
         return ""
 
     # Header
