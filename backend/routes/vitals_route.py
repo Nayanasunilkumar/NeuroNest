@@ -338,3 +338,17 @@ def get_assessment_report():
         as_attachment=True,
         download_name=filename
     )
+
+
+def get_vitals_for_report(patient_id):
+    """Exposes in-memory vitals context for PDF generation.
+    Returns latest and history if the patient matches active telemetry.
+    """
+    # Check if the active telemetry belongs to this patient
+    if _latest.get("patient_id") == patient_id:
+        return {
+            "latest": dict(_latest),
+            "history": list(_history),
+            "is_active": True
+        }
+    return {"is_active": False}

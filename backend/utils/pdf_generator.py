@@ -52,6 +52,18 @@ def generate_patient_report(data):
     label_style = ParagraphStyle('Label', parent=styles['Normal'], fontWeight='bold', textColor=colors.HexColor("#64748b"))
 
     elements = []
+    
+    # --- ICON PATHS ---
+    from pathlib import Path
+    BASE_DIR = Path(__file__).resolve().parent.parent
+    ICONS_DIR = BASE_DIR / "static" / "assets" / "icons"
+    
+    # Helper to get image or placeholder
+    def get_icon(name):
+        path = ICONS_DIR / f"{name}.png"
+        if path.exists():
+            return Image(str(path), width=20, height=20)
+        return ""
 
     # Header
     elements.append(Paragraph("NeuroNest Clinical Report", title_style))
@@ -82,7 +94,67 @@ def generate_patient_report(data):
     elements.append(id_table)
     elements.append(Spacer(1, 0.2 * inch))
 
-    # 2. Emergency Contact
+    # 2. Vitals Section (NEW)
+    elements.append(Paragraph("Vitals Monitoring", section_style))
+    vitals_data = data.get("vitals", {})
+    
+    if vitals_data.get("is_active"):
+        latest = vitals_data.get("latest", {})
+        
+        # Determine if abnormal
+        hr = latest.get("hr", 0) or 0
+        spo2 = latest.get("spo2", 0) or 0
+        temp = latest.get("temp", 0) or 0
+        
+        hr_color = colors.red if (hr > 0 and (hr < 60 or hr > 100)) else colors.black
+        spo2_color = colors.red if (spo2 > 0 and spo2 < 95) else colors.black
+        temp_color = colors.red if (temp > 0 and (temp < 36.1 or temp > 37.5)) else colors.black
+        
+        # Latest Readings "Cards"
+        v_rows = [
+            [
+                get_icon("heart_red"), Paragraph(f"<b>Heart Rate:</b> <font color='{hr_color}'>{hr} BPM</font>", normal_style),
+                get_icon("oxygen_blue"), Paragraph(f"<b>SpO2:</b> <font color='{spo2_color}'>{spo2}%</font>", normal_style),
+                get_icon("temp_green"), Paragraph(f"<b>Temperature:</b> <font color='{temp_color}'>{temp}°C</font>", normal_style)
+            ]
+        ]
+        vt = Table(v_rows, colWidths=[0.3*inch, 1.7*inch, 0.3*inch, 1.7*inch, 0.3*inch, 1.7*inch])
+        vt.setStyle(TableStyle([
+            ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+            ('BACKGROUND', (0,0), (-1,-1), colors.HexColor("#f8fafc")),
+            ('BOX', (0,0), (-1,-1), 0.5, colors.HexColor("#e2e8f0")),
+            ('BOTTOMPADDING', (0,0), (-1,-1), 12),
+            ('TOPPADDING', (0,0), (-1,-1), 12),
+            ('LEFTPADDING', (0,0), (-1,-1), 10),
+        ]))
+        elements.append(vt)
+        elements.append(Spacer(1, 0.1 * inch))
+        
+        # Recent History Summary
+        history = vitals_data.get("history", [])
+        if history:
+            elements.append(Paragraph("Recent Readings Summary", label_style))
+            h_header = ["Timestamp", "HR", "SpO2", "Temp"]
+            h_rows = [h_header]
+            for h in history[-5:]: # Last 5
+                ts = str(h.get("ts") or "")[11:19] # HH:MM:SS
+                h_rows.append([ts, f"{h.get('hr')} BPM", f"{h.get('spo2')}%", f"{h.get('temp')}°C"])
+            
+            ht = Table(h_rows, colWidths=[1.5*inch, 1.5*inch, 1.5*inch, 1.5*inch])
+            ht.setStyle(TableStyle([
+                ('FONTSIZE', (0,0), (-1,-1), 8),
+                ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+                ('INNERGRID', (0,0), (-1,-1), 0.25, colors.HexColor("#e2e8f0")),
+                ('BOX', (0,0), (-1,-1), 0.25, colors.HexColor("#e2e8f0")),
+                ('BACKGROUND', (0,0), (-1,0), colors.HexColor("#f1f5f9")),
+            ]))
+            elements.append(ht)
+    else:
+        elements.append(Paragraph("No vitals data available (No device assigned)", styles['Italic']))
+    
+    elements.append(Spacer(1, 0.2 * inch))
+
+    # 3. Emergency Contact
     ec = data.get("emergency_contact", {})
     if ec:
         elements.append(Paragraph("Emergency Contact", section_style))
@@ -99,7 +171,7 @@ def generate_patient_report(data):
         ]))
         elements.append(ec_table)
 
-    # 3. Appointments
+    # 4. Appointments
     appts = data.get("appointments", [])
     if appts:
         elements.append(Paragraph(f"Recent Appointments ({len(appts)})", section_style))
@@ -116,7 +188,7 @@ def generate_patient_report(data):
         
         t = Table(rows, colWidths=[0.9*inch, 0.7*inch, 1.3*inch, 1.1*inch, 2.5*inch])
         t.setStyle(TableStyle([
-            ('BACKGROUND', (0,0), (-1,0), colors.HexColor("#f8fafc")),
+            ('BACKGROUND', (0,0), ( -1,0), colors.HexColor("#f8fafc")),
             ('TEXTCOLOR', (0,0), (-1,0), colors.HexColor("#475569")),
             ('ALIGN', (0,0), (-1,-1), 'LEFT'),
             ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
@@ -128,7 +200,7 @@ def generate_patient_report(data):
         ]))
         elements.append(t)
 
-    # 4. Prescriptions
+    # 5. Prescriptions
     presc = data.get("prescriptions", [])
     if presc:
         elements.append(Paragraph(f"Recent Prescriptions ({len(presc)})", section_style))
@@ -137,7 +209,7 @@ def generate_patient_report(data):
             date_str = str(p.get('created_at') or "")[:10]
             meds = p.get('medicines') or []
             rows = [
-                [Paragraph(f"<b>Diagnosis:</b> {diag}", styles['Normal']), f"Date: {date_str}"],
+                [Paragraph( f"<b>Diagnosis:</b> {diag}", styles['Normal']), f"Date: {date_str}"],
                 [Paragraph(f"<b>Medicines:</b> {', '.join(meds)}", styles['Normal']), ""]
             ]
             pt = Table(rows, colWidths=[4.5*inch, 1.5*inch])
@@ -145,6 +217,8 @@ def generate_patient_report(data):
                 ('VALIGN', (0,0), (-1,-1), 'TOP'),
                 ('BOTTOMPADDING', (0,0), (-1,-1), 10),
                 ('TOPPADDING', (0,0), (-1,-1), 10),
+                ('BACKGROUND', (0,0), (-1,-1), colors.HexColor("#ffffff")), # White background for cards
+                ('BOX', (0,0), (-1,-1), 0.25, colors.HexColor("#e2e8f0")), # Card-like box
             ]))
             elements.append(pt)
             elements.append(Spacer(1, 0.1 * inch))

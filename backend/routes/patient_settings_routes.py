@@ -365,6 +365,7 @@ def download_report():
     from sqlalchemy import text
     from utils.pdf_generator import generate_patient_report
     from flask import send_file
+    from routes.vitals_route import get_vitals_for_report
 
     user = User.query.get_or_404(uid)
     profile = _get_patient_profile(uid)
@@ -387,12 +388,15 @@ def download_report():
         {"uid": uid}
     ).mappings().fetchall()
 
+    vitals = get_vitals_for_report(uid)
+
     data = {
         "account": {"email": user.email, "full_name": user.full_name},
         "profile": {k: str(v) for k, v in profile.items() if v is not None},
         "emergency_contact": dict(ec_row) if ec_row else {},
         "appointments": [dict(a) for a in appointments],
-        "prescriptions": [dict(p) for p in prescriptions]
+        "prescriptions": [dict(p) for p in prescriptions],
+        "vitals": vitals
     }
 
     pdf_buffer = generate_patient_report(data)
