@@ -71,7 +71,7 @@ def generate_patient_report(data):
 
     # Header
     elements.append(Paragraph("NeuroNest Clinical Report", title_style))
-    elements.append(Paragraph(f"Generated on {datetime.now().strftime('%B %d, %Y at %H:%M')}", styles['Italic']))
+    elements.append(Paragraph(f"Generated on {datetime.now().strftime('%B %d, %Y at %H:%M')}", styles.get('Italic', styles['Normal'])))
     elements.append(Spacer(1, 0.3 * inch))
 
     # 1. Patient Identity
@@ -154,7 +154,7 @@ def generate_patient_report(data):
             ]))
             elements.append(ht)
     else:
-        elements.append(Paragraph("No vitals data available (No device assigned)", styles['Italic']))
+        elements.append(Paragraph("No vitals data available (No device assigned)", styles.get('Italic', styles['Normal'])))
     
     elements.append(Spacer(1, 0.2 * inch))
 
@@ -231,7 +231,7 @@ def generate_patient_report(data):
     elements.append(Spacer(1, 0.5 * inch))
     notice = "Confidential: This document contains sensitive medical information. " \
              "Authorized patient use only. (c) 2026 NeuroNest Health Systems."
-    elements.append(Paragraph(notice, ParagraphStyle('Footer', parent=styles['Italic'], fontSize=8, textColor=colors.gray, alignment=1)))
+    elements.append(Paragraph(notice, ParagraphStyle('Footer', parent=styles.get('Italic', styles['Normal']), fontSize=8, textColor=colors.gray, alignment=1)))
 
     doc.build(elements)
     buffer.seek(0)

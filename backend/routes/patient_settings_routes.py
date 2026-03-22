@@ -365,7 +365,7 @@ def download_report():
     from sqlalchemy import text
     from utils.pdf_generator import generate_patient_report
     from flask import send_file
-    from routes.vitals_route import get_vitals_for_report
+    from .vitals_route import get_vitals_for_report
 
     user = User.query.get_or_404(uid)
     profile = _get_patient_profile(uid)

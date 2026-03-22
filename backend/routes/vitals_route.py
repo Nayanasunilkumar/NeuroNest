@@ -345,7 +345,7 @@ def get_vitals_for_report(patient_id):
     Returns latest and history if the patient matches active telemetry.
     """
     # Check if the active telemetry belongs to this patient
-    if _latest.get("patient_id") == patient_id:
+    if str(_latest.get("patient_id")) == str(patient_id):
         return {
             "latest": dict(_latest),
             "history": list(_history),
