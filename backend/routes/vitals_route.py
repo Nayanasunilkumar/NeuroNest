@@ -25,6 +25,7 @@ _history = deque(maxlen=60)  # last 60 valid readings
 # ─── Alert State Tracking ───────────
 _last_alert_time = {}
 ALERT_COOLDOWN_MINUTES = 5
+_last_error = "None"
 
 def check_and_trigger_alerts(patient_id, data):
     # Thresholds
@@ -79,6 +80,9 @@ def check_and_trigger_alerts(patient_id, data):
                 
             except Exception as e:
                 db.session.rollback()
+                global _last_error
+                import traceback
+                _last_error = traceback.format_exc()
                 print(f"[VITALS ALERT ERROR] {e}")
 
 # (send_critical_alert_email function removed and consolidated into NotificationService)
@@ -152,6 +156,18 @@ def receive_vitals():
     #     print(f"[VITALS DB] Warning: {e}")
 
     return jsonify({"status": "ok"}), 200
+
+
+# =========================================
+# Frontend → GET /api/vitals/debug
+# =========================================
+@vitals_bp.route("/api/vitals/debug", methods=["GET"])
+def get_debug():
+    return jsonify({
+        "last_error": _last_error,
+        "last_alert_time": {f"{k[0]}_{k[1]}": v.isoformat() for k, v in _last_alert_time.items()},
+        "latest": _latest
+    }), 200
 
 
 # =========================================
