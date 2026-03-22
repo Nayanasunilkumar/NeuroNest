@@ -2,6 +2,7 @@ import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from datetime import datetime, timezone
+from datetime import timedelta
 import os
 class NotificationService:
     @staticmethod
@@ -177,12 +178,16 @@ class NotificationService:
         if not patient: return
 
         subject = f"🚨 Critical Health Alert: {alert.vital_type} - {patient.full_name}"
+        # Display both IST (UTC+5.5) and UTC for convenience
+        ist_time = alert.created_at + timedelta(hours=5, minutes=30)
+        time_display = f"{ist_time.strftime('%b %d, %I:%M %p')} IST / {alert.created_at.strftime('%I:%M %p')} UTC"
+
         msg = (
             f"A critical health alert has been triggered for {patient.full_name}.\n\n"
             f"Vital: {alert.vital_type}\n"
             f"Value: {alert.value}\n"
             f"Message: {alert.message}\n"
-            f"Time: {alert.created_at.strftime('%b %d, %I:%M %p')}\n\n"
+            f"Time: {time_display}\n\n"
             f"Immediate review is required."
         )
 
