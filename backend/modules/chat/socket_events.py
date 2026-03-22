@@ -114,7 +114,9 @@ def on_send_message(data):
         # Note: emit to room includes the sender by default in Flask-SocketIO 
         # provided they've joined the room via join_conversation.
         print(f"[SOCKET] Message {msg.id} persisted. Broadcasting...")
-        emit('new_message', msg.to_dict(), room=f"conversation_{conv_id}")
+        payload = msg.to_dict()
+        emit('new_message', payload, room=f"conversation_{conv_id}")
+        emit('receive_message', payload, room=f"conversation_{conv_id}")
 
         # Notify other participants (respecting settings)
         others = Participant.query.filter(

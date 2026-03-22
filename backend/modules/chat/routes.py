@@ -202,7 +202,9 @@ def send_message_http(conversation_id):
     
     # Broadcast to socket room for real-time
     from extensions.socket import socketio
-    socketio.emit('new_message', msg.to_dict(), room=f"conversation_{conversation_id}")
+    payload = msg.to_dict()
+    socketio.emit('new_message', payload, room=f"conversation_{conversation_id}")
+    socketio.emit('receive_message', payload, room=f"conversation_{conversation_id}")
     
     # Notify other participants (respecting settings)
     others = Participant.query.filter(

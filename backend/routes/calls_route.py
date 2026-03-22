@@ -133,6 +133,8 @@ def start_call():
     payload = _serialize_call(call)
     socketio.emit("incoming_call", payload, room=f"user_{receiver_id}")
     socketio.emit("outgoing_call", payload, room=f"user_{caller_id}")
+    socketio.emit("call_initiated", payload, room=f"user_{receiver_id}")
+    socketio.emit("call_initiated", payload, room=f"user_{caller_id}")
     return jsonify(payload), 201
 
 
@@ -159,6 +161,8 @@ def accept_call(call_id):
 
     socketio.emit("call_accepted", payload, room=f"user_{call['caller_id']}")
     socketio.emit("call_accepted", payload, room=f"user_{call['receiver_id']}")
+    socketio.emit("call_joined", payload, room=f"user_{call['caller_id']}")
+    socketio.emit("call_joined", payload, room=f"user_{call['receiver_id']}")
     return jsonify(payload), 200
 
 
@@ -186,6 +190,8 @@ def decline_call(call_id):
 
     socketio.emit("call_declined", payload, room=f"user_{call['caller_id']}")
     socketio.emit("call_declined", payload, room=f"user_{call['receiver_id']}")
+    socketio.emit("call_rejected", payload, room=f"user_{call['caller_id']}")
+    socketio.emit("call_rejected", payload, room=f"user_{call['receiver_id']}")
     return jsonify(payload), 200
 
 
@@ -224,4 +230,3 @@ def get_call(call_id):
         if user_id not in (call["caller_id"], call["receiver_id"]):
             return jsonify({"message": "Access denied"}), 403
         return jsonify(_serialize_call(call)), 200
-

@@ -27,6 +27,7 @@ export default function VideoConsultation() {
     const politeRef = useRef(false);
     const pendingLocalIceRef = useRef([]);
     const reconnectAttemptsRef = useRef(0);
+    const restartDebounceRef = useRef(null);
     const { endActiveCall } = useCall();
     
     const [isMuted, setIsMuted] = useState(false);
@@ -184,9 +185,16 @@ export default function VideoConsultation() {
                     // Safari/Brave mobile may deliver track events with empty event.streams.
                     // Build/maintain the remote MediaStream manually for maximum compatibility.
                     if (event.streams && event.streams[0]) {
-                        remoteVideo.current.srcObject = event.streams[0];
+                        if (remoteVideo.current.srcObject !== event.streams[0]) {
+                            remoteVideo.current.srcObject = event.streams[0];
+                        }
                     } else if (remoteStreamRef.current && event.track) {
-                        remoteStreamRef.current.addTrack(event.track);
+                        const alreadyExists = remoteStreamRef.current
+                            .getTracks()
+                            .some((track) => track.id === event.track.id);
+                        if (!alreadyExists) {
+                            remoteStreamRef.current.addTrack(event.track);
+                        }
                         remoteVideo.current.srcObject = remoteStreamRef.current;
                     }
                     void ensureRemotePlayback();
@@ -196,14 +204,31 @@ export default function VideoConsultation() {
                 peerConnection.current.onconnectionstatechange = () => {
                     const state = peerConnection.current?.connectionState;
                     console.log("WebRTC connectionState:", state);
+                    if (state === "connected") {
+                        reconnectAttemptsRef.current = 0;
+                        if (restartDebounceRef.current) {
+                            clearTimeout(restartDebounceRef.current);
+                            restartDebounceRef.current = null;
+                        }
+                        setIsRemoteConnected(true);
+                        return;
+                    }
+
                     if (state === "disconnected" || state === "failed" || state === "closed") {
                         setIsRemoteConnected(false);
                     }
-                    if (state === "connected") {
-                        reconnectAttemptsRef.current = 0;
-                    }
-                    if ((state === "failed" || state === "disconnected") && reconnectAttemptsRef.current < 3) {
+
+                    if (state === "failed" && reconnectAttemptsRef.current < 3) {
                         void restartIceAndRenegotiate();
+                        return;
+                    }
+
+                    // Some browsers briefly go "disconnected" while renegotiating.
+                    if (state === "disconnected" && reconnectAttemptsRef.current < 3) {
+                        if (restartDebounceRef.current) clearTimeout(restartDebounceRef.current);
+                        restartDebounceRef.current = setTimeout(() => {
+                            void restartIceAndRenegotiate();
+                        }, 1500);
                     }
                 };
                 peerConnection.current.onnegotiationneeded = async () => {
@@ -221,6 +246,11 @@ export default function VideoConsultation() {
                 socket.current = io(API_URL, {
                     transports: ['websocket', 'polling'],
                     query: { token },
+                    reconnection: true,
+                    reconnectionAttempts: Infinity,
+                    reconnectionDelay: 500,
+                    reconnectionDelayMax: 2000,
+                    timeout: 10000,
                 });
 
                 peerConnection.current.onicecandidate = (event) => {
@@ -393,6 +423,10 @@ export default function VideoConsultation() {
             iceCandidateQueue.current = [];
             pendingLocalIceRef.current = [];
             reconnectAttemptsRef.current = 0;
+            if (restartDebounceRef.current) {
+                clearTimeout(restartDebounceRef.current);
+                restartDebounceRef.current = null;
+            }
             if (joinRetryTimer) clearInterval(joinRetryTimer);
             if (restartTimer) clearTimeout(restartTimer);
         };

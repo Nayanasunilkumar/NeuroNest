@@ -19,15 +19,27 @@ const Chat = () => {
     const [messagesLoadError, setMessagesLoadError] = useState('');
     const [showInfoPanel, setShowInfoPanel] = useState(false);
     const { startVideoCall } = useCall();
+    const conversationsRef = React.useRef([]);
+
+    const joinConversationRooms = useCallback((socketClient, convs) => {
+        if (!socketClient || !Array.isArray(convs) || convs.length === 0) return;
+        convs.forEach((conv) => {
+            if (conv?.id) {
+                socketClient.emit('join_conversation', { conversation_id: conv.id });
+            }
+        });
+    }, []);
 
     const fetchConversations = useCallback(async () => {
         try {
             const data = await chatAPI.getConversations();
             setConversations(data);
+            const socket = getSocket();
+            joinConversationRooms(socket, data);
         } catch (err) {
             console.error("Failed to load conversations", err);
         }
-    }, []);
+    }, [joinConversationRooms]);
 
     const handleSelectConversation = async (conv) => {
         if (selectedConv?.id === conv.id) return;
@@ -94,6 +106,10 @@ const Chat = () => {
         currentUserRef.current = currentUser;
     }, [currentUser]);
 
+    useEffect(() => {
+        conversationsRef.current = conversations;
+    }, [conversations]);
+
     const handleNewMessage = useCallback((msg) => {
         if (!msg) return;
 
@@ -155,12 +171,20 @@ const Chat = () => {
         if (!conversations.length) fetchConversations();
 
         if (socket) {
+            const handleSocketConnect = () => {
+                joinConversationRooms(socket, conversationsRef.current);
+                if (selectedConvRef.current?.id) {
+                    socket.emit('join_conversation', { conversation_id: selectedConvRef.current.id });
+                }
+            };
             socket.on("new_message", handleNewMessage);
+            socket.on("connect", handleSocketConnect);
             return () => {
                 socket.off("new_message", handleNewMessage);
+                socket.off("connect", handleSocketConnect);
             };
         }
-    }, [fetchConversations, handleNewMessage]);
+    }, [conversations.length, fetchConversations, handleNewMessage, joinConversationRooms]);
 
     const handleSendMessage = async (content, type = 'text') => {
         if (!selectedConv || !currentUser) return;
@@ -198,12 +222,17 @@ const Chat = () => {
 
     const handleVideoCall = async () => {
         if (!selectedConv) return;
-        await handleSendMessage(`${currentUser?.full_name || 'Patient'} is requesting a secure video consultation.`, 'call_request');
-        await startVideoCall({
+        const session = await startVideoCall({
             receiverId: selectedConv.other_user?.id,
             conversationId: selectedConv.id,
             callType: 'video',
         });
+        if (session) {
+            handleSendMessage(`${currentUser?.full_name || 'Patient'} is requesting a secure video consultation.`, 'call_request')
+                .catch((err) => {
+                    console.error("Failed to send call_request message:", err);
+                });
+        }
     };
 
     return (

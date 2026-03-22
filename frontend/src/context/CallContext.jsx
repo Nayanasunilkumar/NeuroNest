@@ -4,7 +4,7 @@ import IncomingCallCard from "../components/video/IncomingCallCard";
 import VideoCallCard from "../components/video/VideoCallCard";
 import VideoCallModal from "../components/video/VideoCallModal";
 import { acceptCall, declineCall, endCall, startCall } from "../api/callsApi";
-import { getSocket, initSocket } from "../services/socket";
+import { initSocket } from "../services/socket";
 import { getUser, isAuthenticated } from "../utils/auth";
 
 const CallContext = createContext(null);
@@ -16,6 +16,7 @@ export const CallProvider = ({ children }) => {
   const timeoutRef = useRef(null);
   const incomingTimerRef = useRef(null);
   const incomingCallIdRef = useRef(null);
+  const incomingCallRef = useRef(null);
   const activeCallRef = useRef(null);
   const callStatusRef = useRef("idle");
 
@@ -33,6 +34,10 @@ export const CallProvider = ({ children }) => {
   useEffect(() => {
     callStatusRef.current = callStatus;
   }, [callStatus]);
+
+  useEffect(() => {
+    incomingCallRef.current = incomingCall;
+  }, [incomingCall]);
 
   const clearOutgoingTimer = useCallback(() => {
     if (timeoutRef.current) {
@@ -199,7 +204,7 @@ export const CallProvider = ({ children }) => {
       message: "Consultation session has been closed.",
     });
     resetCallState();
-  }, [activeCall?.call_id, resetCallState]);
+  }, [activeCall, resetCallState]);
 
   const dismissIncomingCall = useCallback(() => {
     if (!incomingCall) return;
@@ -214,7 +219,7 @@ export const CallProvider = ({ children }) => {
     if (!socket) return undefined;
 
     const onIncomingCall = async (payload) => {
-      if (callStatus === "connected" || incomingCall || activeCall?.status === "connected") {
+      if (callStatusRef.current === "connected" || incomingCallRef.current || activeCallRef.current?.status === "connected") {
         try {
           await declineCall(payload.call_id, "busy");
         } catch (error) {
@@ -242,7 +247,7 @@ export const CallProvider = ({ children }) => {
     };
 
     const onCallDeclined = (payload) => {
-      if (activeCall?.call_id && payload.call_id !== activeCall.call_id && incomingCall?.call_id !== payload.call_id) {
+      if (activeCallRef.current?.call_id && payload.call_id !== activeCallRef.current.call_id && incomingCallRef.current?.call_id !== payload.call_id) {
         return;
       }
       clearOutgoingTimer();
@@ -259,7 +264,7 @@ export const CallProvider = ({ children }) => {
     };
 
     const onCallMissed = (payload) => {
-      if (activeCall?.call_id && payload.call_id !== activeCall.call_id && incomingCall?.call_id !== payload.call_id) {
+      if (activeCallRef.current?.call_id && payload.call_id !== activeCallRef.current.call_id && incomingCallRef.current?.call_id !== payload.call_id) {
         return;
       }
       clearOutgoingTimer();
@@ -276,7 +281,7 @@ export const CallProvider = ({ children }) => {
     };
 
     const onCallEnded = (payload) => {
-      if (activeCall?.call_id && payload.call_id !== activeCall.call_id) return;
+      if (activeCallRef.current?.call_id && payload.call_id !== activeCallRef.current.call_id) return;
       resetCallState();
       setStatusCard({
         tone: "info",
@@ -299,11 +304,9 @@ export const CallProvider = ({ children }) => {
       socket.off("call_ended", onCallEnded);
     };
   }, [
-    activeCall,
-    callStatus,
     clearIncomingCountdown,
     clearOutgoingTimer,
-    incomingCall,
+    openConsultation,
     resetCallState,
     startIncomingCountdown,
   ]);

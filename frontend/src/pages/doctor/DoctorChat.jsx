@@ -36,17 +36,29 @@ const DoctorChat = ({ isEmbedded = false }) => {
     const isFocusedMode = Boolean(patientIdParam); // Single-patient focused view
     const hasAutoStartedVideoRef = useRef(false);
     const { startVideoCall } = useCall();
+    const conversationsRef = useRef([]);
+
+    const joinConversationRooms = useCallback((socketClient, convs) => {
+        if (!socketClient || !Array.isArray(convs) || convs.length === 0) return;
+        convs.forEach((conv) => {
+            if (conv?.id) {
+                socketClient.emit('join_conversation', { conversation_id: conv.id });
+            }
+        });
+    }, []);
 
     const fetchConversations = useCallback(async () => {
         try {
             const data = await getConversations();
             setConversations(data);
+            const socket = getSocket();
+            joinConversationRooms(socket, data);
             return data;
         } catch (err) {
             console.error("Clinical Inbox error:", err);
             return [];
         }
-    }, []);
+    }, [joinConversationRooms]);
 
     const handleSelectConversation = useCallback(async (conv) => {
         if (selectedConv?.id === conv.id) return;
@@ -99,6 +111,10 @@ const DoctorChat = ({ isEmbedded = false }) => {
     useEffect(() => {
         currentUserRef.current = currentUser;
     }, [currentUser]);
+
+    useEffect(() => {
+        conversationsRef.current = conversations;
+    }, [conversations]);
 
     const handleIncomingMessage = useCallback((msg) => {
         if (!msg) return;
@@ -186,16 +202,24 @@ const DoctorChat = ({ isEmbedded = false }) => {
         };
 
         if (socket) {
+            const handleSocketConnect = () => {
+                joinConversationRooms(socket, conversationsRef.current);
+                if (selectedConvRef.current?.id) {
+                    socket.emit('join_conversation', { conversation_id: selectedConvRef.current.id });
+                }
+            };
             socket.on("new_message", handleIncomingMessage);
+            socket.on("connect", handleSocketConnect);
             initChat();
             return () => {
                 socket.off("new_message", handleIncomingMessage);
+                socket.off("connect", handleSocketConnect);
             };
         } else {
             initChat();
         }
 
-    }, [fetchConversations, handleIncomingMessage, handleSelectConversation, patientIdParam]);
+    }, [fetchConversations, handleIncomingMessage, handleSelectConversation, joinConversationRooms, patientIdParam]);
 
     const handleSendMessage = useCallback(async (content, type = 'text') => {
         if (!selectedConv || !currentUser) return;
@@ -231,12 +255,16 @@ const DoctorChat = ({ isEmbedded = false }) => {
     const handleVideoCall = useCallback(async () => {
         if (!selectedConv) return;
         const roleStr = currentUser?.role === 'doctor' ? 'Doctor' : 'Patient';
-        await handleSendMessage(`${roleStr} is initiating a secure video consultation.`, 'call_request');
-        await startVideoCall({
+        const session = await startVideoCall({
             receiverId: selectedConv.other_user?.id,
             conversationId: selectedConv.id,
             callType: 'video',
         });
+        if (session) {
+            handleSendMessage(`${roleStr} is initiating a secure video consultation.`, 'call_request').catch((err) => {
+                console.error("Failed to send call_request message:", err);
+            });
+        }
     }, [selectedConv, currentUser?.role, handleSendMessage, startVideoCall]);
 
     useEffect(() => {
