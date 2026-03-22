@@ -16,7 +16,7 @@ const SECTIONS = [
 export default function PatientSettingsPage() {
   const [active, setActive] = useState('security');
   const {
-    settings, securityActivity, loading, saving, error, success,
+    settings, securityActivity, loading, saving, exporting, error, success,
     updateNotifications, updateEmail,
     changePassword, exportData, exportReport, exportAppts, exportPresc, deleteAccount,
   } = usePatientSettings();
@@ -31,7 +31,7 @@ export default function PatientSettingsPage() {
     switch (active) {
       case 'security':      return <SecuritySection         data={settings} activity={securityActivity} saving={saving} onChangePassword={changePassword} onUpdateEmail={updateEmail} />;
       case 'notifications': return <NotificationPreferences data={settings} saving={saving} onSave={updateNotifications} />;
-      case 'data':          return <DataManagementSection   saving={saving} onExport={exportData} onExportPDF={exportReport} onExportAppts={exportAppts} onExportPresc={exportPresc} />;
+      case 'data':          return <DataManagementSection   saving={saving} exporting={exporting} onExport={exportData} onExportPDF={exportReport} onExportAppts={exportAppts} onExportPresc={exportPresc} />;
       case 'danger':        return <DangerZoneSection       onDelete={deleteAccount} />;
       default:              return null;
     }

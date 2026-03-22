@@ -25,8 +25,9 @@ const ExportCard = ({ icon, title, description, color, onClick, loading, actionT
   </button>
 );
 
-export default function DataManagementSection({ onExport, onExportPDF, onExportAppts, onExportPresc, saving }) {
+export default function DataManagementSection({ onExport, onExportPDF, onExportAppts, onExportPresc, saving, exporting }) {
   const [exported, setExported] = useState(false);
+  const [activeExport, setActiveExport] = useState(null); // 'json', 'pdf', 'appts', 'presc'
 
   const _triggerDownload = (blob, filename) => {
     const url = URL.createObjectURL(blob);
@@ -39,45 +40,48 @@ export default function DataManagementSection({ onExport, onExportPDF, onExportA
     setTimeout(() => setExported(false), 4000);
   };
 
-  const handleExportJSON = async () => {
+  const wrapExport = async (key, fn) => {
+    setActiveExport(key);
     try {
-      const data = await onExport();
-      if (data) {
-        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-        _triggerDownload(blob, `neuronest_data_export_${new Date().toISOString().split('T')[0]}.json`);
-      }
-    } catch (e) { console.error(e); }
+      await fn();
+    } finally {
+      setActiveExport(null);
+    }
   };
 
-  const handleExportPDF = async () => {
-    try {
-      const response = await onExportPDF();
-      if (response && response.data) {
-        const blob = new Blob([response.data], { type: 'application/pdf' });
-        _triggerDownload(blob, `neuronest_medical_report_${new Date().toISOString().split('T')[0]}.pdf`);
-      }
-    } catch (e) { console.error(e); }
-  };
+  const handleExportJSON = () => wrapExport('json', async () => {
+    const data = await onExport();
+    if (data) {
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      _triggerDownload(blob, `neuronest_data_export_${new Date().toISOString().split('T')[0]}.json`);
+    }
+  });
 
-  const handleExportAppts = async () => {
-    try {
-      const response = await onExportAppts();
-      if (response && response.data) {
-        const blob = new Blob([response.data], { type: 'application/pdf' });
-        _triggerDownload(blob, `neuronest_appointments_${new Date().toISOString().split('T')[0]}.pdf`);
-      }
-    } catch (e) { console.error(e); }
-  };
+  const handleExportPDF = () => wrapExport('pdf', async () => {
+    const response = await onExportPDF();
+    if (response && response.data) {
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      _triggerDownload(blob, `neuronest_medical_report_${new Date().toISOString().split('T')[0]}.pdf`);
+    }
+  });
 
-  const handleExportPresc = async () => {
-    try {
-      const response = await onExportPresc();
-      if (response && response.data) {
-        const blob = new Blob([response.data], { type: 'application/pdf' });
-        _triggerDownload(blob, `neuronest_prescriptions_${new Date().toISOString().split('T')[0]}.pdf`);
-      }
-    } catch (e) { console.error(e); }
-  };
+  const handleExportAppts = () => wrapExport('appts', async () => {
+    const response = await onExportAppts();
+    if (response && response.data) {
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      _triggerDownload(blob, `neuronest_appointments_${new Date().toISOString().split('T')[0]}.pdf`);
+    }
+  });
+
+  const handleExportPresc = () => wrapExport('presc', async () => {
+    const response = await onExportPresc();
+    if (response && response.data) {
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      _triggerDownload(blob, `neuronest_prescriptions_${new Date().toISOString().split('T')[0]}.pdf`);
+    }
+  });
+
+  const isGlobalExporting = exporting || saving;
 
   return (
     <div className="pset-section data-mgmt">
@@ -96,22 +100,22 @@ export default function DataManagementSection({ onExport, onExportPDF, onExportA
 
       <div className="pset-export-list">
         <ExportCard
-          icon={FileCheck} color="#4f46e5" loading={saving}
+          icon={FileCheck} color="#4f46e5" loading={activeExport === 'pdf'}
           title="Full Medical Report" description="A comprehensive clinical summary of your entire medical history with us."
           onClick={handleExportPDF}
         />
         <ExportCard
-          icon={Calendar} color="#0ea5e9" loading={saving}
+          icon={Calendar} color="#0ea5e9" loading={activeExport === 'appts'}
           title="Appointment History" description="Archive of all your consultations, past visits, and upcoming schedules."
           onClick={handleExportAppts}
         />
         <ExportCard
-          icon={Pill} color="#10b981" loading={saving}
+          icon={Pill} color="#10b981" loading={activeExport === 'presc'}
           title="Prescription Log" description="Detailed list of all prescribed medications and dosage instructions."
           onClick={handleExportPresc}
         />
         <ExportCard
-          icon={Package} color="#6366f1" loading={saving}
+          icon={Package} color="#6366f1" loading={activeExport === 'json'}
           title="Personal Data Archive" actionText="Download JSON"
           description="Machine-readable archive for backup or porting your data to other systems."
           onClick={handleExportJSON}

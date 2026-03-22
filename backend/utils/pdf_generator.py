@@ -1,15 +1,61 @@
 import io
+from pathlib import Path
+from datetime import datetime, timezone
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image
 from reportlab.lib.units import inch
-from datetime import datetime, timezone
 
 try:
     from zoneinfo import ZoneInfo
 except ImportError:  # Python older than 3.9
     from backports.zoneinfo import ZoneInfo  # type: ignore
+
+# --- GLOBAL CONSTANTS ---
+BASE_DIR = Path(__file__).resolve().parent.parent
+ICONS_DIR = BASE_DIR / "static" / "assets" / "icons"
+STYLES = getSampleStyleSheet()
+
+# Pre-define custom styles for recycling
+STYLES.add(ParagraphStyle(
+    'MainTitle',
+    parent=STYLES['Heading1'],
+    fontSize=24,
+    textColor=colors.HexColor("#4f46e5"),
+    spaceAfter=20,
+    alignment=1 # Center
+))
+
+STYLES.add(ParagraphStyle(
+    'SectionHeader',
+    parent=STYLES['Heading2'],
+    fontSize=14,
+    textColor=colors.HexColor("#1e293b"),
+    spaceBefore=15,
+    spaceAfter=10,
+    borderPadding=5
+))
+
+STYLES.add(ParagraphStyle('Label', parent=STYLES['Normal'], fontWeight='bold', textColor=colors.HexColor("#64748b")))
+
+# Safety styles for vitals
+if 'HRRed' not in STYLES:
+    STYLES.add(ParagraphStyle('HRRed', parent=STYLES['Normal'], textColor=colors.red))
+if 'SpO2Red' not in STYLES:
+    STYLES.add(ParagraphStyle('SpO2Red', parent=STYLES['Normal'], textColor=colors.red))
+if 'TempRed' not in STYLES:
+    STYLES.add(ParagraphStyle('TempRed', parent=STYLES['Normal'], textColor=colors.red))
+
+def get_icon(name):
+    """Helper to get image or placeholder."""
+    path = ICONS_DIR / f"{name}.png"
+    if path.exists():
+        try:
+            return Image(str(path), width=20, height=20)
+        except Exception:
+            return "● " # Fallback bullet
+    return ""
 
 def generate_patient_report(data):
     """
@@ -24,58 +70,16 @@ def generate_patient_report(data):
     """
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=A4, rightMargin=50, leftMargin=50, topMargin=50, bottomMargin=50)
-    styles = getSampleStyleSheet()
     
-    # Custom Styles
-    title_style = ParagraphStyle(
-        'MainTitle',
-        parent=styles['Heading1'],
-        fontSize=24,
-        textColor=colors.HexColor("#4f46e5"),
-        spaceAfter=20,
-        alignment=1 # Center
-    )
-    
-    section_style = ParagraphStyle(
-        'SectionHeader',
-        parent=styles['Heading2'],
-        fontSize=14,
-        textColor=colors.HexColor("#1e293b"),
-        spaceBefore=15,
-        spaceAfter=10,
-        borderPadding=5,
-        # borderLeftColor=colors.HexColor("#4f46e5"),
-        # borderLeftWidth=2
-    )
-    
-    normal_style = styles['Normal']
-    label_style = ParagraphStyle('Label', parent=styles['Normal'], fontWeight='bold', textColor=colors.HexColor("#64748b"))
-
     elements = []
-    
-    # --- ICON PATHS ---
-    from pathlib import Path
-    BASE_DIR = Path(__file__).resolve().parent.parent
-    ICONS_DIR = BASE_DIR / "static" / "assets" / "icons"
-    
-    # Helper to get image or placeholder
-    def get_icon(name):
-        path = ICONS_DIR / f"{name}.png"
-        if path.exists():
-            try:
-                from reportlab.platypus import Image
-                return Image(str(path), width=20, height=20)
-            except Exception:
-                return "● " # Fallback bullet
-        return ""
 
     # Header
-    elements.append(Paragraph("NeuroNest Clinical Report", title_style))
-    elements.append(Paragraph(f"Generated on {datetime.now().strftime('%B %d, %Y at %H:%M')}", styles.get('Italic', styles['Normal'])))
+    elements.append(Paragraph("NeuroNest Clinical Report", STYLES['MainTitle']))
+    elements.append(Paragraph(f"Generated on {datetime.now().strftime('%B %d, %Y at %H:%M')}", STYLES.get('Italic', STYLES['Normal'])))
     elements.append(Spacer(1, 0.3 * inch))
 
     # 1. Patient Identity
-    elements.append(Paragraph("Patient Identity", section_style))
+    elements.append(Paragraph("Patient Identity", STYLES['SectionHeader']))
     acc = data.get("account", {})
     prof = data.get("profile", {})
     
@@ -99,7 +103,7 @@ def generate_patient_report(data):
     elements.append(Spacer(1, 0.2 * inch))
 
     # 2. Vitals Section (NEW)
-    elements.append(Paragraph("Vitals Monitoring", section_style))
+    elements.append(Paragraph("Vitals Monitoring", STYLES['SectionHeader']))
     vitals_data = data.get("vitals", {})
     
     if vitals_data.get("is_active"):
@@ -117,9 +121,9 @@ def generate_patient_report(data):
         # Latest Readings "Cards"
         v_rows = [
             [
-                get_icon("heart_red"), Paragraph(f"<b>Heart Rate:</b> <font color='{hr_color}'>{hr} BPM</font>", normal_style),
-                get_icon("oxygen_blue"), Paragraph(f"<b>SpO2:</b> <font color='{spo2_color}'>{spo2}%</font>", normal_style),
-                get_icon("temp_green"), Paragraph(f"<b>Temperature:</b> <font color='{temp_color}'>{temp}°C</font>", normal_style)
+                get_icon("heart_red"), Paragraph(f"<b>Heart Rate:</b> <font color='{hr_color}'>{hr} BPM</font>", STYLES['Normal']),
+                get_icon("oxygen_blue"), Paragraph(f"<b>SpO2:</b> <font color='{spo2_color}'>{spo2}%</font>", STYLES['Normal']),
+                get_icon("temp_green"), Paragraph(f"<b>Temperature:</b> <font color='{temp_color}'>{temp}°C</font>", STYLES['Normal'])
             ]
         ]
         vt = Table(v_rows, colWidths=[0.3*inch, 1.7*inch, 0.3*inch, 1.7*inch, 0.3*inch, 1.7*inch])
@@ -137,7 +141,7 @@ def generate_patient_report(data):
         # Recent History Summary
         history = vitals_data.get("history", [])
         if history:
-            elements.append(Paragraph("Recent Readings Summary", label_style))
+            elements.append(Paragraph("Recent Readings Summary", STYLES['Label']))
             h_header = ["Timestamp", "HR", "SpO2", "Temp"]
             h_rows = [h_header]
             for h in history[-5:]: # Last 5
@@ -154,14 +158,14 @@ def generate_patient_report(data):
             ]))
             elements.append(ht)
     else:
-        elements.append(Paragraph("No vitals data available (No device assigned)", styles.get('Italic', styles['Normal'])))
+        elements.append(Paragraph("No vitals data available (No device assigned)", STYLES.get('Italic', STYLES['Normal'])))
     
     elements.append(Spacer(1, 0.2 * inch))
 
     # 3. Emergency Contact
     ec = data.get("emergency_contact", {})
     if ec:
-        elements.append(Paragraph("Emergency Contact", section_style))
+        elements.append(Paragraph("Emergency Contact", STYLES['SectionHeader']))
         ec_data = [
             ["Name:", ec.get("contact_name", "N/A")],
             ["Relation:", ec.get("relationship", "N/A")],
@@ -178,7 +182,7 @@ def generate_patient_report(data):
     # 4. Appointments
     appts = data.get("appointments", [])
     if appts:
-        elements.append(Paragraph(f"Recent Appointments ({len(appts)})", section_style))
+        elements.append(Paragraph(f"Recent Appointments ({len(appts)})", STYLES['SectionHeader']))
         header = ["Date", "Time", "Doctor", "Status", "Reason"]
         rows = [header]
         for a in appts[:10]: # Limit to last 10
@@ -186,8 +190,8 @@ def generate_patient_report(data):
                 str(a.get("appointment_date") or ""),
                 str(a.get("appointment_time") or ""),
                 a.get("doctor_name") or "N/A",
-                Paragraph((a.get("status") or "N/A").capitalize().replace('_', ' '), styles['Normal']),
-                Paragraph((a.get("reason") or "")[:50], styles['Normal'])
+                Paragraph((a.get("status") or "N/A").capitalize().replace('_', ' '), STYLES['Normal']),
+                Paragraph((a.get("reason") or "")[:50], STYLES['Normal'])
             ])
         
         t = Table(rows, colWidths=[0.9*inch, 0.7*inch, 1.3*inch, 1.1*inch, 2.5*inch])
@@ -207,14 +211,14 @@ def generate_patient_report(data):
     # 5. Prescriptions
     presc = data.get("prescriptions", [])
     if presc:
-        elements.append(Paragraph(f"Recent Prescriptions ({len(presc)})", section_style))
+        elements.append(Paragraph(f"Recent Prescriptions ({len(presc)})", STYLES['SectionHeader']))
         for p in presc[:5]:
             diag = p.get('diagnosis') or "No diagnosis recorded"
             date_str = str(p.get('created_at') or "")[:10]
             meds = p.get('medicines') or []
             rows = [
-                [Paragraph( f"<b>Diagnosis:</b> {diag}", styles['Normal']), f"Date: {date_str}"],
-                [Paragraph(f"<b>Medicines:</b> {', '.join(meds)}", styles['Normal']), ""]
+                [Paragraph( f"<b>Diagnosis:</b> {diag}", STYLES['Normal']), f"Date: {date_str}"],
+                [Paragraph(f"<b>Medicines:</b> {', '.join(meds)}", STYLES['Normal']), ""]
             ]
             pt = Table(rows, colWidths=[4.5*inch, 1.5*inch])
             pt.setStyle(TableStyle([
@@ -231,7 +235,7 @@ def generate_patient_report(data):
     elements.append(Spacer(1, 0.5 * inch))
     notice = "Confidential: This document contains sensitive medical information. " \
              "Authorized patient use only. (c) 2026 NeuroNest Health Systems."
-    elements.append(Paragraph(notice, ParagraphStyle('Footer', parent=styles.get('Italic', styles['Normal']), fontSize=8, textColor=colors.gray, alignment=1)))
+    elements.append(Paragraph(notice, ParagraphStyle('Footer', parent=STYLES.get('Italic', STYLES['Normal']), fontSize=8, textColor=colors.gray, alignment=1)))
 
     doc.build(elements)
     buffer.seek(0)

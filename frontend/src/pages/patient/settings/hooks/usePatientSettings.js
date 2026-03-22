@@ -8,6 +8,7 @@ export const usePatientSettings = () => {
   const [saving,  setSaving]      = useState(false);
   const [error,   setError]       = useState(null);
   const [success, setSuccess]     = useState('');
+  const [exporting, setExporting] = useState(false);
 
   const flash = (msg) => { setSuccess(msg); setTimeout(() => setSuccess(''), 3500); };
 
@@ -15,18 +16,16 @@ export const usePatientSettings = () => {
     setLoading(true);
     setError(null);
     try {
-      const settingsData = await patientSettingsService.getSettings();
+      const [settingsData, activityData] = await Promise.all([
+        patientSettingsService.getSettings(),
+        patientSettingsService.getSecurityActivity()
+      ]);
       setSettings(settingsData);
-    } catch (e) {
-      const msg = e?.response?.data?.error || e?.response?.data?.message || e?.response?.data?.msg || 'Could not connect to settings server';
-      setError(msg);
-    }
-
-    try {
-      const activityData = await patientSettingsService.getSecurityActivity();
       setSecurityActivity(activityData);
     } catch (e) {
-      console.warn('Security activity failed to load:', e);
+      console.error('Failed to load settings:', e);
+      const msg = e?.response?.data?.error || e?.response?.data?.message || 'Could not connect to settings server';
+      setError(msg);
     } finally {
       setLoading(false);
     }
@@ -51,14 +50,29 @@ export const usePatientSettings = () => {
     }
   };
 
+  const handleExport = async (fn, successMsg) => {
+    setExporting(true);
+    setError(null);
+    try {
+      const result = await fn();
+      flash(successMsg || 'Export ready');
+      return result;
+    } catch (e) {
+      setError('Export failed. Please try again.');
+      throw e;
+    } finally {
+      setExporting(false);
+    }
+  };
+
   const updateNotifications= (data) => save(() => patientSettingsService.updateNotifications(data), 'Notification preferences saved!');
   const updateEmail        = (data) => save(() => patientSettingsService.updateEmail(data), 'Email address updated!');
   const changePassword     = (data) => save(() => patientSettingsService.changePassword(data), 'Password changed!');
-  const exportData         = ()     => save(() => patientSettingsService.exportData(), 'Data export ready!');
-  const exportReport       = ()     => save(() => patientSettingsService.exportReport(), 'Medical report ready!');
-  const exportAppts        = ()     => save(() => patientSettingsService.exportAppointments(), 'Appointment list ready!');
-  const exportPresc        = ()     => save(() => patientSettingsService.exportPrescriptions(), 'Prescription list ready!');
+  const exportData         = ()     => handleExport(() => patientSettingsService.exportData(), 'Data export ready!');
+  const exportReport       = ()     => handleExport(() => patientSettingsService.exportReport(), 'Medical report ready!');
+  const exportAppts        = ()     => handleExport(() => patientSettingsService.exportAppointments(), 'Appointment list ready!');
+  const exportPresc        = ()     => handleExport(() => patientSettingsService.exportPrescriptions(), 'Prescription list ready!');
   const deleteAccount      = (data) => patientSettingsService.deleteAccount(data);
 
-  return { settings, securityActivity, loading, saving, error, success, updateNotifications, updateEmail, changePassword, exportData, exportReport, exportAppts, exportPresc, deleteAccount, reload: load };
+  return { settings, securityActivity, loading, saving, exporting, error, success, updateNotifications, updateEmail, changePassword, exportData, exportReport, exportAppts, exportPresc, deleteAccount, reload: load };
 };
