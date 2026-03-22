@@ -67,18 +67,15 @@ const ChatWindow = ({ messages, currentUserId, onSendMessage, loadingMessages, m
     const renderMessageStream = () => {
         let lastDayKey = '';
         const blocks = [];
-        let latestOwnCallRequestKey = null;
-        let latestOwnCallRequestEnded = false;
+        let latestActiveCallRequestKey = null;
 
         messages.forEach((msg, index) => {
             const key = msg.id != null ? String(msg.id) : `idx-${index}`;
-            const isOwn = String(msg?.sender_id) === String(currentUserId);
-            if (msg?.type === 'call_request' && isOwn) {
-                latestOwnCallRequestKey = key;
-                latestOwnCallRequestEnded = false;
+            if (msg?.type === 'call_request' || msg?.type === 'consultation_started') {
+                latestActiveCallRequestKey = key;
             }
-            if (msg?.type === 'call_ended' && isOwn && latestOwnCallRequestKey) {
-                latestOwnCallRequestEnded = true;
+            if (msg?.type === 'call_ended' || msg?.type === 'consultation_ended' || msg?.type === 'call_missed') {
+                latestActiveCallRequestKey = null;
             }
         });
 
@@ -104,16 +101,8 @@ const ChatWindow = ({ messages, currentUserId, onSendMessage, loadingMessages, m
                     isMe={isOwn}
                     otherUserAvatar={otherUser?.profile_image}
                     isActiveCallRequest={
-                        msg?.type === 'call_request' &&
-                        isOwn &&
-                        key === latestOwnCallRequestKey &&
-                        !latestOwnCallRequestEnded
-                    }
-                    isEndedCallRequest={
-                        msg?.type === 'call_request' &&
-                        isOwn &&
-                        key === latestOwnCallRequestKey &&
-                        latestOwnCallRequestEnded
+                        (msg?.type === 'call_request' || msg?.type === 'consultation_started') &&
+                        key === latestActiveCallRequestKey
                     }
                 />
             );
