@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Check, CheckCheck, Download, Paperclip, Video, PhoneOff } from 'lucide-react';
+import { Check, CheckCheck, Download, Paperclip, Video, PhoneOff, Clock } from 'lucide-react';
 import { resolveApiUrl } from '../../config/env';
 import { formatTimeIST } from '../../utils/time';
 
@@ -110,11 +110,11 @@ const MessageBubble = ({ message, isMe, otherUserAvatar, isActiveCallRequest = f
                 
                 <div className={`d-flex align-items-center gap-1 ${isMe ? 'justify-content-end' : 'justify-content-start'} w-100 px-1`}>
                     <span className="small text-secondary fw-semibold" style={{ fontSize: '0.65rem' }}>
-                        {formatTimeIST(message.created_at)}
+                        {message.is_optimistic ? 'Sending...' : formatTimeIST(message.created_at)}
                     </span>
                     {isMe && (
                         <span className={message.is_read ? 'text-info' : 'text-secondary opacity-50'}>
-                            {message.is_read ? <CheckCheck size={14} /> : <Check size={14} />}
+                            {message.is_optimistic ? <Clock size={12} /> : message.is_read ? <CheckCheck size={14} /> : <Check size={14} />}
                         </span>
                     )}
                 </div>

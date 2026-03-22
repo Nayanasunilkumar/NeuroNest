@@ -86,9 +86,20 @@ const Chat = () => {
         if (!msg) return;
 
         setSelectedConv((current) => {
-            // Ensure type-safe ID comparison
             if (current && Number(current.id) === Number(msg.conversation_id)) {
                 setMessages((prev) => {
+                    // 1. Check if this is a match for an optimistic message we just sent
+                    // If we just sent a message with the same content/type, we should replace the temp one
+                    const isMyOwnMessage = String(msg.sender_id) === String(currentUser?.id);
+                    const optimisticIndex = isMyOwnMessage ? prev.findIndex(m => m.is_optimistic && m.content === msg.content) : -1;
+                    
+                    if (optimisticIndex > -1) {
+                        const newMsgs = [...prev];
+                        newMsgs[optimisticIndex] = msg; // Replace optimistic with server-side record
+                        return newMsgs;
+                    }
+
+                    // 2. Otherwise prevent duplicates
                     if (prev.find(m => m.id === msg.id)) return prev;
                     return [...prev, msg];
                 });
@@ -144,6 +155,23 @@ const Chat = () => {
     const handleSendMessage = async (content, type = 'text') => {
         if (!selectedConv || !currentUser) return;
         
+        // --- OPTIMISTIC UPDATE ---
+        // Create a temporary message object to show in UI immediately
+        const tempId = `temp-${Date.now()}`;
+        const optimisticMsg = {
+            id: tempId,
+            conversation_id: selectedConv.id,
+            sender_id: currentUser.id,
+            content: content,
+            type: type,
+            created_at: new Date().toISOString(),
+            is_optimistic: true, // Flag to identify it as temporary
+            status: 'sending'
+        };
+
+        // Add to local UI state for instant response
+        setMessages(prev => [...prev, optimisticMsg]);
+        
         try {
             const socket = getSocket();
             if (socket && socket.connected) {
@@ -154,10 +182,13 @@ const Chat = () => {
                 });
             } else {
                 const savedMsg = await chatAPI.sendMessage(selectedConv.id, content, type);
-                handleNewMessage(savedMsg);
+                handleNewMessage({ ...savedMsg, tempId }); // Pass tempId to replace it
             }
         } catch (err) {
             console.error("Failed to send message", err);
+            // On failure, remove the optimistic message or show error
+            setMessages(prev => prev.filter(m => m.id !== tempId));
+            alert("Connection error: Failed to send message. Please check your network.");
         }
     };
 
