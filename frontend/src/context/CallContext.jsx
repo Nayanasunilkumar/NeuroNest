@@ -218,7 +218,9 @@ export const CallProvider = ({ children }) => {
     const socket = initSocket();
     if (!socket) return undefined;
 
-    const onIncomingCall = async (payload) => {
+  const onIncomingCall = async (payload) => {
+      if (!payload?.call_id) return;
+      if (incomingCallRef.current?.call_id === payload.call_id) return;
       if (callStatusRef.current === "connected" || incomingCallRef.current || activeCallRef.current?.status === "connected") {
         try {
           await declineCall(payload.call_id, "busy");
@@ -234,6 +236,8 @@ export const CallProvider = ({ children }) => {
     };
 
     const onCallAccepted = (payload) => {
+      if (!payload?.call_id) return;
+      if (activeCallRef.current?.call_id === payload.call_id && callStatusRef.current === "connected") return;
       setActiveCall(payload);
       setCallStatus("connected");
       setIsModalOpen(true);
@@ -247,6 +251,7 @@ export const CallProvider = ({ children }) => {
     };
 
     const onCallDeclined = (payload) => {
+      if (!payload?.call_id) return;
       if (activeCallRef.current?.call_id && payload.call_id !== activeCallRef.current.call_id && incomingCallRef.current?.call_id !== payload.call_id) {
         return;
       }
@@ -264,6 +269,7 @@ export const CallProvider = ({ children }) => {
     };
 
     const onCallMissed = (payload) => {
+      if (!payload?.call_id) return;
       if (activeCallRef.current?.call_id && payload.call_id !== activeCallRef.current.call_id && incomingCallRef.current?.call_id !== payload.call_id) {
         return;
       }
@@ -281,6 +287,7 @@ export const CallProvider = ({ children }) => {
     };
 
     const onCallEnded = (payload) => {
+      if (!payload?.call_id) return;
       if (activeCallRef.current?.call_id && payload.call_id !== activeCallRef.current.call_id) return;
       resetCallState();
       setStatusCard({
@@ -291,15 +298,21 @@ export const CallProvider = ({ children }) => {
     };
 
     socket.on("incoming_call", onIncomingCall);
+    socket.on("call_initiated", onIncomingCall);
     socket.on("call_accepted", onCallAccepted);
+    socket.on("call_joined", onCallAccepted);
     socket.on("call_declined", onCallDeclined);
+    socket.on("call_rejected", onCallDeclined);
     socket.on("call_missed", onCallMissed);
     socket.on("call_ended", onCallEnded);
 
     return () => {
       socket.off("incoming_call", onIncomingCall);
+      socket.off("call_initiated", onIncomingCall);
       socket.off("call_accepted", onCallAccepted);
+      socket.off("call_joined", onCallAccepted);
       socket.off("call_declined", onCallDeclined);
+      socket.off("call_rejected", onCallDeclined);
       socket.off("call_missed", onCallMissed);
       socket.off("call_ended", onCallEnded);
     };

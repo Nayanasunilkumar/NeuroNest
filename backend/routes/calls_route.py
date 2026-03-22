@@ -41,6 +41,13 @@ def _cancel_call_timer(call_id):
         timer.cancel()
 
 
+def _emit_call_event(event_name, payload, call):
+    socketio.emit(event_name, payload, room=f"user_{call['caller_id']}")
+    socketio.emit(event_name, payload, room=f"user_{call['receiver_id']}")
+    if call.get("conversation_id"):
+        socketio.emit(event_name, payload, room=f"conversation_{call['conversation_id']}")
+
+
 def _schedule_missed_call(call_id):
     def _expire_call():
         with _calls_lock:
@@ -51,8 +58,7 @@ def _schedule_missed_call(call_id):
             call["ended_at"] = datetime.utcnow()
 
         payload = _serialize_call(call)
-        socketio.emit("call_missed", payload, room=f"user_{call['caller_id']}")
-        socketio.emit("call_missed", payload, room=f"user_{call['receiver_id']}")
+        _emit_call_event("call_missed", payload, call)
 
     timer = Timer(CALL_TIMEOUT_SECONDS, _expire_call)
     timer.daemon = True
@@ -131,10 +137,9 @@ def start_call():
         _schedule_missed_call(call_id)
 
     payload = _serialize_call(call)
-    socketio.emit("incoming_call", payload, room=f"user_{receiver_id}")
-    socketio.emit("outgoing_call", payload, room=f"user_{caller_id}")
-    socketio.emit("call_initiated", payload, room=f"user_{receiver_id}")
-    socketio.emit("call_initiated", payload, room=f"user_{caller_id}")
+    _emit_call_event("incoming_call", payload, call)
+    _emit_call_event("outgoing_call", payload, call)
+    _emit_call_event("call_initiated", payload, call)
     return jsonify(payload), 201
 
 
@@ -159,10 +164,8 @@ def accept_call(call_id):
         _cancel_call_timer(call_id)
         payload = _serialize_call(call)
 
-    socketio.emit("call_accepted", payload, room=f"user_{call['caller_id']}")
-    socketio.emit("call_accepted", payload, room=f"user_{call['receiver_id']}")
-    socketio.emit("call_joined", payload, room=f"user_{call['caller_id']}")
-    socketio.emit("call_joined", payload, room=f"user_{call['receiver_id']}")
+    _emit_call_event("call_accepted", payload, call)
+    _emit_call_event("call_joined", payload, call)
     return jsonify(payload), 200
 
 
@@ -188,10 +191,8 @@ def decline_call(call_id):
         _cancel_call_timer(call_id)
         payload = _serialize_call(call)
 
-    socketio.emit("call_declined", payload, room=f"user_{call['caller_id']}")
-    socketio.emit("call_declined", payload, room=f"user_{call['receiver_id']}")
-    socketio.emit("call_rejected", payload, room=f"user_{call['caller_id']}")
-    socketio.emit("call_rejected", payload, room=f"user_{call['receiver_id']}")
+    _emit_call_event("call_declined", payload, call)
+    _emit_call_event("call_rejected", payload, call)
     return jsonify(payload), 200
 
 
@@ -214,8 +215,7 @@ def end_call(call_id):
         _cancel_call_timer(call_id)
         payload = _serialize_call(call)
 
-    socketio.emit("call_ended", payload, room=f"user_{call['caller_id']}")
-    socketio.emit("call_ended", payload, room=f"user_{call['receiver_id']}")
+    _emit_call_event("call_ended", payload, call)
     return jsonify(payload), 200
 
 
