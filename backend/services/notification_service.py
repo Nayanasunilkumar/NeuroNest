@@ -154,15 +154,20 @@ class NotificationService:
                 elif notif_type == "announcement": should_send_email = pref.email_announcements
                 elif notif_type == "feedback":     should_send_email = pref.email_feedback
                 else: should_send_email = True
+                print(f"[NOTIF] Patient (UID: {user_id}) Email Pref Eval: {should_send_email} (type: {notif_type})")
             else:
                 if notif_type == "vitals_alert": should_send_email = d_pref.email_on_alerts
                 else: should_send_email = d_pref.email_on_booking
+                print(f"[NOTIF] Doctor (UID: {user_id}) Email Pref Eval: {should_send_email} (type: {notif_type})")
 
             if should_send_email:
+                print(f"[NOTIF] ✅ E-mail Preference: True. Sending to {user.email}")
                 try:
                     NotificationService.send_email(user.email, email_subject, message, event_type=email_event_type)
                 except Exception as e:
-                    print(f"[NOTIFICATION] Auto-email failed: {e}")
+                    print(f"[NOTIFICATION] Auto-email failed for user {user_id}: {e}")
+            else:
+                print(f"[NOTIF] ❌ E-mail Preference: False (type: {notif_type}). Skipping.")
 
     @staticmethod
     def notify_critical_vitals(patient_id, alert):

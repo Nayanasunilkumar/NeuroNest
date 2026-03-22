@@ -90,14 +90,18 @@ def create_announcement():
             target_ids = list(set(target_ids))
             
             # Send (NotificationService handles individual preferences)
+            print(f"[ANN_P_NOTIF] Target Users: {target_ids}")
             for tid in target_ids:
-                NotificationService.send_in_app(
-                    user_id=tid,
-                    title=f"System Update: {new_announcement.title}",
-                    message=new_announcement.title, # Use title for brief message
-                    notif_type="announcement",
-                    email_subject=f"NeuroNest: {new_announcement.title}"
-                )
+                try:
+                    NotificationService.send_in_app(
+                        user_id=tid,
+                        title=f"System Update: {new_announcement.title}",
+                        message=new_announcement.title, # Use title for brief message
+                        notif_type="announcement",
+                        email_subject=f"NeuroNest: {new_announcement.title}"
+                    )
+                except Exception as ne:
+                    print(f"[ANN_P_NOTIF] Errror during announcement notification to user {tid}: {ne}")
 
         return jsonify(new_announcement.to_dict()), 201
     except Exception as e:
