@@ -207,13 +207,15 @@ class Appointment(db.Model):
     patient_id = db.Column(
         db.Integer,
         db.ForeignKey("users.id"),
-        nullable=False
+        nullable=False,
+        index=True
     )
 
     doctor_id = db.Column(
         db.Integer,
         db.ForeignKey("users.id"),
-        nullable=False
+        nullable=False,
+        index=True
     )
 
     appointment_date = db.Column(db.Date, nullable=False)
@@ -682,7 +684,8 @@ class MedicalRecord(db.Model):
     patient_id = db.Column(
         db.Integer,
         db.ForeignKey("users.id"),
-        nullable=False
+        nullable=False,
+        index=True
     )
 
     title = db.Column(db.String(255), nullable=False)
@@ -1086,13 +1089,15 @@ class ClinicalRemark(db.Model):
     patient_id = db.Column(
         db.Integer,
         db.ForeignKey("users.id"),
-        nullable=False
+        nullable=False,
+        index=True
     )
     
     doctor_id = db.Column(
         db.Integer,
         db.ForeignKey("users.id"),
-        nullable=False
+        nullable=False,
+        index=True
     )
     
     content = db.Column(db.Text, nullable=False)

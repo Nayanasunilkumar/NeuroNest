@@ -473,40 +473,9 @@ const MyAppointments = () => {
         </div>
       )}
 
-      <style>{`
-        .approve-btn:hover { background: #ecfdf3; color: #10b981; border-color: #b7e9cc; }
-        .spinner { animation: spin 1s linear infinite; }
-        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        .feedback-pill-btn {
-          display: inline-flex; alignItems: center; gap: 0.3rem;
-          padding: 0.35rem 0.7rem; borderRadius: 8px; border: none;
-          background: linear-gradient(135deg, #f59e0b, #f97316);
-          color: white; fontSize: '0.72rem'; fontWeight: 800;
-          cursor: pointer; whiteSpace: nowrap;
-          box-shadow: 0 2px 8px rgba(245,158,11,0.3);
-          transition: transform 0.15s, box-shadow 0.15s;
-        }
-        .feedback-pill-btn:hover {
-          transform: translateY(-1px);
-          box-shadow: 0 4px 12px rgba(245,158,11,0.4);
-        }
-        .priority-tag-mini {
-          display: inline-flex;
-          align-items: center;
-          gap: 2px;
-          color: #f87171;
-          background: #f8717115;
-          padding: 2px 6px;
-          border-radius: 4px;
-          font-size: 0.65rem;
-          font-weight: 800;
-          text-transform: uppercase;
-          border: 1px solid #f8717130;
-          width: fit-content;
-        }
-      `}</style>
     </div>
   );
 };
+
 
 export default MyAppointments;

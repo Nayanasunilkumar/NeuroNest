@@ -1,0 +1,32 @@
+@keyframes stripPulse { 0%,100%{opacity:0.5} 50%{opacity:1} }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.15} }
+
+.btn-white { background: white; color: #0d6efd; }
+.btn-white:hover { background: #f8f9fa; transform: scale(1.05); }
+.fw-black { font-weight: 950; }
+.hover-translate-y { transition: transform 0.2s; }
+.hover-translate-y:hover { transform: translateY(-4px); }
+.border-dashed { border-style: dashed !important; }
+
+.dashboard-scroll-container {
+  max-height: 480px;
+  min-height: 380px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 8px;
+}
+
+.dashboard-scroll-container::-webkit-scrollbar {
+  width: 5px;
+}
+.dashboard-scroll-container::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 10px;
+}
+.dashboard-scroll-container::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 10px;
+}
+.dashboard-scroll-container::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
