@@ -40,15 +40,25 @@ export default function PatientSettingsPage() {
   return (
     <>
       <style>{`
+        .pset-page-wrapper {
+          min-height: calc(100vh - 80px);
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          padding: 40px;
+          box-sizing: border-box;
+          background: #f8fafc; /* Match standard dashboard background */
+        }
+
         .pset-root { 
-          max-width: 1400px; 
-          margin: 3rem auto; 
+          width: 100%;
+          max-width: 1240px; /* Slightly adjusted for a more balanced square-like feel */
           background: #ffffff;
-          padding: 1.5rem; 
-          border-radius: 32px;
+          padding: 2.5rem; 
+          border-radius: 36px;
           border: 1px solid #e2e8f0;
-          box-shadow: 0 10px 30px rgba(0,0,0,0.04);
-          font-family:'Inter', system-ui, -apple-system, sans-serif; 
+          box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+          font-family: 'Outfit', 'Inter', sans-serif; 
           color: #1e293b;
         }
 
@@ -386,48 +396,50 @@ export default function PatientSettingsPage() {
         .pset-modal-danger:hover { background: #dc2626; transform: translateY(-2px); }
       `}</style>
 
-      <div className="pset-root">
-        {/* Header Area */}
-        <div className="pset-page-header">
-          <div className="pset-title-wrap">
-            <h1>Settings</h1>
-            <p>Configure your account security and application preferences</p>
+      <div className="pset-page-wrapper">
+        <div className="pset-root">
+          {/* Header Area */}
+          <div className="pset-page-header">
+            <div className="pset-title-wrap">
+              <h1>Settings</h1>
+              <p>Configure your account security and application preferences</p>
+            </div>
           </div>
-        </div>
 
-        {/* Top Navigation Bar */}
-        <nav className="pset-topbar">
-          {SECTIONS.map(s => {
-            const Icon = s.icon;
-            return (
-              <button
-                key={s.id}
-                className={`pset-nav-item ${active === s.id ? 'active' : ''} ${s.danger ? 'danger-item' : ''}`}
-                onClick={() => setActive(s.id)}
-              >
-                <div className="pset-nav-icon"><Icon size={18}/></div>
-                <div className="pset-nav-label">{s.label}</div>
-              </button>
-            );
-          })}
-        </nav>
+          {/* Top Navigation Bar */}
+          <nav className="pset-topbar">
+            {SECTIONS.map(s => {
+              const Icon = s.icon;
+              return (
+                <button
+                  key={s.id}
+                  className={`pset-nav-item ${active === s.id ? 'active' : ''} ${s.danger ? 'danger-item' : ''}`}
+                  onClick={() => setActive(s.id)}
+                >
+                  <div className="pset-nav-icon"><Icon size={18}/></div>
+                  <div className="pset-nav-label">{s.label}</div>
+                </button>
+              );
+            })}
+          </nav>
 
-        {/* Main content */}
-        <div className="pset-content">
-          {success && (
-            <div className="pset-flash success">
-              <CheckCircle size={20}/>
-              <span>{success}</span>
-            </div>
-          )}
-          {error && !loading && (
-            <div className="pset-flash error">
-              <AlertCircle size={20}/>
-              <span>{error}</span>
-            </div>
-          )}
+          {/* Main content */}
+          <div className="pset-content">
+            {success && (
+              <div className="pset-flash success">
+                <CheckCircle size={20}/>
+                <span>{success}</span>
+              </div>
+            )}
+            {error && !loading && (
+              <div className="pset-flash error">
+                <AlertCircle size={20}/>
+                <span>{error}</span>
+              </div>
+            )}
 
-          {renderSection()}
+            {renderSection()}
+          </div>
         </div>
       </div>
     </>
