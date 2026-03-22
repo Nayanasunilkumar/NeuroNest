@@ -100,11 +100,12 @@ def receive_vitals():
             return jsonify({"error": "No data"}), 400
 
     # Identify targeted patient.
-    # If device doesn't send ID, use Patient 1 (Jane - ESP32 target) consistently
+    # If device doesn't send ID, use Patient 'abc' consistently
     # so alerts appear on the expected dashboards instead of newer signups.
     patient_id = int(data.get("patient_id") or 0)
     if not patient_id:
-        patient_id = 1
+        abc_patient = User.query.filter(User.role == 'patient', User.full_name.ilike('%abc%')).first()
+        patient_id = abc_patient.id if abc_patient else 1
 
     _latest.update({
         "patient_id": patient_id,
