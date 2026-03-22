@@ -9,7 +9,7 @@
 
 .pset-root {
   width: 100%;
-  max-width: 1540px;
+  max-width: 1600px;
   background: rgba(255, 255, 255, 0.05); /* Soft glass effect */
   backdrop-filter: blur(10px);
   padding: 3rem;
