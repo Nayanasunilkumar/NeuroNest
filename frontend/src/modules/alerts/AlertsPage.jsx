@@ -2,6 +2,8 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Bell, AlertTriangle, CheckCircle2, Clock } from "lucide-react";
 import { getAlerts, acknowledgeAlert } from "../../api/alerts";
 import { initSocket, getSocket } from "../../services/socket";
+import { getUser } from "../../utils/auth";
+
 
 const severityStyles = {
   critical: { bg: "#FEE2E2", border: "#DC2626", label: "Critical", icon: <AlertTriangle size={18} className="me-2" /> },

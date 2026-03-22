@@ -473,11 +473,7 @@ const DashboardHome = () => {
     }
   };
 
-  const stats = [
-    { label: "Health Score", value: "94/100", icon: <Heart size={20} />, color: "danger", trend: "+2%" },
-    { label: "Active Plans", value: "3", icon: <Activity size={20} />, color: "primary", trend: "On track" },
-    { label: "Next Checkup", value: "In 4 Days", icon: <Calendar size={20} />, color: "success", trend: "Scheduled" },
-  ];
+  const stats = [];
 
   return (
     <div className="py-2">
