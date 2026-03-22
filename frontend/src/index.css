@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700;800&family=Outfit:wght@500;600;700;800&display=swap');
 @import "./styles/theme-tokens.css";
 
 /* =========================================================
@@ -12,7 +13,7 @@ html { scroll-behavior: smooth; overflow-x: hidden; }
 body {
   margin: 0;
   min-height: 100vh;
-  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: 'DM Sans', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
   color: var(--nn-text-main);
   background-color: var(--nn-bg);
   transition: background-color 0.4s ease, color 0.4s ease;
