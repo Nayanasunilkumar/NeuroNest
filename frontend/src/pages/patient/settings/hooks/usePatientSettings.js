@@ -18,7 +18,10 @@ export const usePatientSettings = () => {
     try {
       const [settingsData, activityData] = await Promise.all([
         patientSettingsService.getSettings(),
-        patientSettingsService.getSecurityActivity()
+        patientSettingsService.getSecurityActivity().catch(e => {
+          console.warn('Security activity failed to load:', e);
+          return [];
+        })
       ]);
       setSettings(settingsData);
       setSecurityActivity(activityData);

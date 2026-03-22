@@ -1,37 +1,40 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo, memo } from "react";
 import { Activity, Calendar, Heart, TrendingUp, ShieldCheck, Clock, Bell, X, Wifi, WifiOff, Thermometer, Droplets } from "lucide-react";
 import { getMyNotifications, markNotificationRead } from "../../api/profileApi";
 import { Link } from "react-router-dom";
 import { io } from 'socket.io-client';
 import { getUser } from "../../utils/auth";
-
 import { API_BASE_URL } from "../../config/env";
+import "./DashboardHome.css";
 
 const BACKEND_API = API_BASE_URL;
 
 // ── ECG Waveform ───────────────────────────────────────────────
-function ECGWave({ bpm, color, height = 56 }) {
+const ECGWave = memo(({ bpm, color, height = 56 }) => {
   const W = 600, cycles = 3, cw = W / cycles;
   const mid = height / 2, amp = height * 0.38;
 
-  function ecgCycle(sx) {
-    const t = f => sx + f * cw;
-    const y = v => mid - v * amp;
-    return [
-      [t(0.00), y(0)], [t(0.10), y(0)],
-      [t(0.13), y(0.15)], [t(0.16), y(0.25)], [t(0.19), y(0.15)],
-      [t(0.22), y(0)], [t(0.30), y(0)],
-      [t(0.35), y(-0.15)], [t(0.38), y(1.0)], [t(0.41), y(-0.28)],
-      [t(0.46), y(0)], [t(0.52), y(0)],
-      [t(0.58), y(0.08)], [t(0.65), y(0.38)],
-      [t(0.72), y(0.38)], [t(0.79), y(0.08)],
-      [t(1.00), y(0)],
-    ];
-  }
+  const pts = useMemo(() => {
+    function ecgCycle(sx) {
+      const t = f => sx + f * cw;
+      const y = v => mid - v * amp;
+      return [
+        [t(0.00), y(0)], [t(0.10), y(0)],
+        [t(0.13), y(0.15)], [t(0.16), y(0.25)], [t(0.19), y(0.15)],
+        [t(0.22), y(0)], [t(0.30), y(0)],
+        [t(0.35), y(-0.15)], [t(0.38), y(1.0)], [t(0.41), y(-0.28)],
+        [t(0.46), y(0)], [t(0.52), y(0)],
+        [t(0.58), y(0.08)], [t(0.65), y(0.38)],
+        [t(0.72), y(0.38)], [t(0.79), y(0.08)],
+        [t(1.00), y(0)],
+      ];
+    }
+    let res = [];
+    for (let i = 0; i < cycles; i++) res = res.concat(ecgCycle(i * cw));
+    return res;
+  }, [cycles, cw, mid, amp]);
 
-  let pts = [];
-  for (let i = 0; i < cycles; i++) pts = pts.concat(ecgCycle(i * cw));
-  const d = pts.map((p, i) => `${i === 0 ? "M" : "L"}${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(" ");
+  const d = useMemo(() => pts.map((p, i) => `${i === 0 ? "M" : "L"}${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(" "), [pts]);
   const dur = `${(60 / (bpm || 72)) * cycles}s`;
 
   return (
@@ -69,26 +72,29 @@ function ECGWave({ bpm, color, height = 56 }) {
       </rect>
     </svg>
   );
-}
+});
 
 // ── Pleth Wave ─────────────────────────────────────────────────
-function PlethWave({ color, height = 56 }) {
+const PlethWave = memo(({ color, height = 56 }) => {
   const W = 600, cycles = 4, cw = W / cycles;
   const mid = height * 0.55, amp = height * 0.35;
 
-  function pleth(sx) {
-    const t = f => sx + f * cw, y = v => mid - v * amp;
-    return [
-      [t(0.00), y(0)], [t(0.12), y(0)], [t(0.22), y(0.35)],
-      [t(0.30), y(0.92)], [t(0.35), y(1.0)], [t(0.40), y(0.82)],
-      [t(0.46), y(0.48)], [t(0.52), y(0.28)], [t(0.58), y(0.14)],
-      [t(0.65), y(0.04)], [t(1.00), y(0)],
-    ];
-  }
+  const pts = useMemo(() => {
+    function pleth(sx) {
+      const t = f => sx + f * cw, y = v => mid - v * amp;
+      return [
+        [t(0.00), y(0)], [t(0.12), y(0)], [t(0.22), y(0.35)],
+        [t(0.30), y(0.92)], [t(0.35), y(1.0)], [t(0.40), y(0.82)],
+        [t(0.46), y(0.48)], [t(0.52), y(0.28)], [t(0.58), y(0.14)],
+        [t(0.65), y(0.04)], [t(1.00), y(0)],
+      ];
+    }
+    let res = [];
+    for (let i = 0; i < cycles; i++) res = res.concat(pleth(i * cw));
+    return res;
+  }, [cycles, cw, mid, amp]);
 
-  let pts = [];
-  for (let i = 0; i < cycles; i++) pts = pts.concat(pleth(i * cw));
-  const d = pts.map((p, i) => `${i === 0 ? "M" : "L"}${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(" ");
+  const d = useMemo(() => pts.map((p, i) => `${i === 0 ? "M" : "L"}${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(" "), [pts]);
 
   return (
     <svg viewBox={`0 0 ${W} ${height}`} preserveAspectRatio="none"
@@ -108,10 +114,10 @@ function PlethWave({ color, height = 56 }) {
         strokeLinejoin="round" strokeLinecap="round" opacity="0.85" />
     </svg>
   );
-}
+});
 
 // ── Temp Sparkline ─────────────────────────────────────────────
-function TempSparkline({ history, color, height = 56 }) {
+const TempSparkline = memo(({ history, color, height = 56 }) => {
   if (!history || history.length < 2) return (
     <svg width="100%" height={height}>
       <line x1="0" y1={height / 2} x2="100%" y2={height / 2}
@@ -146,7 +152,7 @@ function TempSparkline({ history, color, height = 56 }) {
         r="3.5" fill={color} opacity="0.9" />
     </svg>
   );
-}
+});
 
 // ── Vitals Section ─────────────────────────────────────────────
 function VitalsSection() {
@@ -171,13 +177,14 @@ function VitalsSection() {
         ]);
         const lJson = await lr.json();
         setData(lJson);
-        setHistory(await hr.json());
+        const hJson = await hr.json();
+        setHistory(hJson);
         if (lJson.signal !== "na") {
           lastUpdateRef.current = Date.now();
           setOnline(true);
           setIsStale(false);
         } else {
-          setOnline(true); // API is up, but h/w not yet heard from
+          setOnline(true); 
         }
       } catch { setOnline(false); }
     };
@@ -200,8 +207,6 @@ function VitalsSection() {
     });
 
     socketRef.current.on('connect', () => {
-      console.log('Connected to vitals socket');
-      // Join vitals room
       socketRef.current.emit('join_vitals_room', { patient_id: patientId });
     });
 
@@ -209,7 +214,6 @@ function VitalsSection() {
       setData(update);
       lastUpdateRef.current = Date.now();
       setIsStale(false);
-      // Update history if signal is valid
       if (update.signal === 'ok' || update.signal === 'weak') {
         setHistory(prev => {
           const newHistory = [...prev, update];
@@ -231,13 +235,13 @@ function VitalsSection() {
     };
   }, [patientId]);
 
-  const tempHistory = history.map(h => h.temp).filter(Boolean);
+  const tempHistory = useMemo(() => history.map(h => h.temp).filter(Boolean), [history]);
   const signal = data?.signal || "na";
   const isLive = signal === "ok";
   const isWeak = signal === "weak";
   const anyAlert = data && !!(data.hr_alert || data.spo2_alert || data.temp_alert);
 
-  const vitals = [
+  const vitals = useMemo(() => [
     {
       label: "Heart Rate",
       sub: "ELECTROCARDIOGRAM",
@@ -277,7 +281,7 @@ function VitalsSection() {
       wave: "temp",
       decimals: 2,
     },
-  ];
+  ], [data]);
 
   return (
     <div className="mb-5">
@@ -290,7 +294,6 @@ function VitalsSection() {
           </p>
         </div>
         <div className="d-flex align-items-center gap-2">
-          {/* Signal status */}
           {signal === "no_device" ? (
             <span className="badge rounded-pill d-flex align-items-center gap-1"
               style={{ background: "#f1f5f9", color: "#64748b", fontSize: "0.7rem", border: "1px solid #e2e8f0" }}>
@@ -370,91 +373,37 @@ function VitalsSection() {
                   style={{
                     background: v.alert ? "#fff5f5" : "white",
                     border: v.alert ? "1px solid rgba(220,53,69,0.3) !important" : undefined,
-                    transition: "all 0.3s",
                   }}>
 
                   {/* Alert strip */}
-                  {v.alert && (
-                    <div style={{
-                      height: 3,
-                      background: `linear-gradient(90deg, transparent, ${v.color}, transparent)`,
-                      animation: "stripPulse 1.5s ease-in-out infinite",
-                    }} />
-                  )}
+                  {v.alert && <div className="alt-strip" style={{ height: 3, background: `linear-gradient(90deg, transparent, ${v.color}, transparent)` }} />}
 
                   <div className="card-body p-4">
-                    {/* Top row */}
                     <div className="d-flex justify-content-between align-items-start mb-2">
                       <div>
-                        <div className="small fw-bold text-uppercase text-secondary mb-0"
-                          style={{ fontSize: "0.68rem", letterSpacing: "1px" }}>
-                          {v.label}
-                        </div>
-                        <div style={{ fontSize: "0.58rem", color: "#bbb", letterSpacing: "1px" }}>
-                          {v.sub}
-                        </div>
+                        <div className="small fw-bold text-uppercase text-secondary mb-0" style={{ fontSize: "0.68rem", letterSpacing: "1px" }}>{v.label}</div>
+                        <div style={{ fontSize: "0.58rem", color: "#bbb", letterSpacing: "1px" }}>{v.sub}</div>
                       </div>
                       <div className="d-flex align-items-center gap-2">
-                        {v.alert && (
-                          <span className="badge bg-danger rounded-pill"
-                            style={{ fontSize: "0.58rem", animation: "blink 0.9s step-end infinite" }}>
-                            ⚠ ALERT
-                          </span>
-                        )}
-                        <div className={`bg-${v.bsColor} bg-opacity-10 text-${v.bsColor} p-2 rounded-3`}>
-                          {v.icon}
-                        </div>
+                        {v.alert && <span className="badge bg-danger rounded-pill alt-badge" style={{ fontSize: "0.58rem" }}>⚠ ALERT</span>}
+                        <div className={`bg-${v.bsColor} bg-opacity-10 text-${v.bsColor} p-2 rounded-3`}>{v.icon}</div>
                       </div>
                     </div>
 
-                    {/* Value */}
                     <div className="d-flex align-items-baseline gap-1 mb-2">
-                      <span className="fw-black"
-                        style={{
-                          fontSize: "2.6rem",
-                          lineHeight: 1,
-                          color: v.alert ? "#dc3545" : v.color,
-                          fontVariantNumeric: "tabular-nums",
-                          transition: "color 0.3s",
-                          letterSpacing: "-1px",
-                        }}>
-                        {fmt}
-                      </span>
-                      <span className="text-secondary fw-bold" style={{ fontSize: "0.85rem" }}>
-                        {v.unit}
-                      </span>
+                      <span className="fw-black" style={{ fontSize: "2.6rem", lineHeight: 1, color: v.alert ? "#dc3545" : v.color, fontVariantNumeric: "tabular-nums", letterSpacing: "-1px" }}>{fmt}</span>
+                      <span className="text-secondary fw-bold" style={{ fontSize: "0.85rem" }}>{v.unit}</span>
                     </div>
 
-                    {/* Waveform */}
-                    <div style={{
-                      background: v.alert
-                        ? `rgba(220,53,69,0.04)`
-                        : `rgba(${v.bsColor === "danger" ? "220,53,69" : v.bsColor === "primary" ? "13,110,253" : "25,135,84"},0.04)`,
-                      borderRadius: 16,
-                      overflow: "hidden",
-                      padding: "4px 2px",
-                      marginBottom: 8,
-                    }}>
-                      {v.wave === "ecg" && (
-                        <ECGWave bpm={data?.hr || 72} color={v.alert ? "#dc3545" : v.color} />
-                      )}
-                      {v.wave === "pleth" && (
-                        <PlethWave color={v.alert ? "#dc3545" : v.color} />
-                      )}
-                      {v.wave === "temp" && (
-                        <TempSparkline history={tempHistory} color={v.alert ? "#dc3545" : v.color} />
-                      )}
+                    <div style={{ background: `rgba(${v.bsColor === "danger" ? "220,53,69" : v.bsColor === "primary" ? "13,110,253" : "25,135,84"},0.04)`, borderRadius: 16, overflow: "hidden", padding: "4px 2px", marginBottom: 8 }}>
+                      {v.wave === "ecg" && <ECGWave bpm={data?.hr || 72} color={v.alert ? "#dc3545" : v.color} />}
+                      {v.wave === "pleth" && <PlethWave color={v.alert ? "#dc3545" : v.color} />}
+                      {v.wave === "temp" && <TempSparkline history={tempHistory} color={v.alert ? "#dc3545" : v.color} />}
                     </div>
 
-                    {/* Footer */}
                     <div className="d-flex justify-content-between align-items-center">
-                      <span className="text-secondary" style={{ fontSize: "0.62rem", letterSpacing: "0.5px" }}>
-                        NORMAL: {v.normal}
-                      </span>
-                      <span className={`badge rounded-pill bg-${v.bsColor} bg-opacity-10 text-${v.bsColor}`}
-                        style={{ fontSize: "0.6rem" }}>
-                        {isLive ? "● LIVE" : isWeak ? "◐ LKG" : "—"}
-                      </span>
+                      <span className="text-secondary" style={{ fontSize: "0.62rem", letterSpacing: "0.5px" }}>NORMAL: {v.normal}</span>
+                      <span className={`badge rounded-pill bg-${v.bsColor} bg-opacity-10 text-${v.bsColor}`} style={{ fontSize: "0.6rem" }}>{isLive ? "● LIVE" : isWeak ? "◐ LKG" : "—"}</span>
                     </div>
                   </div>
                 </div>
@@ -463,11 +412,6 @@ function VitalsSection() {
           })}
         </div>
       )}
-
-      <style>{`
-        @keyframes stripPulse { 0%,100%{opacity:0.5} 50%{opacity:1} }
-        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.15} }
-      `}</style>
     </div>
   );
 }
@@ -500,25 +444,14 @@ const DashboardHome = () => {
 
   return (
     <div className="py-2">
-
-      {/* Welcome Banner */}
-      <div className="card border-0 rounded-4 overflow-hidden mb-5 shadow-sm"
-        style={{ background: "linear-gradient(135deg, #0d6efd, #6610f2)" }}>
+      <div className="card border-0 rounded-4 overflow-hidden mb-5 shadow-sm" style={{ background: "linear-gradient(135deg, #0d6efd, #6610f2)" }}>
         <div className="card-body p-3 p-md-4 text-white position-relative">
           <div className="position-relative z-1">
-            <h1 className="display-6 fw-black mb-2" style={{ letterSpacing: "-1px" }}>
-              Welcome back, {user?.full_name?.split(" ")[0] || "there"} 👋
-            </h1>
-            <p className="lead opacity-75 mb-3 fw-medium">
-              Your health journey is progressing beautifully. Here's your overview for today.
-            </p>
+            <h1 className="display-6 fw-black mb-2" style={{ letterSpacing: "-1px" }}>Welcome back, {user?.full_name?.split(" ")[0] || "there"} 👋</h1>
+            <p className="lead opacity-75 mb-3 fw-medium">Your health journey is progressing beautifully. Here's your overview for today.</p>
             <div className="d-flex flex-wrap gap-3">
-              <button className="btn btn-white rounded-pill px-4 fw-bold shadow-sm border-0">
-                View Health Report
-              </button>
-              <button className="btn btn-outline-light rounded-pill px-4 fw-bold">
-                Emergency SOS
-              </button>
+              <button className="btn btn-white rounded-pill px-4 fw-bold shadow-sm border-0">View Health Report</button>
+              <button className="btn btn-outline-light rounded-pill px-4 fw-bold">Emergency SOS</button>
             </div>
           </div>
           <div className="position-absolute top-0 end-0 opacity-10 p-5 d-none d-lg-block">
@@ -527,26 +460,20 @@ const DashboardHome = () => {
         </div>
       </div>
 
-      {/* ✅ LIVE VITALS — between banner and stats */}
       <VitalsSection />
 
-      {/* Health Summary + Alerts */}
       <div className="row g-4">
         <div className="col-12 col-lg-8">
           <div className="card border-0 shadow-sm rounded-4 h-100">
             <div className="card-body p-4">
               <div className="d-flex justify-content-between align-items-center mb-4">
                 <h2 className="h5 fw-black text-dark mb-0">Health Summary</h2>
-                <button className="btn btn-link text-primary text-decoration-none fw-bold p-0">
-                  Detailed Analysis
-                </button>
+                <button className="btn btn-link text-primary text-decoration-none fw-bold p-0">Detailed Analysis</button>
               </div>
               <div className="p-5 text-center bg-light rounded-4 border border-dashed text-secondary">
                 <TrendingUp size={48} className="mb-3 opacity-25" />
                 <h3 className="h6 fw-bold mb-1">Vitality Metrics Loading...</h3>
-                <p className="small mb-0">
-                  We're synchronizing your latest clinic results from the South Sector lab.
-                </p>
+                <p className="small mb-0">We're synchronizing your latest clinic results from the South Sector lab.</p>
               </div>
             </div>
           </div>
@@ -559,40 +486,18 @@ const DashboardHome = () => {
               <div className="d-flex flex-column gap-3 dashboard-scroll-container">
                 {notifications.length > 0 ? (
                   notifications.map(n => {
-                    const isUrgent = n.message.toLowerCase().includes("urgent") ||
-                      n.message.toLowerCase().includes("priority");
+                    const isUrgent = n.message.toLowerCase().includes("urgent") || n.message.toLowerCase().includes("priority");
                     const isActionRequired = n.type === "appointment_rescheduled";
                     return (
-                      <div key={n.id}
-                        className={`d-flex gap-3 align-items-start p-3 rounded-4 border-start border-4 ${isUrgent ? "bg-danger bg-opacity-10 border-danger" : isActionRequired ? "bg-warning bg-opacity-10 border-warning" : "bg-primary bg-opacity-10 border-primary"}`}>
-                        {isUrgent
-                          ? <ShieldCheck size={20} className="text-danger mt-1" />
-                          : isActionRequired
-                            ? <Clock size={20} className="text-warning mt-1" />
-                            : <Bell size={20} className="text-primary mt-1" />}
+                      <div key={n.id} className={`d-flex gap-3 align-items-start p-3 rounded-4 border-start border-4 ${isUrgent ? "bg-danger bg-opacity-10 border-danger" : isActionRequired ? "bg-warning bg-opacity-10 border-warning" : "bg-primary bg-opacity-10 border-primary"}`}>
+                        {isUrgent ? <ShieldCheck size={20} className="text-danger mt-1" /> : isActionRequired ? <Clock size={20} className="text-warning mt-1" /> : <Bell size={20} className="text-primary mt-1" />}
                         <div className="flex-grow-1">
                           <div className="d-flex justify-content-between">
-                            <div className="fw-bold small text-dark d-flex align-items-center gap-2">
-                              {n.title}
-                              {isUrgent && (
-                                <span className="badge bg-danger rounded-pill" style={{ fontSize: "0.6rem" }}>
-                                  PRIORITY
-                                </span>
-                              )}
-                            </div>
-                            <button onClick={() => handleMarkRead(n.id)}
-                              className="btn btn-link p-0 text-muted" title="Dismiss">
-                              <X size={14} />
-                            </button>
+                            <div className="fw-bold small text-dark d-flex align-items-center gap-2">{n.title} {isUrgent && <span className="badge bg-danger rounded-pill" style={{ fontSize: "0.6rem" }}>PRIORITY</span>}</div>
+                            <button onClick={() => handleMarkRead(n.id)} className="btn btn-link p-0 text-muted" title="Dismiss"><X size={14} /></button>
                           </div>
                           <p className="small text-secondary mb-2 lh-sm">{n.message}</p>
-                          {isActionRequired && (
-                            <Link to="/patient/appointments"
-                              className="btn btn-warning btn-sm py-0 px-2 rounded-pill fw-bold"
-                              style={{ fontSize: "0.7rem" }}>
-                              Review New Time
-                            </Link>
-                          )}
+                          {isActionRequired && <Link to="/patient/appointments" className="btn btn-warning btn-sm py-0 px-2 rounded-pill fw-bold" style={{ fontSize: "0.7rem" }}>Review New Time</Link>}
                         </div>
                       </div>
                     );
@@ -601,21 +506,7 @@ const DashboardHome = () => {
                   <>
                     <div className="d-flex gap-3 align-items-start p-3 rounded-4 bg-primary bg-opacity-10 border-start border-4 border-primary">
                       <ShieldCheck size={20} className="text-primary mt-1" />
-                      <div>
-                        <div className="fw-bold small text-dark">Insurance Verified</div>
-                        <p className="small text-secondary mb-0">
-                          Your medical coverage has been updated for the 2026 term.
-                        </p>
-                      </div>
-                    </div>
-                    <div className="d-flex gap-3 align-items-start p-3 rounded-4 bg-light">
-                      <Calendar size={20} className="text-secondary mt-1" />
-                      <div>
-                        <div className="fw-bold small text-dark text-muted">No recent alerts</div>
-                        <p className="small text-secondary mb-0 opacity-50">
-                          You're all caught up with your notifications.
-                        </p>
-                      </div>
+                      <div><div className="fw-bold small text-dark">Insurance Verified</div><p className="small text-secondary mb-0">Your medical coverage has been updated for the 2026 term.</p></div>
                     </div>
                   </>
                 )}
@@ -624,38 +515,6 @@ const DashboardHome = () => {
           </div>
         </div>
       </div>
-
-      <style>{`
-        .btn-white { background: white; color: #0d6efd; }
-        .btn-white:hover { background: #f8f9fa; transform: scale(1.05); }
-        .fw-black { font-weight: 950; }
-        .hover-translate-y { transition: transform 0.2s; }
-        .hover-translate-y:hover { transform: translateY(-4px); }
-        .border-dashed { border-style: dashed !important; }
-
-        .dashboard-scroll-container {
-          max-height: 480px;
-          min-height: 380px;
-          overflow-y: auto;
-          overflow-x: hidden;
-          padding-right: 8px;
-        }
-
-        .dashboard-scroll-container::-webkit-scrollbar {
-          width: 5px;
-        }
-        .dashboard-scroll-container::-webkit-scrollbar-track {
-          background: #f1f5f9;
-          border-radius: 10px;
-        }
-        .dashboard-scroll-container::-webkit-scrollbar-thumb {
-          background: #cbd5e1;
-          border-radius: 10px;
-        }
-        .dashboard-scroll-container::-webkit-scrollbar-thumb:hover {
-          background: #94a3b8;
-        }
-      `}</style>
     </div>
   );
 };
