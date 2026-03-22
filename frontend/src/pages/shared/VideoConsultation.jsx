@@ -28,6 +28,7 @@ export default function VideoConsultation() {
     const pendingLocalIceRef = useRef([]);
     const reconnectAttemptsRef = useRef(0);
     const restartDebounceRef = useRef(null);
+    const hasSentInitialOfferRef = useRef(false);
     const { endActiveCall } = useCall();
     
     const [isMuted, setIsMuted] = useState(false);
@@ -79,6 +80,8 @@ export default function VideoConsultation() {
             if (!peerConnection.current || !socket.current || !remoteSidRef.current) return;
             if (makingOfferRef.current) return;
             if (peerConnection.current.signalingState !== "stable") return;
+            // Prevent repeated offer churn that can freeze media after initial connect.
+            if (hasSentInitialOfferRef.current && peerConnection.current.remoteDescription?.type) return;
             try {
                 makingOfferRef.current = true;
                 const offer = await peerConnection.current.createOffer();
@@ -88,7 +91,9 @@ export default function VideoConsultation() {
                     to: remoteSidRef.current,
                     offer: peerConnection.current.localDescription,
                 });
+                hasSentInitialOfferRef.current = true;
                 flushPendingLocalIce();
+                console.log("WebRTC: offer sent", { room, to: remoteSidRef.current });
             } catch (err) {
                 console.error("Error creating/sending offer:", err);
             } finally {
@@ -231,12 +236,9 @@ export default function VideoConsultation() {
                         }, 1500);
                     }
                 };
-                peerConnection.current.onnegotiationneeded = async () => {
-                    console.log("WebRTC negotiationneeded");
-                    if (!remoteSidRef.current) return;
-                    if (politeRef.current) return;
-                    await createAndSendOffer();
-                };
+                // Intentionally avoid automatic onnegotiationneeded offer creation.
+                // Offers are driven by explicit signaling roles (video_peer.shouldOffer)
+                // to prevent glare/duplicate offers that can cause one-way/frozen video.
                 peerConnection.current.oniceconnectionstatechange = () => {
                     console.log("WebRTC iceConnectionState:", peerConnection.current?.iceConnectionState);
                 };
@@ -272,7 +274,12 @@ export default function VideoConsultation() {
 
                 socket.current.on("connect", () => {
                     selfSidRef.current = socket.current?.id || null;
+                    hasSentInitialOfferRef.current = false;
                     socket.current?.emit("join_video_room", { room });
+                });
+
+                socket.current.on("room_joined", (payload) => {
+                    console.log("Video room joined:", payload);
                 });
 
                 socket.current.on("video_room_state", async ({ participants }) => {
@@ -282,6 +289,7 @@ export default function VideoConsultation() {
                     politeRef.current = participants[0] !== selfSidRef.current;
                     if (!remoteSidRef.current) {
                         setIsRemoteConnected(false);
+                        hasSentInitialOfferRef.current = false;
                     }
                 });
 
@@ -290,6 +298,7 @@ export default function VideoConsultation() {
                     politeRef.current = Boolean(isPolite);
                     flushPendingLocalIce();
                     if (shouldOffer && remoteSidRef.current) {
+                        console.log("WebRTC: peer role says shouldOffer", { peerSid, isPolite });
                         await createAndSendOffer();
                     }
                 });
@@ -302,11 +311,17 @@ export default function VideoConsultation() {
                 socket.current.on("user_joined", ({ sid }) => {
                     remoteSidRef.current = sid || remoteSidRef.current;
                     flushPendingLocalIce();
+                    // Fallback: if role event is delayed, caller can still issue one initial offer.
+                    if (!politeRef.current && remoteSidRef.current && !hasSentInitialOfferRef.current) {
+                        void createAndSendOffer();
+                    }
                 });
 
                 socket.current.on("user_left", () => {
                     remoteSidRef.current = null;
                     setIsRemoteConnected(false);
+                    hasSentInitialOfferRef.current = false;
+                    ignoreOfferRef.current = false;
                     if (remoteVideo.current) {
                         remoteVideo.current.srcObject = null;
                     }
@@ -319,14 +334,19 @@ export default function VideoConsultation() {
                         const offer = data?.offer;
                         if (!offer) return;
                         if (data?.from) remoteSidRef.current = data.from;
-                        const offerCollision =
-                            makingOfferRef.current || peerConnection.current.signalingState !== "stable";
-                        ignoreOfferRef.current = !politeRef.current && offerCollision;
-                        if (ignoreOfferRef.current) return;
+                        const offerCollision = makingOfferRef.current || peerConnection.current.signalingState !== "stable";
+                        if (offerCollision) {
+                            if (!politeRef.current) {
+                                console.log("WebRTC: dropping colliding offer (impolite peer)");
+                                return;
+                            }
+                            await peerConnection.current.setLocalDescription({ type: "rollback" });
+                        }
                         await peerConnection.current.setRemoteDescription(
                             new RTCSessionDescription(offer),
                         );
                         await flushQueuedIceCandidates();
+                        console.log("WebRTC: remote offer set");
 
                         const answer = await peerConnection.current.createAnswer();
                         await peerConnection.current.setLocalDescription(answer);
@@ -335,6 +355,7 @@ export default function VideoConsultation() {
                             to: data?.from || remoteSidRef.current,
                             answer: peerConnection.current.localDescription,
                         });
+                        console.log("WebRTC: answer sent");
                         flushPendingLocalIce();
                     } catch (error) {
                         console.error("Error handling offer:", error);
@@ -349,6 +370,7 @@ export default function VideoConsultation() {
                             new RTCSessionDescription(data.answer),
                         );
                         await flushQueuedIceCandidates();
+                        console.log("WebRTC: answer received and remote description set");
                     } catch (error) {
                         console.error("Error handling answer:", error);
                     }
@@ -357,10 +379,10 @@ export default function VideoConsultation() {
                 socket.current.on("ice_candidate", async (data) => {
                     if (!peerConnection.current || !data?.candidate) return;
                     try {
-                        if (ignoreOfferRef.current) return;
                         const candidate = new RTCIceCandidate(data.candidate);
                         if (peerConnection.current.remoteDescription?.type) {
                             await peerConnection.current.addIceCandidate(candidate);
+                            console.log("WebRTC: ICE candidate added");
                         } else {
                             iceCandidateQueue.current.push(candidate);
                         }
@@ -373,7 +395,7 @@ export default function VideoConsultation() {
                     if (!socket.current?.connected) return;
                     if (isRemoteConnected) return;
                     socket.current.emit("join_video_room", { room });
-                    if (!politeRef.current && remoteSidRef.current && peerConnection.current?.signalingState === "stable") {
+                    if (!politeRef.current && remoteSidRef.current && !hasSentInitialOfferRef.current && peerConnection.current?.signalingState === "stable") {
                         void createAndSendOffer();
                     }
                 }, 3000);
@@ -423,6 +445,7 @@ export default function VideoConsultation() {
             iceCandidateQueue.current = [];
             pendingLocalIceRef.current = [];
             reconnectAttemptsRef.current = 0;
+            hasSentInitialOfferRef.current = false;
             if (restartDebounceRef.current) {
                 clearTimeout(restartDebounceRef.current);
                 restartDebounceRef.current = null;

@@ -29,6 +29,11 @@ def register_video_events(socketio):
             return
 
         print(f"[VideoSocket] User joined room: {room} as sid {request.sid}")
+        emit(
+            "room_joined",
+            {"room": room, "sid": request.sid, "participants": participants, "count": len(participants)},
+            room=request.sid,
+        )
         emit("user_joined", {"room": room, "sid": request.sid}, room=room, include_self=False)
 
         peers = [sid for sid in participants if sid != request.sid]
