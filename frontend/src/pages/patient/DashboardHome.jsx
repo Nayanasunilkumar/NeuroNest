@@ -473,8 +473,6 @@ const DashboardHome = () => {
     }
   };
 
-  const stats = [];
-
   return (
     <div className="py-2">
 
@@ -506,31 +504,6 @@ const DashboardHome = () => {
 
       {/* ✅ LIVE VITALS — between banner and stats */}
       <VitalsSection />
-
-      {/* Quick Stats */}
-      <div className="row g-4 mb-5">
-        {stats.map((stat, i) => (
-          <div key={i} className="col-12 col-md-4">
-            <div className="card border-0 shadow-sm rounded-4 h-100 hover-translate-y">
-              <div className="card-body p-4">
-                <div className="d-flex justify-content-between align-items-center mb-3">
-                  <div className={`bg-${stat.color} bg-opacity-10 text-${stat.color} p-3 rounded-4`}>
-                    {stat.icon}
-                  </div>
-                  <span className="badge rounded-pill bg-light text-secondary small fw-bold px-2 py-1">
-                    {stat.trend}
-                  </span>
-                </div>
-                <div className="small fw-bold text-uppercase text-secondary mb-1"
-                  style={{ fontSize: "0.7rem", letterSpacing: "1px" }}>
-                  {stat.label}
-                </div>
-                <div className="h3 fw-black text-dark mb-0">{stat.value}</div>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
 
       {/* Health Summary + Alerts */}
       <div className="row g-4">
