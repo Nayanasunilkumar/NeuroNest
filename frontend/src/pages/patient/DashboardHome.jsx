@@ -450,6 +450,7 @@ function VitalsSection() {
 
 // ── Main Dashboard ─────────────────────────────────────────────
 const DashboardHome = () => {
+  const user = getUser();
   const [notifications, setNotifications] = useState([]);
 
   useEffect(() => {
@@ -482,7 +483,7 @@ const DashboardHome = () => {
         <div className="card-body p-3 p-md-4 text-white position-relative">
           <div className="position-relative z-1">
             <h1 className="display-6 fw-black mb-2" style={{ letterSpacing: "-1px" }}>
-              Welcome back, Jane 👋
+              Welcome back, {user?.name?.split(" ")[0] || "there"} 👋
             </h1>
             <p className="lead opacity-75 mb-3 fw-medium">
               Your health journey is progressing beautifully. Here's your overview for today.
