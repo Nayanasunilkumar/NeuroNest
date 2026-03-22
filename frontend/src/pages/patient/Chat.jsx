@@ -83,8 +83,11 @@ const Chat = () => {
     };
 
     const handleNewMessage = useCallback((msg) => {
+        if (!msg) return;
+
         setSelectedConv((current) => {
-            if (current?.id === msg.conversation_id) {
+            // Ensure type-safe ID comparison
+            if (current && Number(current.id) === Number(msg.conversation_id)) {
                 setMessages((prev) => {
                     if (prev.find(m => m.id === msg.id)) return prev;
                     return [...prev, msg];
@@ -96,7 +99,7 @@ const Chat = () => {
         setConversations(prev => (
             prev
                 .map(c => {
-                    if (c.id === msg.conversation_id) {
+                    if (Number(c.id) === Number(msg.conversation_id)) {
                         return {
                             ...c,
                             last_message: {
@@ -106,7 +109,8 @@ const Chat = () => {
                                 sender_id: msg.sender_id
                             },
                             unread_count:
-                                String(msg.sender_id) !== String(currentUser?.id) && selectedConv?.id !== msg.conversation_id
+                                String(msg.sender_id) !== String(currentUser?.id) && 
+                                (!selectedConv || Number(selectedConv.id) !== Number(msg.conversation_id))
                                     ? c.unread_count + 1
                                     : c.unread_count
                         };
@@ -115,7 +119,7 @@ const Chat = () => {
                 })
                 .sort((a, b) => toEpochMs(b.last_message?.created_at) - toEpochMs(a.last_message?.created_at))
         ));
-    }, [currentUser?.id, selectedConv?.id]);
+    }, [currentUser?.id, selectedConv]);
 
     useEffect(() => {
         const user = getUser();
@@ -125,11 +129,16 @@ const Chat = () => {
         fetchConversations();
 
         if (socket) {
-            socket.on("new_message", (msg) => {
+            const onNewMessage = (msg) => {
                 handleNewMessage(msg);
-            });
+            };
+            
+            socket.on("new_message", onNewMessage);
+            
+            return () => {
+                socket.off("new_message", onNewMessage);
+            };
         }
-
     }, [fetchConversations, handleNewMessage]);
 
     const handleSendMessage = async (content, type = 'text') => {

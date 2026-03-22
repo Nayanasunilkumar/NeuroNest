@@ -19,7 +19,7 @@ const ChatHeader = ({ otherUser, context, isDoctor, onToggleSidebar, showSidebar
                 <div>
                     <h3 className="mb-0 fw-bold text-dark" style={{ fontSize: '1.15rem' }}>{otherUser?.name || 'Loading Chat...'}</h3>
                     <div className="d-flex align-items-center gap-2 mt-1">
-                        <div className={`rounded-circle ${otherUser?.is_online ? 'bg-success' : 'bg-secondary opacity-50'}`} style={{ width: '6px', height: '6px', backgroundColor: '#22c55e' }}></div>
+                        <div className={`rounded-circle ${otherUser?.is_online ? 'bg-success' : 'bg-secondary opacity-50'}`} style={{ width: '6px', height: '6px' }}></div>
                         <span className="text-secondary fw-medium" style={{ fontSize: '0.75rem' }}>{otherUser?.is_online ? 'Active now' : 'Last seen recently'}</span>
                     </div>
                 </div>
