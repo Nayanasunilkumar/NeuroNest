@@ -21,6 +21,8 @@ const Chat = () => {
     const { startVideoCall } = useCall();
     const conversationsRef = React.useRef([]);
     const messagesRef = React.useRef([]);
+    const selectedConvRef = React.useRef(selectedConv);
+    const syncInFlightRef = React.useRef(false);
 
     const joinConversationRooms = useCallback((socketClient, convs) => {
         if (!socketClient || !Array.isArray(convs) || convs.length === 0) return;
@@ -96,7 +98,6 @@ const Chat = () => {
     };
 
     // USE REFS FOR STABLE VALUES IN SOCKET LISTENERS
-    const selectedConvRef = React.useRef(selectedConv);
     const currentUserRef = React.useRef(currentUser);
 
     useEffect(() => {
@@ -169,6 +170,29 @@ const Chat = () => {
         const exists = conversationsRef.current.some((c) => Number(c.id) === Number(msg.conversation_id));
         if (!exists) {
             fetchConversations();
+        }
+
+        // Hard fix: if sidebar got a call_request for the currently open conversation,
+        // force refresh full message stream so consultation card appears immediately.
+        const activeConvId = selectedConvRef.current?.id;
+        if (
+            msg?.type === 'call_request' &&
+            activeConvId &&
+            Number(activeConvId) === Number(msg.conversation_id) &&
+            !syncInFlightRef.current
+        ) {
+            syncInFlightRef.current = true;
+            chatAPI
+                .getMessages(activeConvId)
+                .then((latest) => {
+                    if (Array.isArray(latest)) setMessages(latest);
+                })
+                .catch((error) => {
+                    console.error("Failed to hard-sync call_request message stream:", error);
+                })
+                .finally(() => {
+                    syncInFlightRef.current = false;
+                });
         }
     }, [fetchConversations]);
 

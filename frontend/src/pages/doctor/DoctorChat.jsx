@@ -38,6 +38,7 @@ const DoctorChat = ({ isEmbedded = false }) => {
     const { startVideoCall } = useCall();
     const conversationsRef = useRef([]);
     const messagesRef = useRef([]);
+    const syncInFlightRef = useRef(false);
 
     const joinConversationRooms = useCallback((socketClient, convs) => {
         if (!socketClient || !Array.isArray(convs) || convs.length === 0) return;
@@ -180,6 +181,28 @@ const DoctorChat = ({ isEmbedded = false }) => {
                 return dateB - dateA;
             });
         });
+
+        // Hard fix: if sidebar reflects a call_request for active thread,
+        // force pull full message history so consultation card renders in chat.
+        const activeConvId = selectedConvRef.current?.id;
+        if (
+            msg?.type === 'call_request' &&
+            activeConvId &&
+            Number(activeConvId) === Number(msg.conversation_id) &&
+            !syncInFlightRef.current
+        ) {
+            syncInFlightRef.current = true;
+            getMessages(activeConvId)
+                .then((latest) => {
+                    if (Array.isArray(latest)) setMessages(latest);
+                })
+                .catch((error) => {
+                    console.error("Failed to hard-sync call_request in doctor chat:", error);
+                })
+                .finally(() => {
+                    syncInFlightRef.current = false;
+                });
+        }
     }, [fetchConversations]);
 
     useEffect(() => {
