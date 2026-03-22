@@ -211,6 +211,14 @@ def send_message_http(conversation_id):
         Participant.conversation_id == conversation_id,
         Participant.user_id != current_user_id
     ).all()
+
+    # Hard fallback delivery path: user-targeted rooms receive events even when
+    # conversation room join is stale/missed on the frontend.
+    socketio.emit('new_message', payload, room=f"user_{current_user_id}")
+    socketio.emit('receive_message', payload, room=f"user_{current_user_id}")
+    for p in others:
+        socketio.emit('new_message', payload, room=f"user_{p.user_id}")
+        socketio.emit('receive_message', payload, room=f"user_{p.user_id}")
     
     sender_name = User.query.get(current_user_id).full_name if User.query.get(current_user_id) else "Someone"
 

@@ -123,6 +123,13 @@ def on_send_message(data):
             Participant.conversation_id == conv_id,
             Participant.user_id != user_id
         ).all()
+
+        # Hard fallback delivery path to user rooms.
+        emit('new_message', payload, room=f"user_{user_id}")
+        emit('receive_message', payload, room=f"user_{user_id}")
+        for p in others:
+            emit('new_message', payload, room=f"user_{p.user_id}")
+            emit('receive_message', payload, room=f"user_{p.user_id}")
         
         sender = User.query.get(user_id)
         sender_name = sender.full_name if sender else "Someone"

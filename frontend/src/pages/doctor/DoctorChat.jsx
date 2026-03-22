@@ -37,6 +37,7 @@ const DoctorChat = ({ isEmbedded = false }) => {
     const hasAutoStartedVideoRef = useRef(false);
     const { startVideoCall } = useCall();
     const conversationsRef = useRef([]);
+    const messagesRef = useRef([]);
 
     const joinConversationRooms = useCallback((socketClient, convs) => {
         if (!socketClient || !Array.isArray(convs) || convs.length === 0) return;
@@ -116,6 +117,10 @@ const DoctorChat = ({ isEmbedded = false }) => {
         conversationsRef.current = conversations;
     }, [conversations]);
 
+    useEffect(() => {
+        messagesRef.current = messages;
+    }, [messages]);
+
     const handleIncomingMessage = useCallback((msg) => {
         if (!msg) return;
 
@@ -145,6 +150,10 @@ const DoctorChat = ({ isEmbedded = false }) => {
 
         // 2. ALWAYS UPDATE SIDEBAR PREVIEWS
         setConversations(prev => {
+            const exists = prev.some((c) => Number(c.id) === Number(msg.conversation_id));
+            if (!exists) {
+                fetchConversations();
+            }
             const updated = prev.map(c => {
                 if (Number(c.id) === Number(msg.conversation_id)) {
                     return {
@@ -171,7 +180,7 @@ const DoctorChat = ({ isEmbedded = false }) => {
                 return dateB - dateA;
             });
         });
-    }, []);
+    }, [fetchConversations]);
 
     useEffect(() => {
         const user = getUser();
@@ -209,10 +218,12 @@ const DoctorChat = ({ isEmbedded = false }) => {
                 }
             };
             socket.on("new_message", handleIncomingMessage);
+            socket.on("receive_message", handleIncomingMessage);
             socket.on("connect", handleSocketConnect);
             initChat();
             return () => {
                 socket.off("new_message", handleIncomingMessage);
+                socket.off("receive_message", handleIncomingMessage);
                 socket.off("connect", handleSocketConnect);
             };
         } else {
@@ -220,6 +231,28 @@ const DoctorChat = ({ isEmbedded = false }) => {
         }
 
     }, [fetchConversations, handleIncomingMessage, handleSelectConversation, joinConversationRooms, patientIdParam]);
+
+    // Hard fallback polling: ensures chat updates arrive without refresh even under socket jitter.
+    useEffect(() => {
+        const timer = setInterval(async () => {
+            if (document.hidden) return;
+            await fetchConversations();
+            const active = selectedConvRef.current;
+            if (!active?.id) return;
+            try {
+                const latest = await getMessages(active.id);
+                const current = messagesRef.current || [];
+                const lastCurrentId = current[current.length - 1]?.id;
+                const lastLatestId = latest[latest.length - 1]?.id;
+                if (lastLatestId && lastLatestId !== lastCurrentId) {
+                    setMessages(latest);
+                }
+            } catch (error) {
+                console.error("Doctor chat polling sync failed:", error);
+            }
+        }, 2500);
+        return () => clearInterval(timer);
+    }, [fetchConversations]);
 
     const handleSendMessage = useCallback(async (content, type = 'text') => {
         if (!selectedConv || !currentUser) return;

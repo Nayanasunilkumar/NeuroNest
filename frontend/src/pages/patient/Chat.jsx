@@ -20,6 +20,7 @@ const Chat = () => {
     const [showInfoPanel, setShowInfoPanel] = useState(false);
     const { startVideoCall } = useCall();
     const conversationsRef = React.useRef([]);
+    const messagesRef = React.useRef([]);
 
     const joinConversationRooms = useCallback((socketClient, convs) => {
         if (!socketClient || !Array.isArray(convs) || convs.length === 0) return;
@@ -110,6 +111,10 @@ const Chat = () => {
         conversationsRef.current = conversations;
     }, [conversations]);
 
+    useEffect(() => {
+        messagesRef.current = messages;
+    }, [messages]);
+
     const handleNewMessage = useCallback((msg) => {
         if (!msg) return;
 
@@ -161,7 +166,11 @@ const Chat = () => {
                 })
                 .sort((a, b) => toEpochMs(b.last_message?.created_at) - toEpochMs(a.last_message?.created_at))
         ));
-    }, []);
+        const exists = conversationsRef.current.some((c) => Number(c.id) === Number(msg.conversation_id));
+        if (!exists) {
+            fetchConversations();
+        }
+    }, [fetchConversations]);
 
     useEffect(() => {
         const user = getUser();
@@ -178,13 +187,37 @@ const Chat = () => {
                 }
             };
             socket.on("new_message", handleNewMessage);
+            socket.on("receive_message", handleNewMessage);
             socket.on("connect", handleSocketConnect);
             return () => {
                 socket.off("new_message", handleNewMessage);
+                socket.off("receive_message", handleNewMessage);
                 socket.off("connect", handleSocketConnect);
             };
         }
     }, [conversations.length, fetchConversations, handleNewMessage, joinConversationRooms]);
+
+    // Hard fallback polling: guarantees updates without manual refresh.
+    useEffect(() => {
+        const timer = setInterval(async () => {
+            if (document.hidden) return;
+            await fetchConversations();
+            const active = selectedConvRef.current;
+            if (!active?.id) return;
+            try {
+                const latest = await chatAPI.getMessages(active.id);
+                const current = messagesRef.current || [];
+                const lastCurrentId = current[current.length - 1]?.id;
+                const lastLatestId = latest[latest.length - 1]?.id;
+                if (lastLatestId && lastLatestId !== lastCurrentId) {
+                    setMessages(latest);
+                }
+            } catch (error) {
+                console.error("Patient chat polling sync failed:", error);
+            }
+        }, 2500);
+        return () => clearInterval(timer);
+    }, [fetchConversations]);
 
     const handleSendMessage = async (content, type = 'text') => {
         if (!selectedConv || !currentUser) return;
