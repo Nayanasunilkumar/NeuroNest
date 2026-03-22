@@ -29,7 +29,7 @@ export default function VideoConsultation() {
     const reconnectAttemptsRef = useRef(0);
     const restartDebounceRef = useRef(null);
     const hasSentInitialOfferRef = useRef(false);
-    const { endActiveCall } = useCall();
+    const { endActiveCall, activeCall } = useCall();
     
     const [isMuted, setIsMuted] = useState(false);
     const [isVideoOff, setIsVideoOff] = useState(false);
@@ -135,6 +135,9 @@ export default function VideoConsultation() {
             if (hasSentCallEndedRef.current) return;
             const conversationId = Number(roomId);
             if (!Number.isInteger(conversationId)) return;
+            // Consultation lifecycle chat card is initiator-only.
+            // Only the caller publishes the call_ended status update.
+            if (!activeCall?.caller_id || String(activeCall.caller_id) !== String(user?.id)) return;
             hasSentCallEndedRef.current = true;
             const roleLabel = user?.role === 'doctor' ? 'Doctor' : 'Patient';
             try {
@@ -454,7 +457,7 @@ export default function VideoConsultation() {
             if (restartTimer) clearTimeout(restartTimer);
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [roomId]);
+    }, [activeCall?.caller_id, roomId, user?.id, user?.role]);
 
     const handleHangup = async () => {
         try {
