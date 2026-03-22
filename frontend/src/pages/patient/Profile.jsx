@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import api from "../../api/axios";
 import axios from "axios";
 import { toAssetUrl } from "../../utils/media";
@@ -217,13 +217,13 @@ const Profile = () => {
   const bmiNumber = Number(bmi);
   const hasValidBmi = Number.isFinite(bmiNumber);
 
-  const bmiMeta = useMemo(() => {
+  const bmiMeta = (() => {
     if (!hasValidBmi) return { label: "Unknown", tone: "neutral", score: 0 };
     if (bmiNumber < 18.5) return { label: "Underweight", tone: "low", score: 25 };
     if (bmiNumber < 25) return { label: "Healthy", tone: "healthy", score: 50 };
     if (bmiNumber < 30) return { label: "Overweight", tone: "elevated", score: 75 };
     return { label: "Obese", tone: "critical", score: 100 };
-  }, [bmiNumber, hasValidBmi]);
+  })();
 
   const activeMeds = (clinicalData?.medications || []).filter((m) => m.status === "active");
   const timelineEntries = (clinicalData?.timeline || []).slice(0, 5);
