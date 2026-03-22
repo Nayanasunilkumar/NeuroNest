@@ -181,6 +181,13 @@ def reschedule_appointment(appointment_id):
             return jsonify({"message": "Consultation mode cannot be changed for urgent/emergency requests"}), 400
         appointment.consultation_type = requested_consultation_type
 
+    # Populate reschedule fields
+    appointment.rescheduled_by = "doctor"
+    appointment.old_date_time = datetime.combine(old_date, old_time)
+    appointment.new_date_time = datetime.combine(new_date, new_time)
+    appointment.reschedule_reason = data.get("reason", "")
+    appointment.reschedule_status = "Approved"
+
     appointment.appointment_date = new_date
     appointment.appointment_time = new_time
     appointment.status = "rescheduled" # Indicates doctor suggested a new time
@@ -197,7 +204,7 @@ def reschedule_appointment(appointment_id):
             )
         appointment.slot_id = None
 
-    NotificationService.notify_appointment_event(appointment.id, "rescheduled")
+    NotificationService.notify_appointment_reschedule(appointment.id)
     
     db.session.commit()
     
