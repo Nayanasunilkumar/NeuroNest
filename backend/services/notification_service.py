@@ -180,7 +180,7 @@ class NotificationService:
         subject = f"🚨 Critical Health Alert: {alert.vital_type} - {patient.full_name}"
         # Display both IST (UTC+5.5) and UTC for convenience
         ist_time = alert.created_at + timedelta(hours=5, minutes=30)
-        time_display = f"{ist_time.strftime('%b %d, %I:%M %p')} IST / {alert.created_at.strftime('%I:%M %p')} UTC"
+        time_display = f"{ist_time.strftime('%b %d, %I:%M %p')} IST"
 
         msg = (
             f"A critical health alert has been triggered for {patient.full_name}.\n\n"
