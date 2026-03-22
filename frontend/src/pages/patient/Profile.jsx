@@ -1,16 +1,15 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import api from "../../api/axios";
 import axios from "axios";
 import { toAssetUrl } from "../../utils/media";
-import "../../styles/ProfileStyles.css"; 
 import "../../styles/patient-records.css"; // Reuse premium clinical styles
+import "../../styles/ProfileStyles.css";
 import { getClinicalSummary } from "../../api/profileApi";
-import { 
-  User, Phone, Mail, MapPin, Activity, 
-  Heart, Calendar, Ruler, Weight, Edit2, 
-  Save, X, Plus, Trash2, ShieldAlert,
-  CalendarDays, History, ArrowRight, Clock,
-  Droplet, Moon, Scale, Utensils, Hash, Pill
+import {
+  User, Phone, Mail, MapPin, Activity,
+  Heart, Calendar, Weight, Edit2,
+  Save, Plus, Trash2, ShieldAlert,
+  Droplet, Scale, Pill, Video, Stethoscope, FileText, AlertTriangle, ShieldCheck
 } from "lucide-react";
 
 const PROFILE_KEYS = [
@@ -59,6 +58,7 @@ const Profile = () => {
 
   const [editing, setEditing] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [showAllConditions, setShowAllConditions] = useState(false);
   const [initialProfileSnapshot, setInitialProfileSnapshot] = useState(null);
   const [initialEmergencySnapshot, setInitialEmergencySnapshot] = useState(null);
 
@@ -214,6 +214,51 @@ const Profile = () => {
 
   const age = calculateAge(profile.date_of_birth);
   const bmi = calculateBMI(profile.weight_kg, profile.height_cm);
+  const bmiNumber = Number(bmi);
+  const hasValidBmi = Number.isFinite(bmiNumber);
+
+  const bmiMeta = useMemo(() => {
+    if (!hasValidBmi) return { label: "Unknown", tone: "neutral", score: 0 };
+    if (bmiNumber < 18.5) return { label: "Underweight", tone: "low", score: 25 };
+    if (bmiNumber < 25) return { label: "Healthy", tone: "healthy", score: 50 };
+    if (bmiNumber < 30) return { label: "Overweight", tone: "elevated", score: 75 };
+    return { label: "Obese", tone: "critical", score: 100 };
+  }, [bmiNumber, hasValidBmi]);
+
+  const activeMeds = (clinicalData?.medications || []).filter((m) => m.status === "active");
+  const timelineEntries = (clinicalData?.timeline || []).slice(0, 5);
+
+  const conditionItems = [
+    ...(clinicalData?.conditions || []).map((c) => ({
+      name: c.condition_name,
+      severity: (c.status || "active").toLowerCase(),
+      kind: "condition",
+    })),
+    ...(clinicalData?.allergies || []).map((a) => ({
+      name: a.allergy_name,
+      severity: (a.severity || "severe").toLowerCase(),
+      kind: "allergy",
+    })),
+  ];
+
+  const severityClass = (severity = "") => {
+    const value = severity.toLowerCase();
+    if (value === "critical") return "severity-critical";
+    if (value === "active") return "severity-active";
+    if (value === "moderate") return "severity-moderate";
+    return "severity-severe";
+  };
+
+  const visibleConditions = showAllConditions ? conditionItems : conditionItems.slice(0, 5);
+  const activeCount = conditionItems.filter((item) => item.severity === "active").length;
+  const severeCount = conditionItems.filter((item) => item.severity === "severe").length;
+
+  const getTimelineIcon = (reason = "") => {
+    const normalized = String(reason).toLowerCase();
+    if (normalized.includes("video") || normalized.includes("consult")) return <Video size={14} />;
+    if (normalized.includes("prescription") || normalized.includes("med")) return <FileText size={14} />;
+    return <Stethoscope size={14} />;
+  };
 
   return (
     <div className="patient-profile-page-wrapper">
@@ -241,34 +286,30 @@ const Profile = () => {
 
         {!editing ? (
             <div className="mx-auto" style={{ maxWidth: '1440px' }}>
-                {/* MATERIALLY MATCHED IDENTITY CARD */}
-                <div className="card clinical-panel mb-4 border-0">
+                <div className="card clinical-panel profile-hero mb-4 border-0 section-animate">
                     <div className="d-flex flex-wrap flex-lg-nowrap gap-4">
-                        {/* Avatar Col */}
                         <div className="d-flex flex-column align-items-center gap-3 pe-lg-3">
-                            <div className="patient-img-large overflow-hidden">
+                            <div className="patient-img-large overflow-hidden calm-avatar-frame">
                                 {profile.profile_image ? (
                                     <img src={toAssetUrl(profile.profile_image)} alt={profile.full_name} className="w-100 h-100 object-fit-cover" />
                                 ) : (
                                     <div className="w-100 h-100 d-flex align-items-center justify-content-center bg-primary bg-opacity-10 text-primary"><User size={64} /></div>
                                 )}
                             </div>
-                            <div className="d-flex gap-2">
-                                <div className="badge rounded-pill bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 d-flex align-items-center fw-bold" style={{fontSize: '0.65rem', padding: '0.4rem 0.8rem'}}><span className="me-1">🚫</span> Alcohol</div>
-                                <div className="badge rounded-pill bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 d-flex align-items-center fw-bold" style={{fontSize: '0.65rem', padding: '0.4rem 0.8rem'}}><span className="me-1">🚬</span> Smoker</div>
+                            <div className="d-flex gap-2 flex-wrap justify-content-center">
+                                <div className="badge rounded-pill warning-chip d-flex align-items-center fw-bold"><AlertTriangle size={12} className="me-1" /> ALCOHOL</div>
+                                <div className="badge rounded-pill warning-chip d-flex align-items-center fw-bold"><AlertTriangle size={12} className="me-1" /> SMOKER</div>
                             </div>
                         </div>
 
-                        {/* Details Col */}
                         <div className="flex-grow-1 d-flex flex-column justify-content-between gap-4">
-                            {/* Top row */}
                             <div className="d-flex justify-content-between align-items-start w-100">
                                 <div>
                                     <div className="d-flex align-items-center gap-3 mb-2">
-                                        <h2 className="fw-black text-dark mb-0" style={{fontSize: '1.4rem'}}>{profile.full_name}</h2>
+                                        <h2 className="fw-black text-dark mb-0 calm-heading" style={{fontSize: '1.7rem'}}>{profile.full_name}</h2>
                                         <div className="d-flex gap-2">
-                                            <button className="btn btn-light btn-sm rounded-circle p-2 shadow-sm border border-light d-flex align-items-center justify-content-center"><Phone size={14} className="text-secondary"/></button>
-                                            <button className="btn btn-light btn-sm rounded-circle p-2 shadow-sm border border-light d-flex align-items-center justify-content-center"><Mail size={14} className="text-secondary"/></button>
+                                            <button className="btn btn-light btn-sm rounded-circle p-2 shadow-sm border border-light d-flex align-items-center justify-content-center calm-icon-btn"><Phone size={14} className="text-secondary"/></button>
+                                            <button className="btn btn-light btn-sm rounded-circle p-2 shadow-sm border border-light d-flex align-items-center justify-content-center calm-icon-btn"><Mail size={14} className="text-secondary"/></button>
                                         </div>
                                     </div>
                                     <div className="d-flex flex-wrap gap-4 text-dark fw-bold" style={{fontSize: '0.8rem'}}>
@@ -279,25 +320,26 @@ const Profile = () => {
                                         <span className="d-flex align-items-center gap-2"><Mail size={14} className="text-secondary"/> {profile.email}</span>
                                     </div>
                                 </div>
-                                <button onClick={startEditing} className="btn btn-white border border-light rounded-pill px-4 py-2 fw-bold shadow-sm d-flex align-items-center gap-2 text-dark">
+                                <button onClick={startEditing} className="btn rounded-pill px-4 py-2 fw-bold shadow-sm d-flex align-items-center gap-2 text-white edit-gradient-btn">
                                     <Edit2 size={14} /> Edit
                                 </button>
                             </div>
 
-                            {/* Bottom row: Vitals + Tags */}
                             <div className="d-flex flex-wrap flex-xl-nowrap justify-content-between align-items-center gap-4">
-                                {/* Vitals Box */}
-                                <div className="d-flex align-items-center p-3 px-4 rounded-4" style={{border: '1.5px dashed #e2e8f0', gap: '30px', backgroundColor: '#ffffff'}}>
-                                    <div className="text-center">
+                                <div className="vitals-glass-grid">
+                                    <div className="vitals-stat text-center">
+                                        <div className="vitals-icon"><Scale size={16} /></div>
                                         <div className="d-flex align-items-baseline justify-content-center gap-1">
-                                            <span className="fw-black text-dark lh-1" style={{fontSize: '1.25rem'}}>{bmi}</span>
+                                            <span className="fw-black text-dark lh-1" style={{fontSize: '1.25rem'}}>{hasValidBmi ? bmi : "N/A"}</span>
                                         </div>
-                                        <div className="text-muted fw-bold mt-1 d-flex align-items-center justify-content-center gap-1" style={{fontSize: '0.65rem'}}>
-                                            BMI <span className="text-success ms-1">▼ 10</span>
+                                        <div className="text-muted fw-bold mt-1 d-flex align-items-center justify-content-center gap-1" style={{fontSize: '0.65rem'}}>BMI</div>
+                                        <div className={`bmi-state bmi-${bmiMeta.tone}`}>{bmiMeta.label}</div>
+                                        <div className="bmi-progress">
+                                            <span style={{ width: `${bmiMeta.score}%` }} />
                                         </div>
                                     </div>
-                                    <div style={{width: '1px', height: '36px', backgroundColor: '#e2e8f0'}}></div>
-                                    <div className="text-center">
+                                    <div className="vitals-stat text-center">
+                                        <div className="vitals-icon"><Weight size={16} /></div>
                                         <div className="d-flex align-items-baseline justify-content-center gap-1">
                                             <span className="fw-black text-dark lh-1" style={{fontSize: '1.25rem'}}>{profile.weight_kg || 'N/A'}</span>
                                             <span className="fw-bold text-muted" style={{fontSize: '0.75rem'}}>kg</span>
@@ -306,8 +348,8 @@ const Profile = () => {
                                             Weight
                                         </div>
                                     </div>
-                                    <div style={{width: '1px', height: '36px', backgroundColor: '#e2e8f0'}}></div>
-                                    <div className="text-center">
+                                    <div className="vitals-stat text-center">
+                                        <div className="vitals-icon"><Activity size={16} /></div>
                                         <div className="d-flex align-items-baseline justify-content-center gap-1">
                                             <span className="fw-black text-dark lh-1" style={{fontSize: '1.25rem'}}>{profile.height_cm || 'N/A'}</span>
                                             <span className="fw-bold text-muted" style={{fontSize: '0.75rem'}}>Cm</span>
@@ -316,8 +358,8 @@ const Profile = () => {
                                             Height
                                         </div>
                                     </div>
-                                    <div style={{width: '1px', height: '36px', backgroundColor: '#e2e8f0'}}></div>
-                                    <div className="text-center">
+                                    <div className="vitals-stat text-center">
+                                        <div className="vitals-icon"><Droplet size={16} /></div>
                                         <div className="d-flex align-items-baseline justify-content-center gap-1">
                                             <span className="fw-black text-dark lh-1" style={{fontSize: '1.25rem'}}>{profile.blood_group || 'N/A'}</span>
                                         </div>
@@ -327,22 +369,21 @@ const Profile = () => {
                                     </div>
                                 </div>
 
-                                {/* Tags */}
-                                <div className="d-flex flex-column align-items-end gap-3 text-end">
-                                    <div className="d-flex flex-column align-items-end gap-1">
+                                <div className="d-flex flex-column align-items-end gap-3 text-end profile-tags-column">
+                                    <div className="d-flex flex-column align-items-end gap-1 w-100">
                                         <span className="text-dark fw-bolder mb-1" style={{fontSize: '0.75rem'}}>Own diagnosis</span>
-                                        <div className="d-flex gap-2">
+                                        <div className="d-flex gap-2 flex-wrap justify-content-end">
                                             {(clinicalData?.conditions || []).filter(c => c.status === 'active').slice(0, 2).map((c, i) =>(
-                                               <span key={i} className={`badge bg-${i === 0 ? 'warning' : 'primary'} bg-opacity-10 text-${i === 0 ? 'warning' : 'primary'} rounded-pill px-3 py-2 fw-bold`} style={{fontSize: '0.65rem'}}>{c.condition_name}</span>
+                                               <span key={i} className="badge rounded-pill px-3 py-2 fw-bold diagnosis-chip">{c.condition_name}</span>
                                             ))}
                                             {(!clinicalData?.conditions || clinicalData.conditions.length === 0) && <span className="text-muted small">None</span>}
                                         </div>
                                     </div>
-                                    <div className="d-flex flex-column align-items-end gap-1">
+                                    <div className="d-flex flex-column align-items-end gap-1 w-100">
                                         <span className="text-dark fw-bolder mb-1" style={{fontSize: '0.75rem'}}>Known Allergies</span>
-                                        <div className="d-flex gap-2">
+                                        <div className="d-flex gap-2 flex-wrap justify-content-end">
                                             {(clinicalData?.allergies || []).slice(0, 2).map((a, i) =>(
-                                               <span key={i} className="badge bg-danger bg-opacity-10 text-danger rounded-pill px-3 py-2 fw-bold" style={{fontSize: '0.65rem'}}>{a.allergy_name}</span>
+                                               <span key={i} className="badge rounded-pill px-3 py-2 fw-bold allergy-chip">{a.allergy_name}</span>
                                             ))}
                                             {(!clinicalData?.allergies || clinicalData.allergies.length === 0) && <span className="text-muted small">None</span>}
                                         </div>
@@ -353,25 +394,24 @@ const Profile = () => {
                     </div>
                 </div>
 
-                {/* MIDDLE ROW Grid */}
                 <div className="row g-4 mb-4">
-                    {/* TIMELINE */}
                     <div className="col-12 col-lg-4">
-                        <div className="clinical-panel h-100">
+                        <div className="clinical-panel h-100 section-animate">
                             <div className="panel-header">
                                 <div className="panel-title"><Calendar size={18} /> Timeline</div>
                                 <button className="panel-edit-btn">Edit</button>
                             </div>
                             <div className="pt-2">
-                                {(clinicalData?.timeline || []).slice(0, 5).map((appt, i) => {
+                                {timelineEntries.map((appt, i) => {
                                     const dateObj = new Date(appt.appointment_date);
                                     const month = dateObj.toLocaleString('default', { month: 'short' });
                                     const year = dateObj.getFullYear();
                                     return (
-                                    <div key={i} className="timeline-row">
-                                        <div className="timeline-left"><span>{month}</span><span>{year}</span></div>
+                                    <div key={i} className="timeline-row timeline-row-card">
+                                        <div className="timeline-left"><span className="timeline-date-pill">{month} {year}</span></div>
                                         <div className="timeline-center"><div className="timeline-marker" style={i === (clinicalData?.timeline?.length || 0) - 1 ? {borderColor: '#2b70ff'} : {}}></div></div>
                                         <div className="timeline-right">
+                                            <div className="timeline-kind">{getTimelineIcon(appt.reason)} Appointment</div>
                                             <div className="timeline-title">{appt.reason || 'General Appt'}</div>
                                             <div className="timeline-subtitle">Dr. {appt.doctor_name || 'Specialist'}</div>
                                         </div>
@@ -383,20 +423,20 @@ const Profile = () => {
                         </div>
                     </div>
 
-                    {/* EMERGENCY / CONTACT (Replaced Medical History with Emergency logic for Profile page) */}
                     <div className="col-12 col-lg-8">
-                        <div className="clinical-panel h-100">
+                        <div className="clinical-panel h-100 section-animate">
                             <div className="panel-header">
-                                <div className="panel-title"><ShieldAlert size={18} /> Emergency Support</div>
+                                <div className="panel-title"><ShieldAlert size={18} /> Emergency Support <span className="pulse-dot" /></div>
                                 <button className="panel-edit-btn" onClick={startEditing}>Edit</button>
                             </div>
                             <div className="row g-3">
                                 {emergencyContacts.map((c, i) => (
                                     <div key={i} className="col-md-6">
-                                        <div className={`med-history-box ${c.is_primary ? 'border border-primary border-opacity-50' : ''}`}>
+                                        <div className={`med-history-box emergency-card ${c.is_primary ? 'is-primary-contact' : ''}`}>
                                             <div className="med-history-header">
                                                 <div className="med-history-icon"><Phone size={14} className={c.is_primary ? 'text-primary' : ''}/></div>
                                                 <span className="med-history-title">{c.relationship || 'Emergency Contact'} {c.is_primary && '(Primary)'}</span>
+                                                <button className="emergency-call-btn" type="button"><Phone size={12} /></button>
                                             </div>
                                             <div className="med-history-data">{c.contact_name}</div>
                                             <div className="text-muted fw-bold mt-1" style={{fontSize: '0.75rem'}}>{c.phone}</div>
@@ -422,67 +462,57 @@ const Profile = () => {
                     </div>
                 </div>
 
-                {/* BOTTOM ROW Grid */}
                 <div className="row g-4 mb-5">
-                    {/* MEDICATIONS */}
                     <div className="col-12 col-lg-8">
-                        <div className="clinical-panel h-100 p-0 overflow-hidden d-flex flex-column">
+                        <div className="clinical-panel h-100 p-0 overflow-hidden d-flex flex-column section-animate">
                             <div className="panel-header p-4 pb-2 m-0">
                                 <div className="panel-title"><Pill size={18} /> Active Medications</div>
                                 <button className="panel-edit-btn">Edit</button>
                             </div>
-                            <div className="table-responsive px-2 flex-grow-1">
-                                <table className="table med-table mb-0">
-                                    <thead>
-                                        <tr>
-                                            <th>Name</th>
-                                            <th>Dosage</th>
-                                            <th>Freq</th>
-                                            <th>Status</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {(clinicalData?.medications || []).filter(m => m.status === 'active').map((med, i) => (
-                                            <tr key={i}>
-                                                <td>
-                                                    <div className="d-flex align-items-center gap-3">
-                                                        <div className="bg-light rounded p-2 text-primary"><Pill size={18}/></div>
-                                                        <div>
-                                                            <div className="fw-black text-dark" style={{fontSize: '0.85rem'}}>{med.drug_name}</div>
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                                <td>{med.dosage}</td>
-                                                <td>{med.frequency}</td>
-                                                <td><span className="badge rounded-pill bg-success bg-opacity-10 text-success fw-bold p-2 px-3">Active</span></td>
-                                            </tr>
-                                        ))}
-                                        {(!clinicalData?.medications || clinicalData.medications.filter(m => m.status === 'active').length === 0) && <tr><td colSpan="4" className="text-center py-4 fw-bold text-muted">No active medications</td></tr>}
-                                    </tbody>
-                                </table>
+                            <div className="medications-grid p-4 pt-2">
+                                {activeMeds.map((med, i) => (
+                                    <div key={i} className="medication-card">
+                                        <div className="medication-top">
+                                            <div className="pill-icon-wrap"><Pill size={16} /></div>
+                                            <span className="badge rounded-pill status-chip status-active">ACTIVE</span>
+                                        </div>
+                                        <div className="medication-name">{med.drug_name}</div>
+                                        <div className="medication-meta">{med.dosage || "Dose not set"} · {med.frequency || "Schedule not set"}</div>
+                                    </div>
+                                ))}
+                                {activeMeds.length === 0 && <div className="text-center py-4 fw-bold text-muted">No active medications</div>}
                             </div>
                         </div>
                     </div>
 
-                    {/* DIET */}
                     <div className="col-12 col-lg-4">
-                        <div className="clinical-panel h-100">
+                        <div className="clinical-panel h-100 section-animate">
                             <div className="panel-header mb-3">
                                 <div className="panel-title"><Activity size={18} /> Conditions Log</div>
                             </div>
+                            <div className="conditions-summary">
+                                <span className="summary-pill active-pill">{activeCount} Active</span>
+                                <span className="summary-pill severe-pill">{severeCount} Severe</span>
+                            </div>
                             <div className="d-flex flex-column pt-1">
-                                {(clinicalData?.conditions || []).map((c, i) => (
+                                {visibleConditions.map((item, i) => (
                                     <div key={i} className="diet-list-item justify-content-between">
-                                        <div className="d-flex align-items-center gap-2"><Heart size={16} className="text-danger"/> {c.condition_name}</div>
-                                        <span className={`badge bg-${c.status === 'active' ? 'danger' : 'secondary'} bg-opacity-10 text-${c.status === 'active' ? 'danger' : 'secondary'} rounded-pill`}>{c.status}</span>
+                                        <div className="d-flex align-items-center gap-2">
+                                            {item.severity === "active" ? <Heart size={16} className="text-primary" /> : item.severity === "critical" ? <AlertTriangle size={16} className="text-danger" /> : <ShieldCheck size={16} className="text-warning" />}
+                                            {item.name}
+                                        </div>
+                                        <span className={`badge rounded-pill status-chip ${severityClass(item.severity)}`}>{item.severity}</span>
                                     </div>
                                 ))}
-                                {(clinicalData?.allergies || []).map((a, i) => (
-                                    <div key={i + 10} className="diet-list-item justify-content-between">
-                                        <div className="d-flex align-items-center gap-2"><ShieldAlert size={16} className="text-warning"/> {a.allergy_name}</div>
-                                        <span className="badge bg-warning bg-opacity-10 text-warning rounded-pill">{a.severity}</span>
-                                    </div>
-                                ))}
+                                {conditionItems.length > 5 && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowAllConditions((prev) => !prev)}
+                                        className="conditions-toggle-btn"
+                                    >
+                                        {showAllConditions ? "Collapse" : "Show all"}
+                                    </button>
+                                )}
                             </div>
                         </div>
                     </div>
