@@ -253,7 +253,7 @@ const DoctorChat = ({ isEmbedded = false }) => {
             {!isEmbedded && !isFocusedMode && (
                 <ConversationList 
                     conversations={conversations}
-                    activeId={selectedConv?.id}
+                    selectedId={selectedConv?.id}
                     onSelect={handleSelectConversation}
                     currentUserId={currentUser?.id}
                     isDoctor={true}

@@ -69,8 +69,9 @@ export const CallProvider = ({ children }) => {
       incomingTimerRef.current = setInterval(() => {
         setIncomingTimeLeft((prev) => {
           if (prev <= 1) {
+            const timedOutCallId = incomingCallIdRef.current;
             clearIncomingCountdown();
-            if (incomingCallIdRef.current === call.call_id) {
+            if (timedOutCallId === call.call_id) {
               setIncomingCall(null);
               setCallStatus("idle");
               declineCall(call.call_id, "missed").catch((error) => {
@@ -176,6 +177,8 @@ export const CallProvider = ({ children }) => {
     async (callId, reason = "declined") => {
       await declineCall(callId, reason);
       setIncomingCall(null);
+      setActiveCall(null);
+      setIsModalOpen(false);
       clearIncomingCountdown();
       setCallStatus("idle");
     },

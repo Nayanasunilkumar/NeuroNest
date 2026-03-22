@@ -5,6 +5,7 @@ import { getUser } from '../../utils/auth';
 import { io } from 'socket.io-client';
 import { sendMessage } from '../../api/chat';
 import { getIceConfig } from '../../api/rtc';
+import { useCall } from '../../context/CallContext';
 
 export default function VideoConsultation() {
     const { roomId } = useParams();
@@ -26,6 +27,7 @@ export default function VideoConsultation() {
     const politeRef = useRef(false);
     const pendingLocalIceRef = useRef([]);
     const reconnectAttemptsRef = useRef(0);
+    const { endActiveCall } = useCall();
     
     const [isMuted, setIsMuted] = useState(false);
     const [isVideoOff, setIsVideoOff] = useState(false);
@@ -397,8 +399,14 @@ export default function VideoConsultation() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [roomId]);
 
-    const handleHangup = () => {
-        navigate(-1);
+    const handleHangup = async () => {
+        try {
+            await endActiveCall();
+        } catch (err) {
+            console.error("Failed to end active call cleanly:", err);
+        } finally {
+            navigate(-1);
+        }
     };
 
     const resumeRemoteAudio = async () => {
