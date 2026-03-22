@@ -16,17 +16,14 @@ const ROWS = [
   { key: 'appointments', icon: Bell,          label: 'Appointments', hint: 'Reminders for bookings, cancellations, & reschedules', color: '#6366f1' },
   { key: 'prescriptions', icon: ShieldCheck,   label: 'Prescriptions', hint: 'Alerts for new medications and renewal updates', color: '#10b981' },
   { key: 'messages',     icon: MessageSquare, label: 'Direct Messages', hint: 'Real-time replies and follow-ups from your providers', color: '#0ea5e9' },
-  { key: 'announcements',icon: Megaphone,     label: 'System Updates', hint: 'Essential maintenance and feature announcements', color: '#8b5cf6' },
-  { key: 'feedback',     icon: Star,          label: 'Health Surveys', hint: 'Periodic check-ins and appointment feedback requests', emailOnly: true, color: '#f59e0b' },
   { key: 'alerts',       icon: AlertCircle,   label: 'Clinical Alerts', hint: 'High-priority vitals monitoring and health events', color: '#ef4444' },
 ];
 
 export default function NotificationPreferences({ data, saving, onSave }) {
   const basePrefs = useMemo(() => ({
     email_appointments: true, email_prescriptions: true, email_messages: true,
-    email_announcements: true, email_feedback: true,
     inapp_appointments: true, inapp_prescriptions: true,
-    inapp_messages: true, inapp_announcements: true,
+    inapp_messages: true,
     email_alerts: true, inapp_alerts: true,
     allow_doctor_followup: true, allow_promotions: false,
     ...(data?.notifications || {}),
