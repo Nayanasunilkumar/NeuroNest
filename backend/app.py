@@ -60,7 +60,14 @@ def create_app():
                     "ALTER TABLE appointments ADD COLUMN IF NOT EXISTS "
                     "consultation_type VARCHAR(20) DEFAULT 'in_person'"
                 ))
-            print("[MIGRATION] ✓ consultation_type column ensured")
+                # --- Notification Preferences Missing Columns ---
+                conn.execute(db.text("ALTER TABLE notification_preferences ADD COLUMN IF NOT EXISTS email_alerts BOOLEAN DEFAULT TRUE"))
+                conn.execute(db.text("ALTER TABLE notification_preferences ADD COLUMN IF NOT EXISTS inapp_alerts BOOLEAN DEFAULT TRUE"))
+                conn.execute(db.text("ALTER TABLE notification_preferences ADD COLUMN IF NOT EXISTS inapp_messages BOOLEAN DEFAULT TRUE"))
+                conn.execute(db.text("ALTER TABLE notification_preferences ADD COLUMN IF NOT EXISTS inapp_announcements BOOLEAN DEFAULT TRUE"))
+                # --- Doctor Preferences Missing Columns ---
+                conn.execute(db.text("ALTER TABLE doctor_notification_settings ADD COLUMN IF NOT EXISTS email_on_alerts BOOLEAN DEFAULT TRUE"))
+            print("[MIGRATION] ✓ Database columns synced")
         except Exception as e:
             print(f"[MIGRATION] Warning: {e}")
 

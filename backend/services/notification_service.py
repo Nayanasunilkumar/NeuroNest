@@ -432,6 +432,7 @@ class NotificationService:
         smtp_host = os.getenv("SMTP_HOST")
         smtp_port = os.getenv("SMTP_PORT", 587)
         smtp_pass = os.getenv("SMTP_PASS")
+        smtp_user = os.getenv("smtp_user") # lowercase from the setup in app.py
 
         if not all([smtp_host, smtp_user, smtp_pass]):
             print(f"[EMAIL] No RESEND_API_KEY and no SMTP config. Cannot send email to {recipient}.")
