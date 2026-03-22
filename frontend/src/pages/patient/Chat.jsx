@@ -82,31 +82,46 @@ const Chat = () => {
         }
     };
 
+    // USE REFS FOR STABLE VALUES IN SOCKET LISTENERS
+    const selectedConvRef = React.useRef(selectedConv);
+    const currentUserRef = React.useRef(currentUser);
+
+    useEffect(() => {
+        selectedConvRef.current = selectedConv;
+    }, [selectedConv]);
+
+    useEffect(() => {
+        currentUserRef.current = currentUser;
+    }, [currentUser]);
+
     const handleNewMessage = useCallback((msg) => {
         if (!msg) return;
 
-        setSelectedConv((current) => {
-            if (current && Number(current.id) === Number(msg.conversation_id)) {
-                setMessages((prev) => {
-                    // 1. Check if this is a match for an optimistic message we just sent
-                    // If we just sent a message with the same content/type, we should replace the temp one
-                    const isMyOwnMessage = String(msg.sender_id) === String(currentUser?.id);
-                    const optimisticIndex = isMyOwnMessage ? prev.findIndex(m => m.is_optimistic && m.content === msg.content) : -1;
-                    
+        const current = selectedConvRef.current;
+        const currentUserId = currentUserRef.current?.id;
+        
+        // 1. ROUTE TO ACTIVE MESSAGE WINDOW IF MATCH
+        if (current && Number(current.id) === Number(msg.conversation_id)) {
+            setMessages((prev) => {
+                const isMyOwnMessage = String(msg.sender_id) === String(currentUserId);
+                
+                // If it's my own message, try to replace optimistic temp message
+                if (isMyOwnMessage) {
+                    const optimisticIndex = prev.findIndex(m => m.is_optimistic && m.content === msg.content);
                     if (optimisticIndex > -1) {
                         const newMsgs = [...prev];
-                        newMsgs[optimisticIndex] = msg; // Replace optimistic with server-side record
+                        newMsgs[optimisticIndex] = msg;
                         return newMsgs;
                     }
+                }
 
-                    // 2. Otherwise prevent duplicates
-                    if (prev.find(m => m.id === msg.id)) return prev;
-                    return [...prev, msg];
-                });
-            }
-            return current;
-        });
+                // Normal de-duplication
+                if (prev.find(m => m.id === msg.id)) return prev;
+                return [...prev, msg];
+            });
+        }
 
+        // 2. ALWAYS UPDATE SIDEBAR PREVIEWS
         setConversations(prev => (
             prev
                 .map(c => {
@@ -120,8 +135,8 @@ const Chat = () => {
                                 sender_id: msg.sender_id
                             },
                             unread_count:
-                                String(msg.sender_id) !== String(currentUser?.id) && 
-                                (!selectedConv || Number(selectedConv.id) !== Number(msg.conversation_id))
+                                String(msg.sender_id) !== String(currentUserId) && 
+                                (!current || Number(current.id) !== Number(msg.conversation_id))
                                     ? c.unread_count + 1
                                     : c.unread_count
                         };
@@ -130,24 +145,19 @@ const Chat = () => {
                 })
                 .sort((a, b) => toEpochMs(b.last_message?.created_at) - toEpochMs(a.last_message?.created_at))
         ));
-    }, [currentUser?.id, selectedConv]);
+    }, []);
 
     useEffect(() => {
         const user = getUser();
         if (user) setCurrentUser(user);
 
         const socket = initSocket();
-        fetchConversations();
+        if (!conversations.length) fetchConversations();
 
         if (socket) {
-            const onNewMessage = (msg) => {
-                handleNewMessage(msg);
-            };
-            
-            socket.on("new_message", onNewMessage);
-            
+            socket.on("new_message", handleNewMessage);
             return () => {
-                socket.off("new_message", onNewMessage);
+                socket.off("new_message", handleNewMessage);
             };
         }
     }, [fetchConversations, handleNewMessage]);
