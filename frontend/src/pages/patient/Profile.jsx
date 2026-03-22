@@ -280,8 +280,8 @@ const Profile = () => {
                             </div>
                             </div>
                             <div className="d-flex gap-2 flex-wrap justify-content-center">
-                                <div className="badge rounded-pill bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 d-flex align-items-center fw-bold" style={{fontSize: '0.65rem', padding: '0.4rem 0.8rem'}}><span className="me-1">🚫</span> Alcohol</div>
-                                <div className="badge rounded-pill bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 d-flex align-items-center fw-bold" style={{fontSize: '0.65rem', padding: '0.4rem 0.8rem'}}><span className="me-1">🚬</span> Smoker</div>
+                                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium bg-red-50 text-red-600 border border-red-200">ALCOHOL</div>
+                                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium bg-amber-50 text-amber-700 border border-amber-200">SMOKER</div>
                             </div>
                         </div>
 
@@ -313,43 +313,22 @@ const Profile = () => {
                             {/* Bottom row: Vitals + Tags */}
                             <div className="d-flex flex-wrap flex-xl-nowrap justify-content-between align-items-center gap-4">
                                 {/* Vitals Box */}
-                                <div className="d-flex align-items-center p-3 px-4 rounded-4" style={{border: '1.5px dashed #e2e8f0', gap: '30px', backgroundColor: '#ffffff'}}>
-                                    <div className="text-center">
-                                        <div className="d-flex align-items-baseline justify-content-center gap-1">
-                                            <span className="fw-black text-dark lh-1" style={{fontSize: '1.25rem'}}>{bmi}</span>
-                                        </div>
-                                        <div className="text-muted fw-bold mt-1 d-flex align-items-center justify-content-center gap-1" style={{fontSize: '0.65rem'}}>
-                                            BMI <span className="text-success ms-1">▼ 10</span>
-                                        </div>
+                                <div className="d-flex flex-wrap gap-3">
+                                    <div className="bg-slate-50 rounded-xl px-4 py-3 text-center border border-slate-100 min-w-[108px]">
+                                        <div className="text-xs text-slate-400 uppercase tracking-wider">BMI</div>
+                                        <div className="text-xl font-bold text-slate-800">{bmi}</div>
                                     </div>
-                                    <div style={{width: '1px', height: '36px', backgroundColor: '#e2e8f0'}}></div>
-                                    <div className="text-center">
-                                        <div className="d-flex align-items-baseline justify-content-center gap-1">
-                                            <span className="fw-black text-dark lh-1" style={{fontSize: '1.25rem'}}>{profile.weight_kg || 'N/A'}</span>
-                                            <span className="fw-bold text-muted" style={{fontSize: '0.75rem'}}>kg</span>
-                                        </div>
-                                        <div className="text-muted fw-bold mt-1 d-flex align-items-center justify-content-center gap-1" style={{fontSize: '0.65rem'}}>
-                                            Weight
-                                        </div>
+                                    <div className="bg-slate-50 rounded-xl px-4 py-3 text-center border border-slate-100 min-w-[108px]">
+                                        <div className="text-xs text-slate-400 uppercase tracking-wider">Weight</div>
+                                        <div className="text-xl font-bold text-slate-800">{profile.weight_kg || 'N/A'}</div>
                                     </div>
-                                    <div style={{width: '1px', height: '36px', backgroundColor: '#e2e8f0'}}></div>
-                                    <div className="text-center">
-                                        <div className="d-flex align-items-baseline justify-content-center gap-1">
-                                            <span className="fw-black text-dark lh-1" style={{fontSize: '1.25rem'}}>{profile.height_cm || 'N/A'}</span>
-                                            <span className="fw-bold text-muted" style={{fontSize: '0.75rem'}}>Cm</span>
-                                        </div>
-                                        <div className="text-muted fw-bold mt-1 d-flex align-items-center justify-content-center gap-1" style={{fontSize: '0.65rem'}}>
-                                            Height
-                                        </div>
+                                    <div className="bg-slate-50 rounded-xl px-4 py-3 text-center border border-slate-100 min-w-[108px]">
+                                        <div className="text-xs text-slate-400 uppercase tracking-wider">Height</div>
+                                        <div className="text-xl font-bold text-slate-800">{profile.height_cm || 'N/A'}</div>
                                     </div>
-                                    <div style={{width: '1px', height: '36px', backgroundColor: '#e2e8f0'}}></div>
-                                    <div className="text-center">
-                                        <div className="d-flex align-items-baseline justify-content-center gap-1">
-                                            <span className="fw-black text-dark lh-1" style={{fontSize: '1.25rem'}}>{profile.blood_group || 'N/A'}</span>
-                                        </div>
-                                        <div className="text-muted fw-bold mt-1 d-flex align-items-center justify-content-center gap-1" style={{fontSize: '0.65rem'}}>
-                                            Blood Type
-                                        </div>
+                                    <div className="bg-slate-50 rounded-xl px-4 py-3 text-center border border-slate-100 min-w-[108px]">
+                                        <div className="text-xs text-slate-400 uppercase tracking-wider">Blood Type</div>
+                                        <div className="text-xl font-bold text-slate-800">{profile.blood_group || 'N/A'}</div>
                                     </div>
                                 </div>
 
@@ -481,11 +460,11 @@ const Profile = () => {
 
                     {/* DIET */}
                     <div className="col-12 col-lg-4">
-                        <div className="clinical-panel h-100 rounded-2xl shadow-md bg-white p-4 p-md-5">
+                        <div className="clinical-panel h-100 rounded-2xl shadow-md bg-white p-4 p-md-5 d-flex flex-column">
                             <div className="panel-header mb-3">
                                 <div className="panel-title font-['Outfit'] fw-bold"><Activity size={18} className="animate-pulse text-blue-500" /> Conditions Log</div>
                             </div>
-                            <div className="d-flex flex-column pt-1">
+                            <div className="d-flex flex-column pt-1 overflow-auto pe-2" style={{ maxHeight: "420px" }}>
                                 {(clinicalData?.conditions || []).map((c, i) => (
                                     <div key={i} className="d-flex align-items-center justify-content-between py-3 px-2 hover:bg-slate-50 rounded-lg transition-all">
                                         <div className="d-flex align-items-center gap-2 font-semibold text-slate-800"><Heart size={16} className={c.status === 'active' ? 'text-emerald-500' : c.status === 'severe' ? 'text-red-500' : 'text-amber-500'}/> {c.condition_name}</div>
