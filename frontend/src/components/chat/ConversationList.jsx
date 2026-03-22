@@ -86,7 +86,7 @@ const ConversationList = ({ conversations, selectedId, onSelect, currentUserId }
     };
 
     return (
-        <div className="d-flex flex-column border-end h-100" style={{ width: '340px', flexShrink: 0, backgroundColor: '#f8fafc', borderColor: '#e2e8f0' }}>
+        <div className="d-flex flex-column border-end h-100" style={{ width: '400px', flexShrink: 0, backgroundColor: '#f8fafc', borderColor: '#e2e8f0' }}>
             {/* Header */}
             <div className="p-4 pb-3">
                 <div className="position-relative">

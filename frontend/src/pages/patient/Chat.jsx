@@ -238,7 +238,7 @@ const Chat = () => {
                         />
                         
                         {showInfoPanel && (
-                            <aside className="border-start bg-light overflow-y-auto custom-scrollbar" style={{ width: '320px', flexShrink: 0 }}>
+                            <aside className="border-start bg-light overflow-y-auto custom-scrollbar" style={{ width: '380px', flexShrink: 0 }}>
                                 <div className="p-4 border-bottom bg-white sticky-top">
                                     <div className="d-flex justify-content-between align-items-center mb-1">
                                         <h4 className="fw-bolder text-dark mb-0" style={{ fontSize: '1.1rem' }}>Doctor Details</h4>

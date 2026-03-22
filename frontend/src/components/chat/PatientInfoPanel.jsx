@@ -6,7 +6,7 @@ const CURRENT_YEAR = new Date().getUTCFullYear();
 
 const PatientInfoPanel = ({ context, loading }) => {
     if (loading) return (
-        <div className="d-flex flex-column align-items-center justify-content-center bg-light border-start border-light h-100" style={{ width: '340px', flexShrink: 0 }}>
+        <div className="d-flex flex-column align-items-center justify-content-center bg-light border-start border-light h-100" style={{ width: '380px', flexShrink: 0 }}>
             <div className="spinner-border text-primary border-3 mb-3" style={{ width: '2rem', height: '2rem' }} role="status">
                 <span className="visually-hidden">Loading...</span>
             </div>
@@ -15,7 +15,7 @@ const PatientInfoPanel = ({ context, loading }) => {
     );
 
     if (!context) return (
-        <div className="d-flex flex-column align-items-center justify-content-center bg-light border-start border-light h-100 opacity-50" style={{ width: '340px', flexShrink: 0 }}>
+        <div className="d-flex flex-column align-items-center justify-content-center bg-light border-start border-light h-100 opacity-50" style={{ width: '380px', flexShrink: 0 }}>
             <AlertCircle size={40} className="text-secondary mb-3" />
             <p className="text-secondary fw-bold small text-uppercase text-center" style={{ letterSpacing: '0.05em' }}>Select a thread to view clinical context.</p>
         </div>
@@ -31,7 +31,7 @@ const PatientInfoPanel = ({ context, loading }) => {
     };
 
     return (
-        <div className="d-flex flex-column bg-light border-start border-light h-100 overflow-y-auto custom-scrollbar" style={{ width: '340px', flexShrink: 0 }}>
+        <div className="d-flex flex-column bg-light border-start border-light h-100 overflow-y-auto custom-scrollbar" style={{ width: '380px', flexShrink: 0 }}>
             {/* Identity Card */}
             <div className="p-4 text-center bg-white border-bottom border-light">
                 <Avatar 
