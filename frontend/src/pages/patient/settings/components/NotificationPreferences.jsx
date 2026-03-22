@@ -25,7 +25,6 @@ export default function NotificationPreferences({ data, saving, onSave }) {
     inapp_appointments: true, inapp_prescriptions: true,
     inapp_messages: true,
     email_alerts: true, inapp_alerts: true,
-    allow_doctor_followup: true, allow_promotions: false,
     ...(data?.notifications || {}),
   }), [data]);
   const [overrides, setOverrides] = useState({});
@@ -76,28 +75,7 @@ export default function NotificationPreferences({ data, saving, onSave }) {
         </div>
       </div>
 
-      <div className="pset-subsection" style={{ border: 'none', paddingTop: 0 }}>
-        <div className="pset-subsection-title">
-          <ShieldCheck size={16} /> Privacy & Outreach
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-          <div className="pset-toggle-row" onClick={() => !saving && set('allow_doctor_followup', !prefs.allow_doctor_followup)} style={{ cursor: 'pointer' }}>
-            <div style={{ flex: 1 }}>
-              <div className="pset-toggle-label">Clinical Outreach</div>
-              <div className="pset-toggle-hint">Allow doctors to initiate post-visit follow-ups</div>
-            </div>
-            <Toggle checked={prefs.allow_doctor_followup} onChange={() => {}} disabled={saving} />
-          </div>
 
-          <div className="pset-toggle-row" onClick={() => !saving && set('allow_promotions', !prefs.allow_promotions)} style={{ cursor: 'pointer' }}>
-            <div style={{ flex: 1 }}>
-              <div className="pset-toggle-label">Health Tips</div>
-              <div className="pset-toggle-hint">Periodic educational content & campaigns</div>
-            </div>
-            <Toggle checked={prefs.allow_promotions} onChange={() => {}} disabled={saving} />
-          </div>
-        </div>
-      </div>
 
       <button className="pset-save-btn" style={{ width: '100%', marginTop: '3rem' }} onClick={() => onSave(prefs)} disabled={saving}>
         {saving ? 'Syncing Preferences...' : 'Update Notification Policy'}
