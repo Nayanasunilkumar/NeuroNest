@@ -60,19 +60,20 @@ class NotificationService:
         patient_msg = NotificationService._generate_message(appointment, event_type, recipient_role="patient")
 
         # In-app (respects setting)
-        if patient_settings.inapp_appointments:
-            NotificationService.send_in_app(
-                user_id=patient_id,
-                title=f"Health Update: {event_type.replace('_', ' ').title()}",
-                message=patient_msg,
-                payload={"appointment_id": appointment.id, "event_type": event_type}
-            )
+        NotificationService.send_in_app(
+            user_id=patient_id,
+            title=f"Health Update: {event_type.replace('_', ' ').title()}",
+            message=patient_msg,
+            notif_type="appointment",
+            payload={"appointment_id": appointment.id, "event_type": event_type}
+        )
 
-        # Email — ALWAYS send (with HTML template matching event type)
-        try:
-            NotificationService.send_email(appointment.patient.email, subject, patient_msg, event_type=event_type)
-        except Exception as e:
-            print(f"[NOTIFICATION] Patient email failed: {e}")
+        # Email (respects setting)
+        if patient_settings.email_appointments:
+            try:
+                NotificationService.send_email(appointment.patient.email, subject, patient_msg, event_type=event_type)
+            except Exception as e:
+                print(f"[NOTIFICATION] Patient email failed: {e}")
 
         # SMS (respects setting)
         if patient_settings.sms_appointments:
@@ -80,66 +81,88 @@ class NotificationService:
             if phone:
                 NotificationService.send_sms(phone, patient_msg)
 
+        # ── 3. FEEDBACK REQUEST (Health Surveys setting) ──
+        if event_type == "completed":
+            NotificationService.send_in_app(
+                user_id=patient_id,
+                title="How was your visit?",
+                message=f"Please take a moment to share your feedback about your recent consultation with Dr. {doctor_name}.",
+                notif_type="feedback",
+                email_subject=f"BrainNest Feedback: How was your visit with Dr. {doctor_name}?",
+                payload={"appointment_id": appointment.id}
+            )
+
     @staticmethod
     def send_in_app(user_id, title, message, payload=None, notif_type="appointment", email_subject=None, email_event_type=None):
         from database.models import db, InAppNotification, User, NotificationPreference, DoctorNotificationSetting
         
-        # 1. Create In-App record
-        notif = InAppNotification(
-            user_id=user_id,
-            title=title,
-            message=message,
-            payload=payload,
-            type=notif_type
-        )
-        db.session.add(notif)
-        db.session.commit()
-        
-        # 2. Real-time broadcast
-        try:
-            from extensions.socket import socketio
-            socketio.emit('new_in_app_notification', notif.to_dict(), room=f"user_{user_id}")
-        except Exception:
-            pass
+        user = User.query.get(user_id)
+        if not user: return
 
-        # 3. Optional Automated Email (Respecting Preferences)
-        if email_subject:
-            user = User.query.get(user_id)
-            if user and user.email:
-                should_send = False
-                if user.role == "patient":
-                    pref = NotificationPreference.query.filter_by(user_id=user_id).first()
-                    if not pref:
-                        pref = NotificationPreference(user_id=user_id)
-                        db.session.add(pref)
-                        db.session.commit()
-                    
-                    # Choose preference field based on notif_type or event_type
-                    if notif_type == "vitals_alert": 
-                        should_send = pref.email_alerts
-                    elif notif_type == "prescription":
-                        should_send = pref.email_prescriptions
-                    elif notif_type == "appointment":
-                        should_send = pref.email_appointments
-                    else:
-                        should_send = True # Default for others
-                else: # Doctor/Admin
-                    d_pref = DoctorNotificationSetting.query.filter_by(doctor_user_id=user_id).first()
-                    if not d_pref:
-                        d_pref = DoctorNotificationSetting(doctor_user_id=user_id)
-                        db.session.add(d_pref)
-                        db.session.commit()
-                    
-                    if notif_type == "vitals_alert":
-                        should_send = d_pref.email_on_alerts
-                    else:
-                        should_send = d_pref.email_on_booking # Default for others
+        # ── 1. PREFERENCE CHECK (In-App) ──
+        should_send_in_app = True
+        pref = None
+        d_pref = None
 
-                if should_send:
-                    try:
-                        NotificationService.send_email(user.email, email_subject, message, event_type=email_event_type)
-                    except Exception as e:
-                        print(f"[NOTIFICATION] Auto-email failed: {e}")
+        if user.role == "patient":
+            pref = NotificationPreference.query.filter_by(user_id=user_id).first()
+            if not pref:
+                pref = NotificationPreference(user_id=user_id)
+                db.session.add(pref)
+                db.session.commit()
+            
+            if notif_type == "appointment": should_send_in_app = pref.inapp_appointments
+            elif notif_type == "prescription": should_send_in_app = pref.inapp_prescriptions
+            elif notif_type == "vitals_alert": should_send_in_app = pref.inapp_alerts
+            elif notif_type == "message": should_send_in_app = pref.inapp_messages
+            elif notif_type == "announcement": should_send_in_app = pref.inapp_announcements
+            elif notif_type == "feedback": should_send_in_app = pref.email_feedback # Patient profile doesn't have inapp_feedback, use email_feedback as proxy for all feedback request
+        else: # Doctor
+            d_pref = DoctorNotificationSetting.query.filter_by(doctor_user_id=user_id).first()
+            if not d_pref:
+                d_pref = DoctorNotificationSetting(doctor_user_id=user_id)
+                db.session.add(d_pref)
+                db.session.commit()
+            should_send_in_app = d_pref.in_app_notifications
+
+        # ── 2. EXECUTE In-App ──
+        if should_send_in_app:
+            notif = InAppNotification(
+                user_id=user_id,
+                title=title,
+                message=message,
+                payload=payload,
+                type=notif_type
+            )
+            db.session.add(notif)
+            db.session.commit()
+            
+            try:
+                from extensions.socket import socketio
+                socketio.emit('new_in_app_notification', notif.to_dict(), room=f"user_{user_id}")
+            except Exception:
+                pass
+
+        # ── 3. OPTIONAL EMAIL (Respecting Preferences) ──
+        if email_subject and user.email:
+            should_send_email = False
+            if user.role == "patient":
+                if notif_type == "vitals_alert":  should_send_email = pref.email_alerts
+                elif notif_type == "prescription": should_send_email = pref.email_prescriptions
+                elif notif_type == "appointment":  should_send_email = pref.email_appointments
+                elif notif_type == "message":      should_send_email = pref.email_messages
+                elif notif_type == "announcement": should_send_email = pref.email_announcements
+                elif notif_type == "feedback":     should_send_email = pref.email_feedback
+                else: should_send_email = True
+            else:
+                if notif_type == "vitals_alert": should_send_email = d_pref.email_on_alerts
+                else: should_send_email = d_pref.email_on_booking
+
+            if should_send_email:
+                try:
+                    NotificationService.send_email(user.email, email_subject, message, event_type=email_event_type)
+                except Exception as e:
+                    print(f"[NOTIFICATION] Auto-email failed: {e}")
 
     @staticmethod
     def notify_critical_vitals(patient_id, alert):

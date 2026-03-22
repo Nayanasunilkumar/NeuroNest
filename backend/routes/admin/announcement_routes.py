@@ -4,6 +4,7 @@ from database.models import db, User
 from models.announcement import Announcement
 from models.announcement_target import AnnouncementTarget
 from datetime import datetime
+from services.notification_service import NotificationService
 
 admin_announcements_bp = Blueprint('admin_announcements', __name__)
 
@@ -68,6 +69,36 @@ def create_announcement():
                 db.session.add(new_target)
 
         db.session.commit()
+
+        # ── PUSH NOTIFICATIONS ──
+        if new_announcement.status == 'Published':
+            # Identify targeted users
+            target_ids = []
+            if not targets or any(t.get('type') == 'All' for t in targets):
+                # Notify all active patients
+                all_patients = User.query.filter_by(role='patient', is_deleted=False).all()
+                target_ids = [u.id for u in all_patients]
+            else:
+                for t in targets:
+                    if t.get('type') == 'Role':
+                        users_with_role = User.query.filter_by(role=t.get('value'), is_deleted=False).all()
+                        target_ids.extend([u.id for u in users_with_role])
+                    elif t.get('type') == 'User':
+                        target_ids.append(int(t.get('value')))
+            
+            # Remove duplicates
+            target_ids = list(set(target_ids))
+            
+            # Send (NotificationService handles individual preferences)
+            for tid in target_ids:
+                NotificationService.send_in_app(
+                    user_id=tid,
+                    title=f"System Update: {new_announcement.title}",
+                    message=new_announcement.title, # Use title for brief message
+                    notif_type="announcement",
+                    email_subject=f"NeuroNest: {new_announcement.title}"
+                )
+
         return jsonify(new_announcement.to_dict()), 201
     except Exception as e:
         db.session.rollback()

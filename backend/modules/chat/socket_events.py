@@ -3,6 +3,8 @@ from flask_socketio import emit, join_room, disconnect
 from extensions.socket import socketio
 from flask_jwt_extended import decode_token
 from models.chat_models import db, Message, Participant
+from services.notification_service import NotificationService
+from database.models import User
 import functools
 # ...
 def authenticated_only(f):
@@ -78,3 +80,22 @@ def on_send_message(data):
     
     # Emit to room
     emit('new_message', msg.to_dict(), room=f"conversation_{conv_id}")
+
+    # Notify other participants (respecting settings)
+    others = Participant.query.filter(
+        Participant.conversation_id == conv_id,
+        Participant.user_id != user_id
+    ).all()
+    
+    sender = User.query.get(user_id)
+    sender_name = sender.full_name if sender else "Someone"
+
+    for p in others:
+        NotificationService.send_in_app(
+            user_id=p.user_id,
+            title=f"New Message from {sender_name}",
+            message=content if msg_type == "text" else f"Sent a {msg_type}",
+            notif_type="message",
+            email_subject=f"NeuroNest: New Message from {sender_name}",
+            payload={"conversation_id": conv_id, "sender_id": user_id}
+        )

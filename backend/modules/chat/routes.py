@@ -6,6 +6,7 @@ from database.models import db, User, Appointment, PatientProfile
 from models.chat_models import Conversation, Participant, Message, to_utc_iso
 from sqlalchemy import and_, or_, desc
 from flask_jwt_extended import get_jwt
+from services.notification_service import NotificationService
 
 # ... (rest of imports)
 
@@ -202,6 +203,24 @@ def send_message_http(conversation_id):
     # Broadcast to socket room for real-time
     from extensions.socket import socketio
     socketio.emit('new_message', msg.to_dict(), room=f"conversation_{conversation_id}")
+    
+    # Notify other participants (respecting settings)
+    others = Participant.query.filter(
+        Participant.conversation_id == conversation_id,
+        Participant.user_id != current_user_id
+    ).all()
+    
+    sender_name = User.query.get(current_user_id).full_name if User.query.get(current_user_id) else "Someone"
+
+    for p in others:
+        NotificationService.send_in_app(
+            user_id=p.user_id,
+            title=f"New Message from {sender_name}",
+            message=content if msg_type == "text" else f"Sent a {msg_type}",
+            notif_type="message",
+            email_subject=f"NeuroNest: New Message from {sender_name}",
+            payload={"conversation_id": conversation_id, "sender_id": current_user_id}
+        )
     
     return jsonify(msg.to_dict()), 201
 
