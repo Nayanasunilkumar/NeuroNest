@@ -7,10 +7,28 @@ from services.notification_service import NotificationService
 from database.models import User
 import functools
 # ...
+def get_user_id():
+    """Robust helper to get user_id from session or decoded JWT token."""
+    user_id = session.get('user_id')
+    if user_id:
+        return user_id
+    
+    # Fallback: manually decode token from request if session is lost
+    token = request.args.get('token')
+    if token:
+        try:
+            from flask_jwt_extended import decode_token
+            decoded = decode_token(token)
+            return str(decoded['sub'])
+        except:
+            pass
+    return None
+
 def authenticated_only(f):
     @functools.wraps(f)
     def wrapped(*args, **kwargs):
-        if not session.get('user_id'):
+        if not get_user_id():
+            print("[SOCKET] Unauthorized: Force Disconnect.")
             disconnect()
             return
         return f(*args, **kwargs)
@@ -43,9 +61,9 @@ def handle_disconnect():
 def on_join(data):
     try:
         conv_id = int(data.get('conversation_id'))
-        user_id_raw = session.get('user_id')
+        user_id_raw = get_user_id()
         if not user_id_raw:
-            print("[SOCKET] Join failed: Session lost or no user_id")
+            print("[SOCKET] Join failed: Session/Token lost")
             return
         user_id = int(user_id_raw)
         
@@ -68,21 +86,21 @@ def on_send_message(data):
         conv_id = int(data.get('conversation_id'))
         content = data.get('content')
         msg_type = data.get('type', 'text') # Default to text
-        user_id_raw = session.get('user_id')
+        user_id_raw = get_user_id()
         if not user_id_raw:
-            print("[SOCKET] Send failed: Session lost or no user_id")
+            print("[SOCKET] Send failed: Session/Token lost")
             return
         user_id = int(user_id_raw)
         
-        print(f"[SOCKET] Send attempt from {user_id} in {conv_id}")
+        print(f"[SOCKET] Message attempt from {user_id} -> room conversation_{conv_id}")
 
         # Verify participation
         part = Participant.query.filter_by(conversation_id=conv_id, user_id=user_id).first()
         if not part:
-            print(f"[SOCKET] Participation Denied for {user_id} in {conv_id}")
-            return # Ignore
+            print(f"[SOCKET] DENIED: User {user_id} is not in conversation {conv_id}")
+            return
         
-        # Save to DB
+        # Save to DB - Atomic with explicit commit
         msg = Message(
             conversation_id=conv_id,
             sender_id=user_id,
@@ -92,8 +110,10 @@ def on_send_message(data):
         db.session.add(msg)
         db.session.commit()
         
-        # Emit to room
-        print(f"[SOCKET] Message {msg.id} saved & broadcasting")
+        # Emit to room (broadcast)
+        # Note: emit to room includes the sender by default in Flask-SocketIO 
+        # provided they've joined the room via join_conversation.
+        print(f"[SOCKET] Message {msg.id} persisted. Broadcasting...")
         emit('new_message', msg.to_dict(), room=f"conversation_{conv_id}")
 
         # Notify other participants (respecting settings)
@@ -115,5 +135,5 @@ def on_send_message(data):
                 payload={"conversation_id": conv_id, "sender_id": user_id}
             )
     except Exception as e:
-        print(f"[SOCKET] Send crash: {e}")
+        print(f"[SOCKET] Message failure: {e}")
         db.session.rollback()
