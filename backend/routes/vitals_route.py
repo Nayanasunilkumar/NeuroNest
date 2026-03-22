@@ -25,7 +25,6 @@ _history = deque(maxlen=60)  # last 60 valid readings
 # ─── Alert State Tracking ───────────
 _last_alert_time = {}
 ALERT_COOLDOWN_MINUTES = 5
-_last_error = "None"
 
 def check_and_trigger_alerts(patient_id, data):
     # Thresholds
@@ -80,9 +79,6 @@ def check_and_trigger_alerts(patient_id, data):
                 
             except Exception as e:
                 db.session.rollback()
-                global _last_error
-                import traceback
-                _last_error = traceback.format_exc()
                 print(f"[VITALS ALERT ERROR] {e}")
 
 # (send_critical_alert_email function removed and consolidated into NotificationService)
@@ -104,12 +100,11 @@ def receive_vitals():
             return jsonify({"error": "No data"}), 400
 
     # Identify targeted patient.
-    # If device doesn't send ID, we try to use the last active patient in the system
+    # If device doesn't send ID, use Patient 1 (Jane - ESP32 target) consistently
+    # so alerts appear on the expected dashboards instead of newer signups.
     patient_id = int(data.get("patient_id") or 0)
     if not patient_id:
-        # Fallback for dev/testing: use the most recently created patient
-        last_patient = User.query.filter_by(role='patient').order_by(User.created_at.desc()).first()
-        patient_id = last_patient.id if last_patient else 1
+        patient_id = 1
 
     _latest.update({
         "patient_id": patient_id,
@@ -156,18 +151,6 @@ def receive_vitals():
     #     print(f"[VITALS DB] Warning: {e}")
 
     return jsonify({"status": "ok"}), 200
-
-
-# =========================================
-# Frontend → GET /api/vitals/debug
-# =========================================
-@vitals_bp.route("/api/vitals/debug", methods=["GET"])
-def get_debug():
-    return jsonify({
-        "last_error": _last_error,
-        "last_alert_time": {f"{k[0]}_{k[1]}": v.isoformat() for k, v in _last_alert_time.items()},
-        "latest": _latest
-    }), 200
 
 
 # =========================================
