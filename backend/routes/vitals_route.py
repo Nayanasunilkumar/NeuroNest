@@ -99,9 +99,13 @@ def receive_vitals():
             print("[VITALS] Invalid payload:", raw)
             return jsonify({"error": "No data"}), 400
 
-    # Attach optional patient_id if provided (useful for multi-patient routing)
-    # Default to patient 1 if not provided by ESP32 so alerts always trigger
-    patient_id = int(data.get("patient_id", 1) or 1)
+    # Identify targeted patient.
+    # If device doesn't send ID, we try to use the last active patient in the system
+    patient_id = int(data.get("patient_id") or 0)
+    if not patient_id:
+        # Fallback for dev/testing: use the most recently created patient
+        last_patient = User.query.filter_by(role='patient').order_by(User.created_at.desc()).first()
+        patient_id = last_patient.id if last_patient else 1
 
     _latest.update({
         "patient_id": patient_id,

@@ -4,10 +4,13 @@ from database.models import db, User, PatientProfile, DoctorProfile, SecurityAct
 from utils.security import hash_password, verify_password
 from flask_jwt_extended import create_access_token
 
+from extensions.socket import socketio
+from services.notification_service import NotificationService
+
 auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
 
 @auth_bp.route("/test-email")
-def test_email():
+def test_email_v1():
     version = "V_REQUESTS_2026"  # marker
     try:
         import requests as req_lib
@@ -40,17 +43,30 @@ def test_email():
     except Exception as e:
         return jsonify({"status": "error", "version": version, "type": type(e).__name__, "msg": str(e)}), 500
 
+@auth_bp.route("/debug/test-email", methods=["GET"])
+def test_email_diagnostics():
+    target = request.args.get("email")
+    if not target:
+        return jsonify({"error": "email param required"}), 400
+    
+    print(f"[DEBUG] Manual email test to {target}")
+    try:
+        success = NotificationService.send_email(target, "NeuroNest Test Email", "This is a diagnostic test of the notification system.")
+        return jsonify({"success": success}), 200
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
 def parse_user_agent(ua_string):
     if not ua_string: return "Unknown Device"
     ua_string = ua_string.lower()
     
     # Simple OS detection
-    os = "Unknown OS"
-    if "macintosh" in ua_string or "mac os" in ua_string: os = "MacOS"
-    elif "windows" in ua_string: os = "Windows"
-    elif "android" in ua_string: os = "Android"
-    elif "iphone" in ua_string or "ipad" in ua_string: os = "iOS"
-    elif "linux" in ua_string: os = "Linux"
+    os_name = "Unknown OS"
+    if "macintosh" in ua_string or "mac os" in ua_string: os_name = "MacOS"
+    elif "windows" in ua_string: os_name = "Windows"
+    elif "android" in ua_string: os_name = "Android"
+    elif "iphone" in ua_string or "ipad" in ua_string: os_name = "iOS"
+    elif "linux" in ua_string: os_name = "Linux"
 
     # Simple Browser detection
     browser = "Browser"
@@ -60,7 +76,7 @@ def parse_user_agent(ua_string):
     elif "edg" in ua_string: browser = "Edge"
     elif "opera" in ua_string or "opr" in ua_string: browser = "Opera"
     
-    return f"{browser} on {os}"
+    return f"{browser} on {os_name}"
 
 def log_security_event(user_id, event_type, description, commit=True):
     ua = request.headers.get('User-Agent', '')
@@ -135,8 +151,6 @@ def register():
     if not email or not password or not full_name:
         return jsonify({"message": "Full name, email and password required"}), 400
 
-    # Public registration is patient-only; doctor accounts must be provisioned by admins/scripts.
-    role = "patient"
     if requested_role and requested_role != "patient":
         return jsonify({"message": "Only patient self-registration is allowed"}), 403
 
@@ -147,7 +161,7 @@ def register():
     user = User(
         email=email,
         password_hash=hash_password(password),
-        role=role,
+        role="patient",
         full_name=full_name
     )
 
