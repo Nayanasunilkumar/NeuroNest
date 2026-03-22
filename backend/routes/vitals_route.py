@@ -203,10 +203,21 @@ def get_monitored_patients():
     claims = get_jwt()
     if claims.get("role") not in ("doctor", "admin"):
         return jsonify({"message": "Access denied"}), 403
-    # Return current patient if vitals are active
-    if _latest.get("ts"):
-        return jsonify([{"patient_id": 1, "patient_name": "Jane (ESP32)"}]), 200
-    return jsonify([]), 200
+    
+    patients = User.query.filter_by(role='patient').all()
+    patients_list = []
+    active_patient_id = _latest.get("patient_id") if _latest.get("ts") else None
+    
+    for p in patients:
+        name = p.full_name or f"Patient {p.id}"
+        if active_patient_id == p.id:
+            name += " (ESP32)"
+        patients_list.append({
+            "patient_id": p.id,
+            "patient_name": name
+        })
+        
+    return jsonify(patients_list), 200
 
 
 # =========================================
