@@ -216,19 +216,14 @@ const DoctorChat = ({ isEmbedded = false }) => {
         setMessages(prev => [...prev, optimisticMsg]);
 
         try {
-            const socket = getSocket();
-            if (socket && socket.connected) {
-                socket.emit('send_message', {
-                    conversation_id: selectedConv.id,
-                    content: content,
-                    type: type
-                });
-            } else {
-                const savedMsg = await sendMessage(selectedConv.id, content, type);
-                handleIncomingMessage(savedMsg);
-            }
+            // --- FAIL-SAFE PROTOCOL: USE HTTP FOR SENDING, SOCKET FOR RECEIVING ---
+            const savedMsg = await sendMessage(selectedConv.id, content, type);
+            
+            // Re-sync UI with the authoritative server record
+            handleIncomingMessage(savedMsg); 
         } catch (err) {
-            console.error("Clinical dispatch error:", err);
+            console.error("Clinical dispatch error via Protocol Bridge:", err);
+            // On failure, remove the optimistic message
             setMessages(prev => prev.filter(m => m.id !== tempId));
         }
     }, [selectedConv, currentUser, handleIncomingMessage]);

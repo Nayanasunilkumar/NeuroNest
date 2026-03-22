@@ -179,26 +179,20 @@ const Chat = () => {
             status: 'sending'
         };
 
-        // Add to local UI state for instant response
+        // Add to local UI state for instant response (optimistic)
         setMessages(prev => [...prev, optimisticMsg]);
         
         try {
-            const socket = getSocket();
-            if (socket && socket.connected) {
-                socket.emit('send_message', {
-                    conversation_id: selectedConv.id,
-                    content: content,
-                    type: type
-                });
-            } else {
-                const savedMsg = await chatAPI.sendMessage(selectedConv.id, content, type);
-                handleNewMessage({ ...savedMsg, tempId }); // Pass tempId to replace it
-            }
+            // --- FAIL-SAFE PROTOCOL: USE HTTP FOR SENDING, SOCKET FOR RECEIVING ---
+            const savedMsg = await chatAPI.sendMessage(selectedConv.id, content, type);
+            
+            // Re-sync UI with the authoritative server record
+            handleNewMessage({ ...savedMsg, tempId }); 
         } catch (err) {
-            console.error("Failed to send message", err);
-            // On failure, remove the optimistic message or show error
+            console.error("Failed to send message via Protocol Bridge", err);
+            // On failure, remove the optimistic message
             setMessages(prev => prev.filter(m => m.id !== tempId));
-            alert("Connection error: Failed to send message. Please check your network.");
+            alert("Delivery failed. Please check your medical network connection.");
         }
     };
 
