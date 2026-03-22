@@ -106,29 +106,51 @@ const LiveVitalsPanel = ({ title, subtitle, latest, history, loading, error, isO
           <p className="small text-secondary mb-0">{subtitle}</p>
         </div>
         <div className="d-flex align-items-center gap-2">
-          {isOnline ? (
-            <span className="badge rounded-pill d-flex align-items-center gap-1"
-              style={{ background:"#d1fae5", color:"#065f46", fontSize:"0.7rem" }}>
-              <Wifi size={10}/> CONNECTED
-            </span>
+          {signal === "no_device" ? (
+             <span className="badge rounded-pill d-flex align-items-center gap-1"
+               style={{ background:"#f1f5f9", color:"#64748b", fontSize:"0.7rem", border:"1px solid #e2e8f0" }}>
+               <WifiOff size={10}/> NO DEVICE
+             </span>
           ) : (
-            <span className="badge rounded-pill d-flex align-items-center gap-1"
-              style={{ background:"#fee2e2", color:"#991b1b", fontSize:"0.7rem" }}>
-              <WifiOff size={10}/> DISCONNECTED
-            </span>
+            <>
+              {isOnline ? (
+                <span className="badge rounded-pill d-flex align-items-center gap-1"
+                  style={{ background:"#d1fae5", color:"#065f46", fontSize:"0.7rem" }}>
+                  <Wifi size={10}/> CONNECTED
+                </span>
+              ) : (
+                <span className="badge rounded-pill d-flex align-items-center gap-1"
+                  style={{ background:"#fee2e2", color:"#991b1b", fontSize:"0.7rem" }}>
+                  <WifiOff size={10}/> DISCONNECTED
+                </span>
+              )}
+              {isLive && <span className="badge rounded-pill bg-success" style={{fontSize:"0.7rem"}}>● LIVE</span>}
+              {isWeak && <span className="badge rounded-pill bg-warning text-dark" style={{fontSize:"0.7rem"}}>◐ WEAK</span>}
+              {signal === "no_finger" && <span className="badge rounded-pill bg-danger" style={{fontSize:"0.7rem"}}>○ NO FINGER</span>}
+              {signal === "initialising" && <span className="badge rounded-pill bg-info" style={{fontSize:"0.7rem"}}>◌ INITIALISING</span>}
+            </>
           )}
-          {isLive && <span className="badge rounded-pill bg-success" style={{fontSize:"0.7rem"}}>● LIVE</span>}
-          {isWeak && <span className="badge rounded-pill bg-warning text-dark" style={{fontSize:"0.7rem"}}>◐ WEAK</span>}
-          {signal === "no_finger" && <span className="badge rounded-pill bg-danger" style={{fontSize:"0.7rem"}}>○ NO FINGER</span>}
-          {signal === "initialising" && <span className="badge rounded-pill bg-info" style={{fontSize:"0.7rem"}}>◌ INITIALISING</span>}
           <span className="small text-secondary">
-            LAST UPDATE {latest?.ts ? new Date(latest.ts).toLocaleTimeString() : "--"}
+            {signal === "no_device" ? "UNAVAILABLE" : `LAST UPDATE ${latest?.ts ? new Date(latest.ts).toLocaleTimeString() : "--"}`}
           </span>
         </div>
       </div>
 
+      {/* No Device Placeholder */}
+      {signal === "no_device" && (
+        <div className="p-5 text-center bg-light rounded-4 border border-dashed mb-0">
+          <div className="bg-white p-3 rounded-circle shadow-sm d-inline-block mb-3">
+             <WifiOff size={24} className="text-secondary opacity-50" />
+          </div>
+          <h6 className="fw-bold mb-1">No monitoring device assigned to this patient</h6>
+          <p className="small text-secondary mb-0 mx-auto" style={{ maxWidth: "350px" }}>
+            The NeuroNest hardware telemetry is only available for patients with an active ESP32 device link.
+          </p>
+        </div>
+      )}
+
       {/* Alert Banner */}
-      {anyAlert && (
+      {anyAlert && signal !== "no_device" && (
         <div className="alert alert-danger d-flex align-items-center gap-2 rounded-4 mb-3 py-2 px-3 border-0"
           style={{ background:"#fff1f2", color:"#be123c" }}>
           <span>🚨</span>
@@ -137,7 +159,8 @@ const LiveVitalsPanel = ({ title, subtitle, latest, history, loading, error, isO
       )}
 
       {/* Vitals Cards */}
-      <div className="row g-3">
+      {signal !== "no_device" && (
+        <div className="row g-3">
         {vitals.map((v, i) => {
           const fmt = v.value != null ? v.value.toFixed(v.decimals) : "--";
           return (
@@ -182,6 +205,7 @@ const LiveVitalsPanel = ({ title, subtitle, latest, history, loading, error, isO
           );
         })}
       </div>
+      )}
     </div>
   );
 };

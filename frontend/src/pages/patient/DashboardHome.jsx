@@ -290,44 +290,66 @@ function VitalsSection() {
           </p>
         </div>
         <div className="d-flex align-items-center gap-2">
-          {/* Device status */}
-          {online && signal !== "na" && !isStale ? (
+          {/* Signal status */}
+          {signal === "no_device" ? (
             <span className="badge rounded-pill d-flex align-items-center gap-1"
-              style={{ background: "#d1fae5", color: "#065f46", fontSize: "0.7rem" }}>
-              <Wifi size={10} /> CONNECTED
+              style={{ background: "#f1f5f9", color: "#64748b", fontSize: "0.7rem", border: "1px solid #e2e8f0" }}>
+              <WifiOff size={10} /> NO DEVICE ASSIGNED
             </span>
           ) : (
-            <span className="badge rounded-pill d-flex align-items-center gap-1"
-              style={{ background: "#fee2e2", color: "#991b1b", fontSize: "0.7rem" }}>
-              <WifiOff size={10} /> DISCONNECTED
-            </span>
-          )}
-          {/* Signal status */}
-          {isLive && (
-            <span className="badge rounded-pill bg-success" style={{ fontSize: "0.7rem" }}>
-              ● LIVE
-            </span>
-          )}
-          {isWeak && (
-            <span className="badge rounded-pill bg-warning text-dark" style={{ fontSize: "0.7rem" }}>
-              ◐ WEAK SIGNAL
-            </span>
-          )}
-          {signal === "no_finger" && (
-            <span className="badge rounded-pill bg-danger" style={{ fontSize: "0.7rem" }}>
-              ○ NO FINGER
-            </span>
-          )}
-          {signal === "initialising" && (
-            <span className="badge rounded-pill bg-info" style={{ fontSize: "0.7rem" }}>
-              ◌ INITIALISING
-            </span>
+            <>
+              {online && signal !== "na" && !isStale ? (
+                <span className="badge rounded-pill d-flex align-items-center gap-1"
+                  style={{ background: "#d1fae5", color: "#065f46", fontSize: "0.7rem" }}>
+                  <Wifi size={10} /> CONNECTED
+                </span>
+              ) : (
+                <span className="badge rounded-pill d-flex align-items-center gap-1"
+                  style={{ background: "#fee2e2", color: "#991b1b", fontSize: "0.7rem" }}>
+                  <WifiOff size={10} /> DISCONNECTED
+                </span>
+              )}
+
+              {isLive && (
+                <span className="badge rounded-pill bg-success" style={{ fontSize: "0.7rem" }}>
+                  ● LIVE
+                </span>
+              )}
+              {isWeak && (
+                <span className="badge rounded-pill bg-warning text-dark" style={{ fontSize: "0.7rem" }}>
+                  ◐ WEAK SIGNAL
+                </span>
+              )}
+              {signal === "no_finger" && (
+                <span className="badge rounded-pill bg-danger" style={{ fontSize: "0.58rem" }}>
+                  ○ NO FINGER
+                </span>
+              )}
+              {signal === "initialising" && (
+                <span className="badge rounded-pill bg-info" style={{ fontSize: "0.7rem" }}>
+                  ◌ INITIALISING
+                </span>
+              )}
+            </>
           )}
         </div>
       </div>
 
+      {/* No Device Placeholder */}
+      {signal === "no_device" && (
+        <div className="card border-0 shadow-sm rounded-4 p-5 text-center bg-light border border-dashed mb-4">
+          <div className="bg-white p-3 rounded-circle shadow-sm d-inline-block mb-3">
+             <WifiOff size={32} className="text-secondary opacity-50" />
+          </div>
+          <h3 className="h6 fw-bold mb-1">No monitoring device connected</h3>
+          <p className="small text-secondary mb-0 mx-auto" style={{ maxWidth: "300px" }}>
+            Real-time vital monitoring is currently unavailable for this account. Please contact your health provider to assign a hardware device.
+          </p>
+        </div>
+      )}
+
       {/* Alert Banner */}
-      {anyAlert && (
+      {anyAlert && signal !== "no_device" && (
         <div className="alert alert-danger d-flex align-items-center gap-2 rounded-4 mb-3 py-2 px-3 border-0"
           style={{ background: "#fff1f2", color: "#be123c" }}>
           <span style={{ fontSize: "1rem" }}>🚨</span>
@@ -338,107 +360,109 @@ function VitalsSection() {
       )}
 
       {/* Vitals Cards */}
-      <div className="row g-4">
-        {vitals.map((v, i) => {
-          const fmt = v.value != null ? v.value.toFixed(v.decimals) : "--";
-          return (
-            <div key={i} className="col-12 col-md-4">
-              <div className="card border-0 shadow-sm rounded-4 h-100 overflow-hidden hover-translate-y"
-                style={{
-                  background: v.alert ? "#fff5f5" : "white",
-                  border: v.alert ? "1px solid rgba(220,53,69,0.3) !important" : undefined,
-                  transition: "all 0.3s",
-                }}>
-
-                {/* Alert strip */}
-                {v.alert && (
-                  <div style={{
-                    height: 3,
-                    background: `linear-gradient(90deg, transparent, ${v.color}, transparent)`,
-                    animation: "stripPulse 1.5s ease-in-out infinite",
-                  }} />
-                )}
-
-                <div className="card-body p-4">
-                  {/* Top row */}
-                  <div className="d-flex justify-content-between align-items-start mb-2">
-                    <div>
-                      <div className="small fw-bold text-uppercase text-secondary mb-0"
-                        style={{ fontSize: "0.68rem", letterSpacing: "1px" }}>
-                        {v.label}
-                      </div>
-                      <div style={{ fontSize: "0.58rem", color: "#bbb", letterSpacing: "1px" }}>
-                        {v.sub}
-                      </div>
-                    </div>
-                    <div className="d-flex align-items-center gap-2">
-                      {v.alert && (
-                        <span className="badge bg-danger rounded-pill"
-                          style={{ fontSize: "0.58rem", animation: "blink 0.9s step-end infinite" }}>
-                          ⚠ ALERT
-                        </span>
-                      )}
-                      <div className={`bg-${v.bsColor} bg-opacity-10 text-${v.bsColor} p-2 rounded-3`}>
-                        {v.icon}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Value */}
-                  <div className="d-flex align-items-baseline gap-1 mb-2">
-                    <span className="fw-black"
-                      style={{
-                        fontSize: "2.6rem",
-                        lineHeight: 1,
-                        color: v.alert ? "#dc3545" : v.color,
-                        fontVariantNumeric: "tabular-nums",
-                        transition: "color 0.3s",
-                        letterSpacing: "-1px",
-                      }}>
-                      {fmt}
-                    </span>
-                    <span className="text-secondary fw-bold" style={{ fontSize: "0.85rem" }}>
-                      {v.unit}
-                    </span>
-                  </div>
-
-                  {/* Waveform */}
-                  <div style={{
-                    background: v.alert
-                      ? `rgba(220,53,69,0.04)`
-                      : `rgba(${v.bsColor === "danger" ? "220,53,69" : v.bsColor === "primary" ? "13,110,253" : "25,135,84"},0.04)`,
-                    borderRadius: 16,
-                    overflow: "hidden",
-                    padding: "4px 2px",
-                    marginBottom: 8,
+      {signal !== "no_device" && (
+        <div className="row g-4">
+          {vitals.map((v, i) => {
+            const fmt = v.value != null ? v.value.toFixed(v.decimals) : "--";
+            return (
+              <div key={i} className="col-12 col-md-4">
+                <div className="card border-0 shadow-sm rounded-4 h-100 overflow-hidden hover-translate-y"
+                  style={{
+                    background: v.alert ? "#fff5f5" : "white",
+                    border: v.alert ? "1px solid rgba(220,53,69,0.3) !important" : undefined,
+                    transition: "all 0.3s",
                   }}>
-                    {v.wave === "ecg" && (
-                      <ECGWave bpm={data?.hr || 72} color={v.alert ? "#dc3545" : v.color} />
-                    )}
-                    {v.wave === "pleth" && (
-                      <PlethWave color={v.alert ? "#dc3545" : v.color} />
-                    )}
-                    {v.wave === "temp" && (
-                      <TempSparkline history={tempHistory} color={v.alert ? "#dc3545" : v.color} />
-                    )}
-                  </div>
 
-                  {/* Footer */}
-                  <div className="d-flex justify-content-between align-items-center">
-                    <span className="text-secondary" style={{ fontSize: "0.62rem", letterSpacing: "0.5px" }}>
-                      NORMAL: {v.normal}
-                    </span>
-                    <span className={`badge rounded-pill bg-${v.bsColor} bg-opacity-10 text-${v.bsColor}`}
-                      style={{ fontSize: "0.6rem" }}>
-                      {isLive ? "● LIVE" : isWeak ? "◐ LKG" : "—"}
-                    </span>
+                  {/* Alert strip */}
+                  {v.alert && (
+                    <div style={{
+                      height: 3,
+                      background: `linear-gradient(90deg, transparent, ${v.color}, transparent)`,
+                      animation: "stripPulse 1.5s ease-in-out infinite",
+                    }} />
+                  )}
+
+                  <div className="card-body p-4">
+                    {/* Top row */}
+                    <div className="d-flex justify-content-between align-items-start mb-2">
+                      <div>
+                        <div className="small fw-bold text-uppercase text-secondary mb-0"
+                          style={{ fontSize: "0.68rem", letterSpacing: "1px" }}>
+                          {v.label}
+                        </div>
+                        <div style={{ fontSize: "0.58rem", color: "#bbb", letterSpacing: "1px" }}>
+                          {v.sub}
+                        </div>
+                      </div>
+                      <div className="d-flex align-items-center gap-2">
+                        {v.alert && (
+                          <span className="badge bg-danger rounded-pill"
+                            style={{ fontSize: "0.58rem", animation: "blink 0.9s step-end infinite" }}>
+                            ⚠ ALERT
+                          </span>
+                        )}
+                        <div className={`bg-${v.bsColor} bg-opacity-10 text-${v.bsColor} p-2 rounded-3`}>
+                          {v.icon}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Value */}
+                    <div className="d-flex align-items-baseline gap-1 mb-2">
+                      <span className="fw-black"
+                        style={{
+                          fontSize: "2.6rem",
+                          lineHeight: 1,
+                          color: v.alert ? "#dc3545" : v.color,
+                          fontVariantNumeric: "tabular-nums",
+                          transition: "color 0.3s",
+                          letterSpacing: "-1px",
+                        }}>
+                        {fmt}
+                      </span>
+                      <span className="text-secondary fw-bold" style={{ fontSize: "0.85rem" }}>
+                        {v.unit}
+                      </span>
+                    </div>
+
+                    {/* Waveform */}
+                    <div style={{
+                      background: v.alert
+                        ? `rgba(220,53,69,0.04)`
+                        : `rgba(${v.bsColor === "danger" ? "220,53,69" : v.bsColor === "primary" ? "13,110,253" : "25,135,84"},0.04)`,
+                      borderRadius: 16,
+                      overflow: "hidden",
+                      padding: "4px 2px",
+                      marginBottom: 8,
+                    }}>
+                      {v.wave === "ecg" && (
+                        <ECGWave bpm={data?.hr || 72} color={v.alert ? "#dc3545" : v.color} />
+                      )}
+                      {v.wave === "pleth" && (
+                        <PlethWave color={v.alert ? "#dc3545" : v.color} />
+                      )}
+                      {v.wave === "temp" && (
+                        <TempSparkline history={tempHistory} color={v.alert ? "#dc3545" : v.color} />
+                      )}
+                    </div>
+
+                    {/* Footer */}
+                    <div className="d-flex justify-content-between align-items-center">
+                      <span className="text-secondary" style={{ fontSize: "0.62rem", letterSpacing: "0.5px" }}>
+                        NORMAL: {v.normal}
+                      </span>
+                      <span className={`badge rounded-pill bg-${v.bsColor} bg-opacity-10 text-${v.bsColor}`}
+                        style={{ fontSize: "0.6rem" }}>
+                        {isLive ? "● LIVE" : isWeak ? "◐ LKG" : "—"}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      )}
 
       <style>{`
         @keyframes stripPulse { 0%,100%{opacity:0.5} 50%{opacity:1} }

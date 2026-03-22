@@ -71,8 +71,12 @@ def check_and_trigger_alerts(patient_id, data):
                 db.session.add(alert)
                 db.session.commit()
                 
-                # Emit WebSocket
-                socketio.emit("critical_alert", alert.to_dict())
+                # Emit WebSocket ONLY to the specific patient's room (Secure Alert Mapping)
+                room = f"patient_vitals_{patient_id}"
+                socketio.emit("critical_alert", alert.to_dict(), room=room)
+                
+                # Also notify via their personal user room for general notification popups
+                socketio.emit("new_in_app_notification", alert.to_dict(), room=f"user_{patient_id}")
                 
                 # Standardized Notification (In-App + Email/SMS)
                 NotificationService.notify_critical_vitals(patient_id, alert)
@@ -100,12 +104,12 @@ def receive_vitals():
             return jsonify({"error": "No data"}), 400
 
     # Identify targeted patient.
-    # If device doesn't send ID, use Patient 'abc' consistently
-    # so alerts appear on the expected dashboards instead of newer signups.
+    # Hardware device (ESP32) is assigned ONLY to Patient ABC (nezrinnoushad20@gmail.com)
     patient_id = int(data.get("patient_id") or 0)
     if not patient_id:
-        abc_patient = User.query.filter(User.role == 'patient', User.full_name.ilike('%abc%')).first()
-        patient_id = abc_patient.id if abc_patient else 1
+        target_patient = User.query.filter_by(email='nezrinnoushad20@gmail.com').first()
+        # If mapping fails, default safely to Patient 1 but log the mismatch
+        patient_id = target_patient.id if target_patient else 1
 
     _latest.update({
         "patient_id": patient_id,
@@ -122,9 +126,9 @@ def receive_vitals():
 
     # Debug log: show incoming vitals
     print("[VITALS] Received", _latest)
-
-    # Emit to all connected clients (fallback for missing room joins)
-    socketio.emit("vitals_update", _latest)
+    
+    # Emit ONLY to the specific patient's room (Secure Data Mapping)
+    socketio.emit("vitals_update", _latest, room=f"patient_vitals_{patient_id}")
 
     # Save to history only when signal is valid
     if data.get("signal") in ("ok", "weak"):
@@ -161,8 +165,32 @@ def receive_vitals():
 @vitals_bp.route("/api/vitals/latest", methods=["GET"])
 @jwt_required()
 def get_latest():
-    claims = get_jwt()
-    if claims.get("role") not in ("patient", "doctor", "admin"):
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({"message": "User not found"}), 404
+
+    # Optional patient_id parameter (sent by Doctor Dashboard via useLiveVitals hook)
+    requested_patient_id = request.args.get("patient_id", type=int)
+    active_patient_id = _latest.get("patient_id")
+
+    # Access Control & Isolation
+    is_target_patient = (user.email == 'nezrinnoushad20@gmail.com')
+    is_clinical_staff = (user.role in ("doctor", "admin", "super_admin"))
+
+    if user.role == 'patient':
+        # ONLY Patient ABC has a device. Others see "no_device".
+        if not is_target_patient:
+            return jsonify({"signal": "no_device"}), 200
+        # If Patient ABC is viewing, don't show data if the device is mapped elsewhere
+        if active_patient_id and active_patient_id != user.id:
+            return jsonify({"signal": "disconnected"}), 200
+    
+    elif is_clinical_staff:
+        # If doctor selecting a patient, only show vitals if it matches the selected patient
+        if requested_patient_id and active_patient_id != requested_patient_id:
+            return jsonify({"signal": "no_device"}), 200
+    else:
         return jsonify({"message": "Access denied"}), 403
 
     # If the device hasn't sent an update recently, treat it as disconnected.
@@ -174,7 +202,6 @@ def get_latest():
             if datetime.utcnow() - last_update > timedelta(seconds=30):
                 latest["signal"] = "disconnected"
         except Exception:
-            # If parsing fails, fall back to the stored status
             pass
 
     return jsonify(latest), 200
@@ -187,9 +214,25 @@ def get_latest():
 @vitals_bp.route("/api/vitals/history", methods=["GET"])
 @jwt_required()
 def get_history():
-    claims = get_jwt()
-    if claims.get("role") not in ("patient", "doctor", "admin"):
-        return jsonify({"message": "Access denied"}), 403
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
+    
+    requested_patient_id = request.args.get("patient_id", type=int)
+    active_patient_id = _latest.get("patient_id")
+
+    is_target_patient = (user.email == 'nezrinnoushad20@gmail.com')
+    is_clinical_staff = (user.role in ("doctor", "admin", "super_admin"))
+    
+    # Isolation
+    if user.role == 'patient':
+        if not is_target_patient or (active_patient_id and active_patient_id != user.id):
+            return jsonify([]), 200
+    elif is_clinical_staff:
+        if requested_patient_id and active_patient_id != requested_patient_id:
+            return jsonify([]), 200
+    else:
+        return jsonify([]), 200
+        
     return jsonify(list(_history)), 200
 
 
