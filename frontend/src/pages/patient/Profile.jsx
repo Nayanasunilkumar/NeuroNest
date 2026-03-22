@@ -228,21 +228,30 @@ const Profile = () => {
   const activeMeds = (clinicalData?.medications || []).filter((m) => m.status === "active");
   const timelineEntries = (clinicalData?.timeline || []).slice(0, 5);
 
+  const normalizeSeverity = (rawValue, fallback = "severe") => {
+    const value = String(rawValue ?? fallback).trim().toLowerCase();
+    if (value === "critical" || value === "high") return "critical";
+    if (value === "active") return "active";
+    if (value === "moderate" || value === "medium") return "moderate";
+    if (value === "mild" || value === "low") return "active";
+    return "severe";
+  };
+
   const conditionItems = [
     ...(clinicalData?.conditions || []).map((c) => ({
       name: c.condition_name,
-      severity: (c.status || "active").toLowerCase(),
+      severity: normalizeSeverity(c.status, "active"),
       kind: "condition",
     })),
     ...(clinicalData?.allergies || []).map((a) => ({
       name: a.allergy_name,
-      severity: (a.severity || "severe").toLowerCase(),
+      severity: normalizeSeverity(a.severity, "severe"),
       kind: "allergy",
     })),
   ];
 
   const severityClass = (severity = "") => {
-    const value = severity.toLowerCase();
+    const value = normalizeSeverity(severity, "severe");
     if (value === "critical") return "severity-critical";
     if (value === "active") return "severity-active";
     if (value === "moderate") return "severity-moderate";
