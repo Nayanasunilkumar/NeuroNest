@@ -88,22 +88,49 @@ const DoctorChat = ({ isEmbedded = false }) => {
         }
     }, [selectedConv?.id]);
 
-    const handleIncomingMessage = useCallback((msg) => {
-        // Update messages if currently viewing this thread
-        setSelectedConv((current) => {
-            if (current?.id === msg.conversation_id) {
-                setMessages((prev) => {
-                    if (prev.find(m => m.id === msg.id)) return prev;
-                    return [...prev, msg];
-                });
-            }
-            return current;
-        });
+    // USE REFS FOR STABLE VALUES IN SOCKET LISTENERS
+    const selectedConvRef = useRef(selectedConv);
+    const currentUserRef = useRef(currentUser);
 
-        // Update main list
+    useEffect(() => {
+        selectedConvRef.current = selectedConv;
+    }, [selectedConv]);
+
+    useEffect(() => {
+        currentUserRef.current = currentUser;
+    }, [currentUser]);
+
+    const handleIncomingMessage = useCallback((msg) => {
+        if (!msg) return;
+
+        const current = selectedConvRef.current;
+        const currentUserId = currentUserRef.current?.id;
+        
+        // 1. ROUTE TO ACTIVE MESSAGE WINDOW IF MATCH
+        if (current && Number(current.id) === Number(msg.conversation_id)) {
+            setMessages((prev) => {
+                const isMyOwnMessage = String(msg.sender_id) === String(currentUserId);
+                
+                // If it's my own message, try to replace optimistic temp message
+                if (isMyOwnMessage) {
+                    const optimisticIndex = prev.findIndex(m => m.is_optimistic && m.content === msg.content);
+                    if (optimisticIndex > -1) {
+                        const newMsgs = [...prev];
+                        newMsgs[optimisticIndex] = msg;
+                        return newMsgs;
+                    }
+                }
+
+                // Normal de-duplication
+                if (prev.find(m => m.id === msg.id)) return prev;
+                return [...prev, msg];
+            });
+        }
+
+        // 2. ALWAYS UPDATE SIDEBAR PREVIEWS
         setConversations(prev => {
             const updated = prev.map(c => {
-                if (c.id === msg.conversation_id) {
+                if (Number(c.id) === Number(msg.conversation_id)) {
                     return {
                         ...c,
                         last_message: {
@@ -112,7 +139,11 @@ const DoctorChat = ({ isEmbedded = false }) => {
                             is_read: false,
                             sender_id: msg.sender_id
                         },
-                        unread_count: String(msg.sender_id) !== String(currentUser?.id) ? (c.unread_count + 1) : c.unread_count
+                        unread_count: 
+                            String(msg.sender_id) !== String(currentUserId) && 
+                            (!current || Number(current.id) !== Number(msg.conversation_id))
+                                ? (c.unread_count + 1) 
+                                : c.unread_count
                     };
                 }
                 return c;
@@ -124,7 +155,7 @@ const DoctorChat = ({ isEmbedded = false }) => {
                 return dateB - dateA;
             });
         });
-    }, [currentUser?.id]);
+    }, []);
 
     useEffect(() => {
         const user = getUser();
@@ -133,19 +164,15 @@ const DoctorChat = ({ isEmbedded = false }) => {
         const socket = initSocket();
         
         const initChat = async () => {
-            const convs = await fetchConversations();
+            const currentConvs = await fetchConversations();
             
             if (patientIdParam) {
-                // Check if conversation already exists in full list
-                const existing = convs.find(c => c.other_user.id === parseInt(patientIdParam));
-                
+                const existing = currentConvs.find(c => c.other_user.id === parseInt(patientIdParam));
                 if (existing) {
                     handleSelectConversation(existing);
                 } else {
-                    // Try to start a new one
                     try {
                         const newConvData = await startConversation(patientIdParam);
-                        // Re-fetch to get the full formatted conversation object
                         const updatedConvs = await fetchConversations();
                         const newlyCreated = updatedConvs.find(c => c.id === newConvData.conversation_id);
                         if (newlyCreated) {
@@ -159,22 +186,35 @@ const DoctorChat = ({ isEmbedded = false }) => {
         };
 
         if (socket) {
-            socket.on("new_message", (msg) => {
-                handleIncomingMessage(msg);
-            });
+            socket.on("new_message", handleIncomingMessage);
+            initChat();
+            return () => {
+                socket.off("new_message", handleIncomingMessage);
+            };
+        } else {
+            initChat();
         }
 
-        initChat();
-
-        return () => {
-            // Only disconnect if we created it ? Actually shared socket is better.
-            // disconnectSocket(); 
-        };
     }, [fetchConversations, handleIncomingMessage, handleSelectConversation, patientIdParam]);
 
     const handleSendMessage = useCallback(async (content, type = 'text') => {
         if (!selectedConv || !currentUser) return;
         
+        // --- OPTIMISTIC UPDATE ---
+        const tempId = `temp-${Date.now()}`;
+        const optimisticMsg = {
+            id: tempId,
+            conversation_id: selectedConv.id,
+            sender_id: currentUser.id,
+            content: content,
+            type: type,
+            created_at: new Date().toISOString(),
+            is_optimistic: true,
+            status: 'sending'
+        };
+
+        setMessages(prev => [...prev, optimisticMsg]);
+
         try {
             const socket = getSocket();
             if (socket && socket.connected) {
@@ -184,12 +224,12 @@ const DoctorChat = ({ isEmbedded = false }) => {
                     type: type
                 });
             } else {
-                // HTTP Fallback for reliability
                 const savedMsg = await sendMessage(selectedConv.id, content, type);
                 handleIncomingMessage(savedMsg);
             }
         } catch (err) {
             console.error("Clinical dispatch error:", err);
+            setMessages(prev => prev.filter(m => m.id !== tempId));
         }
     }, [selectedConv, currentUser, handleIncomingMessage]);
 
