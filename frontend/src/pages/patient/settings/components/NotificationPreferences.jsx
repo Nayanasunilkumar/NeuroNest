@@ -27,6 +27,7 @@ export default function NotificationPreferences({ data, saving, onSave }) {
     email_announcements: true, email_feedback: true,
     inapp_appointments: true, inapp_prescriptions: true,
     inapp_messages: true, inapp_announcements: true,
+    email_alerts: true, inapp_alerts: true,
     allow_doctor_followup: true, allow_promotions: false,
     ...(data?.notifications || {}),
   }), [data]);

@@ -162,9 +162,10 @@ def update_notifications():
     allowed = [
         "email_appointments","email_prescriptions","email_messages","email_announcements","email_feedback",
         "sms_appointments","sms_prescriptions","sms_messages","sms_announcements",
-        "inapp_appointments","inapp_prescriptions","inapp_messages","inapp_announcements",
+        "inapp_appointments","inapp_prescriptions","inapp_messages","inapp_announcements","inapp_alerts",
         "allow_doctor_followup","allow_promotions","allow_anonymous_feedback",
         "share_history_with_doctors","allow_analytics",
+        "email_alerts",
     ]
     updates = {k: v for k, v in data.items() if k in allowed and isinstance(v, bool)}
     if updates:
