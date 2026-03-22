@@ -58,7 +58,12 @@ def create_app():
             with db.engine.connect().execution_options(isolation_level="AUTOCOMMIT") as conn:
                 conn.execute(db.text(
                     "ALTER TABLE appointments ADD COLUMN IF NOT EXISTS "
-                    "consultation_type VARCHAR(20) DEFAULT 'in_person'"
+                    "consultation_type VARCHAR(20) DEFAULT 'in_person', "
+                    "ADD COLUMN IF NOT EXISTS rescheduled_by VARCHAR(20), "
+                    "ADD COLUMN IF NOT EXISTS old_date_time TIMESTAMP, "
+                    "ADD COLUMN IF NOT EXISTS new_date_time TIMESTAMP, "
+                    "ADD COLUMN IF NOT EXISTS reschedule_reason TEXT, "
+                    "ADD COLUMN IF NOT EXISTS reschedule_status VARCHAR(20)"
                 ))
                 # --- Notification Preferences Missing Columns ---
                 conn.execute(db.text("ALTER TABLE notification_preferences ADD COLUMN IF NOT EXISTS email_alerts BOOLEAN DEFAULT TRUE"))

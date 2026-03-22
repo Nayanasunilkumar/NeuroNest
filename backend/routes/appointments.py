@@ -538,8 +538,11 @@ def reschedule_appointment(id):
         if not appointment:
             return jsonify({"error": "Appointment not found"}), 404
 
-        doctor_id = appointment.doctor_id
+        # Save old date and time
+        from datetime import datetime
+        old_dt = datetime.combine(appointment.appointment_date, appointment.appointment_time)
 
+        doctor_id = appointment.doctor_id
         target_slot = None
         if data.get("slot_id"):
             target_slot = AppointmentSlot.query.filter_by(
@@ -575,6 +578,13 @@ def reschedule_appointment(id):
             appointment.appointment_time = slot.slot_start_utc.time()
             appointment.status = _appointment_status_for_mode(mode)
             appointment.booking_mode = mode
+            
+            # Populate reschedule fields
+            appointment.rescheduled_by = "patient"
+            appointment.old_date_time = old_dt
+            appointment.new_date_time = datetime.combine(slot.slot_date_local, slot.slot_start_utc.time())
+            appointment.reschedule_reason = data.get("reason", "")
+            appointment.reschedule_status = "Pending"
 
             if mode == "doctor_approval":
                 mark_slot_held(
@@ -594,7 +604,7 @@ def reschedule_appointment(id):
                     source="patient_reschedule",
                     reason="Rescheduled slot confirmed",
                 )
-            NotificationService.notify_appointment_event(appointment.id, "rescheduled")
+            NotificationService.notify_appointment_reschedule(appointment.id)
             db.session.commit()
             return jsonify({"message": "Appointment rescheduled successfully", "appointment": appointment.to_dict()}), 200
 
@@ -604,8 +614,18 @@ def reschedule_appointment(id):
         if "time" in data:
             appointment.appointment_time = datetime.strptime(data["time"], "%H:%M").time()
 
+        # Populate reschedule fields for legacy path
+        appointment.rescheduled_by = "patient"
+        appointment.old_date_time = old_dt
+        if "date" in data and "time" in data:
+            appointment.new_date_time = datetime.strptime(f"{data['date']} {data['time']}", "%Y-%m-%d %H:%M")
+        appointment.reschedule_reason = data.get("reason", "")
+        appointment.reschedule_status = "Pending"
+
         appointment.status = "pending"
         appointment.booking_mode = "doctor_approval"
+        
+        NotificationService.notify_appointment_reschedule(appointment.id)
         db.session.commit()
 
         payload = {

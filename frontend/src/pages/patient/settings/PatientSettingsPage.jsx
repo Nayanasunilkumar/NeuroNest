@@ -42,17 +42,16 @@ export default function PatientSettingsPage() {
       <style>{`
         .pset-page-wrapper {
           min-height: calc(100vh - 80px);
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          padding: 40px;
+          display: grid;
+          place-items: center; /* Centers the content precisely on both axes */
+          padding: 60px 40px; /* Increased vertical padding to ensure a healthy gap on all screen sizes */
           box-sizing: border-box;
-          background: #f8fafc; /* Match standard dashboard background */
+          background: #f8fafc;
         }
 
         .pset-root { 
           width: 100%;
-          max-width: 1240px; /* Slightly adjusted for a more balanced square-like feel */
+          max-width: 1240px;
           background: #ffffff;
           padding: 2.5rem; 
           border-radius: 36px;
@@ -60,6 +59,7 @@ export default function PatientSettingsPage() {
           box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
           font-family: 'Outfit', 'Inter', sans-serif; 
           color: #1e293b;
+          margin: 0; /* Let grid handle centering */
         }
 
         /* Top Bar Navigation */

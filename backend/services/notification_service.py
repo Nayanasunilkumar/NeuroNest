@@ -250,6 +250,54 @@ class NotificationService:
         )
 
     @staticmethod
+    def notify_appointment_reschedule(appointment_id):
+        from database.models import Appointment, User
+        appt = Appointment.query.get(appointment_id)
+        if not appt: return
+
+        patient = User.query.get(appt.patient_id)
+        doctor = User.query.get(appt.doctor_id)
+        if not patient or not doctor: return
+
+        # Format dates for display
+        old_dt = appt.old_date_time.strftime('%b %d, %I:%M %p') if appt.old_date_time else 'N/A'
+        new_dt = appt.new_date_time.strftime('%b %d, %I:%M %p') if appt.new_date_time else 'N/A'
+        reason = appt.reschedule_reason or "None provided"
+
+        if appt.rescheduled_by == "doctor":
+            # Email to Patient
+            msg = (
+                f"Dear {patient.full_name},\n\n"
+                f"Your appointment with Dr. {doctor.full_name} scheduled on {old_dt} has been rescheduled to {new_dt}.\n\n"
+                f"Reason: {reason}\n\n"
+                f"Please log in to your dashboard for more details."
+            )
+            subject = f"Your Appointment Has Been Rescheduled by Dr. {doctor.full_name}"
+            target_user_id = patient.id
+            title = "Appointment Rescheduled"
+        else: # patient
+            # Email to Doctor
+            msg = (
+                f"Dear Dr. {doctor.full_name},\n\n"
+                f"Patient {patient.full_name} has requested to reschedule the appointment originally scheduled on {old_dt}.\n\n"
+                f"Requested new time: {new_dt}.\n"
+                f"Reason: {reason}\n\n"
+                f"Please log in to your dashboard to approve or manage the request."
+            )
+            subject = f"Appointment Reschedule Request from {patient.full_name}"
+            target_user_id = doctor.id
+            title = "Reschedule Request Received"
+
+        NotificationService.send_in_app(
+            user_id=target_user_id,
+            title=title,
+            message=msg,
+            notif_type="appointment",
+            email_subject=subject,
+            email_event_type="reschedule"
+        )
+
+    @staticmethod
     def _build_html_email(subject, body, event_type=None):
         """Returns a professional HTML email for NeuroNest notifications."""
         # Choose accent colour based on event type

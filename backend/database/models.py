@@ -252,6 +252,14 @@ class Appointment(db.Model):
         default="in_person"  # in_person / online
     )
 
+    # Reschedule tracking
+    rescheduled_by = db.Column(db.String(20), nullable=True) # "doctor" / "patient"
+    old_date_time = db.Column(db.DateTime, nullable=True)
+    new_date_time = db.Column(db.DateTime, nullable=True)
+    reschedule_reason = db.Column(db.Text, nullable=True)
+    reschedule_status = db.Column(db.String(20), nullable=True) # "Pending" / "Approved" / "Rejected"
+
+
     created_at = db.Column(
         db.DateTime,
         default=datetime.utcnow
@@ -294,8 +302,13 @@ class Appointment(db.Model):
             "delay_reason": self.delay_reason,
             "extended_from_appointment_id": self.extended_from_appointment_id,
             "feedback_given": self.feedback_given,
+            "rescheduled_by": self.rescheduled_by,
+            "old_date_time": self.old_date_time.isoformat() + 'Z' if self.old_date_time else None,
+            "new_date_time": self.new_date_time.isoformat() + 'Z' if self.new_date_time else None,
+            "reschedule_reason": self.reschedule_reason,
+            "reschedule_status": self.reschedule_status,
             "created_at": self.created_at.isoformat() + 'Z',
-            "updated_at": self.updated_at.isoformat() + 'Z',
+            "updated_at": self.updated_at.isoformat() + 'Z'
         }
 
 
