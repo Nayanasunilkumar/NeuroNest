@@ -30,3 +30,677 @@
 .dashboard-scroll-container::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
 }
+
+@keyframes nnFadeUp {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes nnPulseSoft {
+  0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.18); }
+  50% { transform: scale(1.02); box-shadow: 0 0 0 12px rgba(220, 38, 38, 0); }
+}
+
+@keyframes nnSlideOut {
+  to { opacity: 0; transform: translateX(24px); }
+}
+
+.nn-dashboard-shell {
+  color: #11263f;
+}
+
+.nn-hero-card {
+  background:
+    radial-gradient(circle at top right, rgba(86, 209, 197, 0.28), transparent 32%),
+    linear-gradient(135deg, #0c2340 0%, #11355f 54%, #164d77 100%);
+}
+
+.nn-hero-kicker,
+.nn-panel-kicker,
+.nn-sos-kicker,
+.nn-countdown-label {
+  display: inline-block;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  font-size: 0.68rem;
+  font-weight: 800;
+}
+
+.nn-hero-kicker {
+  margin-bottom: 0.9rem;
+  color: rgba(255, 255, 255, 0.76);
+}
+
+.nn-quick-actions-row {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.nn-quick-action,
+.nn-panel {
+  border: 1px solid rgba(15, 23, 42, 0.06);
+  border-radius: 24px;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fbfd 100%);
+  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.08);
+}
+
+.nn-quick-action {
+  display: flex;
+  align-items: center;
+  gap: 0.95rem;
+  padding: 1rem 1.1rem;
+  text-align: left;
+  transition: transform 0.24s ease, box-shadow 0.24s ease, border-color 0.24s ease;
+}
+
+.nn-quick-action:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 22px 48px rgba(15, 23, 42, 0.14);
+  border-color: rgba(16, 90, 138, 0.14);
+}
+
+.nn-quick-action-icon,
+.nn-specialty-icon,
+.nn-slot-icon,
+.nn-alert-icon,
+.nn-confirm-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 16px;
+}
+
+.nn-quick-action-icon {
+  width: 46px;
+  height: 46px;
+  background: rgba(20, 164, 152, 0.12);
+  color: #0d6b74;
+}
+
+.nn-quick-action-copy {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.nn-quick-action-title {
+  font-weight: 800;
+  color: #10243d;
+}
+
+.nn-quick-action-subtitle {
+  color: #688096;
+  font-size: 0.86rem;
+}
+
+.nn-quick-action-sos {
+  background: linear-gradient(135deg, #fff5f5 0%, #fff0f0 100%);
+  border-color: rgba(220, 38, 38, 0.16);
+  animation: nnPulseSoft 2.4s ease-in-out infinite;
+}
+
+.nn-quick-action-sos .nn-quick-action-icon {
+  background: rgba(220, 38, 38, 0.12);
+  color: #c81e1e;
+}
+
+.nn-panel {
+  height: 100%;
+  padding: 1.35rem;
+}
+
+.nn-panel-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.nn-panel-head h2 {
+  margin: 0.2rem 0 0;
+  font-size: 1.2rem;
+  font-weight: 900;
+  color: #10243d;
+}
+
+.nn-panel-kicker {
+  color: #5f7690;
+}
+
+.nn-panel-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  color: #0f6d7a;
+  text-decoration: none;
+  font-weight: 800;
+}
+
+.nn-next-appointment-banner,
+.nn-progress-track,
+.nn-stat-card,
+.nn-empty-state,
+.nn-medication-empty {
+  background: #f1f7fb;
+}
+
+.nn-next-appointment-banner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.95rem 1rem;
+  border-radius: 18px;
+  margin-bottom: 1rem;
+  color: #103451;
+}
+
+.nn-next-appointment-banner strong {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 1rem;
+}
+
+.nn-appointment-list {
+  display: grid;
+  gap: 1rem;
+}
+
+.nn-appointment-card {
+  border-radius: 22px;
+  padding: 1rem;
+  background: linear-gradient(180deg, #ffffff 0%, #f9fcff 100%);
+  border: 1px solid rgba(15, 23, 42, 0.06);
+  animation: nnFadeUp 0.5s ease both;
+}
+
+.nn-appointment-top,
+.nn-appointment-meta,
+.nn-appointment-footer,
+.nn-medication-slot-head,
+.nn-alert-top,
+.nn-alert-heading-row,
+.nn-sos-contact-top,
+.nn-sos-contact-meta {
+  display: flex;
+}
+
+.nn-appointment-top,
+.nn-medication-slot-head,
+.nn-alert-heading-row,
+.nn-sos-contact-top {
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.85rem;
+}
+
+.nn-specialty-icon,
+.nn-slot-icon,
+.nn-alert-icon {
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
+  background: rgba(12, 35, 64, 0.07);
+  color: #0d3e61;
+}
+
+.nn-appointment-top h3,
+.nn-medication-slot h3,
+.nn-sos-contact-card h3 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.nn-appointment-top p,
+.nn-medication-slot p,
+.nn-sos-contact-card p {
+  margin: 0.18rem 0 0;
+  color: #6d8197;
+  font-size: 0.88rem;
+}
+
+.nn-status-badge,
+.nn-countdown-chip,
+.nn-severity-pill,
+.nn-alert-count,
+.nn-primary-badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  font-size: 0.74rem;
+  font-weight: 800;
+  padding: 0.38rem 0.75rem;
+}
+
+.nn-status-badge.confirmed,
+.nn-countdown-chip,
+.nn-primary-badge {
+  background: rgba(18, 156, 125, 0.12);
+  color: #0d7f66;
+}
+
+.nn-status-badge.pending {
+  background: rgba(245, 158, 11, 0.14);
+  color: #b56b00;
+}
+
+.nn-appointment-meta {
+  flex-wrap: wrap;
+  gap: 0.9rem;
+  margin: 0.9rem 0;
+  color: #4c657e;
+  font-size: 0.88rem;
+}
+
+.nn-appointment-meta span,
+.nn-sos-contact-meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.nn-appointment-footer {
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.nn-progress-copy {
+  color: #577089;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.nn-progress-track {
+  height: 10px;
+  border-radius: 999px;
+  overflow: hidden;
+  margin-bottom: 1rem;
+}
+
+.nn-progress-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #0d6b74 0%, #2cc3b0 100%);
+  transition: width 0.35s ease;
+}
+
+.nn-medication-timeline {
+  display: grid;
+  gap: 0.95rem;
+}
+
+.nn-medication-slot {
+  border-left: 2px solid rgba(32, 169, 156, 0.2);
+  padding-left: 1rem;
+}
+
+.nn-medication-items {
+  display: grid;
+  gap: 0.7rem;
+  margin-top: 0.85rem;
+}
+
+.nn-medication-item {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 0.85rem 0.95rem;
+  border-radius: 18px;
+  background: #f7fbfd;
+  border: 1px solid rgba(15, 23, 42, 0.05);
+}
+
+.nn-pill-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 14px;
+  background: rgba(20, 164, 152, 0.12);
+  color: #0d6b74;
+}
+
+.nn-medication-copy {
+  display: flex;
+  flex-direction: column;
+}
+
+.nn-medication-copy strong {
+  font-size: 0.94rem;
+  color: #10243d;
+}
+
+.nn-medication-copy span {
+  font-size: 0.82rem;
+  color: #668099;
+}
+
+.nn-medication-item input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: #0d6b74;
+}
+
+.nn-medication-item.is-complete {
+  background: rgba(18, 156, 125, 0.08);
+}
+
+.nn-medication-item.is-overdue {
+  animation: nnPulseSoft 1.8s ease-in-out infinite;
+  border-color: rgba(220, 38, 38, 0.24);
+}
+
+.nn-medication-empty,
+.nn-empty-state {
+  border-radius: 18px;
+  padding: 0.95rem 1rem;
+  color: #64798e;
+}
+
+.nn-empty-state {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.nn-empty-state strong {
+  display: block;
+  color: #12304b;
+}
+
+.nn-empty-state p {
+  margin: 0.2rem 0 0;
+  font-size: 0.86rem;
+}
+
+.nn-metric-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  margin-bottom: 1rem;
+}
+
+.nn-metric-tab {
+  border: 1px solid rgba(15, 23, 42, 0.07);
+  background: #f4f9fb;
+  color: #557089;
+  padding: 0.55rem 0.95rem;
+  border-radius: 999px;
+  font-weight: 800;
+  transition: all 0.2s ease;
+}
+
+.nn-metric-tab.active {
+  background: #0c2340;
+  color: white;
+  box-shadow: 0 10px 24px rgba(12, 35, 64, 0.22);
+}
+
+.nn-trend-chart {
+  border-radius: 22px;
+  background: linear-gradient(180deg, #fcfeff 0%, #f4f9fc 100%);
+  border: 1px solid rgba(15, 23, 42, 0.05);
+  padding: 0.5rem 0.2rem 0;
+  margin-bottom: 1rem;
+}
+
+.nn-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.9rem;
+}
+
+.nn-stat-card {
+  border-radius: 18px;
+  padding: 0.9rem 1rem;
+}
+
+.nn-stat-card span {
+  display: block;
+  color: #617a92;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.nn-stat-card strong {
+  display: block;
+  margin-top: 0.35rem;
+  color: #0f2944;
+}
+
+.nn-alert-count {
+  background: #0c2340;
+  color: white;
+}
+
+.nn-alert-scroll {
+  max-height: 535px;
+  min-height: 420px;
+}
+
+.nn-alert-card {
+  border-left: 5px solid transparent;
+  border-radius: 20px;
+  padding: 1rem;
+  background: #f8fbfd;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.nn-alert-card.critical { border-left-color: #dc2626; background: rgba(254, 242, 242, 0.9); }
+.nn-alert-card.warning { border-left-color: #f59e0b; background: rgba(255, 251, 235, 0.95); }
+.nn-alert-card.info { border-left-color: #2563eb; background: rgba(239, 246, 255, 0.95); }
+.nn-alert-card.is-dismissing { animation: nnSlideOut 0.28s ease forwards; }
+
+.nn-alert-top {
+  gap: 0.8rem;
+  align-items: flex-start;
+}
+
+.nn-alert-heading-row {
+  margin-bottom: 0.35rem;
+}
+
+.nn-alert-card p {
+  margin: 0;
+  color: #5c7388;
+  font-size: 0.88rem;
+}
+
+.nn-alert-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+  margin-top: 0.9rem;
+  flex-wrap: wrap;
+}
+
+.nn-severity-pill.critical { background: rgba(220, 38, 38, 0.14); color: #b91c1c; }
+.nn-severity-pill.warning { background: rgba(245, 158, 11, 0.18); color: #a16207; }
+.nn-severity-pill.info { background: rgba(37, 99, 235, 0.14); color: #1d4ed8; }
+
+.nn-modal-backdrop,
+.nn-sos-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+}
+
+.nn-modal-backdrop {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(4, 15, 27, 0.52);
+  backdrop-filter: blur(8px);
+}
+
+.nn-confirm-modal {
+  width: min(92vw, 460px);
+  border-radius: 28px;
+  background: white;
+  padding: 1.6rem;
+  box-shadow: 0 30px 80px rgba(15, 23, 42, 0.22);
+  text-align: center;
+}
+
+.nn-confirm-icon {
+  width: 58px;
+  height: 58px;
+  margin: 0 auto 1rem;
+  background: rgba(220, 38, 38, 0.12);
+  color: #c81e1e;
+}
+
+.nn-confirm-actions {
+  display: flex;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-top: 1.2rem;
+}
+
+.nn-sos-overlay {
+  background: rgba(7, 14, 25, 0.82);
+  backdrop-filter: blur(10px);
+  overflow-y: auto;
+  padding: 2rem;
+}
+
+.nn-sos-shell {
+  width: min(1180px, 100%);
+  margin: 0 auto;
+  background: linear-gradient(180deg, #102235 0%, #162d46 100%);
+  color: white;
+  border-radius: 32px;
+  padding: 1.5rem;
+  box-shadow: 0 35px 90px rgba(0, 0, 0, 0.35);
+}
+
+.nn-sos-header,
+.nn-sos-section-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.nn-sos-header {
+  margin-bottom: 1.3rem;
+}
+
+.nn-sos-close {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.05);
+  color: white;
+}
+
+.nn-sos-grid,
+.nn-sos-service-grid,
+.nn-sos-contact-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.nn-sos-grid {
+  grid-template-columns: 1.1fr 0.9fr;
+}
+
+.nn-sos-section {
+  border-radius: 26px;
+  padding: 1.2rem;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.nn-sos-service {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 1rem;
+  align-items: center;
+  border-radius: 22px;
+  padding: 1rem;
+}
+
+.nn-sos-service-red { background: linear-gradient(135deg, #8a1c1c 0%, #d43c2f 100%); }
+.nn-sos-service-orange { background: linear-gradient(135deg, #9c3a08 0%, #f97316 100%); }
+
+.nn-sos-service-icon {
+  font-size: 1.8rem;
+}
+
+.nn-sos-service-copy span {
+  display: block;
+  opacity: 0.88;
+}
+
+.nn-sos-service-copy strong {
+  font-size: 1.35rem;
+}
+
+.nn-sos-contact-card {
+  border-radius: 22px;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.nn-sos-contact-card.is-primary {
+  border-color: rgba(45, 212, 191, 0.55);
+  box-shadow: inset 0 0 0 1px rgba(45, 212, 191, 0.22);
+}
+
+.nn-sos-contact-meta {
+  flex-direction: column;
+  gap: 0.35rem;
+  margin: 0.9rem 0 1rem;
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.nn-empty-sos-state {
+  border-radius: 22px;
+  padding: 1.2rem;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+@media (max-width: 1199px) {
+  .nn-quick-actions-row,
+  .nn-sos-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 767px) {
+  .nn-quick-actions-row,
+  .nn-stat-grid,
+  .nn-sos-grid,
+  .nn-sos-service-grid,
+  .nn-sos-contact-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .nn-panel-head,
+  .nn-appointment-footer,
+  .nn-confirm-actions,
+  .nn-sos-service,
+  .nn-sos-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .nn-sos-overlay {
+    padding: 1rem;
+  }
+
+  .nn-sos-shell,
+  .nn-panel,
+  .nn-quick-action {
+    border-radius: 24px;
+  }
+}
