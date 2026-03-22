@@ -258,9 +258,9 @@ const DoctorDashboard = () => {
               <h3>Quick Actions</h3>
             </div>
             <div className="nn-quick-grid">
-              <QuickButton icon={Calendar} label="Today's Schedule" onClick={() => navigate('/doctor/today-schedule')} />
+              <QuickButton icon={Calendar} label="Today's Schedule" onClick={() => navigate('/doctor/schedule')} />
               <QuickButton icon={Clock} label="Appointment Requests" onClick={() => navigate('/doctor/appointment-requests')} />
-              <QuickButton icon={Users} label="My Patients" onClick={() => navigate('/doctor/my-patients')} />
+              <QuickButton icon={Users} label="My Patients" onClick={() => navigate('/doctor/patients')} />
               <QuickButton icon={MessageSquare} label="Patient Chat" onClick={() => navigate('/doctor/chat')} />
             </div>
           </div>
