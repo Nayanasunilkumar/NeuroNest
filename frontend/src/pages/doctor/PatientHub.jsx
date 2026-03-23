@@ -119,22 +119,6 @@ const PatientHub = () => {
             color: '#f97316',
             path: `/doctor/alerts?patientId=${patientId}`
         },
-        {
-            id: 'archives',
-            title: 'Clinical Archives',
-            desc: 'Medical records & historical data',
-            icon: <Folder size={22} />,
-            color: '#64748b',
-            path: `/doctor/clinical-archives?patientId=${patientId}`
-        },
-        {
-            id: 'chat',
-            title: 'Patients Chat',
-            desc: 'Clinical consultation threads',
-            icon: <MessageSquare size={22} />,
-            color: '#475569',
-            path: `/doctor/chat?patientId=${patientId}`
-        }
     ];
 
     return (
