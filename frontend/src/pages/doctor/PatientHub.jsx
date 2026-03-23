@@ -104,8 +104,8 @@ const PatientHub = () => {
         },
         {
             id: 'performance',
-            title: 'Patient Vitals',
-            desc: 'Real-time physiological data',
+            title: 'Patient Chat',
+            desc: 'Direct clinical consultation',
             icon: <Activity size={22} />,
             color: '#ef4444',
             path: `/doctor/performance-analytics?patientId=${patientId}`,
