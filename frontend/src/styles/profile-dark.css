@@ -1,7 +1,7 @@
 .dark-profile-page {
     background-color: transparent;
     min-height: 100vh;
-    padding: 2rem 1rem;
+    padding: 2rem 1.5rem 6rem 1.5rem; /* Increased side and bottom padding */
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
     color: #e5e5e5;
 }
@@ -12,8 +12,9 @@
     background-color: #121212;
     border-radius: 24px;
     border: 1px solid #232323;
-    padding: 20px;
+    padding: 20px 20px 40px 20px; /* Added bottom padding */
     box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+    margin-bottom: 30px; /* Space for the shadow and scroll room */
 }
 
 .dark-banner {
