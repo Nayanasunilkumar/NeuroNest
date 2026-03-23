@@ -22,8 +22,14 @@ def list_alerts():
     query = Alert.query
 
     if role == "patient":
-        # Allow viewing own alerts AND demo device alerts (patient 1)
-        query = query.filter(or_(Alert.patient_id == user_id, Alert.patient_id == 1))
+        # Check if this patient is the one with the assigned hardware
+        user = User.query.get(user_id)
+        if user and user.email == 'nezrinnoushad20@gmail.com':
+            # Authorized patient can see their own and the demo device alerts
+            query = query.filter(or_(Alert.patient_id == user_id, Alert.patient_id == 1))
+        else:
+            # Other patients only see their own alerts (none if no hardware)
+            query = query.filter(Alert.patient_id == user_id)
     elif role in ("doctor", "admin", "super_admin"):
         # Doctors / admins can see all alerts
         pass

@@ -1,8 +1,9 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Bell, AlertTriangle, CheckCircle2, Clock } from "lucide-react";
+import { Bell, AlertTriangle, CheckCircle2, Clock, Activity } from "lucide-react";
 import { getAlerts, acknowledgeAlert } from "../../api/alerts";
 import { initSocket, getSocket } from "../../services/socket";
 import { getUser } from "../../utils/auth";
+import { getLatestVitals } from "../../api/vitals";
 
 const severityStyles = {
   critical: { bg: "#FEE2E2", border: "#DC2626", label: "Critical", icon: <AlertTriangle size={18} className="me-2" /> },
@@ -22,6 +23,7 @@ const formatTime = (iso) => {
 const AlertsPage = () => {
   const [alerts, setAlerts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [status, setStatus] = useState(null); // 'ok', 'no_device', etc.
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState("All");
@@ -98,6 +100,17 @@ const AlertsPage = () => {
   useEffect(() => {
     fetchAlerts();
 
+    // Check device status
+    const checkStatus = async () => {
+      try {
+        const vitals = await getLatestVitals();
+        setStatus(vitals?.signal || 'na');
+      } catch (err) {
+        console.error("Failed to check device status", err);
+      }
+    };
+    checkStatus();
+
     const socket = initSocket();
     if (!socket) return;
 
@@ -152,6 +165,18 @@ const AlertsPage = () => {
           </div>
         </div>
       </header>
+
+      {status === "no_device" && (
+        <div className="alert alert-info rounded-4 border-0 shadow-sm d-flex align-items-center gap-3 p-4 mb-4" style={{ background: "#F1F5F9", color: "#475569" }}>
+          <div className="bg-white p-2 rounded-circle shadow-sm">
+            <Activity size={24} className="text-secondary opacity-75" />
+          </div>
+          <div>
+            <h3 className="h6 fw-bold mb-1">No Monitoring Device Assigned</h3>
+            <p className="small mb-0 opacity-75">Real-time alerts and clinical event monitoring are currently unavailable for this account.</p>
+          </div>
+        </div>
+      )}
 
       {/* Filter Bar */}
       <div className="card border-0 shadow-sm rounded-4 p-3 mb-4">
