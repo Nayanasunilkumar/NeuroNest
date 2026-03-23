@@ -226,8 +226,10 @@ const PatientLayout = () => {
                     className={`flex-grow-1 d-flex flex-column ${isMessagePath ? 'overflow-hidden' : 'overflow-auto'} position-relative ${isMessagePath ? 'p-0' : (isSettingsPath ? 'p-0' : 'p-3 p-md-4 p-lg-5')}`}
                     style={{ transition: 'all 0.4s' }}
                 >
-                    <div className={isMessagePath ? 'h-100' : 'container-fluid max-w-1600 mx-auto pb-5 pb-lg-0'}>
-                        <Outlet />
+                    <div className={isMessagePath ? 'h-100 p-2 p-md-3 p-lg-4' : 'container-fluid max-w-1600 mx-auto pb-5 pb-lg-0'}>
+                        <div className={`patient-page-shell ${isMessagePath ? 'patient-page-shell-chat h-100' : ''}`}>
+                            <Outlet />
+                        </div>
                     </div>
                 </main>
             </div>
@@ -249,6 +251,30 @@ const PatientLayout = () => {
                 }
                 .hover-bg:hover {
                     background: ${darkMode ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)'} !important;
+                }
+                .patient-page-shell {
+                    background: var(--nn-surface);
+                    border: 1px solid var(--nn-border);
+                    border-radius: 36px;
+                    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.05);
+                    min-height: calc(100vh - 180px);
+                    padding: clamp(16px, 1.8vw, 28px);
+                }
+                .patient-page-shell-chat {
+                    min-height: calc(100vh - 150px);
+                    padding: 0;
+                    overflow: hidden;
+                }
+                @media (max-width: 992px) {
+                    .patient-page-shell {
+                        border-radius: 24px;
+                        min-height: calc(100vh - 210px);
+                        padding: 14px;
+                    }
+                    .patient-page-shell-chat {
+                        padding: 0;
+                        min-height: calc(100vh - 175px);
+                    }
                 }
                 @keyframes fadeInSlide {
                     from { opacity: 0; transform: translateY(-10px); }
