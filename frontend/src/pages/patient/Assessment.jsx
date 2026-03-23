@@ -321,6 +321,7 @@ function AssessmentPage({ patientId: propPatientId }) {
 
   const deviceStatus = useMemo(() => {
     if (!latest) return "Offline";
+    if (latest.signal === "no_device") return "No Device Assigned";
     if (latest.signal === "ok") return "Connected";
     if (latest.signal === "weak") return "Weak Connection";
     return "Disconnected";
@@ -368,7 +369,7 @@ function AssessmentPage({ patientId: propPatientId }) {
           <button
             className="btn btn-primary d-flex align-items-center gap-2"
             onClick={handleDownloadReport}
-            disabled={loading}
+            disabled={loading || latest?.signal === "no_device"}
           >
             <Download size={16} />
             Download Report
@@ -377,6 +378,18 @@ function AssessmentPage({ patientId: propPatientId }) {
       </header>
 
       <section className="mb-4">
+        {latest?.signal === "no_device" && (
+          <div className="alert alert-info rounded-4 border-0 shadow-sm d-flex align-items-center gap-3 p-4 mb-4" style={{ background: "#F1F5F9", color: "#475569" }}>
+            <div className="bg-white p-2 rounded-circle shadow-sm">
+              <Activity size={24} className="text-secondary opacity-75" />
+            </div>
+            <div>
+              <h3 className="h6 fw-bold mb-1">No Monitoring Device Assigned</h3>
+              <p className="small mb-0 opacity-75">Real-time vital monitoring and clinical evaluation mapping are currently unavailable for this account.</p>
+            </div>
+          </div>
+        )}
+
         <div className="d-flex flex-wrap align-items-center justify-content-between gap-3">
           <div>
             <h2 className="h5 fw-bold mb-1">Current Vitals Snapshot</h2>
