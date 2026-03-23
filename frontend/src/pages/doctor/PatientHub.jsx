@@ -104,8 +104,8 @@ const PatientHub = () => {
         },
         {
             id: 'performance',
-            title: 'Performance Analytics',
-            desc: 'Therapeutic outcome data',
+            title: 'Patient Vitals',
+            desc: 'Real-time physiological data',
             icon: <Activity size={22} />,
             color: '#ef4444',
             path: `/doctor/performance-analytics?patientId=${patientId}`,
