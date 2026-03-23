@@ -24,9 +24,6 @@ import {
 } from 'recharts';
 import { getDoctorProfile } from '../../services/doctorProfileService';
 import { getDoctorStats } from '../../api/doctor';
-import { getMonitoredPatients } from '../../api/vitals';
-import { useLiveVitals } from '../../hooks/useLiveVitals';
-import LiveVitalsPanel from '../../components/LiveVitalsPanel';
 import '../../styles/dashboard.css';
 
 const ACTIVITY_DATA = [
@@ -89,13 +86,6 @@ const DoctorDashboard = () => {
     active_assessments: 0,
   });
   const [loading, setLoading] = useState(true);
-  const [monitoredPatients, setMonitoredPatients] = useState([]);
-  const [selectedPatientId, setSelectedPatientId] = useState(null);
-
-  const { latest, history, loading: vitalsLoading, error: vitalsError, isOffline } = useLiveVitals({
-    patientId: selectedPatientId,
-    enabled: Boolean(selectedPatientId),
-  });
 
   useEffect(() => {
     const fetchData = async () => {
@@ -114,19 +104,6 @@ const DoctorDashboard = () => {
       }
     };
     fetchData();
-  }, []);
-
-  useEffect(() => {
-    const fetchMonitoredPatients = async () => {
-      try {
-        const rows = await getMonitoredPatients();
-        setMonitoredPatients(rows || []);
-        setSelectedPatientId((prev) => prev || rows?.[0]?.patient_id || null);
-      } catch (err) {
-        console.error('Failed to load monitored patients', err);
-      }
-    };
-    fetchMonitoredPatients();
   }, []);
 
   const loadFactor = useMemo(() => {
@@ -211,47 +188,6 @@ const DoctorDashboard = () => {
       </section>
 
       <section className="row g-4 mb-4">
-        <div className="col-12">
-          <div className="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-3">
-            <div>
-              <h3 className="h5 fw-black mb-1 text-dark">Remote Patient Monitoring</h3>
-              <p className="small text-secondary mb-0">
-                Streaming live vitals from paired NeuroNest devices
-              </p>
-            </div>
-            <div className="d-flex align-items-center gap-2">
-              <span className="small text-secondary fw-bold">Patient</span>
-              <select
-                className="form-select rounded-pill border-0 shadow-sm"
-                style={{ minWidth: '230px' }}
-                value={selectedPatientId || ''}
-                onChange={(event) => setSelectedPatientId(Number(event.target.value))}
-                disabled={!monitoredPatients.length}
-              >
-                {monitoredPatients.length === 0 ? (
-                  <option value="">No monitored patients</option>
-                ) : (
-                  monitoredPatients.map((patient) => (
-                    <option key={patient.patient_id} value={patient.patient_id}>
-                      {patient.patient_name || `Patient #${patient.patient_id}`}
-                    </option>
-                  ))
-                )}
-              </select>
-            </div>
-          </div>
-          <LiveVitalsPanel
-            title="Live Vitals Feed"
-            subtitle="Realtime device telemetry shared to clinician dashboards"
-            patientLabel={latest?.patient_name || ''}
-            latest={latest}
-            history={history}
-            loading={vitalsLoading}
-            error={selectedPatientId ? vitalsError : ''}
-            isOffline={isOffline}
-          />
-        </div>
-
         <div className="col-12 col-xl-4">
           <div className="nn-panel">
             <div className="nn-panel-head">
