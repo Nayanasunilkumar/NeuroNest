@@ -297,9 +297,42 @@
 
 /* --- BODY GRID --- */
 .profile-body-grid {
-    display: grid;
-    grid-template-columns: 4fr 6fr;
+    display: flex;
+    flex-direction: column;
     gap: 24px;
+}
+
+.profile-body-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    align-items: start;
+}
+
+.profile-scroll-card {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.profile-scroll-area {
+    max-height: 640px;
+    overflow-y: auto;
+    padding-right: 8px;
+}
+
+.profile-scroll-area::-webkit-scrollbar {
+    width: 8px;
+}
+
+.profile-scroll-area::-webkit-scrollbar-thumb {
+    background: rgba(108, 99, 255, 0.35);
+    border-radius: 999px;
+}
+
+.profile-scroll-area::-webkit-scrollbar-track {
+    background: rgba(226, 232, 240, 0.45);
+    border-radius: 999px;
 }
 
 .profile-section-card {
@@ -874,7 +907,7 @@
 
 /* --- RESPONSIVE --- */
 @media (max-width: 1200px) {
-    .profile-body-grid {
+    .profile-body-row {
         grid-template-columns: 1fr;
     }
 }

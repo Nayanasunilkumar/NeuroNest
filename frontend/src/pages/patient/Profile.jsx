@@ -378,8 +378,8 @@ const Profile = () => {
             </div>
 
             <div className="profile-body-grid mb-4">
-              <div className="profile-body-column">
-                <div className="profile-section-card mb-4">
+              <div className="profile-body-row">
+                <div className="profile-section-card">
                   <div className="section-header">
                     <h3 className="section-title"><MapPin size={18} /> Contact Details</h3>
                     <button className="section-edit-link" onClick={startEditing}>Edit</button>
@@ -409,13 +409,36 @@ const Profile = () => {
                     </div>
                   </div>
                 </div>
+                <div className="profile-section-card">
+                  <div className="section-header">
+                    <h3 className="section-title"><ShieldAlert size={18} /> Emergency Support</h3>
+                    <button className="section-edit-link" onClick={startEditing}>Edit</button>
+                  </div>
+                  <div className="emergency-list">
+                    {emergencyContacts.map((c, i) => (
+                      <div key={i} className={`emergency-row ${c.is_primary ? "primary" : ""}`}>
+                        <div className="emergency-info">
+                          <span className="emergency-relation">{c.relationship || "Emergency Contact"} {c.is_primary && "(Primary)"}</span>
+                          <h4 className="emergency-name">{c.contact_name}</h4>
+                          <p className="emergency-meta">{c.phone} · {c.email}</p>
+                        </div>
+                        <div className="emergency-actions">
+                          <button className="action-circle-btn"><Phone size={14} /></button>
+                          <button className="action-circle-btn"><MessageCircle size={14} /></button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
 
-                <div className="profile-section-card mb-4">
+              <div className="profile-body-row profile-body-row-bottom">
+                <div className="profile-section-card profile-scroll-card">
                   <div className="section-header">
                     <h3 className="section-title"><Calendar size={18} /> Timeline</h3>
                     <button className="section-edit-link">Edit</button>
                   </div>
-                  <div className="timeline-container">
+                  <div className="timeline-container profile-scroll-area">
                     {timelineEntries.map((appt, i) => {
                       const dateObj = new Date(appt.appointment_date);
                       const month = dateObj.toLocaleString("default", { month: "short" });
@@ -444,32 +467,8 @@ const Profile = () => {
                     })}
                   </div>
                 </div>
-              </div>
 
-              <div className="profile-body-column">
-                <div className="profile-section-card mb-4">
-                  <div className="section-header">
-                    <h3 className="section-title"><ShieldAlert size={18} /> Emergency Support</h3>
-                    <button className="section-edit-link" onClick={startEditing}>Edit</button>
-                  </div>
-                  <div className="emergency-list">
-                    {emergencyContacts.map((c, i) => (
-                      <div key={i} className={`emergency-row ${c.is_primary ? "primary" : ""}`}>
-                        <div className="emergency-info">
-                          <span className="emergency-relation">{c.relationship || "Emergency Contact"} {c.is_primary && "(Primary)"}</span>
-                          <h4 className="emergency-name">{c.contact_name}</h4>
-                          <p className="emergency-meta">{c.phone} · {c.email}</p>
-                        </div>
-                        <div className="emergency-actions">
-                          <button className="action-circle-btn"><Phone size={14} /></button>
-                          <button className="action-circle-btn"><MessageCircle size={14} /></button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="profile-section-card">
+                <div className="profile-section-card profile-scroll-card">
                   <div className="section-header">
                     <div className="d-flex align-items-center gap-3">
                       <h3 className="section-title"><Activity size={18} /> Conditions Log</h3>
@@ -479,7 +478,7 @@ const Profile = () => {
                       </div>
                     </div>
                   </div>
-                  <div className="conditions-list-stack">
+                  <div className="conditions-list-stack profile-scroll-area">
                     {visibleConditions.map((item, i) => (
                       <div key={i} className="condition-item-row">
                         <div className="condition-icon-wrap">
