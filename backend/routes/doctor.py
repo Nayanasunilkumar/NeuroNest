@@ -858,7 +858,7 @@ def get_doctor_patients():
             "next_appointment": str(next_visit.appointment_date) if next_visit else None,
             "next_appointment_time": str(next_visit.appointment_time) if next_visit else None,
             "next_appointment_status": next_visit.status if next_visit else None,
-            "status": "Active"
+            "status": "Active" if patient_user.email == 'nezrinnoushad20@gmail.com' else "Inactive"
         })
 
     return jsonify(patients_data), 200
