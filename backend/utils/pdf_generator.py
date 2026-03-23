@@ -51,6 +51,8 @@ STYLES.add(ParagraphStyle(
 
 STYLES.add(ParagraphStyle('Label', parent=STYLES['Normal'], fontSize=9, fontName='Helvetica-Bold', textColor=colors.HexColor("#64748b")))
 STYLES.add(ParagraphStyle('Value', parent=STYLES['Normal'], fontSize=10, textColor=colors.HexColor("#1e293b")))
+if 'LabelRight' not in STYLES:
+    STYLES.add(ParagraphStyle('LabelRight', parent=STYLES['Label'], alignment=2))
 
 # Safety styles for vitals
 if 'HRRed' not in STYLES:
@@ -238,19 +240,26 @@ def generate_patient_report(data):
     presc = data.get("prescriptions", [])
     if presc:
         elements.append(Paragraph("Active Prescriptions & Medications", STYLES['SectionHeader']))
-        
+
+        # Keep card widths within printable area to avoid right-edge clipping.
+        card_gap = 0.18 * inch
+        card_width = (doc.width - card_gap) / 2
+
         cards = []
         for p in presc[:12]:
             diag = p.get('diagnosis') or "General Consultation"
             date_str = str(p.get('created_at') or "")[:10]
             meds_list = p.get('medicines') or []
             meds_text = ", ".join(meds_list) if meds_list else "None listed"
-            
+
             card_content = [
                 [Paragraph(f"<font size='11'><b>{diag}</b></font>", STYLES['Value'])],
-                [Paragraph(f"<b>Medications:</b> {meds_text}", STYLES['Normal']), Paragraph(f"Issued: {date_str}", STYLES['Label'])]
+                [Spacer(1, 0.05 * inch)],
+                [Paragraph(f"<b>Medications:</b> {meds_text}", STYLES['Normal'])],
+                [Spacer(1, 0.04 * inch)],
+                [Paragraph(f"Issued: {date_str}", STYLES['LabelRight'])],
             ]
-            ct = Table(card_content, colWidths=[3.5*inch])
+            ct = Table(card_content, colWidths=[card_width])
             ct.setStyle(TableStyle([
                 ('BACKGROUND', (0,0), (-1,-1), colors.HexColor("#ffffff")),
                 ('BOX', (0,0), (-1,-1), 0.5, colors.HexColor("#e2e8f0")),
@@ -270,11 +279,15 @@ def generate_patient_report(data):
             else:
                 row.append("")
             grid_rows.append(row)
-        
-        gt = Table(grid_rows, colWidths=[3.7*inch, 3.7*inch])
+
+        gt = Table(grid_rows, colWidths=[card_width, card_width])
         gt.setStyle(TableStyle([
             ('VALIGN', (0,0), (-1,-1), 'TOP'),
-            ('BOTTOMPADDING', (0,0), (-1,-1), 15),
+            ('LEFTPADDING', (0,0), (-1,-1), 0),
+            ('RIGHTPADDING', (0,0), (-1,-1), 0),
+            ('RIGHTPADDING', (0,0), (0,-1), card_gap / 2),
+            ('LEFTPADDING', (1,0), (1,-1), card_gap / 2),
+            ('BOTTOMPADDING', (0,0), (-1,-1), 14),
         ]))
         elements.append(gt)
 
