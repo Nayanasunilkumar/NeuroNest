@@ -164,7 +164,7 @@ const DoctorDashboard = () => {
   }
 
   return (
-    <div className="nn-dashboard-wrap">
+    <div className="nn-dashboard-wrap nn-doctor-dashboard-v3">
       <section className="nn-dashboard-head">
         <div>
           <h2 className="nn-title">Welcome back, Dr. {doctorLastName}</h2>

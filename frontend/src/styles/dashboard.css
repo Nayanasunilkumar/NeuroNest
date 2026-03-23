@@ -568,6 +568,12 @@ body.dark .theme-toggle-btn::before {
   overflow-y: auto;
 }
 
+.nn-doctor-dashboard-v3 {
+  --nn-doctor-hero-start: #0a2f5d;
+  --nn-doctor-hero-mid: #174aa6;
+  --nn-doctor-hero-end: #1f5ec4;
+}
+
 .nn-dashboard-wrap .nn-metric-card {
   background: #ffffff;
   border: 1px solid var(--nn-border);
@@ -717,7 +723,7 @@ body.dark .theme-toggle-btn::before {
   gap: 1rem;
   padding: 1.35rem 1.6rem;
   border-radius: 22px;
-  background: linear-gradient(135deg, #0b3a79 0%, #1550b8 55%, #0a2f5d 100%);
+  background: linear-gradient(135deg, var(--nn-doctor-hero-start) 0%, var(--nn-doctor-hero-mid) 55%, var(--nn-doctor-hero-end) 100%);
   border: 1px solid rgba(255, 255, 255, 0.14);
   box-shadow: 0 18px 40px rgba(11, 58, 121, 0.18);
 }
