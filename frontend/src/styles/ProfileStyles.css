@@ -335,6 +335,10 @@
     border-radius: 999px;
 }
 
+.profile-body-row-bottom .profile-scroll-card:last-child {
+    margin-top: -96px;
+}
+
 .profile-section-card {
     background: var(--card-glass);
     backdrop-filter: blur(12px);
@@ -909,6 +913,10 @@
 @media (max-width: 1200px) {
     .profile-body-row {
         grid-template-columns: 1fr;
+    }
+
+    .profile-body-row-bottom .profile-scroll-card:last-child {
+        margin-top: 0;
     }
 }
 

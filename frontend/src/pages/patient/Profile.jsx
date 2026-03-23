@@ -382,7 +382,6 @@ const Profile = () => {
                 <div className="profile-section-card">
                   <div className="section-header">
                     <h3 className="section-title"><MapPin size={18} /> Contact Details</h3>
-                    <button className="section-edit-link" onClick={startEditing}>Edit</button>
                   </div>
                   <div className="contact-details-grid">
                     <div className="contact-detail-item">
@@ -412,7 +411,6 @@ const Profile = () => {
                 <div className="profile-section-card">
                   <div className="section-header">
                     <h3 className="section-title"><ShieldAlert size={18} /> Emergency Support</h3>
-                    <button className="section-edit-link" onClick={startEditing}>Edit</button>
                   </div>
                   <div className="emergency-list">
                     {emergencyContacts.map((c, i) => (
@@ -436,7 +434,6 @@ const Profile = () => {
                 <div className="profile-section-card profile-scroll-card">
                   <div className="section-header">
                     <h3 className="section-title"><Calendar size={18} /> Timeline</h3>
-                    <button className="section-edit-link">Edit</button>
                   </div>
                   <div className="timeline-container profile-scroll-area">
                     {timelineEntries.map((appt, i) => {
