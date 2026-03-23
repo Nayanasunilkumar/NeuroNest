@@ -838,11 +838,11 @@ def get_doctor_patients():
             )
         ).order_by(desc(Appointment.appointment_date), desc(Appointment.appointment_time)).first()
 
-        # Fetch Next Visit (Upcoming Approved)
+        # Fetch Next Visit (Upcoming Approved, Pending, or Rescheduled)
         next_visit = Appointment.query.filter(
             Appointment.patient_id == pid,
             Appointment.doctor_id == current_user_id,
-            Appointment.status.in_(['approved']),
+            Appointment.status.in_(['approved', 'pending', 'rescheduled']),
             or_(
                 Appointment.appointment_date > now.date(),
                 and_(Appointment.appointment_date == now.date(), Appointment.appointment_time > now.time())
@@ -856,6 +856,8 @@ def get_doctor_patients():
             "patient_image": patient_user.patient_profile.profile_image if patient_user.patient_profile else None,
             "last_visit": str(last_visit.appointment_date) if last_visit else None,
             "next_appointment": str(next_visit.appointment_date) if next_visit else None,
+            "next_appointment_time": str(next_visit.appointment_time) if next_visit else None,
+            "next_appointment_status": next_visit.status if next_visit else None,
             "status": "Active"
         })
 

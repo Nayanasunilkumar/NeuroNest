@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, Search, Filter, Loader2, ArrowUpDown, UserPlus, SlidersHorizontal, UserX, MessageSquare, ExternalLink } from 'lucide-react';
+import { Users, Search, Filter, Loader2, ArrowUpDown, UserPlus, SlidersHorizontal, UserX, MessageSquare, ExternalLink, Clock } from 'lucide-react';
 import { getPatients } from '../../api/doctor';
 import { toAssetUrl } from '../../utils/media';
 import "../../styles/my-patients.css";
@@ -43,6 +43,20 @@ const MyPatients = () => {
             day: '2-digit',
             year: 'numeric'
         });
+    };
+
+    const formatTime = (timeStr) => {
+        if (!timeStr) return '';
+        try {
+            const [hours, minutes] = timeStr.split(':');
+            let h = parseInt(hours);
+            const m = minutes.substring(0, 2);
+            const ampm = h >= 12 ? 'PM' : 'AM';
+            h = h % 12 || 12;
+            return `${h}:${m} ${ampm}`;
+        } catch (e) {
+            return timeStr;
+        }
     };
 
     useEffect(() => {
@@ -370,7 +384,25 @@ const MyPatients = () => {
                                         <td>
                                             <div className="roster-visit-cell">
                                                 <span className="roster-visit-label">Schedule</span>
-                                                <span className="roster-visit-val">{patient.next_appointment ? formatDate(patient.next_appointment) : 'None'}</span>
+                                                <div className="roster-visit-val">
+                                                    {patient.next_appointment ? (
+                                                        <>
+                                                            <div className="fw-bold text-dark mb-0" style={{ fontSize: '0.9rem' }}>
+                                                                {patient.next_appointment_status === 'pending' && <span className="text-warning small fw-bold me-1">Requested:</span>}
+                                                                {patient.next_appointment_status === 'rescheduled' && <span className="text-info small fw-bold me-1">Rescheduled:</span>}
+                                                                {formatDate(patient.next_appointment)}
+                                                            </div>
+                                                            {patient.next_appointment_time && (
+                                                                <div className="text-muted extra-small d-flex align-items-center gap-1" style={{ fontSize: '0.75rem' }}>
+                                                                    <Clock size={10} />
+                                                                    {formatTime(patient.next_appointment_time)}
+                                                                </div>
+                                                            )}
+                                                        </>
+                                                    ) : (
+                                                        <span className="text-muted italic opacity-75">None</span>
+                                                    )}
+                                                </div>
                                             </div>
                                         </td>
                                         <td>
