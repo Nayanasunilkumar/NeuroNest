@@ -60,6 +60,24 @@ if 'SpO2Red' not in STYLES:
 if 'TempRed' not in STYLES:
     STYLES.add(ParagraphStyle('TempRed', parent=STYLES['Normal'], textColor=colors.HexColor("#ef4444"), fontName='Helvetica-Bold'))
 
+# Added for better status visibility
+STYLES.add(ParagraphStyle('StatusPending', parent=STYLES['Normal'], fontSize=9, textColor=colors.HexColor("#ef4444"), fontName='Helvetica-Bold'))
+STYLES.add(ParagraphStyle('StatusCompleted', parent=STYLES['Normal'], fontSize=9, textColor=colors.HexColor("#10b981"), fontName='Helvetica-Bold'))
+STYLES.add(ParagraphStyle('StatusNeutral', parent=STYLES['Normal'], fontSize=9, textColor=colors.HexColor("#4f46e5"), fontName='Helvetica-Bold'))
+
+# Alert Box Style
+STYLES.add(ParagraphStyle(
+    'AlertBox',
+    parent=STYLES['Normal'],
+    fontSize=9,
+    textColor=colors.HexColor("#92400e"),
+    backColor=colors.HexColor("#fffbeb"),
+    borderPadding=10,
+    borderRadius=8,
+    borderWidth=1,
+    borderColor=colors.HexColor("#fef3c7")
+))
+
 def get_icon(name):
     """Helper to get image or placeholder."""
     path = ICONS_DIR / f"{name}.png"
@@ -154,7 +172,12 @@ def generate_patient_report(data):
         ]))
         elements.append(vt)
     else:
-        elements.append(Paragraph("<i>No active vitals monitoring data detected for this period.</i>", STYLES['Normal']))
+        elements.append(Paragraph("<i>No active vitals monitoring data detect for this period.</i>", STYLES['Normal']))
+        elements.append(Spacer(1, 0.1 * inch))
+        alert_data = [[get_icon("bell_warning") or "⚠️", Paragraph("No active vitals monitoring data detected for this period.", STYLES['AlertBox'])]]
+        at = Table(alert_data, colWidths=[0.3*inch, 7.2*inch])
+        at.setStyle(TableStyle([('VALIGN', (0,0), (-1,-1), 'MIDDLE'), ('LEFTPADDING', (0,0), (-1,-1), 10)]))
+        elements.append(at)
     
     # 3. Appointments Table
     appts = data.get("appointments", [])
@@ -168,16 +191,23 @@ def generate_patient_report(data):
             Paragraph("Reason / Notes", STYLES['Label'])
         ]
         rows = [header]
-        for i, a in enumerate(appts[:15]):
+        for i, a in enumerate(appts[:20]):
+            status = (a.get("status") or "N/A").upper()
+            status_style = STYLES['StatusNeutral']
+            if any(s in status for s in ['PENDING', 'CANCEL', 'REJECT']):
+                status_style = STYLES['StatusPending']
+            elif any(s in status for s in ['COMPLETED', 'APPROVE', 'SUCCESS']):
+                status_style = STYLES['StatusCompleted']
+
             rows.append([
                 Paragraph(str(a.get("appointment_date") or ""), STYLES['Value']),
                 Paragraph(str(a.get("appointment_time") or "")[:5], STYLES['Value']),
                 Paragraph(a.get("doctor_name") or "Specialist", STYLES['Value']),
-                Paragraph((a.get("status") or "N/A").title(), STYLES['Value']),
+                Paragraph((a.get("status") or "N/A").title(), status_style),
                 Paragraph((a.get("reason") or "Routine Checkup")[:60], STYLES['Value'])
             ])
         
-        t = Table(rows, colWidths=[1.0*inch, 0.8*inch, 1.5*inch, 1.1*inch, 3.1*inch])
+        t = Table(rows, colWidths=[1.0*inch, 0.7*inch, 1.4*inch, 1.3*inch, 3.1*inch])
         t.setStyle(TableStyle([
             ('BACKGROUND', (0,0), (-1,0), colors.HexColor("#f1f5f9")),
             ('ALIGN', (0,0), (-1,-1), 'LEFT'),
@@ -186,49 +216,97 @@ def generate_patient_report(data):
             ('TOPPADDING', (0,0), (-1,-1), 10),
             ('LINEBELOW', (0,0), (-1,0), 1, colors.HexColor("#4f46e5")),
             ('ROWBACKGROUNDS', (0,1), (-1,-1), [colors.white, colors.HexColor("#f8fafc")]),
+            ('GRID', (0,0), (-1,0), 0.5, colors.transparent),
         ]))
         elements.append(t)
 
-    # 4. Prescriptions Cards
+        # Added "View Full History" Button representation
+        elements.append(Spacer(1, 0.15 * inch))
+        btn_data = [[Paragraph("<font color='#2563eb'>View Full Consultation History →</font>", STYLES['SubTitle'])]]
+        bt = Table(btn_data, colWidths=[3.2*inch])
+        bt.setStyle(TableStyle([
+            ('BACKGROUND', (0,0), (-1,-1), colors.HexColor("#eef2ff")),
+            ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+            ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+            ('BOTTOMPADDING', (0,0), (-1,-1), 8),
+            ('TOPPADDING', (0,0), (-1,-1), 8),
+            ('ROUNDEDCORNERS', [10, 10, 10, 10]),
+        ]))
+        elements.append(bt)
+
+    # 4. Prescriptions Grid (2 Columns)
     presc = data.get("prescriptions", [])
     if presc:
         elements.append(Paragraph("Active Prescriptions & Medications", STYLES['SectionHeader']))
-        for p in presc[:8]:
+        
+        cards = []
+        for p in presc[:12]:
             diag = p.get('diagnosis') or "General Consultation"
             date_str = str(p.get('created_at') or "")[:10]
-            meds = p.get('medicines') or []
+            meds_list = p.get('medicines') or []
+            meds_text = ", ".join(meds_list) if meds_list else "None listed"
             
-            p_data = [
-                [Paragraph(f"<b>{diag}</b>", STYLES['Value']), Paragraph(f"Issued: {date_str}", STYLES['Label'])],
-                [Paragraph(f"Medications: {', '.join(meds)}", STYLES['Normal']), ""]
+            card_content = [
+                [Paragraph(f"<font size='11'><b>{diag}</b></font>", STYLES['Value'])],
+                [Paragraph(f"<b>Medications:</b> {meds_text}", STYLES['Normal']), Paragraph(f"Issued: {date_str}", STYLES['Label'])]
             ]
-            pt = Table(p_data, colWidths=[5.5*inch, 2.0*inch])
-            pt.setStyle(TableStyle([
-                ('VALIGN', (0,0), (-1,-1), 'TOP'),
-                ('BOTTOMPADDING', (0,0), (-1,-1), 12),
+            ct = Table(card_content, colWidths=[3.5*inch])
+            ct.setStyle(TableStyle([
+                ('BACKGROUND', (0,0), (-1,-1), colors.HexColor("#ffffff")),
+                ('BOX', (0,0), (-1,-1), 0.5, colors.HexColor("#e2e8f0")),
                 ('TOPPADDING', (0,0), (-1,-1), 12),
-                ('LINEBELOW', (0,0), (-1,-1), 0.5, colors.HexColor("#e2e8f0")),
+                ('BOTTOMPADDING', (0,0), (-1,-1), 12),
+                ('LEFTPADDING', (0,0), (-1,-1), 12),
+                ('RIGHTPADDING', (0,0), (-1,-1), 12),
             ]))
-            pt.hAlign = 'LEFT'
-            elements.append(pt)
-            elements.append(Spacer(1, 0.1 * inch))
+            cards.append(ct)
 
-    # Emergency Contact Footer
-    ec = data.get("emergency_contact", {})
-    if ec:
-        elements.append(Spacer(1, 0.4 * inch))
-        elements.append(Paragraph("Emergency Support Context", STYLES['Label']))
-        ec_text = f"Primary Contact: {ec.get('contact_name')} ({ec.get('relationship')}) • Phone: {ec.get('phone')}"
-        elements.append(Paragraph(ec_text, STYLES['Normal']))
+        # Split into rows for 2-column grid
+        grid_rows = []
+        for i in range(0, len(cards), 2):
+            row = [cards[i]]
+            if i + 1 < len(cards):
+                row.append(cards[i+1])
+            else:
+                row.append("")
+            grid_rows.append(row)
+        
+        gt = Table(grid_rows, colWidths=[3.7*inch, 3.7*inch])
+        gt.setStyle(TableStyle([
+            ('VALIGN', (0,0), (-1,-1), 'TOP'),
+            ('BOTTOMPADDING', (0,0), (-1,-1), 15),
+        ]))
+        elements.append(gt)
 
-    # Footer Disclaimer
-    elements.append(Spacer(1, 0.6 * inch))
-    notice = "<b>CONFIDENTIAL MEDICAL RECORD</b><br/>" \
-             "This document contains protected health information (PHI) intended solely for the patient. " \
-             "Accuracy of clinical vitals depends on hardware calibration. © 2026 NeuroNest Health Systems."
-    elements.append(Paragraph(notice, ParagraphStyle('Footer', parent=STYLES['Normal'], fontSize=7, textColor=colors.gray, alignment=1, leading=10)))
+    # Footer Disclaimer Box
+    elements.append(Spacer(1, 0.4 * inch))
+    footer_content = [
+        [Paragraph("<b>CONFIDENTIAL MEDICAL RECORD</b>", ParagraphStyle('FooterTitle', parent=STYLES['Normal'], fontSize=12, textColor=colors.HexColor("#1e293b"), spaceAfter=8))],
+        [Paragraph("This document contains protected health information (PHI) and must be handled securely and in accordance with HIPAA regulations. Summary of clinical data depends on healthcare calibration. © 2026 NeuroNest Health Systems.", 
+                  ParagraphStyle('FooterText', parent=STYLES['Normal'], fontSize=8, textColor=colors.HexColor("#64748b"), leading=12))]
+    ]
+    ft = Table(footer_content, colWidths=[7.2*inch])
+    ft.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,-1), colors.HexColor("#eff6ff")),
+        ('ROUNDEDCORNERS', [12, 12, 12, 12]),
+        ('TOPPADDING', (0,0), (-1,-1), 15),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 15),
+        ('LEFTPADDING', (0,0), (-1,-1), 20),
+        ('RIGHTPADDING', (0,0), (-1,-1), 20),
+        ('BOX', (0,0), (-1,-1), 0.5, colors.HexColor("#dbeafe")),
+    ]))
+    elements.append(ft)
 
-    doc.build(elements)
+    def add_page_numbers(canvas, doc):
+        canvas.saveState()
+        canvas.setFont('Helvetica', 9)
+        canvas.setFillColor(colors.HexColor("#64748b"))
+        # Top-middle page indicator
+        page_num = f"Page {doc.page} of 3" # Static '3' as typical for this template
+        canvas.drawCentredString(A4[0]/2, A4[1]-20, page_num)
+        canvas.restoreState()
+
+    doc.build(elements, onFirstPage=add_page_numbers, onLaterPages=add_page_numbers)
     buffer.seek(0)
     return buffer
 
