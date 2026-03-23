@@ -14,7 +14,8 @@ import { getDoctorStats, getPatients, getSchedule } from '../../api/doctor';
 import '../../styles/dashboard.css';
 
 const StatCard = ({ label, value, hint, icon, tone = 'primary' }) => (
-  <div className={`nn-metric-card nn-tone-${tone}`}>
+  <div className={`nn-metric-card nn-tone-${tone} nn-metric-card-accent`}>
+    <div className="nn-metric-accent" aria-hidden="true" />
     <div className="d-flex justify-content-between align-items-start mb-2">
       <div className="nn-stat-label">{label}</div>
       <div className="nn-stat-icon">
@@ -183,48 +184,21 @@ const DoctorDashboard = () => {
         </div>
       </section>
 
-      <section className="row g-3 mb-4">
-        <div className="col-12 col-sm-6 col-xl-3">
-          <StatCard
-            label="Total Patients"
-            value={stats.total_patients}
-            hint="Under your care"
-            icon={Users}
-            tone="primary"
-          />
-        </div>
-        <div className="col-12 col-sm-6 col-xl-3">
-          <StatCard
-            label="Today's Appointments"
-            value={stats.today_appointments}
-            hint="Planned sessions"
-            icon={Calendar}
-            tone="info"
-          />
-        </div>
-        <div className="col-12 col-sm-6 col-xl-3">
-          <StatCard
-            label="Pending Requests"
-            value={stats.pending_requests}
-            hint="Awaiting approval"
-            icon={AlertTriangle}
-            tone="warning"
-          />
-        </div>
-        <div className="col-12 col-sm-6 col-xl-3">
-          <StatCard
-            label="Active Assessments"
-            value={stats.active_assessments}
-            hint="Open clinical reviews"
-            icon={ClipboardList}
-            tone="success"
-          />
-        </div>
-      </section>
-
       <section className="row g-4">
         <div className="col-12">
-          <div className="nn-overview-hero-card">
+          <div
+            className="nn-overview-hero-card nn-clickable"
+            role="button"
+            tabIndex={0}
+            onClick={() => navigate('/doctor/profile')}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                navigate('/doctor/profile');
+              }
+            }}
+            aria-label="Open doctor profile"
+          >
             <div className="nn-overview-hero-left">
               <div className="nn-overview-hero-avatar" aria-hidden="true">
                 <span className="nn-overview-hero-avatar-initials">{doctorHeroInitials}</span>
@@ -242,6 +216,47 @@ const DoctorDashboard = () => {
               <span>Clinician Dashboard</span>
             </div>
           </div>
+        </div>
+
+        <div className="col-12">
+          <section className="row g-3 mb-1">
+            <div className="col-12 col-sm-6 col-xl-3">
+              <StatCard
+                label="Total Patients"
+                value={stats.total_patients}
+                hint="Under your care"
+                icon={Users}
+                tone="primary"
+              />
+            </div>
+            <div className="col-12 col-sm-6 col-xl-3">
+              <StatCard
+                label="Today's Appointments"
+                value={stats.today_appointments}
+                hint="Planned sessions"
+                icon={Calendar}
+                tone="info"
+              />
+            </div>
+            <div className="col-12 col-sm-6 col-xl-3">
+              <StatCard
+                label="Pending Requests"
+                value={stats.pending_requests}
+                hint="Awaiting approval"
+                icon={AlertTriangle}
+                tone="warning"
+              />
+            </div>
+            <div className="col-12 col-sm-6 col-xl-3">
+              <StatCard
+                label="Active Assessments"
+                value={stats.active_assessments}
+                hint="Open clinical reviews"
+                icon={ClipboardList}
+                tone="success"
+              />
+            </div>
+          </section>
         </div>
 
         <div className="col-12 col-xl-6">
