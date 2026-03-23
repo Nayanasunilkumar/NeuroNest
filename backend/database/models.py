@@ -301,9 +301,6 @@ class Appointment(db.Model):
     def _resolved_schedule_datetime(self):
         if self.slot and self.slot.slot_start_utc:
             tz_name = "Asia/Kolkata"
-            setting = DoctorScheduleSetting.query.filter_by(doctor_user_id=self.doctor_id).first()
-            if setting and setting.timezone:
-                tz_name = setting.timezone
 
             slot_start = self.slot.slot_start_utc
             if slot_start.tzinfo is None:

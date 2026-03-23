@@ -10,13 +10,15 @@ import {
   getAppointmentCallState,
   joinAppointmentCall,
 } from "../../api/appointments";
+import { formatClockTimeIST, formatDateFromISTDate, formatTimeIST, parseISTDateTime } from "../../utils/time";
 import "../../styles/appointments.css"; 
 import { CheckCircle, X, Calendar, Clock, RefreshCw, ChevronLeft, ChevronRight, AlertCircle } from "lucide-react";
 
 // --- Clinical Utilities ---
 function isCloseDate(dateStr) {
   if (!dateStr) return false;
-  const d = new Date(dateStr);
+  const d = parseISTDateTime(dateStr, "00:00:00");
+  if (!d) return false;
   const today = new Date();
   const diff = (d - today) / (1000 * 60 * 60 * 24);
   return diff >= 0 && diff <= 2;
@@ -173,22 +175,18 @@ const MyAppointments = () => {
   const pendingFeedback = appointments.filter(a => String(a.status).toLowerCase() === 'completed' && !a.feedback_given).length;
 
   const formatDate = (dateStr) => {
-    return new Date(dateStr).toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
+    return formatDateFromISTDate(dateStr);
   };
 
   const formatTime = (timeStr) => {
-    return timeStr ? timeStr.substring(0, 5) : "N/A";
+    return timeStr ? formatClockTimeIST(timeStr) : "N/A";
   };
 
   const formatCallTime = (isoString) => {
     if (!isoString) return "N/A";
     const date = new Date(isoString);
     if (Number.isNaN(date.getTime())) return "N/A";
-    return date.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+    return formatTimeIST(date.toISOString());
   };
 
   const getCallStatusText = (appt, callState) => {

@@ -24,12 +24,58 @@ export const parseServerDate = (value) => {
   return Number.isNaN(dt.getTime()) ? null : dt;
 };
 
+export const parseISTDateTime = (dateValue, timeValue = "00:00:00") => {
+  const dateRaw = String(dateValue || "").trim();
+  if (!dateRaw) return null;
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateRaw);
+  if (!match) return null;
+
+  const [, yearStr, monthStr, dayStr] = match;
+  const [hourStr = "0", minuteStr = "0", secondStr = "0"] = String(timeValue || "00:00:00").split(":");
+  const year = Number(yearStr);
+  const month = Number(monthStr);
+  const day = Number(dayStr);
+  const hour = Number(hourStr);
+  const minute = Number(minuteStr);
+  const second = Number(secondStr);
+  if ([year, month, day, hour, minute, second].some((part) => Number.isNaN(part))) return null;
+
+  // Convert IST wall-clock to UTC epoch.
+  const utcMs = Date.UTC(year, month - 1, day, hour - 5, minute - 30, second, 0);
+  const dt = new Date(utcMs);
+  return Number.isNaN(dt.getTime()) ? null : dt;
+};
+
+export const formatDateFromISTDate = (dateValue, options = {}) => {
+  const dt = parseISTDateTime(dateValue, "00:00:00");
+  if (!dt) return "";
+  return dt.toLocaleDateString("en-IN", {
+    timeZone: IST_TIMEZONE,
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    ...options,
+  });
+};
+
+export const formatClockTimeIST = (timeValue) => {
+  if (!timeValue) return "";
+  const dt = parseISTDateTime("2000-01-01", timeValue);
+  if (!dt) return String(timeValue);
+  return dt.toLocaleTimeString("en-IN", {
+    timeZone: IST_TIMEZONE,
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
+};
+
 export const toEpochMs = (value) => {
   const dt = parseServerDate(value);
   return dt ? dt.getTime() : 0;
 };
 
-export const formatTimeIST = (value) => {
+export const formatTimeIST = (value, options = {}) => {
   const dt = parseServerDate(value);
   if (!dt) return "";
   return dt.toLocaleTimeString("en-IN", {
@@ -37,10 +83,11 @@ export const formatTimeIST = (value) => {
     hour: "2-digit",
     minute: "2-digit",
     hour12: true,
+    ...options,
   });
 };
 
-export const formatDateIST = (value) => {
+export const formatDateIST = (value, options = {}) => {
   const dt = parseServerDate(value);
   if (!dt) return "";
   return dt.toLocaleDateString("en-IN", {
@@ -48,10 +95,11 @@ export const formatDateIST = (value) => {
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
+    ...options,
   });
 };
 
-export const formatDateTimeIST = (value) => {
+export const formatDateTimeIST = (value, options = {}) => {
   const dt = parseServerDate(value);
   if (!dt) return "";
   return dt.toLocaleString("en-IN", {
@@ -62,6 +110,7 @@ export const formatDateTimeIST = (value) => {
     hour: "2-digit",
     minute: "2-digit",
     hour12: true,
+    ...options,
   });
 };
 
@@ -93,4 +142,25 @@ export const getRelativeDayLabelIST = (value, now = new Date()) => {
     month: "short",
     year: "numeric",
   });
+};
+
+export const calculateAgeIST = (dobValue) => {
+  const birthDate = parseServerDate(dobValue);
+  if (!birthDate) return "N/A";
+  
+  const now = new Date();
+  let age = now.getFullYear() - birthDate.getFullYear();
+  const m = now.getMonth() - birthDate.getMonth();
+  if (m < 0 || (m === 0 && now.getDate() < birthDate.getDate())) {
+    age -= 1;
+  }
+  return age >= 0 ? age : "N/A";
+};
+
+export const getISTHour = (date = new Date()) => {
+  return Number(new Intl.DateTimeFormat("en-IN", {
+    timeZone: IST_TIMEZONE,
+    hour: "2-digit",
+    hour12: false,
+  }).format(date));
 };

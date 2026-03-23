@@ -11,6 +11,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { getDoctorProfile } from '../../services/doctorProfileService';
 import { getDoctorStats, getPatients, getSchedule, joinDoctorAppointmentCall } from '../../api/doctor';
+import { formatClockTimeIST, formatDateFromISTDate, formatTimeIST, getISTDayKey, parseISTDateTime } from '../../utils/time';
 import '../../styles/dashboard.css';
 
 const StatCard = ({ label, value, hint, icon, tone = 'primary' }) => (
@@ -31,36 +32,20 @@ const StatCard = ({ label, value, hint, icon, tone = 'primary' }) => (
 
 const formatDate = (value, options = {}) => {
   if (!value) return 'Not available';
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return 'Not available';
-  return parsed.toLocaleDateString('en-US', {
+  return formatDateFromISTDate(value, {
     month: 'short',
     day: '2-digit',
     year: 'numeric',
     ...options,
-  });
+  }) || 'Not available';
 };
 
 const formatTime = (value) => {
   if (!value) return 'TBD';
-  const [hourStr, minuteStr = '00'] = String(value).split(':');
-  const hour = Number(hourStr);
-  const minute = Number(minuteStr);
-  if (Number.isNaN(hour) || Number.isNaN(minute)) return value;
-  const date = new Date();
-  date.setHours(hour, minute, 0, 0);
-  return date.toLocaleTimeString('en-US', {
-    hour: 'numeric',
-    minute: '2-digit',
-  });
+  return formatClockTimeIST(value) || value;
 };
 
-const formatJoinTime = (isoString) => {
-  if (!isoString) return 'TBD';
-  const date = new Date(isoString);
-  if (Number.isNaN(date.getTime())) return 'TBD';
-  return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-};
+const formatJoinTime = (isoString) => formatTimeIST(isoString) || 'TBD';
 const formatCountdown = (targetTime, nowMs) => {
   const delta = targetTime - nowMs;
   const abs = Math.abs(delta);
@@ -111,7 +96,7 @@ const DoctorDashboard = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      const today = new Date().toISOString().split('T')[0];
+      const today = getISTDayKey(new Date());
       try {
         setLoading(true);
         const results = await Promise.allSettled([
@@ -173,9 +158,9 @@ const DoctorDashboard = () => {
         return status !== 'cancelled' && status !== 'completed' && status !== 'no-show';
       })
       .sort((a, b) => {
-        const timeA = `${a.appointment_date || ''} ${a.appointment_time || ''}`.trim();
-        const timeB = `${b.appointment_date || ''} ${b.appointment_time || ''}`.trim();
-        return new Date(timeA).getTime() - new Date(timeB).getTime();
+        const timeA = parseISTDateTime(a.appointment_date, a.appointment_time || "00:00:00");
+        const timeB = parseISTDateTime(b.appointment_date, b.appointment_time || "00:00:00");
+        return (timeA?.getTime() || 0) - (timeB?.getTime() || 0);
       })
       .slice(0, 5);
   }, [appointments]);
@@ -197,15 +182,17 @@ const DoctorDashboard = () => {
       if ((appt.consultation_type || 'in_person') !== 'online') return false;
       const status = String(appt.status || '').toLowerCase();
       if (['completed', 'cancelled', 'cancelled_by_doctor', 'cancelled_by_patient', 'no_show'].includes(status)) return false;
-      const apptTime = new Date(`${appt.appointment_date || ''} ${appt.appointment_time || ''}`).getTime();
+      const apptTime = parseISTDateTime(appt.appointment_date, appt.appointment_time || "00:00:00")?.getTime() || 0;
       const inWindow = nowMs >= (apptTime - 10 * 60 * 1000) && nowMs <= (apptTime + 15 * 60 * 1000);
       const missed = Boolean(appt?.call_state?.missed);
       return inWindow && !missed;
     });
     if (!eligible.length) return null;
     const nearest = [...eligible].sort((a, b) => {
-      const aDiff = Math.abs(new Date(`${a.appointment_date || ''} ${a.appointment_time || ''}`).getTime() - nowMs);
-      const bDiff = Math.abs(new Date(`${b.appointment_date || ''} ${b.appointment_time || ''}`).getTime() - nowMs);
+      const aTime = parseISTDateTime(a.appointment_date, a.appointment_time || "00:00:00")?.getTime() || 0;
+      const bTime = parseISTDateTime(b.appointment_date, b.appointment_time || "00:00:00")?.getTime() || 0;
+      const aDiff = Math.abs(aTime - nowMs);
+      const bDiff = Math.abs(bTime - nowMs);
       return aDiff - bDiff;
     })[0];
     if (popupDismissedById[nearest.id]) return null;
@@ -245,7 +232,7 @@ const DoctorDashboard = () => {
   return (
     <div className="nn-dashboard-wrap nn-doctor-dashboard-v3">
       {popupAppointment && (() => {
-        const apptTime = new Date(`${popupAppointment.appointment_date || ''} ${popupAppointment.appointment_time || ''}`).getTime();
+        const apptTime = parseISTDateTime(popupAppointment.appointment_date, popupAppointment.appointment_time || "00:00:00")?.getTime() || 0;
         const joinMeta = getDoctorPopupJoinMeta(popupAppointment);
         return (
           <div
@@ -303,11 +290,7 @@ const DoctorDashboard = () => {
         <div>
           <h2 className="nn-title">Welcome back, Dr. {doctorLastName}</h2>
           <p className="nn-subtitle">
-            {new Date().toLocaleDateString('en-US', {
-              weekday: 'long',
-              month: 'long',
-              day: 'numeric',
-            })}{' '}
+            {formatDateIST(new Date(), { weekday: 'long', month: 'long', day: 'numeric' })}{' '}
             · Clinical operations snapshot
           </p>
         </div>

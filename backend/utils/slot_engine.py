@@ -89,9 +89,12 @@ def get_or_create_schedule_setting(doctor_user_id: int) -> DoctorScheduleSetting
     _ensure_schedule_settings_schema()
     setting = DoctorScheduleSetting.query.filter_by(doctor_user_id=doctor_user_id).first()
     if setting:
+        if setting.timezone != "Asia/Kolkata":
+            setting.timezone = "Asia/Kolkata"
+            db.session.flush()
         return setting
 
-    setting = DoctorScheduleSetting(doctor_user_id=doctor_user_id)
+    setting = DoctorScheduleSetting(doctor_user_id=doctor_user_id, timezone="Asia/Kolkata")
     db.session.add(setting)
     db.session.flush()
     return setting

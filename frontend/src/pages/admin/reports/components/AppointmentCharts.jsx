@@ -17,11 +17,13 @@ const CustomTooltip = ({ active, payload, label }) => {
     return null;
 };
 
+import { formatDateIST } from '../../../utils/time';
+
 const AppointmentCharts = ({ data }) => {
     // Format dates for display
     const chartData = data?.map(item => ({
         ...item,
-        date: new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+        date: formatDateIST(item.date, { month: 'short', day: 'numeric' })
     })) || [];
 
     const totalVolume = chartData.reduce((sum, item) => sum + Number(item.count || 0), 0);

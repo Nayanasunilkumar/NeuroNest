@@ -405,7 +405,7 @@ def update_schedule_settings():
     buffer_minutes = int(data.get("buffer_minutes", setting.buffer_minutes))
     approval_mode = data.get("approval_mode", setting.approval_mode)
     accepting_new_bookings = bool(data.get("accepting_new_bookings", setting.accepting_new_bookings))
-    tz = data.get("timezone", setting.timezone or "Asia/Kolkata")
+    tz = "Asia/Kolkata"
 
     if slot_duration <= 0 or slot_duration > 180:
         return jsonify({"message": "slot_duration_minutes must be between 1 and 180"}), 400

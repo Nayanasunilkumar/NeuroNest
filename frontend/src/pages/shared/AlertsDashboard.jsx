@@ -14,6 +14,7 @@ import {
   Wifi,
   WifiOff,
 } from 'lucide-react';
+import { formatTimeIST, formatDateTimeIST, getISTDayKey } from '../../utils/time';
 
 const SEVERITY_COLORS = {
   critical: { border: '#dc2626', bg: '#fee2e2', text: '#991b1b', chip: 'bg-danger' },
@@ -125,7 +126,11 @@ const AlertsDashboard = () => {
   const mergeAndSortAlerts = useCallback((incoming, existing = []) => {
     const mergedMap = new Map(existing.map((item) => [item.id, item]));
     incoming.forEach((item) => mergedMap.set(item.id, { ...mergedMap.get(item.id), ...item }));
-    return [...mergedMap.values()].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    return [...mergedMap.values()].sort((a, b) => {
+        const dateA = new Date(a.created_at).getTime();
+        const dateB = new Date(b.created_at).getTime();
+        return dateB - dateA;
+    });
   }, []);
 
   const loadAllAlerts = useCallback(async () => {
@@ -263,7 +268,7 @@ const AlertsDashboard = () => {
         if (historySeverity !== 'all' && normalizeSeverity(alert) !== historySeverity) return false;
         if (historyPatient && String(alert.patient_id) !== String(historyPatient).trim()) return false;
         if (historyDate) {
-          const day = new Date(alert.created_at).toISOString().slice(0, 10);
+          const day = getISTDayKey(new Date(alert.created_at));
           if (day !== historyDate) return false;
         }
         return true;
@@ -279,7 +284,7 @@ const AlertsDashboard = () => {
           ? {
               ...item,
               is_acknowledged: true,
-              acknowledged_at: new Date().toISOString(),
+              acknowledged_at: formatDateTimeIST(new Date()),
             }
           : item,
       ),
@@ -320,7 +325,7 @@ const AlertsDashboard = () => {
               <p className="mb-1 text-muted small">{alert.message}</p>
               <div className="small text-muted">
                 Normal Range: {getNormalRange(alert.vital_type)} | Time:{' '}
-                {new Date(alert.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                {formatTimeIST(alert.created_at, { hour: '2-digit', minute: '2-digit' })}
               </div>
             </div>
             {!alert.is_acknowledged && (
@@ -508,7 +513,7 @@ const AlertsDashboard = () => {
                       onClick={() => setSelectedAlertId(alert.id)}
                     >
                       <div className="text-nowrap small text-muted fw-semibold">
-                        {new Date(alert.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        {formatTimeIST(alert.created_at, { hour: '2-digit', minute: '2-digit' })}
                       </div>
                       <div className="flex-grow-1">
                         <div className="fw-semibold">{alert.message}</div>
@@ -545,7 +550,7 @@ const AlertsDashboard = () => {
                           <div className="small text-muted">Patient #{alert.patient_id} | Source: {alert.vital_type}</div>
                         </div>
                         <div className="small text-muted">
-                          {new Date(alert.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          {formatTimeIST(alert.created_at, { hour: '2-digit', minute: '2-digit' })}
                         </div>
                       </div>
                     </div>
@@ -612,7 +617,7 @@ const AlertsDashboard = () => {
                       const severity = normalizeSeverity(alert);
                       return (
                         <tr key={alert.id} role="button" onClick={() => setSelectedAlertId(alert.id)}>
-                          <td className="ps-3">{new Date(alert.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</td>
+                          <td className="ps-3">{formatTimeIST(alert.created_at, { hour: '2-digit', minute: '2-digit' })}</td>
                           <td>Patient #{alert.patient_id}</td>
                           <td>{alert.vital_type}</td>
                           <td>
@@ -646,7 +651,7 @@ const AlertsDashboard = () => {
                 Status: {safetyScore >= 85 ? 'Stable' : safetyScore >= 65 ? 'Watch' : 'High Risk'}
               </div>
               <div className="small text-muted mt-2">
-                Last detected alert: {lastDetectedAt ? new Date(lastDetectedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'None'}
+                Last detected alert: {lastDetectedAt ? formatTimeIST(lastDetectedAt, { hour: '2-digit', minute: '2-digit' }) : 'None'}
               </div>
             </div>
           </div>
@@ -688,7 +693,7 @@ const AlertsDashboard = () => {
                   <div className="mb-3">
                     <div className="small text-muted mb-1">Time</div>
                     <div className="fw-semibold">
-                      {new Date(selectedAlert.created_at).toLocaleString([], {
+                      {formatDateTimeIST(selectedAlert.created_at, {
                         hour: '2-digit',
                         minute: '2-digit',
                         month: 'short',

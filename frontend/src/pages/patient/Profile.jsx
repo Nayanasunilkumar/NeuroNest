@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { formatDateIST, calculateAgeIST } from "../../utils/time";
 import api from "../../api/axios";
 import axios from "axios";
 import { toAssetUrl } from "../../utils/media";
@@ -216,14 +217,8 @@ const Profile = () => {
       );
   }
 
-  const calculateAge = (dobString) => {
-    if (!dobString || dobString === "N/A") return "N/A";
-    const now = new Date();
-    const birthDate = new Date(dobString);
-    const difference = now.getTime() - birthDate.getTime();
-    return Math.abs(new Date(difference).getUTCFullYear() - 1970);
-  };
-
+  const calculateAge = (dob) => calculateAgeIST(dob);
+  const formatDate = (date) => formatDateIST(date);
   const calculateBMI = (weight, height) => {
     if (!weight || !height) return "N/A";
     const heightMeters = height / 100;
@@ -280,13 +275,6 @@ const Profile = () => {
     if (normalized.includes("video") || normalized.includes("consult")) return <Video size={14} />;
     if (normalized.includes("prescription") || normalized.includes("med")) return <FileText size={14} />;
     return <Stethoscope size={14} />;
-  };
-
-  const formatDate = (value) => {
-    if (!value) return "Not available";
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return "Not available";
-    return date.toLocaleDateString(undefined, { day: "2-digit", month: "short", year: "numeric" });
   };
 
   const timelineStatus = (rawStatus = "") => {

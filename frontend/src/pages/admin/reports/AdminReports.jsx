@@ -9,6 +9,8 @@ import DoctorPerformanceTable from './components/DoctorPerformanceTable';
 import GovernancePanel from './components/GovernancePanel';
 import '../../../styles/admin-reports.css';
 
+import { formatDateTimeIST, formatDateIST } from '../../../utils/time';
+
 const AdminReports = () => {
     const [overview, setOverview] = useState(null);
     const [appointments, setAppointments] = useState(null);
@@ -65,9 +67,10 @@ const AdminReports = () => {
     const handleExport = (format = 'json') => {
         if (!overview || !appointments || !doctors || !governance) return;
         
+        const now = new Date();
         if (format === 'json') {
             const exportData = {
-                generated_at: new Date().toISOString(),
+                generated_at: formatDateTimeIST(now),
                 period_days: days,
                 overview,
                 appointments,
@@ -78,7 +81,7 @@ const AdminReports = () => {
             const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportData, null, 2));
             const downloadAnchorNode = document.createElement('a');
             downloadAnchorNode.setAttribute("href", dataStr);
-            downloadAnchorNode.setAttribute("download", `enterprise_report_${days}d_${new Date().toISOString().split('T')[0]}.json`);
+            downloadAnchorNode.setAttribute("download", `enterprise_report_${days}d_${formatDateIST(now).replace(/\//g, '-')}.json`);
             document.body.appendChild(downloadAnchorNode); 
             downloadAnchorNode.click();
             downloadAnchorNode.remove();
@@ -89,7 +92,7 @@ const AdminReports = () => {
 
             const opt = {
                 margin:       10,
-                filename:     `enterprise_report_${days}d_${new Date().toISOString().split('T')[0]}.pdf`,
+                filename:     `enterprise_report_${days}d_${formatDateIST(now).replace(/\//g, '-')}.pdf`,
                 image:        { type: 'jpeg', quality: 0.98 },
                 html2canvas:  { scale: 2, useCORS: true },
                 jsPDF:        { unit: 'mm', format: 'a4', orientation: 'landscape' }

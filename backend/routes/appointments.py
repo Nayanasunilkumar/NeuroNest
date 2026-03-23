@@ -106,7 +106,7 @@ def _book_slot_atomic(*, current_user_id: int, doctor_id: int, slot_id: int, rea
     slot_start_utc = slot.slot_start_utc
     if slot_start_utc.tzinfo is None:
         slot_start_utc = slot_start_utc.replace(tzinfo=timezone.utc)
-    slot_local_dt = slot_start_utc.astimezone(ZoneInfo(setting.timezone or "Asia/Kolkata"))
+    slot_local_dt = slot_start_utc.astimezone(ZoneInfo("Asia/Kolkata"))
 
     appointment = Appointment(
         patient_id=current_user_id,
@@ -337,7 +337,7 @@ def get_available_slots(doctor_id):
             .all()
         )
 
-        doctor_tz = setting.timezone or "Asia/Kolkata"
+        doctor_tz = "Asia/Kolkata"
         slot_payload = []
         for slot in slots:
             raw = slot.to_dict()
@@ -620,7 +620,7 @@ def reschedule_appointment(id):
             slot_start_utc = slot.slot_start_utc
             if slot_start_utc.tzinfo is None:
                 slot_start_utc = slot_start_utc.replace(tzinfo=timezone.utc)
-            slot_local_dt = slot_start_utc.astimezone(ZoneInfo(setting.timezone or "Asia/Kolkata"))
+            slot_local_dt = slot_start_utc.astimezone(ZoneInfo("Asia/Kolkata"))
             appointment.slot_id = slot.id
             appointment.appointment_date = slot_local_dt.date()
             appointment.appointment_time = slot_local_dt.time().replace(microsecond=0)

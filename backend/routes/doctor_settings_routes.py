@@ -79,7 +79,7 @@ def update_schedule_settings():
 
     slot_duration = schedule.slot_duration_minutes
     buffer_minutes = schedule.buffer_minutes
-    timezone = schedule.timezone
+    timezone = "Asia/Kolkata"
 
     if "slot_duration_minutes" in data:
         slot_duration = int(data["slot_duration_minutes"])
@@ -90,7 +90,7 @@ def update_schedule_settings():
     if "accepting_new_bookings" in data:
         schedule.accepting_new_bookings = bool(data["accepting_new_bookings"])
     if "timezone" in data:
-        timezone = data["timezone"]
+        timezone = "Asia/Kolkata"
 
     requires_regeneration = (
         schedule.slot_duration_minutes != slot_duration

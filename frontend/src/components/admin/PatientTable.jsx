@@ -9,6 +9,8 @@ import {
   ShieldCheck 
 } from 'lucide-react';
 
+import { formatDateIST } from '../../utils/time';
+
 const PatientTable = ({ patients, onSelectPatient }) => {
   const getFlagClass = (count) => {
     if (count === 0) return 'flag-safe';
@@ -16,19 +18,7 @@ const PatientTable = ({ patients, onSelectPatient }) => {
     return 'flag-danger';
   };
 
-  const formatDate = (dateStr) => {
-    if (!dateStr) return '—';
-    try {
-      const d = new Date(dateStr);
-      return d.toLocaleDateString('en-US', { 
-        year: 'numeric', 
-        month: 'short', 
-        day: 'numeric' 
-      });
-    } catch {
-      return '—';
-    }
-  };
+  const formatDate = (dateStr) => formatDateIST(dateStr, { year: 'numeric', month: 'short', day: 'numeric' }) || '—';
 
   return (
     <div className="patient-table-container">

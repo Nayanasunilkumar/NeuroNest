@@ -12,6 +12,7 @@ import {
   Calendar, CheckCircle2, ShieldAlert, Zap, Clock
 } from "lucide-react";
 import { useTheme } from "../../context/ThemeContext";
+import { formatClockTimeIST, formatDateFromISTDate, getISTDayKey, parseISTDateTime } from "../../utils/time";
 import "../../styles/appointment-requests.css";
 
 // --- Clinical Utilities ---
@@ -53,23 +54,19 @@ function calculateAge(dob) {
 
 function formatDateHeader(dateStr) {
   if (!dateStr) return "N/A";
-  const date = new Date(dateStr);
-  return date.toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  return formatDateFromISTDate(dateStr, { weekday: "long", day: "numeric", month: "long", year: "numeric" });
 }
 
 function formatDateSmall(dateStr) {
   if (!dateStr) return "N/A";
-  const date = new Date(dateStr);
-  return date.toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
+  const date = parseISTDateTime(dateStr, "00:00:00");
+  if (!date) return "N/A";
+  return date.toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short" });
 }
 
 function formatTime(timeStr) {
   if (!timeStr) return "N/A";
-  const parts = timeStr.split(':');
-  if (parts.length < 2) return timeStr;
-  const [h, m] = parts;
-  const hh = parseInt(h);
-  return `${hh % 12 || 12}:${m} ${hh >= 12 ? 'PM' : 'AM'}`;
+  return formatClockTimeIST(timeStr);
 }
 
 // --- Sub-components ---
@@ -251,7 +248,7 @@ const RescheduleModal = ({ isOpen, onClose, onSubmit, appointment, loading }) =>
                     type="date" 
                     value={date} 
                     onChange={(e) => setDate(e.target.value)} 
-                    min={new Date().toISOString().split('T')[0]}
+                    min={getISTDayKey(new Date())}
                    />
                    <Calendar className="ar-field-icon" size={16} />
                 </div>

@@ -30,6 +30,7 @@ import api from "../../api/axios";
 import { getAppointmentCallState, getAppointments, joinAppointmentCall } from "../../api/appointments";
 import { getClinicalSummary, getMyNotifications, markNotificationRead } from "../../api/profileApi";
 import { API_BASE_URL } from "../../config/env";
+import { formatClockTimeIST, formatDateFromISTDate, formatTimeIST, parseISTDateTime, getISTDayKey, getISTHour, formatDateIST } from "../../utils/time";
 
 const METRIC_CONFIG = {
   hr: { label: "Heart Rate", unit: "BPM", normal: [60, 100], border: [50, 120], colors: { normal: "#129c7d", borderline: "#f59e0b", critical: "#dc2626" } },
@@ -51,26 +52,27 @@ const EMERGENCY_SERVICES = [
   { icon: "🏥", label: "National Health Helpline", number: "104", theme: "red" },
 ];
 
+const getISTDayOffset = (offsetDays = 0) => {
+  const dt = new Date();
+  dt.setDate(dt.getDate() + offsetDays);
+  return getISTDayKey(dt);
+};
+
 const FALLBACK_APPOINTMENTS = [
-  { id: "fallback-1", doctor_name: "Dr. Priya Raman", specialization: "Neurology", appointment_date: new Date(Date.now() + 86400000).toISOString().slice(0, 10), appointment_time: "15:00:00", consultation_type: "online", status: "approved" },
-  { id: "fallback-2", doctor_name: "Dr. Arjun Mehta", specialization: "Cardiology", appointment_date: new Date(Date.now() + 3 * 86400000).toISOString().slice(0, 10), appointment_time: "10:30:00", consultation_type: "in_person", status: "pending" },
+  { id: "fallback-1", doctor_name: "Dr. Priya Raman", specialization: "Neurology", appointment_date: getISTDayOffset(1), appointment_time: "15:00:00", consultation_type: "online", status: "approved" },
+  { id: "fallback-2", doctor_name: "Dr. Arjun Mehta", specialization: "Cardiology", appointment_date: getISTDayOffset(3), appointment_time: "10:30:00", consultation_type: "in_person", status: "pending" },
 ];
 
-const todayKey = new Date().toISOString().slice(0, 10);
+const todayKey = getISTDayKey(new Date());
 
-const parseAppointmentDateTime = (appt) => new Date(`${appt?.appointment_date}T${appt?.appointment_time || "00:00:00"}`);
-const formatDate = (value) => new Intl.DateTimeFormat("en-US", { weekday: "short", month: "short", day: "numeric" }).format(value);
-const formatTime = (time) => {
-  const [hour = "0", minute = "0"] = String(time || "00:00").slice(0, 5).split(":");
-  const d = new Date();
-  d.setHours(Number(hour), Number(minute), 0, 0);
-  return new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit" }).format(d);
-};
+const parseAppointmentDateTime = (appt) => parseISTDateTime(appt?.appointment_date, appt?.appointment_time || "00:00:00");
+const formatDate = (value) => formatDateIST(value, { weekday: "short", month: "short", day: "numeric" });
+const formatTime = (time) => formatClockTimeIST(time);
 const formatTimeFromISO = (value) => {
   if (!value) return "N/A";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "N/A";
-  return new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit" }).format(date);
+  return formatTimeIST(date.toISOString());
 };
 const formatCountdown = (targetTime, nowMs) => {
   const delta = targetTime - nowMs;
@@ -93,6 +95,7 @@ const getCountdown = (appt) => {
   if (diff === 1) return `Tomorrow at ${formatTime(appt.appointment_time)}`;
   return `In ${diff} days`;
 };
+const getCurrentHourIST = () => getISTHour();
 
 const getAppointmentType = (appt) => String(appt?.consultation_type || "in_person").toLowerCase() === "online" ? "Video" : "In-person";
 const getStatusMeta = (status) => {
@@ -124,7 +127,7 @@ const buildTrendSeries = (history = [], latest = null) => {
     date.setDate(today.getDate() - (6 - i));
     return {
       label: date.toLocaleDateString("en-US", { weekday: "short" }),
-      dateKey: date.toISOString().slice(0, 10),
+      dateKey: getISTDayKey(date),
       hr: null,
       spo2: null,
       temp: null,
@@ -135,7 +138,7 @@ const buildTrendSeries = (history = [], latest = null) => {
   history.forEach((entry, index) => {
     const ts = entry?.ts ? new Date(entry.ts) : null;
     const fallbackDay = days[Math.max(0, days.length - history.length + index)];
-    const key = ts && !Number.isNaN(ts.getTime()) ? ts.toISOString().slice(0, 10) : fallbackDay?.dateKey;
+    const key = ts && !Number.isNaN(ts.getTime()) ? getISTDayKey(ts) : fallbackDay?.dateKey;
     const bucket = days.find((day) => day.dateKey === key);
     if (!bucket) return;
     bucket.hr = (bucket.hr ?? 0) + Number(entry.hr || 0);
@@ -674,7 +677,7 @@ export default function DashboardEnhancements() {
             <div className="nn-medication-timeline">
               {medicationTimeline.map((slot) => {
                 const Icon = slot.icon;
-                const hour = new Date().getHours();
+                const hour = getCurrentHourIST();
                 return (
                   <div key={slot.key} className="nn-medication-slot">
                     <div className="nn-medication-slot-head">

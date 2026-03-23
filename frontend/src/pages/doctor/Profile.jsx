@@ -8,10 +8,12 @@ import AvailabilityModal from '../../components/doctor/AvailabilityModal';
 import { fetchSpecialties } from '../../services/adminDoctorAPI';
 import { toAssetUrl } from '../../utils/media';
 import { useTheme } from '../../context/ThemeContext';
+import { formatDateIST } from '../../utils/time';
 import '../../styles/profile-dark.css';
 
 const Profile = () => {
     const { isDark } = useTheme();
+    const currentYear = formatDateIST(new Date(), { year: 'numeric' });
     const fileInputRef = useRef(null);
     const [profile, setProfile] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -27,7 +29,7 @@ const Profile = () => {
     const [newExp, setNewExp] = useState({
         title: '',
         hospital: '',
-        startYear: new Date().getFullYear().toString(),
+        startYear: currentYear,
         endYear: 'Present',
         description: ''
     });
@@ -137,7 +139,7 @@ const Profile = () => {
             setNewExp({ 
                 title: '', 
                 hospital: '', 
-                startYear: new Date().getFullYear().toString(), 
+                startYear: currentYear, 
                 endYear: 'Present', 
                 description: '' 
             });

@@ -6,6 +6,7 @@ import { getPatientDossier } from "../../api/doctor";
 import { getUser } from "../../utils/auth";
 import { getDoctorProfile } from "../../services/doctorProfileService";
 import { getClinicalSummary } from "../../api/profileApi";
+import { formatDateIST, calculateAgeIST as calculateAgeHelper } from "../../utils/time";
 
 // Components
 import MedicalRecordTable from "../../components/patient/medicalRecords/MedicalRecordTable";
@@ -41,24 +42,8 @@ const MedicalRecords = ({ patientId: propPatientId = null }) => {
   const canManageClinical = !patientId || isDoctor;
   const [doctorDefaults, setDoctorDefaults] = useState({ name: '', hospital: '' });
 
-  const formatDate = (value) => {
-    if (!value) return "N/A";
-    const d = new Date(value);
-    if (Number.isNaN(d.getTime())) return "N/A";
-    return d.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
-  };
-
-  const calculateAge = (dobString) => {
-    if (!dobString || dobString === "N/A") return "N/A";
-    const now = new Date();
-    const birthDate = new Date(dobString);
-    const difference = now.getTime() - birthDate.getTime();
-    return Math.abs(new Date(difference).getUTCFullYear() - 1970);
-  };
+  const formatDate = (value) => formatDateIST(value, { month: "short", day: "numeric", year: "numeric" });
+  const calculateAge = (dobString) => calculateAgeHelper(dobString);
 
   const calculateBMI = (weight, height) => {
     if (!weight || !height) return "N/A";
