@@ -225,7 +225,7 @@ const PatientLayout = () => {
                     className={`flex-grow-1 d-flex flex-column ${isMessagePath ? 'overflow-hidden' : 'overflow-auto'} position-relative p-0`}
                     style={{ transition: 'all 0.4s' }}
                 >
-                    <div className={isMessagePath ? 'h-100 p-2 p-md-3 p-lg-4' : 'container-fluid max-w-1600 mx-auto p-2 p-md-3 p-lg-4 pb-5 pb-lg-0'}>
+                    <div className={isMessagePath ? 'h-100 p-2 p-md-3 p-lg-4' : 'container-fluid max-w-1600 mx-auto p-2 p-md-3 p-lg-4'}>
                         <div className={`patient-page-shell ${isMessagePath ? 'patient-page-shell-chat h-100' : ''}`}>
                             <Outlet />
                         </div>
