@@ -1,24 +1,24 @@
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Poppins:wght@600;700&display=swap");
 
 :root {
-    --brand-primary: #6c63ff;
-    --brand-secondary: #8b5cf6;
-    --bg-navy: #0f172a;
-    --text-navy: #1b2559;
-    --text-muted: #64748b;
-    --card-glass: rgba(255, 255, 255, 0.85);
-    --card-border: rgba(255, 255, 255, 0.9);
-    --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-    --diagnosis-bg: #ede9fe;
-    --diagnosis-text: #5b21b6;
-    --diagnosis-border: #8b5cf6;
-    --allergy-bg: #ffe4e6;
-    --allergy-text: #9f1239;
-    --allergy-border: #fb7185;
+    --brand-primary: var(--nn-primary);
+    --brand-secondary: var(--nn-secondary);
+    --bg-page: var(--nn-bg);
+    --text-navy: var(--nn-text-main);
+    --text-muted: var(--nn-text-muted);
+    --card-glass: var(--nn-glass);
+    --card-border: var(--nn-border);
+    --card-shadow: var(--nn-shadow-md);
+    --diagnosis-bg: var(--nn-primary-light);
+    --diagnosis-text: var(--nn-primary);
+    --diagnosis-border: var(--nn-primary);
+    --allergy-bg: var(--nn-danger-bg);
+    --allergy-text: var(--nn-danger-text);
+    --allergy-border: var(--nn-danger);
 }
 
 .patient-profile-page-wrapper {
-    background-color: var(--bg-navy);
+    background-color: var(--bg-page);
     min-height: 100vh;
     padding: 60px;
     font-family: 'Inter', sans-serif;

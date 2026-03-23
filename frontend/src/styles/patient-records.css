@@ -3,10 +3,11 @@
 }
 
 .patient-dashboard-grid-bg {
-    background-color: #f8fafc;
+    background-color: var(--nn-bg);
     flex: 1;
     min-height: 0;
     overflow-y: auto;
+    transition: background-color 0.4s ease;
 }
 
 /* Custom scrollbar for patient records */
@@ -19,17 +20,18 @@
 }
 
 .clinical-panel {
-    background: #ffffff;
+    background: var(--nn-surface);
     border-radius: 20px;
     padding: 24px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.02);
+    box-shadow: var(--nn-shadow-sm);
+    border: 1px solid var(--nn-border);
 }
 
 .patient-img-large {
     width: 120px;
     height: 120px;
     border-radius: 20px;
-    background: #f1f5f9;
+    background: var(--nn-surface-secondary);
 }
 
 .panel-header {
@@ -42,7 +44,7 @@
 .panel-title {
     font-size: 1.05rem;
     font-weight: 800;
-    color: #1e293b;
+    color: var(--nn-text-main);
     display: flex;
     align-items: center;
     gap: 8px;
@@ -96,7 +98,7 @@
     top: 14px;
     bottom: -24px;
     width: 2px;
-    background: #e2e8f0;
+    background: var(--nn-border);
 }
 
 .timeline-row:last-child .timeline-center::before {
@@ -107,8 +109,8 @@
     width: 12px;
     height: 12px;
     border-radius: 50%;
-    border: 3px solid #1e3a8a;
-    background: white;
+    border: 3px solid var(--nn-primary);
+    background: var(--nn-surface);
     z-index: 2;
     margin-top: 2px;
 }
@@ -120,7 +122,7 @@
 
 .timeline-title {
     font-weight: 800;
-    color: #1e293b;
+    color: var(--nn-text-main);
     font-size: 0.9rem;
 }
 
@@ -133,8 +135,8 @@
 
 /* Medical History Grid */
 .med-history-box {
-    border: 1px solid #f1f5f9;
-    background: white;
+    border: 1px solid var(--nn-border);
+    background: var(--nn-surface);
     border-radius: 16px;
     padding: 16px;
     height: 100%;
@@ -151,11 +153,11 @@
     width: 28px;
     height: 28px;
     border-radius: 50%;
-    background: #f8fafc;
+    background: var(--nn-surface-secondary);
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #64748b;
+    color: var(--nn-text-secondary);
 }
 
 .med-history-title {
@@ -167,32 +169,32 @@
 .med-history-data {
     font-size: 0.85rem;
     font-weight: 700;
-    color: #1e293b;
+    color: var(--nn-text-main);
     line-height: 1.4;
 }
 
 /* Medications Table */
 .med-table th {
-    color: #94a3b8;
+    color: var(--nn-text-secondary);
     font-size: 0.75rem;
     font-weight: 600;
     text-transform: none;
-    border-bottom: 1px solid #f1f5f9;
+    border-bottom: 1px solid var(--nn-border);
     padding: 12px 8px;
 }
 
 .med-table td {
     padding: 16px 8px;
     vertical-align: middle;
-    border-bottom: 1px solid #f1f5f9;
+    border-bottom: 1px solid var(--nn-border);
     font-size: 0.8rem;
-    color: #475569;
+    color: var(--nn-text-secondary);
     font-weight: 600;
 }
 
 /* Diet/Notes Module */
 .diet-list-item {
-    border: 1px solid #f1f5f9;
+    border: 1px solid var(--nn-border);
     border-radius: 12px;
     padding: 12px 16px;
     display: flex;
@@ -200,6 +202,6 @@
     gap: 12px;
     font-size: 0.8rem;
     font-weight: 700;
-    color: #1e293b;
+    color: var(--nn-text-main);
     margin-bottom: 12px;
 }
