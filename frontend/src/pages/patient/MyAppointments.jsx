@@ -397,18 +397,20 @@ const MyAppointments = () => {
                                     {isUpcoming && (
                                         <>
                                             {isOnline && (
-                                              <button
-                                                className="icon-action-btn"
-                                                onClick={() => handleJoinOnlineCall(appt.id)}
-                                                title={joinDisabled ? "Join not available yet" : "Join video call"}
-                                                disabled={joinDisabled || actionLoading === `${appt.id}join`}
-                                                style={{
-                                                  borderColor: joinDisabled ? "#cbd5e1" : "#0ea5e9",
-                                                  color: joinDisabled ? "#94a3b8" : "#0284c7",
-                                                }}
-                                              >
-                                                {actionLoading === `${appt.id}join` ? <RefreshCw size={14} className="spinner" /> : "Join"}
-                                              </button>
+                                              !joinDisabled && (
+                                                <button
+                                                  className="icon-action-btn"
+                                                  onClick={() => handleJoinOnlineCall(appt.id)}
+                                                  title="Join video call"
+                                                  disabled={actionLoading === `${appt.id}join`}
+                                                  style={{
+                                                    borderColor: "#0ea5e9",
+                                                    color: "#0284c7",
+                                                  }}
+                                                >
+                                                  {actionLoading === `${appt.id}join` ? <RefreshCw size={14} className="spinner" /> : "Join"}
+                                                </button>
+                                              )
                                             )}
                                             <button 
                                                 className="icon-action-btn reschedule-btn"
