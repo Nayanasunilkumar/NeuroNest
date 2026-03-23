@@ -106,9 +106,9 @@ const PatientHub = () => {
             id: 'performance',
             title: 'Patient Chat',
             desc: 'Direct clinical consultation',
-            icon: <Activity size={22} />,
-            color: '#ef4444',
-            path: `/doctor/performance-analytics?patientId=${patientId}`,
+            icon: <MessageSquare size={22} />,
+            color: '#475569',
+            path: `/doctor/chat?patientId=${patientId}`,
             hoverBlue: true
         },
         {
