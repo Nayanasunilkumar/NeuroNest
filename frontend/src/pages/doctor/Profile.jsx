@@ -359,168 +359,170 @@ const Profile = () => {
                             <div className="dark-edit-form">
                                 <h4 className="text-white mb-4 fw-bold">Update Infrastructure Logic <br/><span className="text-secondary fw-normal fs-6">Manage data bindings for your core credentials.</span></h4>
                                 
-                                <div className="row">
-                                    <div className="col-12 col-md-4 dark-input-group">
-                                        <label className="dark-label">Contact Payload</label>
-                                        <input name="phone" className="dark-input" value={formData.phone || ''} onChange={handleChange} placeholder="Phone Number" />
-                                    </div>
-                                    <div className="col-12 col-md-4 dark-input-group">
-                                        <label className="dark-label">DoB Param</label>
-                                        <input type="date" name="dob" className="dark-input" value={formData.dob || ''} onChange={handleChange} />
-                                    </div>
-                                    <div className="col-12 col-md-4 dark-input-group">
-                                        <label className="dark-label">Gender Entity</label>
-                                        <select name="gender" className="dark-input" value={formData.gender || ''} onChange={handleChange}>
-                                            <option value="">Select</option>
-                                            <option value="Male">Male</option>
-                                            <option value="Female">Female</option>
-                                            <option value="Other">Other</option>
-                                        </select>
+                                <div className="dark-edit-form-scroll" style={{ maxHeight: '60vh', overflowY: 'auto', paddingRight: '12px', overflowX: 'hidden' }}>
+                                    <div className="row">
+                                        <div className="col-12 col-md-4 dark-input-group">
+                                            <label className="dark-label">Contact Payload</label>
+                                            <input name="phone" className="dark-input" value={formData.phone || ''} onChange={handleChange} placeholder="Phone Number" />
+                                        </div>
+                                        <div className="col-12 col-md-4 dark-input-group">
+                                            <label className="dark-label">DoB Param</label>
+                                            <input type="date" name="dob" className="dark-input" value={formData.dob || ''} onChange={handleChange} />
+                                        </div>
+                                        <div className="col-12 col-md-4 dark-input-group">
+                                            <label className="dark-label">Gender Entity</label>
+                                            <select name="gender" className="dark-input" value={formData.gender || ''} onChange={handleChange}>
+                                                <option value="">Select</option>
+                                                <option value="Male">Male</option>
+                                                <option value="Female">Female</option>
+                                                <option value="Other">Other</option>
+                                            </select>
+                                        </div>
+
+                                        <div className="col-12"><hr style={{borderColor:'var(--nn-border)', margin:'10px 0 25px 0'}}/></div>
+
+                                        <div className="col-12 col-md-6 dark-input-group">
+                                            <label className="dark-label">License Reference</label>
+                                            <input name="license_number" className="dark-input" value={formData.license_number || ''} onChange={handleChange} />
+                                        </div>
+                                        <div className="col-12 col-md-6 dark-input-group">
+                                            <label className="dark-label">Specialization Module</label>
+                                            <select name="specialization" className="dark-input" value={formData.specialization || ''} onChange={handleChange}>
+                                                <option value="">Select Value</option>
+                                                {specialties.map(spec => (
+                                                    <option key={spec} value={spec}>{spec}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                        
+                                        <div className="col-12 col-md-6 dark-input-group">
+                                            <label className="dark-label">Qualification Core</label>
+                                            <input name="qualification" className="dark-input" value={formData.qualification || ''} onChange={handleChange} />
+                                        </div>
+                                        <div className="col-12 col-md-6 dark-input-group">
+                                            <label className="dark-label">Experience Runtime (Yrs)</label>
+                                            <input type="number" name="experience_years" className="dark-input" value={formData.experience_years || ''} onChange={handleChange} />
+                                        </div>
+
+                                        <div className="col-12"><hr style={{borderColor:'var(--nn-border)', margin:'10px 0 25px 0'}}/></div>
+
+                                        <div className="col-12 dark-input-group">
+                                            <label className="dark-label">Hospital Cluster</label>
+                                            <input name="hospital_name" className="dark-input" value={formData.hospital_name || ''} onChange={handleChange} />
+                                        </div>
+
+                                        <div className="col-12 dark-input-group">
+                                            <label className="dark-label">Professional Summary / Bio</label>
+                                            <textarea 
+                                                name="bio" 
+                                                className="dark-input" 
+                                                value={formData.bio || ''} 
+                                                onChange={handleChange} 
+                                                rows={4}
+                                                placeholder="Describe your clinical focus and professional summary..."
+                                            />
+                                        </div>
                                     </div>
 
-                                    <div className="col-12"><hr style={{borderColor:'var(--nn-border)', margin:'10px 0 25px 0'}}/></div>
-
-                                    <div className="col-12 col-md-6 dark-input-group">
-                                        <label className="dark-label">License Reference</label>
-                                        <input name="license_number" className="dark-input" value={formData.license_number || ''} onChange={handleChange} />
-                                    </div>
-                                    <div className="col-12 col-md-6 dark-input-group">
-                                        <label className="dark-label">Specialization Module</label>
-                                        <select name="specialization" className="dark-input" value={formData.specialization || ''} onChange={handleChange}>
-                                            <option value="">Select Value</option>
-                                            {specialties.map(spec => (
-                                                <option key={spec} value={spec}>{spec}</option>
-                                            ))}
-                                        </select>
-                                    </div>
+                                    <div className="col-12"><hr style={{borderColor:'var(--nn-border)', margin:'35px 0 25px 0'}}/></div>
                                     
-                                    <div className="col-12 col-md-6 dark-input-group">
-                                        <label className="dark-label">Qualification Core</label>
-                                        <input name="qualification" className="dark-input" value={formData.qualification || ''} onChange={handleChange} />
-                                    </div>
-                                    <div className="col-12 col-md-6 dark-input-group">
-                                        <label className="dark-label">Experience Runtime (Yrs)</label>
-                                        <input type="number" name="experience_years" className="dark-input" value={formData.experience_years || ''} onChange={handleChange} />
-                                    </div>
-
-                                    <div className="col-12"><hr style={{borderColor:'var(--nn-border)', margin:'10px 0 25px 0'}}/></div>
-
-                                    <div className="col-12 dark-input-group">
-                                        <label className="dark-label">Hospital Cluster</label>
-                                        <input name="hospital_name" className="dark-input" value={formData.hospital_name || ''} onChange={handleChange} />
-                                    </div>
-
-                                    <div className="col-12 dark-input-group">
-                                        <label className="dark-label">Professional Summary / Bio</label>
-                                        <textarea 
-                                            name="bio" 
-                                            className="dark-input" 
-                                            value={formData.bio || ''} 
-                                            onChange={handleChange} 
-                                            rows={4}
-                                            placeholder="Describe your clinical focus and professional summary..."
-                                        />
-                                    </div>
-                                </div>
-
-                                <div className="col-12"><hr style={{borderColor:'var(--nn-border)', margin:'35px 0 25px 0'}}/></div>
-                                
-                                {/* Experience Builder */}
-                                <div className="mt-2">
-                                    <h5 className="text-white mb-4 fw-bold d-flex align-items-center gap-2">
-                                        <Award size={18} className="text-primary"/> Experience Matrix Builder
-                                    </h5>
-                                    
-                                    {/* List view of experiences in Edit Mode */}
-                                    {formData.experience && formData.experience.length > 0 && (
-                                        <div className="mb-4">
-                                            {formData.experience.map((exp) => (
-                                                <div key={exp.id} className="dark-card mb-3 p-3 d-flex justify-content-between align-items-center" style={{ backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
-                                                    <div>
-                                                        <h6 className="text-white mb-1 fw-bold">{exp.title}</h6>
-                                                        <p className="mb-0 text-secondary" style={{ fontSize: '0.85rem' }}>{exp.hospital} | <span className="text-primary">{exp.period}</span></p>
+                                    {/* Experience Builder */}
+                                    <div className="mt-2">
+                                        <h5 className="text-white mb-4 fw-bold d-flex align-items-center gap-2">
+                                            <Award size={18} className="text-primary"/> Experience Matrix Builder
+                                        </h5>
+                                        
+                                        {/* List view of experiences in Edit Mode */}
+                                        {formData.experience && formData.experience.length > 0 && (
+                                            <div className="mb-4">
+                                                {formData.experience.map((exp) => (
+                                                    <div key={exp.id} className="dark-card mb-3 p-3 d-flex justify-content-between align-items-center" style={{ backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                                                        <div>
+                                                            <h6 className="text-white mb-1 fw-bold">{exp.title}</h6>
+                                                            <p className="mb-0 text-secondary" style={{ fontSize: '0.85rem' }}>{exp.hospital} | <span className="text-primary">{exp.period}</span></p>
+                                                        </div>
+                                                        <button 
+                                                            className="btn btn-link text-danger p-0" 
+                                                            onClick={() => handleDeleteExp(exp.id)}
+                                                            title="Delete entry"
+                                                        >
+                                                            <Trash2 size={18} />
+                                                        </button>
                                                     </div>
+                                                ))}
+                                            </div>
+                                        )}
+
+                                        {/* Add New Experience Form */}
+                                        <div className="dark-card p-4" style={{ backgroundColor: 'rgba(0,85,255,0.05)', border: '1px dashed rgba(0,85,255,0.3)' }}>
+                                            <div className="row g-3">
+                                                <div className="col-12 col-md-6">
+                                                    <label className="dark-label" style={{ fontSize: '0.75rem' }}>Job Title Key</label>
+                                                    <input 
+                                                        className="dark-input" 
+                                                        style={{ height: '42px', fontSize: '0.85rem' }} 
+                                                        placeholder="e.g. Senior Neuro-Surgeon"
+                                                        value={newExp.title}
+                                                        onChange={e => setNewExp(prev => ({ ...prev, title: e.target.value }))}
+                                                    />
+                                                </div>
+                                                <div className="col-12 col-md-6">
+                                                    <label className="dark-label" style={{ fontSize: '0.75rem' }}>Hospital/Clinic Node</label>
+                                                    <input 
+                                                        className="dark-input" 
+                                                        style={{ height: '42px', fontSize: '0.85rem' }} 
+                                                        placeholder="e.g. Central City Medical"
+                                                        value={newExp.hospital}
+                                                        onChange={e => setNewExp(prev => ({ ...prev, hospital: e.target.value }))}
+                                                    />
+                                                </div>
+                                                <div className="col-12 col-md-4">
+                                                    <label className="dark-label" style={{ fontSize: '0.75rem' }}>Timeline Range</label>
+                                                    <div className="d-flex align-items-center gap-2">
+                                                        <select 
+                                                            className="dark-input" 
+                                                            style={{ height: '42px', fontSize: '0.85rem' }}
+                                                            value={newExp.startYear}
+                                                            onChange={e => setNewExp(prev => ({ ...prev, startYear: e.target.value }))}
+                                                        >
+                                                            {Array.from({ length: 50 }, (_, i) => new Date().getFullYear() - i).map(year => (
+                                                                <option key={year} value={year}>{year}</option>
+                                                            ))}
+                                                        </select>
+                                                        <span className="text-secondary">to</span>
+                                                        <select 
+                                                            className="dark-input" 
+                                                            style={{ height: '42px', fontSize: '0.85rem' }}
+                                                            value={newExp.endYear}
+                                                            onChange={e => setNewExp(prev => ({ ...prev, endYear: e.target.value }))}
+                                                        >
+                                                            <option value="Present">Present</option>
+                                                            {Array.from({ length: 50 }, (_, i) => new Date().getFullYear() - i).map(year => (
+                                                                <option key={year} value={year}>{year}</option>
+                                                            ))}
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                                <div className="col-12 col-md-8">
+                                                    <label className="dark-label" style={{ fontSize: '0.75rem' }}>Role Logic Description</label>
+                                                    <input 
+                                                        className="dark-input" 
+                                                        style={{ height: '42px', fontSize: '0.85rem' }} 
+                                                        placeholder="Brief outline of clinical responsibilities"
+                                                        value={newExp.description}
+                                                        onChange={e => setNewExp(prev => ({ ...prev, description: e.target.value }))}
+                                                    />
+                                                </div>
+                                                <div className="col-12 d-flex justify-content-end">
                                                     <button 
-                                                        className="btn btn-link text-danger p-0" 
-                                                        onClick={() => handleDeleteExp(exp.id)}
-                                                        title="Delete entry"
+                                                        className="dark-btn-primary d-flex align-items-center gap-2" 
+                                                        onClick={handleAddExp}
+                                                        disabled={isExperienceLoading}
+                                                        style={{ padding: '8px 16px', borderRadius: '12px', fontSize: '0.8rem' }}
                                                     >
-                                                        <Trash2 size={18} />
+                                                        {isExperienceLoading ? "Processing..." : <><Plus size={16}/> Insert Experience</>}
                                                     </button>
                                                 </div>
-                                            ))}
-                                        </div>
-                                    )}
-
-                                    {/* Add New Experience Form */}
-                                    <div className="dark-card p-4" style={{ backgroundColor: 'rgba(0,85,255,0.05)', border: '1px dashed rgba(0,85,255,0.3)' }}>
-                                        <div className="row g-3">
-                                            <div className="col-12 col-md-6">
-                                                <label className="dark-label" style={{ fontSize: '0.75rem' }}>Job Title Key</label>
-                                                <input 
-                                                    className="dark-input" 
-                                                    style={{ height: '42px', fontSize: '0.85rem' }} 
-                                                    placeholder="e.g. Senior Neuro-Surgeon"
-                                                    value={newExp.title}
-                                                    onChange={e => setNewExp(prev => ({ ...prev, title: e.target.value }))}
-                                                />
-                                            </div>
-                                            <div className="col-12 col-md-6">
-                                                <label className="dark-label" style={{ fontSize: '0.75rem' }}>Hospital/Clinic Node</label>
-                                                <input 
-                                                    className="dark-input" 
-                                                    style={{ height: '42px', fontSize: '0.85rem' }} 
-                                                    placeholder="e.g. Central City Medical"
-                                                    value={newExp.hospital}
-                                                    onChange={e => setNewExp(prev => ({ ...prev, hospital: e.target.value }))}
-                                                />
-                                            </div>
-                                            <div className="col-12 col-md-4">
-                                                <label className="dark-label" style={{ fontSize: '0.75rem' }}>Timeline Range</label>
-                                                <div className="d-flex align-items-center gap-2">
-                                                    <select 
-                                                        className="dark-input" 
-                                                        style={{ height: '42px', fontSize: '0.85rem' }}
-                                                        value={newExp.startYear}
-                                                        onChange={e => setNewExp(prev => ({ ...prev, startYear: e.target.value }))}
-                                                    >
-                                                        {Array.from({ length: 50 }, (_, i) => new Date().getFullYear() - i).map(year => (
-                                                            <option key={year} value={year}>{year}</option>
-                                                        ))}
-                                                    </select>
-                                                    <span className="text-secondary">to</span>
-                                                    <select 
-                                                        className="dark-input" 
-                                                        style={{ height: '42px', fontSize: '0.85rem' }}
-                                                        value={newExp.endYear}
-                                                        onChange={e => setNewExp(prev => ({ ...prev, endYear: e.target.value }))}
-                                                    >
-                                                        <option value="Present">Present</option>
-                                                        {Array.from({ length: 50 }, (_, i) => new Date().getFullYear() - i).map(year => (
-                                                            <option key={year} value={year}>{year}</option>
-                                                        ))}
-                                                    </select>
-                                                </div>
-                                            </div>
-                                            <div className="col-12 col-md-8">
-                                                <label className="dark-label" style={{ fontSize: '0.75rem' }}>Role Logic Description</label>
-                                                <input 
-                                                    className="dark-input" 
-                                                    style={{ height: '42px', fontSize: '0.85rem' }} 
-                                                    placeholder="Brief outline of clinical responsibilities"
-                                                    value={newExp.description}
-                                                    onChange={e => setNewExp(prev => ({ ...prev, description: e.target.value }))}
-                                                />
-                                            </div>
-                                            <div className="col-12 d-flex justify-content-end">
-                                                <button 
-                                                    className="dark-btn-primary d-flex align-items-center gap-2" 
-                                                    onClick={handleAddExp}
-                                                    disabled={isExperienceLoading}
-                                                    style={{ padding: '8px 16px', borderRadius: '12px', fontSize: '0.8rem' }}
-                                                >
-                                                    {isExperienceLoading ? "Processing..." : <><Plus size={16}/> Insert Experience</>}
-                                                </button>
                                             </div>
                                         </div>
                                     </div>
