@@ -7,9 +7,9 @@ import "../../styles/ProfileStyles.css";
 import { getClinicalSummary } from "../../api/profileApi";
 import {
   User, Phone, Mail, MapPin, Activity,
-  Heart, Calendar, Weight, Edit2, Clock, MessageCircle,
+  Heart, Calendar, Weight, Edit2, MessageCircle,
   Save, Plus, Trash2, ShieldAlert,
-  Droplet, Scale, Pill, Video, Stethoscope, FileText, AlertTriangle, ShieldCheck
+  Droplet, Scale, Pill, Video, Stethoscope, FileText
 } from "lucide-react";
 
 const PROFILE_KEYS = [
@@ -227,7 +227,6 @@ const Profile = () => {
 
   const allMeds = clinicalData?.medications || [];
   const timelineEntries = (clinicalData?.timeline || []).slice(0, 5);
-  const upcomingAppointment = timelineEntries.find((entry) => String(entry.status || "").toLowerCase() === "upcoming") || timelineEntries[0];
 
   const normalizeSeverity = (rawValue, fallback = "severe") => {
     const value = String(rawValue ?? fallback).trim().toLowerCase();
@@ -287,9 +286,6 @@ const Profile = () => {
     if (value === "cancelled" || value === "canceled") return "cancelled";
     return "completed";
   };
-
-  const bloodPressureSamples = [118, 122, 125, 120, 128, 124];
-  const heartRate = clinicalData?.identity?.heart_rate || 76;
 
   return (
     <div className="patient-profile-page-wrapper">
@@ -530,68 +526,6 @@ const Profile = () => {
                     </div>
                 </div>
 
-                {/* BOTTOM INFO CARDS (3-Column Row) */}
-                <div className="row g-4 mb-4">
-                    <div className="col-12 col-md-4">
-                        <div className="profile-section-card mini-card h-100">
-                            <h4 className="section-title-small"><ShieldCheck size={16} /> Insurance Information</h4>
-                            <h5 className="mini-card-main">NeuroNest Plus Care</h5>
-                            <p className="mini-card-p">Policy ID: NN-INS-90211</p>
-                            <p className="mini-card-p">Coverage: Consultation + Diagnostics</p>
-                        </div>
-                    </div>
-                    <div className="col-12 col-md-4">
-                        <div className="profile-section-card mini-card h-100 text-center">
-                            <h4 className="section-title-small justify-content-center"><Droplet size={16} /> Heart Rate</h4>
-                            <div className="heart-rate-display">{heartRate} bpm</div>
-                            <p className="mini-card-p">Resting rate within monitored range.</p>
-                        </div>
-                    </div>
-                    <div className="col-12 col-md-4">
-                        <div className="profile-section-card mini-card h-100">
-                            <h4 className="section-title-small"><Calendar size={16} /> Upcoming Appointment</h4>
-                            <h5 className="mini-card-main">{upcomingAppointment?.reason || "Checkup"}</h5>
-                            <p className="mini-card-p">Dr. {upcomingAppointment?.doctor_name || "Specialist"}</p>
-                            <p className="mini-card-p">{formatDate(upcomingAppointment?.appointment_date)}</p>
-                        </div>
-                    </div>
-                </div>
-
-                {/* BP HISTORY + REPORTS + NOTES */}
-                <div className="row g-4 mb-5">
-                    <div className="col-12 col-lg-7">
-                        <div className="profile-section-card h-100">
-                            <h3 className="section-title mb-4"><Activity size={18} /> Blood Pressure History</h3>
-                            <div className="bp-chart-container">
-                                {bloodPressureSamples.map((value, index) => (
-                                    <div key={index} className="bp-bar-group">
-                                        <div className="bp-bar-rail">
-                                            <div className="bp-bar-fill" style={{ height: `${(value/200)*100}%` }} />
-                                        </div>
-                                        <span className="bp-label">{value}</span>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-                    <div className="col-12 col-lg-5">
-                        <div className="d-flex flex-column gap-4 h-100">
-                            <div className="profile-section-card flex-grow-1">
-                                <h3 className="section-title-small"><FileText size={16} /> Recent Reports</h3>
-                                <ul className="reports-list">
-                                    <li>CBC Report uploaded on {formatDate(clinicalData?.identity?.updated_at)}</li>
-                                    <li>General wellness summary available</li>
-                                </ul>
-                            </div>
-                            <div className="profile-section-card flex-grow-1">
-                                <h3 className="section-title-small"><FileText size={16} /> Doctor Notes</h3>
-                                <p className="notes-text">
-                                    <em>Continue medication adherence, maintain hydration, and follow up next week for progress review.</em>
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
             </div>
         ) : (
             <div className="edit-form-grid">
