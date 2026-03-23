@@ -264,6 +264,7 @@ class Appointment(db.Model):
     )
     reminder_30_sent_at = db.Column(db.DateTime, nullable=True)
     reminder_10_sent_at = db.Column(db.DateTime, nullable=True)
+    popup_shown_at = db.Column(db.DateTime, nullable=True)
     missed_notified_at = db.Column(db.DateTime, nullable=True)
 
     # Reschedule tracking
@@ -375,6 +376,8 @@ class Appointment(db.Model):
             "patient_joined_at": self.patient_joined_at.isoformat() + 'Z' if self.patient_joined_at else None,
             "doctor_joined_at": self.doctor_joined_at.isoformat() + 'Z' if self.doctor_joined_at else None,
             "call_started_at": self.call_started_at.isoformat() + 'Z' if self.call_started_at else None,
+            "popup_shown": bool(self.popup_shown_at),
+            "popup_shown_at": self.popup_shown_at.isoformat() + 'Z' if self.popup_shown_at else None,
             "call_state": {
                 "patient_can_join_now": state["patient_can_join"],
                 "doctor_can_join_now": state["doctor_can_join"],

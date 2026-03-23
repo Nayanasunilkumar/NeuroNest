@@ -47,6 +47,7 @@ def check_upcoming_consultations(app):
                         notif_type="appointment",
                         payload={"appointment_id": appt.id, "event_type": "appointment_30_min"},
                     )
+                    _send_scheduled_email_reminder(appt, minutes_before=30)
                     appt.reminder_30_sent_at = now
 
                 if appt.reminder_10_sent_at is None and 9 <= minutes_until <= 10:
@@ -70,7 +71,9 @@ def check_upcoming_consultations(app):
                         notif_type="appointment",
                         payload={"appointment_id": appt.id, "event_type": "appointment_10_min"},
                     )
+                    _send_scheduled_email_reminder(appt, minutes_before=10)
                     appt.reminder_10_sent_at = now
+                    appt.popup_shown_at = now
 
                 if (
                     state["is_missed"]
@@ -97,6 +100,7 @@ def check_upcoming_consultations(app):
                         notif_type="appointment",
                         payload={"appointment_id": appt.id, "event_type": "appointment_missed"},
                     )
+                    _send_missed_email(appt)
                     appt.missed_notified_at = now
 
                 # Get doctor's notification settings
@@ -141,3 +145,83 @@ def _trigger_upcoming_consultation_alert(appt, minutes_until):
             subject=title,
             body=f"Hello Dr. {doctor.full_name},\n\n" + message + "\n\nRegards,\nThe App Team"
         )
+
+
+def _send_scheduled_email_reminder(appt, minutes_before: int):
+    doctor_name = appt.doctor.full_name if appt.doctor else "Doctor"
+    patient_name = appt.patient.full_name if appt.patient else "Patient"
+    appt_date = appt.appointment_date.strftime("%B %d, %Y")
+    appt_time = appt.appointment_time.strftime("%I:%M %p")
+
+    if minutes_before == 30:
+        subject = "Upcoming Appointment Reminder – NeuroNest"
+        patient_body = (
+            "Hello,\n\n"
+            "This is a reminder that you have an upcoming appointment.\n\n"
+            f"Doctor: Dr. {doctor_name}\n"
+            f"Date: {appt_date}\n"
+            f"Time: {appt_time}\n"
+            "Type: Video Consultation\n\n"
+            "Please log in to NeuroNest 10 minutes before the appointment to join the call.\n\n"
+            "Thank you,\nNeuroNest Team"
+        )
+        doctor_body = (
+            "Hello,\n\n"
+            "This is a reminder that you have an upcoming appointment.\n\n"
+            f"Patient: {patient_name}\n"
+            f"Date: {appt_date}\n"
+            f"Time: {appt_time}\n"
+            "Type: Video Consultation\n\n"
+            "Please log in to NeuroNest before the appointment to join the call.\n\n"
+            "Thank you,\nNeuroNest Team"
+        )
+    else:
+        subject = "Your Appointment Starts in 10 Minutes"
+        patient_body = (
+            "Hello,\n\n"
+            f"Your appointment with Dr. {doctor_name} will start in 10 minutes.\n\n"
+            "You can now join the call from your NeuroNest dashboard.\n\n"
+            "Join link: Open NeuroNest Dashboard\n\n"
+            "Thank you,\nNeuroNest Team"
+        )
+        doctor_body = (
+            "Hello,\n\n"
+            f"Your appointment with {patient_name} will start in 10 minutes.\n\n"
+            "You can now join the call from your NeuroNest dashboard.\n\n"
+            "Join link: Open NeuroNest Dashboard\n\n"
+            "Thank you,\nNeuroNest Team"
+        )
+
+    try:
+        if appt.patient and appt.patient.email:
+            NotificationService.send_email(appt.patient.email, subject, patient_body, event_type="approved")
+        if appt.doctor and appt.doctor.email:
+            NotificationService.send_email(appt.doctor.email, subject, doctor_body, event_type="approved")
+    except Exception as error:
+        print(f"[SCHEDULER EMAIL] reminder email failed: {error}")
+
+
+def _send_missed_email(appt):
+    doctor_name = appt.doctor.full_name if appt.doctor else "Doctor"
+    patient_name = appt.patient.full_name if appt.patient else "Patient"
+    subject = "Appointment Missed – NeuroNest"
+    patient_body = (
+        "Hello,\n\n"
+        f"Your appointment with Dr. {doctor_name} was marked as missed.\n"
+        "Please reschedule from your NeuroNest dashboard.\n\n"
+        "Thank you,\nNeuroNest Team"
+    )
+    doctor_body = (
+        "Hello,\n\n"
+        f"Your appointment with {patient_name} was marked as missed.\n"
+        "Please follow up from your NeuroNest dashboard.\n\n"
+        "Thank you,\nNeuroNest Team"
+    )
+
+    try:
+        if appt.patient and appt.patient.email:
+            NotificationService.send_email(appt.patient.email, subject, patient_body, event_type="cancelled")
+        if appt.doctor and appt.doctor.email:
+            NotificationService.send_email(appt.doctor.email, subject, doctor_body, event_type="cancelled")
+    except Exception as error:
+        print(f"[SCHEDULER EMAIL] missed email failed: {error}")

@@ -72,6 +72,16 @@ const formatTimeFromISO = (value) => {
   if (Number.isNaN(date.getTime())) return "N/A";
   return new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit" }).format(date);
 };
+const formatCountdown = (targetTime, nowMs) => {
+  const delta = targetTime - nowMs;
+  const abs = Math.abs(delta);
+  const mins = Math.floor(abs / 60000);
+  const secs = Math.floor((abs % 60000) / 1000);
+  const mm = String(mins).padStart(2, "0");
+  const ss = String(secs).padStart(2, "0");
+  if (delta >= 0) return `Starts in: ${mm}:${ss}`;
+  return `Started: ${mm}:${ss} ago`;
+};
 
 const getCountdown = (appt) => {
   const dt = parseAppointmentDateTime(appt);
@@ -335,6 +345,8 @@ export default function DashboardEnhancements() {
   const [showSosConfirm, setShowSosConfirm] = useState(false);
   const [showSosModal, setShowSosModal] = useState(false);
   const [callStateById, setCallStateById] = useState({});
+  const [popupDismissedById, setPopupDismissedById] = useState({});
+  const [nowMs, setNowMs] = useState(() => Date.now());
   const [medicationChecks, setMedicationChecks] = useState(() => {
     try {
       return JSON.parse(localStorage.getItem(`nn-medications-${todayKey}`) || "{}");
@@ -401,6 +413,11 @@ export default function DashboardEnhancements() {
   }, [appointments]);
 
   useEffect(() => {
+    const timer = window.setInterval(() => setNowMs(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
     localStorage.setItem(`nn-medications-${todayKey}`, JSON.stringify(medicationChecks));
   }, [medicationChecks]);
 
@@ -448,6 +465,46 @@ export default function DashboardEnhancements() {
     return "Waiting for doctor to join";
   };
 
+  const popupCandidate = useMemo(() => {
+    const now = nowMs;
+    const eligible = appointments.filter((appt) => {
+      if (String(appt.consultation_type || "in_person").toLowerCase() !== "online") return false;
+      const status = String(appt.status || "").toLowerCase();
+      if (["completed", "cancelled", "cancelled_by_patient", "cancelled_by_doctor", "no_show"].includes(status)) return false;
+      const apptTime = parseAppointmentDateTime(appt).getTime();
+      const inWindow = now >= (apptTime - 10 * 60 * 1000) && now <= (apptTime + 15 * 60 * 1000);
+      const missed = Boolean(callStateById[appt.id]?.call_state?.missed);
+      return inWindow && !missed;
+    });
+
+    if (!eligible.length) return null;
+    return [...eligible].sort((a, b) => {
+      const aDiff = Math.abs(parseAppointmentDateTime(a).getTime() - now);
+      const bDiff = Math.abs(parseAppointmentDateTime(b).getTime() - now);
+      return aDiff - bDiff;
+    })[0];
+  }, [appointments, callStateById, nowMs]);
+
+  const popupAppointment = useMemo(() => {
+    if (!popupCandidate) return null;
+    if (popupDismissedById[popupCandidate.id]) return null;
+    return popupCandidate;
+  }, [popupCandidate, popupDismissedById]);
+
+  const getPopupJoinMeta = (appointment) => {
+    const callData = callStateById[appointment.id];
+    const state = callData?.call_state || {};
+    if (!callData) {
+      return { label: "Join Call", enabled: false };
+    }
+    if (state.missed) return { label: "Appointment Missed", enabled: false };
+    if (state.both_joined || callData.call_status === "ongoing") return { label: "Call in Progress", enabled: true };
+    if (state.patient_joined && !state.doctor_joined) return { label: "Waiting for Doctor", enabled: true };
+    if (!state.patient_joined && state.doctor_joined) return { label: "Doctor is waiting - Join Now", enabled: true };
+    if (state.patient_can_join_now) return { label: "Join Call", enabled: true };
+    return { label: "Join not open yet", enabled: false };
+  };
+
   const openAppointmentAction = async (appointment) => {
     if (getAppointmentType(appointment) === "Video") {
       if (!Number.isFinite(Number(appointment?.id))) {
@@ -472,6 +529,63 @@ export default function DashboardEnhancements() {
 
   return (
     <>
+      {popupAppointment && (() => {
+        const callMeta = getPopupJoinMeta(popupAppointment);
+        const apptTime = parseAppointmentDateTime(popupAppointment).getTime();
+        return (
+          <div
+            style={{
+              position: "fixed",
+              inset: 0,
+              background: "rgba(15,23,42,0.38)",
+              zIndex: 1200,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: "20px",
+            }}
+          >
+            <div style={{ width: "100%", maxWidth: 440, background: "#fff", borderRadius: 20, padding: 24, boxShadow: "0 30px 80px rgba(15,23,42,0.35)" }}>
+              <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: "0.08em", color: "#64748b", textTransform: "uppercase", marginBottom: 8 }}>
+                Upcoming Video Appointment
+              </div>
+              <h3 style={{ margin: 0, fontSize: 28, color: "#0f172a", fontWeight: 800 }}>{popupAppointment.doctor_name || "Doctor"}</h3>
+              <p style={{ margin: "4px 0 16px", color: "#64748b", fontWeight: 600 }}>{popupAppointment.specialization || "Specialist"}</p>
+              <div style={{ color: "#1e293b", fontWeight: 700, marginBottom: 4 }}>
+                {formatDate(parseAppointmentDateTime(popupAppointment))} • {formatTime(popupAppointment.appointment_time)}
+              </div>
+              <div style={{ color: "#475569", fontWeight: 600, marginBottom: 16 }}>Video Consultation</div>
+              <div style={{ background: "#f1f5f9", borderRadius: 12, padding: "10px 12px", color: "#0f172a", fontWeight: 800, marginBottom: 18 }}>
+                {formatCountdown(apptTime, nowMs)}
+              </div>
+              {callStateById[popupAppointment.id] && (
+                <div style={{ marginBottom: 14, color: "#475569", fontWeight: 600, fontSize: 14 }}>
+                  {getPatientCallStatus(popupAppointment)}
+                </div>
+              )}
+              <div style={{ display: "flex", gap: 10 }}>
+                <button
+                  type="button"
+                  onClick={() => openAppointmentAction(popupAppointment)}
+                  disabled={!callMeta.enabled}
+                  className="btn btn-primary rounded-pill fw-bold"
+                  style={{ flex: 1 }}
+                >
+                  {callMeta.label}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPopupDismissedById((prev) => ({ ...prev, [popupAppointment.id]: true }))}
+                  className="btn btn-outline-secondary rounded-pill fw-bold"
+                  style={{ flex: 1 }}
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
       <section className="nn-quick-actions-row">
         <QuickActionCard icon={CalendarPlus2} title="Book Appointment" subtitle="Schedule a consultation" onClick={() => navigate("/patient/book")} />
         <QuickActionCard icon={MessageSquare} title="Message Doctor" subtitle="Open patient messages" onClick={() => navigate("/patient/messages")} />

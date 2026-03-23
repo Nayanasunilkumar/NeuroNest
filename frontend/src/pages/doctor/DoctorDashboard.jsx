@@ -61,6 +61,16 @@ const formatJoinTime = (isoString) => {
   if (Number.isNaN(date.getTime())) return 'TBD';
   return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
 };
+const formatCountdown = (targetTime, nowMs) => {
+  const delta = targetTime - nowMs;
+  const abs = Math.abs(delta);
+  const mins = Math.floor(abs / 60000);
+  const secs = Math.floor((abs % 60000) / 1000);
+  const mm = String(mins).padStart(2, '0');
+  const ss = String(secs).padStart(2, '0');
+  if (delta >= 0) return `Starts in: ${mm}:${ss}`;
+  return `Started: ${mm}:${ss} ago`;
+};
 
 const getInitials = (name = 'Doctor') =>
   String(name)
@@ -96,6 +106,8 @@ const DoctorDashboard = () => {
   const [patients, setPatients] = useState([]);
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [popupDismissedById, setPopupDismissedById] = useState({});
+  const [nowMs, setNowMs] = useState(() => Date.now());
 
   useEffect(() => {
     const fetchData = async () => {
@@ -132,6 +144,11 @@ const DoctorDashboard = () => {
 
     fetchData();
     const timer = window.setInterval(fetchData, 30000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setNowMs(Date.now()), 1000);
     return () => window.clearInterval(timer);
   }, []);
 
@@ -175,6 +192,36 @@ const DoctorDashboard = () => {
     return 'Patient not joined yet';
   };
 
+  const popupAppointment = useMemo(() => {
+    const eligible = appointments.filter((appt) => {
+      if ((appt.consultation_type || 'in_person') !== 'online') return false;
+      const status = String(appt.status || '').toLowerCase();
+      if (['completed', 'cancelled', 'cancelled_by_doctor', 'cancelled_by_patient', 'no_show'].includes(status)) return false;
+      const apptTime = new Date(`${appt.appointment_date || ''} ${appt.appointment_time || ''}`).getTime();
+      const inWindow = nowMs >= (apptTime - 10 * 60 * 1000) && nowMs <= (apptTime + 15 * 60 * 1000);
+      const missed = Boolean(appt?.call_state?.missed);
+      return inWindow && !missed;
+    });
+    if (!eligible.length) return null;
+    const nearest = [...eligible].sort((a, b) => {
+      const aDiff = Math.abs(new Date(`${a.appointment_date || ''} ${a.appointment_time || ''}`).getTime() - nowMs);
+      const bDiff = Math.abs(new Date(`${b.appointment_date || ''} ${b.appointment_time || ''}`).getTime() - nowMs);
+      return aDiff - bDiff;
+    })[0];
+    if (popupDismissedById[nearest.id]) return null;
+    return nearest;
+  }, [appointments, nowMs, popupDismissedById]);
+
+  const getDoctorPopupJoinMeta = (appointment) => {
+    const state = appointment?.call_state || {};
+    if (state.missed) return { label: 'Appointment Missed', enabled: false };
+    if (state.both_joined || appointment.call_status === 'ongoing') return { label: 'Call in Progress', enabled: true };
+    if (state.doctor_joined && !state.patient_joined) return { label: 'Waiting for Patient', enabled: true };
+    if (!state.doctor_joined && state.patient_joined) return { label: 'Patient is waiting - Join Now', enabled: true };
+    if (state.doctor_can_join_now) return { label: 'Join Call', enabled: true };
+    return { label: 'Join not open yet', enabled: false };
+  };
+
   const handleJoinAppointmentCall = async (appointment) => {
     try {
       const payload = await joinDoctorAppointmentCall(appointment.id);
@@ -197,6 +244,61 @@ const DoctorDashboard = () => {
 
   return (
     <div className="nn-dashboard-wrap nn-doctor-dashboard-v3">
+      {popupAppointment && (() => {
+        const apptTime = new Date(`${popupAppointment.appointment_date || ''} ${popupAppointment.appointment_time || ''}`).getTime();
+        const joinMeta = getDoctorPopupJoinMeta(popupAppointment);
+        return (
+          <div
+            style={{
+              position: 'fixed',
+              inset: 0,
+              background: 'rgba(15,23,42,0.38)',
+              zIndex: 1200,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '20px',
+            }}
+          >
+            <div style={{ width: '100%', maxWidth: 440, background: '#fff', borderRadius: 20, padding: 24, boxShadow: '0 30px 80px rgba(15,23,42,0.35)' }}>
+              <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: '0.08em', color: '#64748b', textTransform: 'uppercase', marginBottom: 8 }}>
+                Upcoming Video Appointment
+              </div>
+              <h3 style={{ margin: 0, fontSize: 28, color: '#0f172a', fontWeight: 800 }}>{popupAppointment.patient_name || 'Patient'}</h3>
+              <p style={{ margin: '4px 0 16px', color: '#64748b', fontWeight: 600 }}>Patient Consultation</p>
+              <div style={{ color: '#1e293b', fontWeight: 700, marginBottom: 4 }}>
+                {formatDate(popupAppointment.appointment_date)} • {formatTime(popupAppointment.appointment_time)}
+              </div>
+              <div style={{ color: '#475569', fontWeight: 600, marginBottom: 16 }}>Video Consultation</div>
+              <div style={{ background: '#f1f5f9', borderRadius: 12, padding: '10px 12px', color: '#0f172a', fontWeight: 800, marginBottom: 18 }}>
+                {formatCountdown(apptTime, nowMs)}
+              </div>
+              <div style={{ marginBottom: 14, color: '#475569', fontWeight: 600, fontSize: 14 }}>
+                {getDoctorCallStatusText(popupAppointment)}
+              </div>
+              <div style={{ display: 'flex', gap: 10 }}>
+                <button
+                  type="button"
+                  onClick={() => handleJoinAppointmentCall(popupAppointment)}
+                  disabled={!joinMeta.enabled}
+                  className="btn btn-primary rounded-pill fw-bold"
+                  style={{ flex: 1 }}
+                >
+                  {joinMeta.label}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPopupDismissedById((prev) => ({ ...prev, [popupAppointment.id]: true }))}
+                  className="btn btn-outline-secondary rounded-pill fw-bold"
+                  style={{ flex: 1 }}
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
       <section className="nn-dashboard-head">
         <div>
           <h2 className="nn-title">Welcome back, Dr. {doctorLastName}</h2>

@@ -66,6 +66,7 @@ def _reset_call_lifecycle(appointment: Appointment):
     appointment.call_status = "scheduled"
     appointment.reminder_30_sent_at = None
     appointment.reminder_10_sent_at = None
+    appointment.popup_shown_at = None
     appointment.missed_notified_at = None
     ensure_join_windows(appointment)
 

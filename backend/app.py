@@ -72,6 +72,7 @@ def create_app():
                     "ADD COLUMN IF NOT EXISTS call_status VARCHAR(20) DEFAULT 'scheduled', "
                     "ADD COLUMN IF NOT EXISTS reminder_30_sent_at TIMESTAMP, "
                     "ADD COLUMN IF NOT EXISTS reminder_10_sent_at TIMESTAMP, "
+                    "ADD COLUMN IF NOT EXISTS popup_shown_at TIMESTAMP, "
                     "ADD COLUMN IF NOT EXISTS missed_notified_at TIMESTAMP"
                 ))
                 # --- Notification Preferences Missing Columns ---
