@@ -140,7 +140,7 @@ def create_app():
     # ================= Home Route =================
     @app.route("/")
     def home():
-        return {"status": "NeuroNest-V16-STABLE-LIVE"}
+        return {"status": "NeuroNest-V17-STABLE-LIVE"}
     
     @app.after_request
     def add_ngrok_header(response):
