@@ -193,22 +193,6 @@ const DoctorNavbar = ({ darkMode, toggleTheme }) => {
                 {totalNotifications > 0 && <span className="badge bg-danger rounded-pill px-2 py-1" style={{ fontSize: '0.6rem' }}>{totalNotifications} NEW</span>}
               </div>
               <div className="p-1" style={{ maxHeight: 'calc(100vh - 160px)', overflowY: 'auto' }}>
-                {unacknowledgedAlerts.map(a => (
-                    <div 
-                      key={`alert-${a.id}`} 
-                      onClick={() => navigate('/alerts')} 
-                      className={`d-flex gap-3 p-2 rounded-3 cursor-pointer mb-1 transition-all border border-danger bg-danger bg-opacity-10 ${darkMode ? 'text-light' : 'text-dark'}`}
-                    >
-                      <div className="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0 shadow-sm bg-danger text-white pulse-active" style={{ width: '38px', height: '38px' }}>
-                        <AlertTriangle size={18} />
-                      </div>
-                      <div className="flex-grow-1">
-                         <div className="fw-bold fs-6 mb-0 lh-sm text-danger">CRITICAL ALERT</div>
-                         <div className={`small fw-bold ${darkMode ? 'text-secondary' : 'text-muted'}`}>{a.vital_type} - {a.message}</div>
-                         <button onClick={(e) => { e.stopPropagation(); markAcknowledged(a.id); }} className="btn btn-sm btn-danger mt-1 py-0 px-2" style={{ fontSize: '0.7rem' }}>Acknowledge</button>
-                      </div>
-                    </div>
-                ))}
                 {notifications.length > 0 ? (
                   notifications.map(n => (
                     <div 

@@ -175,12 +175,14 @@ def get_latest():
     active_patient_id = _latest.get("patient_id")
 
     # Access Control & Isolation
-    is_target_patient = (user.email == 'nezrinnoushad20@gmail.com')
+    target_user = User.query.filter_by(email='nezrinnoushad20@gmail.com').first()
+    is_primary_patient = (target_user and requested_patient_id == target_user.id)
+    is_target_patient_user = (user.email == 'nezrinnoushad20@gmail.com')
     is_clinical_staff = (user.role in ("doctor", "admin", "super_admin"))
 
     if user.role == 'patient':
         # ONLY Patient ABC has a device. Others see "no_device".
-        if not is_target_patient:
+        if not is_target_patient_user:
             return jsonify({"signal": "no_device"}), 200
         # If Patient ABC is viewing, don't show data if the device is mapped elsewhere
         if active_patient_id and active_patient_id != user.id:
@@ -189,6 +191,9 @@ def get_latest():
     elif is_clinical_staff:
         # If doctor selecting a patient, only show vitals if it matches the selected patient
         if requested_patient_id and active_patient_id != requested_patient_id:
+            # If the requested patient IS the primary one who has the device, return 'disconnected' instead of 'no_device'
+            if is_primary_patient:
+                return jsonify({"signal": "disconnected"}), 200
             return jsonify({"signal": "no_device"}), 200
     else:
         return jsonify({"message": "Access denied"}), 403
@@ -203,6 +208,9 @@ def get_latest():
                 latest["signal"] = "disconnected"
         except Exception:
             pass
+    elif is_primary_patient:
+        # Force disconnected signal if no latest TS but it's the primary patient
+        return jsonify({"signal": "disconnected"}), 200
 
     return jsonify(latest), 200
 
@@ -220,15 +228,19 @@ def get_history():
     requested_patient_id = request.args.get("patient_id", type=int)
     active_patient_id = _latest.get("patient_id")
 
-    is_target_patient = (user.email == 'nezrinnoushad20@gmail.com')
+    # Isolation
+    target_user = User.query.filter_by(email='nezrinnoushad20@gmail.com').first()
+    is_primary_patient = (target_user and requested_patient_id == target_user.id)
+    is_target_patient_user = (user.email == 'nezrinnoushad20@gmail.com')
     is_clinical_staff = (user.role in ("doctor", "admin", "super_admin"))
     
-    # Isolation
     if user.role == 'patient':
-        if not is_target_patient or (active_patient_id and active_patient_id != user.id):
+        if not is_target_patient_user or (active_patient_id and active_patient_id != user.id):
             return jsonify([]), 200
     elif is_clinical_staff:
         if requested_patient_id and active_patient_id != requested_patient_id:
+            if is_primary_patient:
+                return jsonify(list(_history)), 200
             return jsonify([]), 200
     else:
         return jsonify([]), 200
