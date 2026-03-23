@@ -8,7 +8,7 @@ const clinicalArchivesModule = {
   route: '/clinical-archives',
   rolesAllowed: ['doctor'],
   enabledByDefault: true,
-  showInSidebarByRole: ['doctor'],
+  showInSidebarByRole: [],
   componentsByRole: {
     doctor: ClinicalArchivesPage,
   },

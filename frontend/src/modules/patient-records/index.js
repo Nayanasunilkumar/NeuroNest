@@ -8,7 +8,7 @@ const patientRecordsModule = {
   route: '/patient-records',
   rolesAllowed: ['doctor', 'admin'],
   enabledByDefault: true,
-  showInSidebarByRole: ['doctor'],
+  showInSidebarByRole: ['admin'],
   componentsByRole: {
     doctor: PatientRecords,
   },
