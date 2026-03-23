@@ -192,7 +192,7 @@ const DoctorNavbar = ({ darkMode, toggleTheme }) => {
                 <span className={`fw-bold small ${darkMode ? 'text-light' : 'text-dark'}`}>Notifications</span>
                 {totalNotifications > 0 && <span className="badge bg-danger rounded-pill px-2 py-1" style={{ fontSize: '0.6rem' }}>{totalNotifications} NEW</span>}
               </div>
-              <div className="p-1 max-vh-50 overflow-auto">
+              <div className="p-1" style={{ maxHeight: 'calc(100vh - 160px)', overflowY: 'auto' }}>
                 {unacknowledgedAlerts.map(a => (
                     <div 
                       key={`alert-${a.id}`} 
