@@ -286,11 +286,7 @@ const Profile = () => {
       <div className="profile-container py-4 px-3 px-md-5">
         <div className="d-flex align-items-center justify-content-between mb-4">
           <h1 className="h3 fw-black text-dark mb-0">My Health Profile</h1>
-          {!editing ? (
-            <button onClick={startEditing} className="btn btn-dark rounded-pill px-4 fw-bold shadow-sm d-flex align-items-center gap-2">
-              <Edit2 size={18} /> Edit Profile
-            </button>
-          ) : (
+          {editing && (
             <div className="d-flex gap-2">
               <button onClick={cancelEdit} className="btn btn-light rounded-pill px-4 fw-bold shadow-sm">Cancel</button>
               <button onClick={handleSave} className="btn btn-primary rounded-pill px-4 fw-bold shadow-sm d-flex align-items-center gap-2">
@@ -311,10 +307,6 @@ const Profile = () => {
                     ) : (
                       <div className="avatar-placeholder"><User size={48} /></div>
                     )}
-                  </div>
-                  <div className="avatar-overlap-badges">
-                    <span className="risk-badge badge-alcohol"><Activity size={10} /> ALCOHOL</span>
-                    <span className="risk-badge badge-smoker"><Activity size={10} /> SMOKER</span>
                   </div>
                 </div>
 
@@ -387,6 +379,37 @@ const Profile = () => {
 
             <div className="profile-body-grid mb-4">
               <div className="profile-body-column">
+                <div className="profile-section-card mb-4">
+                  <div className="section-header">
+                    <h3 className="section-title"><MapPin size={18} /> Contact Details</h3>
+                    <button className="section-edit-link" onClick={startEditing}>Edit</button>
+                  </div>
+                  <div className="contact-details-grid">
+                    <div className="contact-detail-item">
+                      <span className="contact-detail-label">Email</span>
+                      <p className="contact-detail-value">{profile.email || "Not provided"}</p>
+                    </div>
+                    <div className="contact-detail-item">
+                      <span className="contact-detail-label">Phone</span>
+                      <p className="contact-detail-value">{profile.phone || "Not provided"}</p>
+                    </div>
+                    <div className="contact-detail-item contact-detail-item-wide">
+                      <span className="contact-detail-label">Address</span>
+                      <p className="contact-detail-value">{profile.address || "Not provided"}</p>
+                    </div>
+                    <div className="contact-detail-item">
+                      <span className="contact-detail-label">Location</span>
+                      <p className="contact-detail-value">
+                        {[profile.city, profile.state, profile.country].filter(Boolean).join(", ") || "Not provided"}
+                      </p>
+                    </div>
+                    <div className="contact-detail-item">
+                      <span className="contact-detail-label">Pincode</span>
+                      <p className="contact-detail-value">{profile.pincode || "Not provided"}</p>
+                    </div>
+                  </div>
+                </div>
+
                 <div className="profile-section-card mb-4">
                   <div className="section-header">
                     <h3 className="section-title"><Calendar size={18} /> Timeline</h3>
