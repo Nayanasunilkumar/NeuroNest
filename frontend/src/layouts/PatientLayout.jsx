@@ -226,7 +226,7 @@ const PatientLayout = () => {
                     className={`flex-grow-1 d-flex flex-column ${isMessagePath ? 'overflow-hidden' : 'overflow-auto'} position-relative ${isMessagePath ? 'p-0' : (isSettingsPath ? 'p-0' : 'p-3 p-md-4 p-lg-5')}`}
                     style={{ transition: 'all 0.4s' }}
                 >
-                    <div className={isMessagePath ? 'h-100' : 'container-fluid max-w-1400 mx-auto pb-5 pb-lg-0'}>
+                    <div className={isMessagePath ? 'h-100' : 'container-fluid max-w-1600 mx-auto pb-5 pb-lg-0'}>
                         <Outlet />
                     </div>
                 </main>
@@ -236,7 +236,7 @@ const PatientLayout = () => {
                 .fw-black { font-weight: 950; }
                 .shadow-xs { box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
                 .max-w-400 { max-width: 400px; }
-                .max-w-1400 { max-width: 1400px; }
+                .max-w-1600 { max-width: 1600px; }
                 .btn-danger-soft { 
                     background-color: rgba(220, 53, 69, 0.1); 
                     color: #dc3545; 
