@@ -316,242 +316,213 @@ const Profile = () => {
         </div>
 
         {!editing ? (
-            <div className="mx-auto" style={{ maxWidth: '1440px' }}>
-                <div className="card clinical-panel profile-hero mb-4 border-0 section-animate">
-                    <div className="d-flex flex-wrap flex-lg-nowrap gap-4">
-                        <div className="d-flex flex-column align-items-center gap-3 pe-lg-3">
-                            <div className="patient-img-large overflow-hidden calm-avatar-frame">
+            <div className="mx-auto" style={{ maxWidth: '1600px' }}>
+                {/* HERO / HEADER CARD (Horizontal Strip) */}
+                <div className="profile-hero-card mb-4">
+                    <div className="profile-header-strip">
+                        {/* Left: Avatar & Risk Badges */}
+                        <div className="profile-avatar-wrapper">
+                            <div className="profile-avatar-frame">
                                 {profile.profile_image ? (
-                                    <img src={toAssetUrl(profile.profile_image)} alt={profile.full_name} className="w-100 h-100 object-fit-cover" />
+                                    <img src={toAssetUrl(profile.profile_image)} alt={profile.full_name} />
                                 ) : (
-                                    <div className="w-100 h-100 d-flex align-items-center justify-content-center bg-primary bg-opacity-10 text-primary"><User size={64} /></div>
+                                    <div className="avatar-placeholder"><User size={48} /></div>
                                 )}
                             </div>
-                            <div className="d-flex gap-2 flex-wrap justify-content-center">
-                                <div className="badge rounded-pill warning-chip d-flex align-items-center fw-bold"><AlertTriangle size={12} className="me-1" /> ALCOHOL</div>
-                                <div className="badge rounded-pill warning-chip d-flex align-items-center fw-bold"><AlertTriangle size={12} className="me-1" /> SMOKER</div>
+                            <div className="avatar-overlap-badges">
+                                <span className="risk-badge badge-alcohol"><Activity size={10} /> ALCOHOL</span>
+                                <span className="risk-badge badge-smoker"><Activity size={10} /> SMOKER</span>
                             </div>
                         </div>
 
-                        <div className="flex-grow-1 d-flex flex-column justify-content-between gap-4">
-                            <div className="d-flex justify-content-between align-items-start w-100">
-                                <div>
-                                    <div className="d-flex align-items-center gap-3 mb-2">
-                                        <h2 className="fw-black text-dark mb-0 calm-heading" style={{fontSize: '1.7rem'}}>{profile.full_name}</h2>
-                                        <div className="d-flex gap-2">
-                                            <button className="btn btn-light btn-sm rounded-circle p-2 shadow-sm border border-light d-flex align-items-center justify-content-center calm-icon-btn"><Phone size={14} className="text-secondary"/></button>
-                                            <button className="btn btn-light btn-sm rounded-circle p-2 shadow-sm border border-light d-flex align-items-center justify-content-center calm-icon-btn"><Mail size={14} className="text-secondary"/></button>
-                                        </div>
-                                    </div>
-                                    <div className="d-flex flex-wrap gap-4 text-dark fw-bold" style={{fontSize: '0.8rem'}}>
-                                        <span className="d-flex align-items-center gap-2"><User size={14} className="text-secondary"/> {profile.gender || 'Not Specified'}</span>
-                                        <span className="d-flex align-items-center gap-2"><MapPin size={14} className="text-secondary"/> {profile.city || 'Elshiekh zayed, Giza'}</span>
-                                        <span className="d-flex align-items-center gap-2"><Calendar size={14} className="text-secondary"/> {profile.date_of_birth} ({age} years)</span>
-                                        <span className="d-flex align-items-center gap-2"><Phone size={14} className="text-secondary"/> {profile.phone}</span>
-                                        <span className="d-flex align-items-center gap-2"><Mail size={14} className="text-secondary"/> {profile.email}</span>
-                                    </div>
-                                </div>
-                                <button onClick={startEditing} className="btn rounded-pill px-4 py-2 fw-bold shadow-sm d-flex align-items-center gap-2 text-white edit-gradient-btn">
-                                    <Edit2 size={14} /> Edit
-                                </button>
+                        {/* Middle: Name & Demographics */}
+                        <div className="profile-identity-center">
+                            <div className="d-flex align-items-center gap-3 mb-2">
+                                <h2 className="profile-name-title">{profile.full_name}</h2>
+                                <button className="icon-action-btn"><Phone size={14} /></button>
+                                <button className="icon-action-btn"><Mail size={14} /></button>
+                            </div>
+                            <div className="demographic-pills">
+                                <span className="demo-pill"><User size={12} /> {profile.gender || 'Not Specified'}</span>
+                                <span className="demo-pill"><MapPin size={12} /> {profile.city || 'Kollam'}</span>
+                                <span className="demo-pill"><Calendar size={12} /> {profile.date_of_birth} ({age} years)</span>
+                                <span className="demo-pill"><Phone size={12} /> {profile.phone}</span>
+                                <span className="demo-pill"><Mail size={12} /> {profile.email}</span>
                             </div>
 
-                            <div className="d-flex flex-wrap flex-xl-nowrap justify-content-between align-items-center gap-4">
-                                <div className="vitals-glass-grid">
-                                    <div className="vitals-stat text-center">
-                                        <div className="vitals-icon"><Scale size={16} /></div>
-                                        <div className="d-flex align-items-baseline justify-content-center gap-1">
-                                            <span className="fw-black text-dark lh-1" style={{fontSize: '1.25rem'}}>{hasValidBmi ? bmi : "N/A"}</span>
-                                        </div>
-                                        <div className="text-muted fw-bold mt-1 d-flex align-items-center justify-content-center gap-1" style={{fontSize: '0.65rem'}}>BMI</div>
-                                        <div className={`bmi-state bmi-${bmiMeta.tone}`}>{bmiMeta.label}</div>
-                                        <div className="bmi-progress">
-                                            <span style={{ width: `${bmiMeta.score}%` }} />
-                                        </div>
-                                    </div>
-                                    <div className="vitals-stat text-center">
-                                        <div className="vitals-icon"><Weight size={16} /></div>
-                                        <div className="d-flex align-items-baseline justify-content-center gap-1">
-                                            <span className="fw-black text-dark lh-1" style={{fontSize: '1.25rem'}}>{profile.weight_kg || 'N/A'}</span>
-                                            <span className="fw-bold text-muted" style={{fontSize: '0.75rem'}}>kg</span>
-                                        </div>
-                                        <div className="text-muted fw-bold mt-1 d-flex align-items-center justify-content-center gap-1" style={{fontSize: '0.65rem'}}>
-                                            Weight
-                                        </div>
-                                    </div>
-                                    <div className="vitals-stat text-center">
-                                        <div className="vitals-icon"><Activity size={16} /></div>
-                                        <div className="d-flex align-items-baseline justify-content-center gap-1">
-                                            <span className="fw-black text-dark lh-1" style={{fontSize: '1.25rem'}}>{profile.height_cm || 'N/A'}</span>
-                                            <span className="fw-bold text-muted" style={{fontSize: '0.75rem'}}>Cm</span>
-                                        </div>
-                                        <div className="text-muted fw-bold mt-1 d-flex align-items-center justify-content-center gap-1" style={{fontSize: '0.65rem'}}>
-                                            Height
-                                        </div>
-                                    </div>
-                                    <div className="vitals-stat text-center">
-                                        <div className="vitals-icon"><Droplet size={16} /></div>
-                                        <div className="d-flex align-items-baseline justify-content-center gap-1">
-                                            <span className="fw-black text-dark lh-1" style={{fontSize: '1.25rem'}}>{profile.blood_group || 'N/A'}</span>
-                                        </div>
-                                        <div className="text-muted fw-bold mt-1 d-flex align-items-center justify-content-center gap-1" style={{fontSize: '0.65rem'}}>
-                                            Blood Type
-                                        </div>
+                            {/* 4-Column Stat Row inside Header */}
+                            <div className="header-stats-row">
+                                <div className="header-stat">
+                                    <div className="stat-label-wrap"><Scale size={14} /> BMI</div>
+                                    <div className="stat-value">{hasValidBmi ? bmi : "N/A"}</div>
+                                    <div className={`stat-sublabel bmi-${bmiMeta.tone}`}>{bmiMeta.label}</div>
+                                    <div className="bmi-gradient-bar">
+                                        <div className="bmi-progress-marker" style={{ left: `${bmiMeta.score}%` }} />
                                     </div>
                                 </div>
+                                <div className="stat-divider" />
+                                <div className="header-stat">
+                                    <div className="stat-label-wrap"><Weight size={14} /> Weight</div>
+                                    <div className="stat-value">{profile.weight_kg || 'N/A'} <span className="stat-unit">kg</span></div>
+                                </div>
+                                <div className="stat-divider" />
+                                <div className="header-stat">
+                                    <div className="stat-label-wrap"><Activity size={14} /> Height</div>
+                                    <div className="stat-value">{profile.height_cm || 'N/A'} <span className="stat-unit">Cm</span></div>
+                                </div>
+                                <div className="stat-divider" />
+                                <div className="header-stat">
+                                    <div className="stat-label-wrap"><Droplet size={14} /> Blood Type</div>
+                                    <div className="stat-value">{profile.blood_group || 'N/A'}</div>
+                                </div>
+                            </div>
+                        </div>
 
-                                <div className="d-flex flex-column align-items-end gap-3 text-end profile-tags-column">
-                                    <div className="d-flex flex-column align-items-end gap-1 w-100">
-                                        <span className="text-dark fw-bolder mb-1" style={{fontSize: '0.75rem'}}>Own diagnosis</span>
-                                        <div className="d-flex gap-2 flex-wrap justify-content-end">
-                                            {(clinicalData?.conditions || []).filter(c => c.status === 'active').slice(0, 2).map((c, i) =>(
-                                               <span key={i} className="badge rounded-pill px-3 py-2 fw-bold diagnosis-chip">{c.condition_name}</span>
-                                            ))}
-                                            {(!clinicalData?.conditions || clinicalData.conditions.length === 0) && <span className="text-muted small">None</span>}
-                                        </div>
+                        {/* Right: Tags & Quick Edit */}
+                        <div className="profile-header-right">
+                            <div className="tags-stack">
+                                <div className="tag-group">
+                                    <span className="tag-header">Own diagnosis</span>
+                                    <div className="tag-pills">
+                                        {(clinicalData?.conditions || []).filter(c => c.status === 'active').slice(0, 2).map((c, i) =>(
+                                            <span key={i} className="badge diagnosis-pill">{c.condition_name}</span>
+                                        ))}
                                     </div>
-                                    <div className="d-flex flex-column align-items-end gap-1 w-100">
-                                        <span className="text-dark fw-bolder mb-1" style={{fontSize: '0.75rem'}}>Known Allergies</span>
-                                        <div className="d-flex gap-2 flex-wrap justify-content-end">
-                                            {(clinicalData?.allergies || []).slice(0, 2).map((a, i) =>(
-                                               <span key={i} className="badge rounded-pill px-3 py-2 fw-bold allergy-chip">{a.allergy_name}</span>
-                                            ))}
-                                            {(!clinicalData?.allergies || clinicalData.allergies.length === 0) && <span className="text-muted small">None</span>}
-                                        </div>
+                                </div>
+                                <div className="tag-group">
+                                    <span className="tag-header">Known Allergies</span>
+                                    <div className="tag-pills">
+                                        {(clinicalData?.allergies || []).slice(0, 2).map((a, i) =>(
+                                            <span key={i} className="badge allergy-pill">{a.allergy_name}</span>
+                                        ))}
                                     </div>
                                 </div>
                             </div>
+                            <button onClick={startEditing} className="btn-edit-header">
+                                <Edit2 size={14} /> Edit Profile
+                            </button>
                         </div>
                     </div>
                 </div>
 
-                <div className="row g-4 mb-4">
-                    <div className="col-12 col-lg-4">
-                        <div className="clinical-panel h-100 section-animate">
-                            <div className="panel-header">
-                                <div className="panel-title"><Calendar size={18} /> Timeline</div>
-                                <button className="panel-edit-btn">Edit</button>
+                {/* TWO-COLUMN BODY LAYOUT */}
+                <div className="profile-body-grid mb-4">
+                    {/* Left Column (40%) */}
+                    <div className="profile-body-column">
+                        {/* Timeline Section */}
+                        <div className="profile-section-card mb-4">
+                            <div className="section-header">
+                                <h3 className="section-title"><Calendar size={18} /> Timeline</h3>
+                                <button className="section-edit-link">Edit</button>
                             </div>
-                            <div className="pt-2">
+                            <div className="timeline-container">
                                 {timelineEntries.map((appt, i) => {
                                     const dateObj = new Date(appt.appointment_date);
                                     const month = dateObj.toLocaleString('default', { month: 'short' });
                                     const year = dateObj.getFullYear();
                                     const status = timelineStatus(appt.status);
                                     return (
-                                    <div key={i} className="timeline-row timeline-row-card">
-                                        <div className="timeline-left"><span className="timeline-date-pill">{month} {year}</span></div>
-                                        <div className="timeline-center"><div className="timeline-marker" style={i === (clinicalData?.timeline?.length || 0) - 1 ? {borderColor: '#2b70ff'} : {}}></div></div>
-                                        <div className="timeline-right">
-                                            <div className="timeline-kind">{getTimelineIcon(appt.reason)} Appointment <span className={`timeline-status-badge ${status}`}>{status}</span></div>
-                                            <div className="timeline-title">{appt.reason || 'General Appt'}</div>
-                                            <div className="timeline-subtitle">Dr. {appt.doctor_name || 'Specialist'}</div>
-                                            <div className="timeline-meta"><Clock size={12} /> {formatDate(appt.appointment_date)} {appt.appointment_time ? `· ${appt.appointment_time}` : ""}</div>
+                                        <div key={i} className="timeline-entry">
+                                            <div className="timeline-date-stack">
+                                                <span className="month">{month}</span>
+                                                <span className="year">{year}</span>
+                                            </div>
+                                            <div className="timeline-connector">
+                                                <div className={`timeline-dot ${status}`} />
+                                                {i < timelineEntries.length - 1 && <div className="timeline-line" />}
+                                            </div>
+                                            <div className="timeline-content-card">
+                                                <div className="timeline-header">
+                                                    <span className="appt-kind">{getTimelineIcon(appt.reason)} Appointment</span>
+                                                    <span className={`status-pill ${status}`}>{status}</span>
+                                                </div>
+                                                <h4 className="appt-title">{appt.reason || 'General Checkup'}</h4>
+                                                <p className="appt-doctor">Dr. {appt.doctor_name || 'Specialist'}</p>
+                                            </div>
                                         </div>
-                                    </div>
                                     );
                                 })}
-                                {(!clinicalData?.timeline || clinicalData.timeline.length === 0) && <div className="text-muted text-center pt-4 fw-bold">No recent history</div>}
+                            </div>
+                        </div>
+
+                        {/* Active Medications */}
+                        <div className="profile-section-card">
+                            <div className="section-header">
+                                <h3 className="section-title"><Pill size={18} /> Active Medications</h3>
+                                <button className="section-edit-link">Edit</button>
+                            </div>
+                            <div className="medications-2col-grid">
+                                {allMeds.map((med, i) => (
+                                    <div key={i} className="medication-item-card">
+                                        <div className="med-top">
+                                            <div className="med-pill-icon"><Pill size={14} /></div>
+                                            <span className="med-active-badge">ACTIVE</span>
+                                        </div>
+                                        <h4 className="med-name">{med.drug_name}</h4>
+                                        <p className="med-dosage">{med.dosage} · {med.frequency}</p>
+                                        <p className="med-started">Started: {formatDate(med.start_date || med.created_at)}</p>
+                                    </div>
+                                ))}
                             </div>
                         </div>
                     </div>
 
-                    <div className="col-12 col-lg-8">
-                        <div className="clinical-panel h-100 section-animate">
-                            <div className="panel-header">
-                                <div className="panel-title"><ShieldAlert size={18} /> Emergency Support <span className="pulse-dot" /></div>
-                                <button className="panel-edit-btn" onClick={startEditing}>Edit</button>
+                    {/* Right Column (60%) */}
+                    <div className="profile-body-column">
+                        {/* Emergency Support */}
+                        <div className="profile-section-card mb-4">
+                            <div className="section-header">
+                                <h3 className="section-title"><ShieldAlert size={18} /> Emergency Support</h3>
+                                <button className="section-edit-link" onClick={startEditing}>Edit</button>
                             </div>
-                            <div className="row g-3">
+                            <div className="emergency-list">
                                 {emergencyContacts.map((c, i) => (
-                                    <div key={i} className="col-md-6">
-                                        <div className={`med-history-box emergency-card ${c.is_primary ? 'is-primary-contact' : ''}`}>
-                                            <div className="med-history-header">
-                                                <div className="med-history-icon"><Phone size={14} className={c.is_primary ? 'text-primary' : ''}/></div>
-                                                <span className="med-history-title">{c.relationship || 'Emergency Contact'} {c.is_primary && '(Primary)'}</span>
-                                                <button className="emergency-call-btn" type="button"><Phone size={12} /></button>
-                                                <button className="emergency-call-btn" type="button"><MessageCircle size={12} /></button>
-                                            </div>
-                                            <div className="med-history-data">{c.contact_name}</div>
-                                            <div className="text-muted fw-bold mt-1" style={{fontSize: '0.75rem'}}>{c.phone}</div>
-                                            <div className="text-muted fw-bold" style={{fontSize: '0.75rem'}}>{c.email}</div>
+                                    <div key={i} className={`emergency-row ${c.is_primary ? 'primary' : ''}`}>
+                                        <div className="emergency-info">
+                                            <span className="emergency-relation">{c.relationship || 'Emergency Contact'} {c.is_primary && '(Primary)'}</span>
+                                            <h4 className="emergency-name">{c.contact_name}</h4>
+                                            <p className="emergency-meta">{c.phone} · {c.email}</p>
+                                        </div>
+                                        <div className="emergency-actions">
+                                            <button className="action-circle-btn"><Phone size={14} /></button>
+                                            <button className="action-circle-btn"><MessageCircle size={14} /></button>
                                         </div>
                                     </div>
                                 ))}
-                                {emergencyContacts.length === 0 && <div className="col-12 text-muted fw-bold">No emergency contacts listed</div>}
-                                
-                                <div className="col-12 mt-4">
-                                    <div className="med-history-box">
-                                        <div className="med-history-header">
-                                            <div className="med-history-icon"><MapPin size={14} /></div>
-                                            <span className="med-history-title">Personal Address</span>
-                                        </div>
-                                        <div className="med-history-data">{profile.address}</div>
-                                        <div className="text-muted fw-bold mt-1" style={{fontSize: '0.75rem'}}>{profile.city}, {profile.state}</div>
-                                        <div className="text-muted fw-bold" style={{fontSize: '0.75rem'}}>{profile.country} - {profile.pincode}</div>
+                            </div>
+                        </div>
+
+                        {/* Conditions Log */}
+                        <div className="profile-section-card">
+                            <div className="section-header">
+                                <div className="d-flex align-items-center gap-3">
+                                    <h3 className="section-title"><Activity size={18} /> Conditions Log</h3>
+                                    <div className="condition-counters">
+                                        <span className="counter-pill active">{activeCount} Active</span>
+                                        <span className="counter-pill severe">{severeCount} Severe</span>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="row g-4 mb-5">
-                    <div className="col-12 col-lg-8">
-                        <div className="clinical-panel h-100 p-0 overflow-hidden d-flex flex-column section-animate">
-                            <div className="panel-header p-4 pb-2 m-0">
-                                <div className="panel-title"><Pill size={18} /> Active Medications</div>
-                                <button className="panel-edit-btn">Edit</button>
-                            </div>
-                            <div className="medications-grid p-4 pt-2">
-                                {allMeds.map((med, i) => {
-                                    const medStatus = String(med.status || "active").toLowerCase() === "completed" ? "completed" : "active";
-                                    return (
-                                    <div key={i} className="medication-card">
-                                        <div className="medication-top">
-                                            <div className="pill-icon-wrap"><Pill size={16} /></div>
-                                            <span className={`badge rounded-pill status-chip ${medStatus === "active" ? "status-active" : "status-completed"}`}>{medStatus}</span>
-                                        </div>
-                                        <div className="medication-name">{med.drug_name}</div>
-                                        <div className="medication-meta">{med.dosage || "Dose not set"} · {med.frequency || "Schedule not set"}</div>
-                                        <div className="medication-started">Started: {formatDate(med.start_date || med.created_at)}</div>
-                                    </div>
-                                    );
-                                })}
-                                {allMeds.length === 0 && <div className="text-center py-4 fw-bold text-muted">No medications available</div>}
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="col-12 col-lg-4">
-                        <div className="clinical-panel h-100 section-animate">
-                            <div className="panel-header mb-3">
-                                <div className="panel-title"><Activity size={18} /> Conditions Log</div>
-                            </div>
-                            <div className="conditions-summary">
-                                <span className="summary-pill active-pill">{activeCount} Active</span>
-                                <span className="summary-pill severe-pill">{severeCount} Severe</span>
-                            </div>
-                            <div className="d-flex flex-column pt-1">
+                            <div className="conditions-list-stack">
                                 {visibleConditions.map((item, i) => (
-                                    <div key={i} className="diet-list-item justify-content-between">
-                                        <div className="d-flex flex-column">
-                                            <div className="d-flex align-items-center gap-2">
-                                                {item.severity === "active" ? <Heart size={16} className="text-primary" /> : item.severity === "critical" ? <AlertTriangle size={16} className="text-danger" /> : <ShieldCheck size={16} className="text-warning" />}
-                                                {item.name}
-                                            </div>
-                                            <div className="condition-meta">{item.status} · Updated {formatDate(item.updatedAt)}</div>
+                                    <div key={i} className="condition-item-row">
+                                        <div className="condition-icon-wrap">
+                                            <Heart size={16} className={`icon-${item.severity}`} />
                                         </div>
-                                        <span className={`badge rounded-pill status-chip ${severityClass(item.severity)}`}>{item.severity}</span>
+                                        <div className="condition-details">
+                                            <h4 className="condition-name">{item.name}</h4>
+                                            <p className="condition-meta">{item.status} · Updated {formatDate(item.updatedAt)}</p>
+                                        </div>
+                                        <div className="condition-severity-wrap">
+                                            <span className={`severity-badge ${item.severity === 'active' ? 'blue' : 'amber'}`}>
+                                                {item.severity === 'active' ? 'ACTIVE' : 'SEVERE'}
+                                            </span>
+                                        </div>
                                     </div>
                                 ))}
                                 {conditionItems.length > 5 && (
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowAllConditions((prev) => !prev)}
-                                        className="conditions-toggle-btn"
-                                    >
-                                        {showAllConditions ? "Collapse" : "Show all"}
+                                    <button className="show-all-link" onClick={() => setShowAllConditions(!showAllConditions)}>
+                                        {showAllConditions ? 'Show less' : 'Show all'}
                                     </button>
                                 )}
                             </div>
@@ -559,64 +530,70 @@ const Profile = () => {
                     </div>
                 </div>
 
+                {/* BOTTOM INFO CARDS (3-Column Row) */}
+                <div className="row g-4 mb-4">
+                    <div className="col-12 col-md-4">
+                        <div className="profile-section-card mini-card h-100">
+                            <h4 className="section-title-small"><ShieldCheck size={16} /> Insurance Information</h4>
+                            <h5 className="mini-card-main">NeuroNest Plus Care</h5>
+                            <p className="mini-card-p">Policy ID: NN-INS-90211</p>
+                            <p className="mini-card-p">Coverage: Consultation + Diagnostics</p>
+                        </div>
+                    </div>
+                    <div className="col-12 col-md-4">
+                        <div className="profile-section-card mini-card h-100 text-center">
+                            <h4 className="section-title-small justify-content-center"><Droplet size={16} /> Heart Rate</h4>
+                            <div className="heart-rate-display">{heartRate} bpm</div>
+                            <p className="mini-card-p">Resting rate within monitored range.</p>
+                        </div>
+                    </div>
+                    <div className="col-12 col-md-4">
+                        <div className="profile-section-card mini-card h-100">
+                            <h4 className="section-title-small"><Calendar size={16} /> Upcoming Appointment</h4>
+                            <h5 className="mini-card-main">{upcomingAppointment?.reason || "Checkup"}</h5>
+                            <p className="mini-card-p">Dr. {upcomingAppointment?.doctor_name || "Specialist"}</p>
+                            <p className="mini-card-p">{formatDate(upcomingAppointment?.appointment_date)}</p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* BP HISTORY + REPORTS + NOTES */}
                 <div className="row g-4 mb-5">
-                    <div className="col-12 col-lg-8">
-                        <div className="row g-4">
-                            <div className="col-12 col-md-6">
-                                <div className="clinical-panel section-animate dashboard-mini-card">
-                                    <div className="panel-title mb-2"><ShieldAlert size={16} /> Insurance Information</div>
-                                    <div className="mini-card-title">NeuroNest Plus Care</div>
-                                    <div className="mini-card-meta">Policy ID: NN-INS-90211</div>
-                                    <div className="mini-card-meta">Coverage: Consultation + Diagnostics</div>
-                                </div>
-                            </div>
-                            <div className="col-12 col-md-6">
-                                <div className="clinical-panel section-animate dashboard-mini-card">
-                                    <div className="panel-title mb-2"><Activity size={16} /> Heart Rate</div>
-                                    <div className="health-metric">{heartRate} bpm</div>
-                                    <div className="mini-card-meta">Resting rate within monitored range.</div>
-                                </div>
-                            </div>
-                            <div className="col-12">
-                                <div className="clinical-panel section-animate dashboard-mini-card">
-                                    <div className="panel-title mb-3"><Activity size={16} /> Blood Pressure History</div>
-                                    <div className="bp-chart">
-                                        {bloodPressureSamples.map((value, index) => (
-                                            <div key={`${value}-${index}`} className="bp-bar-wrap">
-                                                <div className="bp-bar" style={{ height: `${Math.max(20, value - 90)}px` }} />
-                                                <span>{value}</span>
-                                            </div>
-                                        ))}
+                    <div className="col-12 col-lg-7">
+                        <div className="profile-section-card h-100">
+                            <h3 className="section-title mb-4"><Activity size={18} /> Blood Pressure History</h3>
+                            <div className="bp-chart-container">
+                                {bloodPressureSamples.map((value, index) => (
+                                    <div key={index} className="bp-bar-group">
+                                        <div className="bp-bar-rail">
+                                            <div className="bp-bar-fill" style={{ height: `${(value/200)*100}%` }} />
+                                        </div>
+                                        <span className="bp-label">{value}</span>
                                     </div>
-                                </div>
+                                ))}
                             </div>
                         </div>
                     </div>
-                    <div className="col-12 col-lg-4">
-                        <div className="d-flex flex-column gap-4">
-                            <div className="clinical-panel section-animate dashboard-mini-card">
-                                <div className="panel-title mb-2"><Calendar size={16} /> Upcoming Appointment</div>
-                                <div className="mini-card-title">{upcomingAppointment?.reason || "No upcoming appointment"}</div>
-                                <div className="mini-card-meta">Dr. {upcomingAppointment?.doctor_name || "Specialist"}</div>
-                                <div className="mini-card-meta">{formatDate(upcomingAppointment?.appointment_date)}</div>
-                            </div>
-                            <div className="clinical-panel section-animate dashboard-mini-card">
-                                <div className="panel-title mb-2"><FileText size={16} /> Recent Reports</div>
-                                <ul className="mini-list">
+                    <div className="col-12 col-lg-5">
+                        <div className="d-flex flex-column gap-4 h-100">
+                            <div className="profile-section-card flex-grow-1">
+                                <h3 className="section-title-small"><FileText size={16} /> Recent Reports</h3>
+                                <ul className="reports-list">
                                     <li>CBC Report uploaded on {formatDate(clinicalData?.identity?.updated_at)}</li>
                                     <li>General wellness summary available</li>
                                 </ul>
                             </div>
-                            <div className="clinical-panel section-animate dashboard-mini-card">
-                                <div className="panel-title mb-2"><FileText size={16} /> Doctor Notes</div>
-                                <p className="mini-card-meta mb-0">Continue medication adherence, maintain hydration, and follow up next week for progress review.</p>
+                            <div className="profile-section-card flex-grow-1">
+                                <h3 className="section-title-small"><FileText size={16} /> Doctor Notes</h3>
+                                <p className="notes-text">
+                                    <em>Continue medication adherence, maintain hydration, and follow up next week for progress review.</em>
+                                </p>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
         ) : (
-            /* EDIT FORM */
             <div className="edit-form-grid">
                 <div className="form-section-title"><User size={20} className="text-primary" /> Basic Information</div>
                 <div className="form-group">
@@ -692,6 +669,10 @@ const Profile = () => {
                          </div>
                      ))}
                      <button className="btn btn-outline-primary w-100 mt-2" onClick={addNewContact}><Plus size={16}/> Add New Contact</button>
+                </div>
+                <div className="form-actions mt-4">
+                    <button className="btn-save" onClick={handleSave}>Save Changes</button>
+                    <button className="btn-cancel" onClick={() => setEditing(false)}>Cancel</button>
                 </div>
             </div>
         )}
