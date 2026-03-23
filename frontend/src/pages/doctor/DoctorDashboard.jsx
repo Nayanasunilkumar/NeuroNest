@@ -8,6 +8,8 @@ import {
   AlertTriangle,
   UserRound,
   Stethoscope,
+  Search,
+  Bell,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { getDoctorProfile } from '../../services/doctorProfileService';
@@ -173,7 +175,7 @@ const DoctorDashboard = () => {
     <div className="nn-dashboard-wrap">
       <section className="nn-dashboard-head">
         <div>
-          <h2 className="nn-title">Welcome back, Dr. {doctorName.split(' ').slice(-1)[0]}</h2>
+          <h2 className="nn-title">Welcome back, Dr. {doctorName.split(' ')[0]}</h2>
           <p className="nn-subtitle">
             {new Date().toLocaleDateString('en-US', {
               weekday: 'long',
@@ -183,9 +185,18 @@ const DoctorDashboard = () => {
             · Clinical operations snapshot
           </p>
         </div>
-        <div className="nn-head-chip">
-          <Activity size={14} />
-          <span>System Active</span>
+        <div className="d-flex align-items-center gap-3">
+          <div className="header-icon-btn">
+            <Bell size={18} />
+            <span className="notification-badge"></span>
+          </div>
+          <div className="header-icon-btn">
+            <Search size={18} />
+          </div>
+          <div className="nn-head-chip">
+            <span className="status-dot"></span>
+            <span>System Active</span>
+          </div>
         </div>
       </section>
 
@@ -230,20 +241,24 @@ const DoctorDashboard = () => {
 
       <section className="row g-4">
         <div className="col-12">
-          <div className="nn-panel nn-overview-card">
-            <div className="nn-overview-avatar">
-              <UserRound size={24} />
-              <span>{getInitials(doctorName)}</span>
-            </div>
-            <div className="nn-overview-copy">
-              <p className="nn-panel-kicker">Doctor Overview</p>
-              <h3>{doctorName}</h3>
-              <div className="nn-overview-meta">
-                <span>{doctorProfile?.specialization || 'Clinical Specialist'}</span>
-              </div>
+          <div className="nn-overview-card">
+            <div className="d-flex align-items-center gap-4">
+                <div className="nn-overview-avatar">
+                  {getInitials(doctorName)}
+                </div>
+                <div className="nn-overview-copy">
+                  <p className="nn-panel-kicker" style={{ color: 'rgba(255,255,255,0.6)' }}>Doctor Overview</p>
+                  <h3>Dr. {doctorName.split(' ').slice(-1)[0]}</h3>
+                  <div className="nn-overview-meta">
+                    <span>
+                        <Activity size={12} />
+                        {doctorProfile?.specialization || 'Neurologist'}
+                    </span>
+                  </div>
+                </div>
             </div>
             <div className="nn-overview-badge">
-              <Stethoscope size={16} />
+              <ClipboardList size={18} />
               <span>Clinician Dashboard</span>
             </div>
           </div>
@@ -264,20 +279,23 @@ const DoctorDashboard = () => {
               {patientPreview.length === 0 ? (
                 <PreviewEmpty title="No patients found" />
               ) : (
-                patientPreview.map((patient) => {
-                  const status = getPatientStatus(patient);
-                  return (
-                    <article key={patient.id} className="nn-preview-item">
-                      <div className="nn-preview-main">
-                        <strong>{patient.full_name}</strong>
-                        <span>Last visit: {formatDate(patient.last_visit)}</span>
-                      </div>
-                      <span className={`nn-status-chip nn-status-${status.toLowerCase().replace(/[^a-z]/g, '-')}`}>
-                        {status}
-                      </span>
-                    </article>
-                  );
-                })
+                  patientPreview.map((patient) => {
+                    const status = getPatientStatus(patient);
+                    return (
+                      <article key={patient.id} className="nn-preview-item">
+                        <div className="nn-avatar-circle">
+                          {getInitials(patient.full_name)}
+                        </div>
+                        <div className="nn-preview-main">
+                          <strong>{patient.full_name}</strong>
+                          <span>Last visit: {formatDate(patient.last_visit)}</span>
+                        </div>
+                        <span className={`nn-status-chip nn-status-${status.toLowerCase().replace(/[^a-z]/g, '-')}`}>
+                          {status}
+                        </span>
+                      </article>
+                    );
+                  })
               )}
             </div>
           </div>
@@ -300,6 +318,9 @@ const DoctorDashboard = () => {
               ) : (
                 appointmentPreview.map((appointment) => (
                   <article key={appointment.id} className="nn-preview-item">
+                    <div className="nn-avatar-circle" style={{ background: '#eff6ff', color: '#3b82f6' }}>
+                      <Calendar size={18} />
+                    </div>
                     <div className="nn-preview-main">
                       <strong>{appointment.patient_name || 'Patient'}</strong>
                       <span>
