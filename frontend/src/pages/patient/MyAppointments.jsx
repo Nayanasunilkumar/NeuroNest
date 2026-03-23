@@ -6,7 +6,9 @@ import {
   getAppointments,
   cancelAppointment,
   rescheduleAppointment,
-  confirmReschedule
+  confirmReschedule,
+  getAppointmentCallState,
+  joinAppointmentCall,
 } from "../../api/appointments";
 import "../../styles/appointments.css"; 
 import { CheckCircle, X, Calendar, Clock, RefreshCw, ChevronLeft, ChevronRight, AlertCircle } from "lucide-react";
@@ -39,6 +41,7 @@ const MyAppointments = () => {
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [selectedDetailsAppointment, setSelectedDetailsAppointment] = useState(null);
+  const [callStateById, setCallStateById] = useState({});
 
   const fetchAppointments = async () => {
     setLoading(true);
@@ -53,9 +56,38 @@ const MyAppointments = () => {
     }
   };
 
+  const refreshCallStates = async (sourceAppointments = appointments) => {
+    const eligible = (sourceAppointments || []).filter((appt) => {
+      const status = String(appt.status || "").toLowerCase();
+      return (appt.consultation_type || "in_person") === "online" && ["pending", "approved", "rescheduled"].includes(status);
+    });
+    if (!eligible.length) {
+      setCallStateById({});
+      return;
+    }
+
+    const results = await Promise.allSettled(
+      eligible.map((appt) => getAppointmentCallState(appt.id))
+    );
+
+    const nextMap = {};
+    results.forEach((result, index) => {
+      if (result.status === "fulfilled") {
+        nextMap[eligible[index].id] = result.value;
+      }
+    });
+    setCallStateById(nextMap);
+  };
+
   useEffect(() => {
     fetchAppointments();
   }, []);
+
+  useEffect(() => {
+    refreshCallStates();
+    const timer = window.setInterval(() => refreshCallStates(), 30000);
+    return () => window.clearInterval(timer);
+  }, [appointments]);
 
   const handleCancel = async (id) => {
     if (!window.confirm("Are you sure you want to cancel this appointment?")) return;
@@ -150,6 +182,39 @@ const MyAppointments = () => {
 
   const formatTime = (timeStr) => {
     return timeStr ? timeStr.substring(0, 5) : "N/A";
+  };
+
+  const formatCallTime = (isoString) => {
+    if (!isoString) return "N/A";
+    const date = new Date(isoString);
+    if (Number.isNaN(date.getTime())) return "N/A";
+    return date.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+  };
+
+  const getCallStatusText = (appt, callState) => {
+    if (!callState) return null;
+    const state = callState.call_state || {};
+
+    if (state.missed) return "Appointment marked as missed";
+    if (state.both_joined || callState.call_status === "ongoing") return "Video call started";
+    if (!state.patient_can_join_now) return `Join available at ${formatCallTime(callState.join_enabled_patient_time)}`;
+    if (state.patient_joined && !state.doctor_joined) return "You joined. Waiting for doctor";
+    if (!state.patient_joined && state.doctor_joined) return "Doctor is waiting. Join now";
+    if (state.patient_can_join_now && !state.doctor_joined) return "Waiting for doctor to join";
+    return null;
+  };
+
+  const handleJoinOnlineCall = async (appointmentId) => {
+    setActionLoading(`${appointmentId}join`);
+    try {
+      const payload = await joinAppointmentCall(appointmentId);
+      setCallStateById((prev) => ({ ...prev, [appointmentId]: payload }));
+      navigate(`/consultation/${payload.room_id || `appointment-${appointmentId}`}`);
+    } catch (err) {
+      alert(err.response?.data?.error || err.response?.data?.message || "Unable to join call right now");
+    } finally {
+      setActionLoading(null);
+    }
   };
 
   return (
@@ -265,6 +330,11 @@ const MyAppointments = () => {
                       const status = String(appt.status).toLowerCase();
                       const isUpcoming = ['pending', 'approved', 'rescheduled'].includes(status);
                       const isRescheduled = status === 'rescheduled';
+                      const isOnline = (appt.consultation_type || "in_person") === "online";
+                      const callData = callStateById[appt.id];
+                      const callState = callData?.call_state || {};
+                      const joinDisabled = !callState.patient_can_join_now || callState.missed;
+                      const callStatusText = getCallStatusText(appt, callData);
                       
                       return (
                         <tr key={appt.id}>
@@ -299,6 +369,16 @@ const MyAppointments = () => {
                                  <div className="reason-text" title={appt.reason}>
                                     {appt.reason}
                                  </div>
+                                 {isOnline && callData && (
+                                   <div style={{ marginTop: 8, fontSize: 12, color: "#64748b", fontWeight: 600 }}>
+                                     Doctor status: {callState.doctor_joined ? "Joined" : "Not joined yet"}
+                                   </div>
+                                 )}
+                                 {isOnline && callStatusText && (
+                                   <div style={{ marginTop: 4, fontSize: 12, color: "#475569" }}>
+                                     {callStatusText}
+                                   </div>
+                                 )}
                             </td>
                             <td>
                                  <div className="action-row">
@@ -316,6 +396,20 @@ const MyAppointments = () => {
 
                                     {isUpcoming && (
                                         <>
+                                            {isOnline && (
+                                              <button
+                                                className="icon-action-btn"
+                                                onClick={() => handleJoinOnlineCall(appt.id)}
+                                                title={joinDisabled ? "Join not available yet" : "Join video call"}
+                                                disabled={joinDisabled || actionLoading === `${appt.id}join`}
+                                                style={{
+                                                  borderColor: joinDisabled ? "#cbd5e1" : "#0ea5e9",
+                                                  color: joinDisabled ? "#94a3b8" : "#0284c7",
+                                                }}
+                                              >
+                                                {actionLoading === `${appt.id}join` ? <RefreshCw size={14} className="spinner" /> : "Join"}
+                                              </button>
+                                            )}
                                             <button 
                                                 className="icon-action-btn reschedule-btn"
                                                 onClick={() => openRescheduleModal(appt)}

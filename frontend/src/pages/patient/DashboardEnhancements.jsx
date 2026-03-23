@@ -27,7 +27,7 @@ import {
 import { Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../../api/axios";
-import { getAppointments } from "../../api/appointments";
+import { getAppointmentCallState, getAppointments, joinAppointmentCall } from "../../api/appointments";
 import { getClinicalSummary, getMyNotifications, markNotificationRead } from "../../api/profileApi";
 import { API_BASE_URL } from "../../config/env";
 
@@ -65,6 +65,12 @@ const formatTime = (time) => {
   const d = new Date();
   d.setHours(Number(hour), Number(minute), 0, 0);
   return new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit" }).format(d);
+};
+const formatTimeFromISO = (value) => {
+  if (!value) return "N/A";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "N/A";
+  return new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit" }).format(date);
 };
 
 const getCountdown = (appt) => {
@@ -328,6 +334,7 @@ export default function DashboardEnhancements() {
   const [dismissingAlerts, setDismissingAlerts] = useState([]);
   const [showSosConfirm, setShowSosConfirm] = useState(false);
   const [showSosModal, setShowSosModal] = useState(false);
+  const [callStateById, setCallStateById] = useState({});
   const [medicationChecks, setMedicationChecks] = useState(() => {
     try {
       return JSON.parse(localStorage.getItem(`nn-medications-${todayKey}`) || "{}");
@@ -361,6 +368,37 @@ export default function DashboardEnhancements() {
 
     loadData();
   }, []);
+
+  useEffect(() => {
+    const onlineUpcoming = appointments.filter((appt) => {
+      const status = String(appt.status || "").toLowerCase();
+      return String(appt.consultation_type || "in_person").toLowerCase() === "online" && ["pending", "approved", "rescheduled", "confirmed"].includes(status);
+    });
+    if (!onlineUpcoming.length) {
+      setCallStateById({});
+      return;
+    }
+
+    let isCancelled = false;
+    const loadCallStates = async () => {
+      const results = await Promise.allSettled(onlineUpcoming.map((appt) => getAppointmentCallState(appt.id)));
+      if (isCancelled) return;
+      const nextState = {};
+      results.forEach((result, idx) => {
+        if (result.status === "fulfilled") {
+          nextState[onlineUpcoming[idx].id] = result.value;
+        }
+      });
+      setCallStateById(nextState);
+    };
+
+    loadCallStates();
+    const timer = window.setInterval(loadCallStates, 30000);
+    return () => {
+      isCancelled = true;
+      window.clearInterval(timer);
+    };
+  }, [appointments]);
 
   useEffect(() => {
     localStorage.setItem(`nn-medications-${todayKey}`, JSON.stringify(medicationChecks));
@@ -398,9 +436,32 @@ export default function DashboardEnhancements() {
     }, 280);
   };
 
-  const openAppointmentAction = (appointment) => {
+  const getPatientCallStatus = (appointment) => {
+    const callData = callStateById[appointment.id];
+    const state = callData?.call_state || {};
+    if (!callData) return null;
+    if (state.missed) return "Appointment marked as missed";
+    if (state.both_joined || callData.call_status === "ongoing") return "Video call started";
+    if (!state.patient_can_join_now) return `Join available at ${formatTimeFromISO(callData.join_enabled_patient_time)}`;
+    if (state.patient_joined && !state.doctor_joined) return "You joined. Waiting for doctor";
+    if (!state.patient_joined && state.doctor_joined) return "Doctor is waiting. Join now";
+    return "Waiting for doctor to join";
+  };
+
+  const openAppointmentAction = async (appointment) => {
     if (getAppointmentType(appointment) === "Video") {
-      navigate("/patient/appointments");
+      if (!Number.isFinite(Number(appointment?.id))) {
+        navigate("/patient/appointments");
+        return;
+      }
+      try {
+        const payload = await joinAppointmentCall(appointment.id);
+        setCallStateById((prev) => ({ ...prev, [appointment.id]: payload }));
+        navigate(`/consultation/${payload.room_id || `appointment-${appointment.id}`}`);
+      } catch (error) {
+        const message = error?.response?.data?.error || error?.response?.data?.message || "Join is not available yet";
+        window.alert(message);
+      }
       return;
     }
     const query = encodeURIComponent(`NeuroNest clinic ${appointment.specialization || "specialist"}`);
@@ -452,10 +513,32 @@ export default function DashboardEnhancements() {
                     </div>
                     <div className="nn-appointment-footer">
                       <span className="nn-countdown-chip">{getCountdown(appointment)}</span>
-                      <button type="button" className="btn btn-outline-primary rounded-pill fw-bold" onClick={() => openAppointmentAction(appointment)}>
+                      <button
+                        type="button"
+                        className="btn btn-outline-primary rounded-pill fw-bold"
+                        onClick={() => openAppointmentAction(appointment)}
+                        disabled={
+                          type === "Video"
+                          && (
+                            !Number.isFinite(Number(appointment?.id))
+                            || (
+                              callStateById[appointment.id]
+                              && (
+                                callStateById[appointment.id]?.call_state?.missed
+                                || !callStateById[appointment.id]?.call_state?.patient_can_join_now
+                              )
+                            )
+                          )
+                        }
+                      >
                         {type === "Video" ? "Join Call" : "Get Directions"}
                       </button>
                     </div>
+                    {type === "Video" && callStateById[appointment.id] && (
+                      <div style={{ marginTop: 8, fontSize: 12, color: "#64748b", fontWeight: 600 }}>
+                        {getPatientCallStatus(appointment)}
+                      </div>
+                    )}
                   </article>
                 );
               }) : (

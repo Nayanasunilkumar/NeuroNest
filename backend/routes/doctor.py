@@ -33,6 +33,12 @@ from services.slot_lifecycle_service import (
     mark_slot_booked,
 )
 from services.notification_service import NotificationService
+from services.appointment_call_service import (
+    ensure_join_windows,
+    evaluate_call_state,
+    send_system_chat_message,
+    sync_call_status,
+)
 
 doctor_bp = Blueprint("doctor", __name__)
 
@@ -49,6 +55,17 @@ def _utc_now():
 
 def _lock_slot(slot_id: int):
     return AppointmentSlot.query.filter_by(id=slot_id).with_for_update().first()
+
+
+def _reset_call_lifecycle(appointment: Appointment):
+    appointment.patient_joined_at = None
+    appointment.doctor_joined_at = None
+    appointment.call_started_at = None
+    appointment.call_status = "scheduled"
+    appointment.reminder_30_sent_at = None
+    appointment.reminder_10_sent_at = None
+    appointment.missed_notified_at = None
+    ensure_join_windows(appointment)
 
 @doctor_bp.route("/appointment-requests", methods=["GET"])
 @jwt_required()
@@ -191,6 +208,7 @@ def reschedule_appointment(appointment_id):
     appointment.appointment_date = new_date
     appointment.appointment_time = new_time
     appointment.status = "rescheduled" # Indicates doctor suggested a new time
+    _reset_call_lifecycle(appointment)
     
     # If there was a slot, unbind it as the time has changed
     if appointment.slot_id:
@@ -212,6 +230,118 @@ def reschedule_appointment(appointment_id):
         "message": "Appointment rescheduled successfully",
         "appointment": appointment.to_dict()
     }), 200
+
+
+@doctor_bp.route("/appointments/<int:appointment_id>/call-state", methods=["GET"])
+@jwt_required()
+def get_doctor_call_state(appointment_id):
+    if not check_doctor_role():
+        return jsonify({"message": "Doctor access required"}), 403
+
+    current_user_id = int(get_jwt_identity())
+    appointment = Appointment.query.filter_by(id=appointment_id, doctor_id=current_user_id).first()
+    if not appointment:
+        return jsonify({"message": "Appointment not found"}), 404
+
+    if (appointment.consultation_type or "in_person") != "online":
+        return jsonify({"message": "Call state is only available for online appointments"}), 400
+
+    state, changed = sync_call_status(appointment)
+    if changed:
+        db.session.commit()
+
+    payload = appointment.to_dict()
+    payload["room_id"] = f"appointment-{appointment.id}"
+    payload["doctor_join_allowed"] = state["doctor_can_join_now"]
+    payload["join_available_at"] = (
+        state["doctor_join_time"].isoformat() + "Z" if state["doctor_join_time"] else None
+    )
+    return jsonify(payload), 200
+
+
+@doctor_bp.route("/appointments/<int:appointment_id>/join-call", methods=["POST"])
+@jwt_required()
+def doctor_join_call(appointment_id):
+    if not check_doctor_role():
+        return jsonify({"message": "Doctor access required"}), 403
+
+    current_user_id = int(get_jwt_identity())
+    appointment = Appointment.query.filter_by(id=appointment_id, doctor_id=current_user_id).first()
+    if not appointment:
+        return jsonify({"message": "Appointment not found"}), 404
+
+    if (appointment.consultation_type or "in_person") != "online":
+        return jsonify({"message": "Only online appointments can be joined"}), 400
+
+    if str(appointment.status).lower() not in {"approved", "rescheduled", "pending"}:
+        return jsonify({"message": f"Cannot join a {appointment.status} appointment"}), 400
+
+    now = datetime.now()
+    ensure_join_windows(appointment)
+    pre_state = evaluate_call_state(appointment, now=now)
+    if not pre_state["doctor_can_join_now"]:
+        return jsonify(
+            {
+                "message": "Join is not available yet",
+                "join_available_at": pre_state["doctor_join_time"].isoformat() + "Z"
+                if pre_state["doctor_join_time"]
+                else None,
+            }
+        ), 403
+
+    joined_now = appointment.doctor_joined_at is None
+    if joined_now:
+        appointment.doctor_joined_at = now
+
+    previous_status = (appointment.call_status or "scheduled").lower()
+    state, changed = sync_call_status(appointment, now=now)
+    started_now = state["status"] == "ongoing" and previous_status != "ongoing"
+
+    if changed or joined_now:
+        db.session.commit()
+
+    if joined_now and not state["patient_joined"]:
+        send_system_chat_message(
+            appointment,
+            f"System: Dr. {appointment.doctor.full_name if appointment.doctor else 'Doctor'} has joined the call. You can join now.",
+            sender_id=appointment.doctor_id,
+        )
+        NotificationService.send_in_app(
+            user_id=appointment.patient_id,
+            title="Doctor joined video appointment",
+            message=f"Dr. {appointment.doctor.full_name if appointment.doctor else 'Doctor'} has joined. You can join now.",
+            notif_type="appointment",
+            payload={"appointment_id": appointment.id, "event_type": "doctor_joined"},
+        )
+        db.session.commit()
+
+    if started_now:
+        send_system_chat_message(
+            appointment,
+            "System: Video call started.",
+            sender_id=appointment.doctor_id,
+        )
+        NotificationService.send_in_app(
+            user_id=appointment.patient_id,
+            title="Video call started",
+            message=f"Your appointment with Dr. {appointment.doctor.full_name if appointment.doctor else 'Doctor'} is now live.",
+            notif_type="appointment",
+            payload={"appointment_id": appointment.id, "event_type": "call_started"},
+        )
+        NotificationService.send_in_app(
+            user_id=appointment.doctor_id,
+            title="Video call started",
+            message=f"Your appointment with {appointment.patient.full_name if appointment.patient else 'patient'} is now live.",
+            notif_type="appointment",
+            payload={"appointment_id": appointment.id, "event_type": "call_started"},
+        )
+        db.session.commit()
+
+    payload = appointment.to_dict()
+    payload["room_id"] = f"appointment-{appointment.id}"
+    payload["open_call"] = bool(state["both_joined"])
+    payload["waiting_for"] = state["waiting_for"]
+    return jsonify(payload), 200
 
 @doctor_bp.route("/schedule", methods=["GET"])
 @jwt_required()
@@ -576,6 +706,7 @@ def complete_appointment(appointment_id):
         return jsonify({"message": "Appointment not found"}), 404
         
     appointment.status = "completed"
+    appointment.call_status = "completed"
     NotificationService.notify_appointment_event(appointment.id, "completed")
     db.session.commit()
     
@@ -594,6 +725,7 @@ def cancel_appointment(appointment_id):
         return jsonify({"message": "Appointment not found"}), 404
         
     appointment.status = "cancelled_by_doctor"
+    appointment.call_status = "completed"
     if appointment.slot_id:
         apply_cancellation_policy(
             appointment=appointment,
@@ -758,6 +890,7 @@ def mark_no_show(appointment_id):
         return jsonify({"message": "Appointment not found"}), 404
         
     appointment.status = "no_show"
+    appointment.call_status = "missed"
     if appointment.slot_id:
         apply_cancellation_policy(
             appointment=appointment,

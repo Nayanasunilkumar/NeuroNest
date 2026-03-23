@@ -102,7 +102,7 @@ const PatientLayout = () => {
     };
 
     return (
-        <div className="vh-100 d-flex flex-column overflow-hidden" style={{ transition: 'all 0.3s' }}>
+        <div className="vh-100 d-flex flex-column overflow-hidden patient-layout-root" style={{ transition: 'all 0.3s' }}>
             {/* Navbar */}
             <header className="navbar navbar-expand-lg sticky-top border-bottom shadow-sm px-3" style={{ height: '80px', zIndex: 1050, background: 'var(--nn-nav-bg)', backdropFilter: 'blur(10px)', borderColor: 'var(--nn-border)' }}>
                 <div className="container-fluid align-items-center flex-nowrap">
@@ -122,7 +122,7 @@ const PatientLayout = () => {
                     {/* Right Actions */}
                     <div className="d-flex align-items-center justify-content-end gap-2 gap-md-3 flex-shrink-0 ms-3">
                         <button 
-                            className={`btn p-2 rounded-circle border-0 d-flex align-items-center justify-content-center transition-all ${darkMode ? 'btn-outline-light text-warning' : 'btn-outline-secondary text-secondary opacity-75'}`}
+                            className="btn p-2 rounded-circle border-0 d-flex align-items-center justify-content-center transition-all patient-action-btn"
                             onClick={toggleTheme}
                             title="Toggle Theme"
                             style={{ width: '40px', height: '40px' }}
@@ -132,7 +132,7 @@ const PatientLayout = () => {
 
                         <div className="position-relative" ref={notificationRef}>
                             <button 
-                                className={`btn p-2 rounded-circle border-0 d-none d-sm-flex align-items-center justify-content-center position-relative transition-all ${darkMode ? 'btn-outline-light' : 'btn-outline-secondary opacity-75'} ${showNotifications ? 'bg-primary bg-opacity-10' : ''}`} 
+                                className={`btn p-2 rounded-circle border-0 d-none d-sm-flex align-items-center justify-content-center position-relative transition-all patient-action-btn ${showNotifications ? 'bg-primary bg-opacity-10' : ''}`} 
                                 style={{ width: '40px', height: '40px' }}
                                 onClick={() => setShowNotifications(!showNotifications)}
                             >
@@ -238,6 +238,37 @@ const PatientLayout = () => {
                 .shadow-xs { box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
                 .max-w-400 { max-width: 400px; }
                 .max-w-1600 { max-width: 1600px; }
+                .patient-layout-root {
+                    background: var(--nn-bg);
+                }
+                .dark .patient-layout-root {
+                    background:
+                        radial-gradient(1200px 420px at 80% -10%, rgba(59, 130, 246, 0.14), transparent 55%),
+                        radial-gradient(900px 360px at 10% 0%, rgba(99, 102, 241, 0.12), transparent 58%),
+                        var(--nn-bg);
+                }
+                .patient-action-btn {
+                    border: 1px solid var(--nn-border) !important;
+                    color: var(--nn-text-secondary);
+                    background: var(--nn-surface);
+                }
+                .patient-action-btn:hover {
+                    color: var(--nn-text-main);
+                    background: var(--nn-surface-secondary);
+                    border-color: var(--nn-border-strong) !important;
+                    transform: translateY(-1px);
+                }
+                .dark .patient-action-btn {
+                    background: color-mix(in srgb, var(--nn-surface) 85%, transparent);
+                    color: #cbd5e1;
+                    border-color: #334155 !important;
+                    box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+                }
+                .dark .patient-action-btn:hover {
+                    background: color-mix(in srgb, var(--nn-surface-secondary) 88%, #0b1220);
+                    color: #f8fafc;
+                    border-color: #475569 !important;
+                }
                 .btn-danger-soft { 
                     background-color: rgba(220, 53, 69, 0.1); 
                     color: #dc3545; 
@@ -263,6 +294,14 @@ const PatientLayout = () => {
                     min-height: calc(100vh - 150px);
                     padding: 0;
                     overflow: hidden;
+                }
+                .dark .patient-page-shell {
+                    background:
+                        linear-gradient(180deg, rgba(30, 41, 59, 0.94), rgba(15, 23, 42, 0.9));
+                    border-color: #334155;
+                    box-shadow:
+                        0 22px 42px rgba(2, 6, 23, 0.45),
+                        inset 0 1px 0 rgba(148, 163, 184, 0.08);
                 }
                 @media (max-width: 992px) {
                     .patient-page-shell {

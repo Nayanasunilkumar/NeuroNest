@@ -677,3 +677,76 @@
   background: #dc2626;
   transform: translateY(-2px);
 }
+
+/* Dark theme refinements */
+.dark .pset-topbar {
+  background: color-mix(in srgb, var(--nn-surface) 92%, #0b1220);
+  border-color: var(--nn-border);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+.dark .pset-nav-item {
+  color: var(--nn-text-secondary);
+}
+.dark .pset-nav-item:hover {
+  background: color-mix(in srgb, var(--nn-surface-secondary) 85%, #0b1220);
+  color: var(--nn-text-main);
+}
+.dark .pset-title-wrap p,
+.dark .pset-section-header p,
+.dark .pset-subsection-title,
+.dark .pset-notif-hint,
+.dark .pset-toggle-hint,
+.dark .pset-export-desc,
+.dark .pset-data-notice {
+  color: var(--nn-text-muted);
+}
+.dark .pset-section {
+  background: color-mix(in srgb, var(--nn-surface) 95%, #0b1220);
+  border-color: var(--nn-border);
+  box-shadow: var(--nn-shadow-md);
+}
+.dark .pset-section-header,
+.dark .pset-subsection,
+.dark .pset-export-footer {
+  border-color: var(--nn-border);
+}
+.dark .pset-field input,
+.dark .pset-field select,
+.dark .pset-toggle-row,
+.dark .pset-export-card,
+.dark .pset-notif-header,
+.dark .pset-notif-row {
+  background: var(--nn-surface-secondary);
+  border-color: var(--nn-border);
+  color: var(--nn-text-main);
+}
+.dark .pset-toggle-label,
+.dark .pset-notif-label,
+.dark .pset-export-title,
+.dark .pset-modal-title {
+  color: var(--nn-text-main);
+}
+.dark .pset-toggle-icon {
+  background: color-mix(in srgb, var(--nn-primary) 20%, var(--nn-surface));
+  color: #93c5fd;
+}
+.dark .pset-info-chip {
+  color: #bfdbfe;
+  background: color-mix(in srgb, var(--nn-primary) 18%, var(--nn-surface-secondary));
+  border-color: color-mix(in srgb, var(--nn-primary) 35%, var(--nn-border));
+}
+.dark .pset-data-notice {
+  background: var(--nn-surface-secondary);
+  border-left-color: var(--nn-border-strong);
+}
+.dark .pset-modal {
+  background: var(--nn-surface);
+  border: 1px solid var(--nn-border);
+}
+.dark .pset-modal-cancel {
+  background: var(--nn-surface-secondary);
+  color: var(--nn-text-secondary);
+}
+.dark .pset-modal-cancel:hover {
+  background: color-mix(in srgb, var(--nn-surface-secondary) 75%, #0b1220);
+}

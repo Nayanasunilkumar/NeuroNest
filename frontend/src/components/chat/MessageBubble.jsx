@@ -27,9 +27,32 @@ const getMessageFileUrl = (content = '') => {
 const MessageBubble = ({ message, isMe, otherUserAvatar, isActiveCallRequest = false }) => {
     const navigate = useNavigate();
     const content = message?.content || '';
+    const isSystem = message?.type === 'system';
     const isFileMessage = message?.type === 'file' || content.includes('/uploads/');
     const fileUrl = getMessageFileUrl(content);
     const fileName = fileUrl ? extractFileName(fileUrl) : null;
+
+    if (isSystem) {
+        return (
+            <div className="d-flex justify-content-center mb-3">
+                <div
+                    className="px-3 py-2 rounded-pill"
+                    style={{
+                        background: 'rgba(37, 99, 235, 0.08)',
+                        color: '#1e3a8a',
+                        border: '1px solid rgba(37, 99, 235, 0.2)',
+                        fontSize: '0.76rem',
+                        fontWeight: 700,
+                        letterSpacing: '0.01em',
+                        maxWidth: '92%',
+                        textAlign: 'center',
+                    }}
+                >
+                    {content}
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className={`d-flex mb-3 ${isMe ? 'justify-content-end' : 'justify-content-start'}`} style={{ gap: '12px' }}>

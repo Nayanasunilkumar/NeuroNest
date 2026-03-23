@@ -61,3 +61,13 @@ export const bookAppointmentBySlot = async (data) => {
   const response = await axios.post("/appointments/book-by-slot", data);
   return response.data;
 };
+
+export const getAppointmentCallState = async (id) => {
+  const response = await axios.get(`/appointments/${id}/call-state`);
+  return response.data;
+};
+
+export const joinAppointmentCall = async (id) => {
+  const response = await axios.post(`/appointments/${id}/join-call`);
+  return response.data;
+};

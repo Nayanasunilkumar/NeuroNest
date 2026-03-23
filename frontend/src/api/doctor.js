@@ -88,6 +88,16 @@ export const markNoShow = async (id) => {
   return response.data;
 };
 
+export const getDoctorAppointmentCallState = async (id) => {
+  const response = await axios.get(`/doctor/appointments/${id}/call-state`);
+  return response.data;
+};
+
+export const joinDoctorAppointmentCall = async (id) => {
+  const response = await axios.post(`/doctor/appointments/${id}/join-call`);
+  return response.data;
+};
+
 export const getAppointmentHistory = async () => {
   const response = await axios.get("/doctor/appointments/history");
   return response.data;

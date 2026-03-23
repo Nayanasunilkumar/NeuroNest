@@ -63,7 +63,16 @@ def create_app():
                     "ADD COLUMN IF NOT EXISTS old_date_time TIMESTAMP, "
                     "ADD COLUMN IF NOT EXISTS new_date_time TIMESTAMP, "
                     "ADD COLUMN IF NOT EXISTS reschedule_reason TEXT, "
-                    "ADD COLUMN IF NOT EXISTS reschedule_status VARCHAR(20)"
+                    "ADD COLUMN IF NOT EXISTS reschedule_status VARCHAR(20), "
+                    "ADD COLUMN IF NOT EXISTS join_enabled_patient_time TIMESTAMP, "
+                    "ADD COLUMN IF NOT EXISTS join_enabled_doctor_time TIMESTAMP, "
+                    "ADD COLUMN IF NOT EXISTS doctor_joined_at TIMESTAMP, "
+                    "ADD COLUMN IF NOT EXISTS patient_joined_at TIMESTAMP, "
+                    "ADD COLUMN IF NOT EXISTS call_started_at TIMESTAMP, "
+                    "ADD COLUMN IF NOT EXISTS call_status VARCHAR(20) DEFAULT 'scheduled', "
+                    "ADD COLUMN IF NOT EXISTS reminder_30_sent_at TIMESTAMP, "
+                    "ADD COLUMN IF NOT EXISTS reminder_10_sent_at TIMESTAMP, "
+                    "ADD COLUMN IF NOT EXISTS missed_notified_at TIMESTAMP"
                 ))
                 # --- Notification Preferences Missing Columns ---
                 conn.execute(db.text("ALTER TABLE notification_preferences ADD COLUMN IF NOT EXISTS email_alerts BOOLEAN DEFAULT TRUE"))

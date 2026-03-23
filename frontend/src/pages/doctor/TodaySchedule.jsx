@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { 
-    getSchedule, completeAppointment, cancelAppointment, markNoShow,
+    getSchedule, completeAppointment, cancelAppointment, markNoShow, joinDoctorAppointmentCall,
     getClinicalPins, createClinicalPin, updateClinicalPin
 } from "../../api/doctor";
 import { 
@@ -44,6 +44,8 @@ const TodaySchedule = () => {
 
     useEffect(() => {
         fetchSchedule();
+        const timer = window.setInterval(fetchSchedule, 30000);
+        return () => window.clearInterval(timer);
     }, [fetchSchedule]);
 
     const handleDateStep = (days) => {
@@ -71,6 +73,33 @@ const TodaySchedule = () => {
         const period = hourNum >= 12 ? "PM" : "AM";
         const hour12 = hourNum % 12 || 12;
         return { value: `${hour12}:${minute}`, period };
+    };
+
+    const formatJoinTime = (isoString) => {
+        if (!isoString) return "TBD";
+        const date = new Date(isoString);
+        if (Number.isNaN(date.getTime())) return "TBD";
+        return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+    };
+
+    const getDoctorCallStatusText = (appointment) => {
+        const state = appointment?.call_state || {};
+        if ((appointment.consultation_type || 'in_person') !== 'online') return null;
+        if (state.missed) return 'Appointment marked as missed';
+        if (state.both_joined || appointment.call_status === 'ongoing') return 'Video call started';
+        if (!state.doctor_can_join_now) return `Join available at ${formatJoinTime(appointment.join_enabled_doctor_time)}`;
+        if (state.doctor_joined && !state.patient_joined) return 'You joined. Waiting for patient';
+        if (!state.doctor_joined && state.patient_joined) return 'Patient has joined and is waiting';
+        return 'Patient status: Not joined';
+    };
+
+    const handleJoinCall = async (appointmentId) => {
+        try {
+            const payload = await joinDoctorAppointmentCall(appointmentId);
+            navigate(`/consultation/${payload.room_id || `appointment-${appointmentId}`}`);
+        } catch (error) {
+            alert(error?.response?.data?.message || error?.response?.data?.error || 'Unable to join call');
+        }
     };
 
     const displayDate = useMemo(() => {
@@ -307,6 +336,11 @@ const TodaySchedule = () => {
                                                     }}>
                                                         {isOnline ? '💻 Online' : '🏥 In-Person'}
                                                     </span>
+                                                    {isOnline && (
+                                                        <span style={{ display: 'block', marginTop: '6px', fontSize: '12px', color: 'var(--nn-text-secondary)', fontWeight: 600 }}>
+                                                            {getDoctorCallStatusText(appointment)}
+                                                        </span>
+                                                    )}
                                                 </div>
                                             </div>
                                             <div className="ts-card-actions d-flex align-items-center gap-3">
@@ -327,6 +361,15 @@ const TodaySchedule = () => {
                                                         >
                                                             <X size={16} strokeWidth={3} />
                                                         </button>
+                                                        {isOnline && (
+                                                            <button
+                                                                className="btn btn-sm btn-outline-primary rounded-pill fw-bold"
+                                                                onClick={(e) => { e.stopPropagation(); handleJoinCall(appointment.id); }}
+                                                                disabled={!appointment?.call_state?.doctor_can_join_now || appointment?.call_state?.missed}
+                                                            >
+                                                                Join
+                                                            </button>
+                                                        )}
                                                     </div>
                                                 )}
                                             </div>

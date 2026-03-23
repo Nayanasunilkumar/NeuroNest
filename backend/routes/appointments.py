@@ -24,6 +24,12 @@ from services.slot_lifecycle_service import (
     mark_slot_held,
 )
 from services.notification_service import NotificationService
+from services.appointment_call_service import (
+    ensure_join_windows,
+    evaluate_call_state,
+    send_system_chat_message,
+    sync_call_status,
+)
 
 appointments_bp = Blueprint("appointments", __name__)
 
@@ -51,6 +57,17 @@ def _utc_now():
 
 def _appointment_status_for_mode(mode: str) -> str:
     return "approved" if mode == "auto_confirm" else "pending"
+
+
+def _reset_call_lifecycle(appointment: Appointment):
+    appointment.patient_joined_at = None
+    appointment.doctor_joined_at = None
+    appointment.call_started_at = None
+    appointment.call_status = "scheduled"
+    appointment.reminder_30_sent_at = None
+    appointment.reminder_10_sent_at = None
+    appointment.missed_notified_at = None
+    ensure_join_windows(appointment)
 
 
 def _lock_slot(slot_id: int):
@@ -96,6 +113,7 @@ def _book_slot_atomic(*, current_user_id: int, doctor_id: int, slot_id: int, rea
         status=_appointment_status_for_mode(booking_mode),
         booking_mode=booking_mode,
     )
+    _reset_call_lifecycle(appointment)
     db.session.add(appointment)
     db.session.flush()
 
@@ -434,6 +452,7 @@ def book_appointment():
             status="pending",
             booking_mode="doctor_approval",
         )
+        _reset_call_lifecycle(new_appointment)
 
         db.session.add(new_appointment)
         db.session.flush() # ensure ID is generated
@@ -505,6 +524,7 @@ def cancel_appointment(id):
                 return jsonify({"error": f"You cannot cancel this appointment. The doctor requires at least {policy_hours} hours' notice."}), 400
 
         appointment.status = "cancelled_by_patient"
+        appointment.call_status = "completed"
 
         if appointment.slot_id:
             apply_cancellation_policy(
@@ -585,6 +605,7 @@ def reschedule_appointment(id):
             appointment.new_date_time = datetime.combine(slot.slot_date_local, slot.slot_start_utc.time())
             appointment.reschedule_reason = data.get("reason", "")
             appointment.reschedule_status = "Pending"
+            _reset_call_lifecycle(appointment)
 
             if mode == "doctor_approval":
                 mark_slot_held(
@@ -621,6 +642,7 @@ def reschedule_appointment(id):
             appointment.new_date_time = datetime.strptime(f"{data['date']} {data['time']}", "%Y-%m-%d %H:%M")
         appointment.reschedule_reason = data.get("reason", "")
         appointment.reschedule_status = "Pending"
+        _reset_call_lifecycle(appointment)
 
         appointment.status = "pending"
         appointment.booking_mode = "doctor_approval"
@@ -665,6 +687,126 @@ def confirm_reschedule(id):
         db.session.commit()
         return jsonify({"message": "Appointment confirmed successfully", "appointment": appointment.to_dict()}), 200
 
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
+
+@appointments_bp.route("/<int:id>/call-state", methods=["GET"])
+@jwt_required()
+def get_call_state(id):
+    try:
+        if not _is_patient():
+            return jsonify({"error": "Patient access required"}), 403
+
+        current_user_id = int(get_jwt_identity())
+        appointment = Appointment.query.filter_by(id=id, patient_id=current_user_id).first()
+        if not appointment:
+            return jsonify({"error": "Appointment not found"}), 404
+
+        if (appointment.consultation_type or "in_person") != "online":
+            return jsonify({"error": "Call state is only available for online appointments"}), 400
+
+        state, changed = sync_call_status(appointment)
+        if changed:
+            db.session.commit()
+
+        payload = appointment.to_dict()
+        payload["room_id"] = f"appointment-{appointment.id}"
+        payload["join_available_at"] = (
+            state["patient_join_time"].isoformat() + "Z" if state["patient_join_time"] else None
+        )
+        payload["patient_join_allowed"] = state["patient_can_join_now"]
+        return jsonify(payload), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
+
+@appointments_bp.route("/<int:id>/join-call", methods=["POST"])
+@jwt_required()
+def patient_join_call(id):
+    try:
+        if not _is_patient():
+            return jsonify({"error": "Patient access required"}), 403
+
+        current_user_id = int(get_jwt_identity())
+        appointment = Appointment.query.filter_by(id=id, patient_id=current_user_id).first()
+        if not appointment:
+            return jsonify({"error": "Appointment not found"}), 404
+
+        if (appointment.consultation_type or "in_person") != "online":
+            return jsonify({"error": "Only online appointments can be joined"}), 400
+
+        if str(appointment.status).lower() not in {"approved", "rescheduled", "pending"}:
+            return jsonify({"error": f"Cannot join a {appointment.status} appointment"}), 400
+
+        now = datetime.now()
+        ensure_join_windows(appointment)
+        pre_state = evaluate_call_state(appointment, now=now)
+        if not pre_state["patient_can_join_now"]:
+            return jsonify(
+                {
+                    "error": "Join is not available yet",
+                    "join_available_at": pre_state["patient_join_time"].isoformat() + "Z"
+                    if pre_state["patient_join_time"]
+                    else None,
+                }
+            ), 403
+
+        joined_now = appointment.patient_joined_at is None
+        if joined_now:
+            appointment.patient_joined_at = now
+
+        previous_status = (appointment.call_status or "scheduled").lower()
+        state, changed = sync_call_status(appointment, now=now)
+        started_now = state["status"] == "ongoing" and previous_status != "ongoing"
+
+        if changed or joined_now:
+            db.session.commit()
+
+        if joined_now and not state["doctor_joined"]:
+            send_system_chat_message(
+                appointment,
+                "System: Patient has joined the call and is waiting for you.",
+                sender_id=appointment.patient_id,
+            )
+            NotificationService.send_in_app(
+                user_id=appointment.doctor_id,
+                title="Patient joined video appointment",
+                message=f"{appointment.patient.full_name if appointment.patient else 'Patient'} has joined and is waiting.",
+                notif_type="appointment",
+                payload={"appointment_id": appointment.id, "event_type": "patient_joined"},
+            )
+            db.session.commit()
+
+        if started_now:
+            send_system_chat_message(
+                appointment,
+                "System: Video call started.",
+                sender_id=appointment.doctor_id,
+            )
+            NotificationService.send_in_app(
+                user_id=appointment.patient_id,
+                title="Video call started",
+                message=f"Your appointment with Dr. {appointment.doctor.full_name if appointment.doctor else 'Doctor'} is now live.",
+                notif_type="appointment",
+                payload={"appointment_id": appointment.id, "event_type": "call_started"},
+            )
+            NotificationService.send_in_app(
+                user_id=appointment.doctor_id,
+                title="Video call started",
+                message=f"Your appointment with {appointment.patient.full_name if appointment.patient else 'patient'} is now live.",
+                notif_type="appointment",
+                payload={"appointment_id": appointment.id, "event_type": "call_started"},
+            )
+            db.session.commit()
+
+        payload = appointment.to_dict()
+        payload["room_id"] = f"appointment-{appointment.id}"
+        payload["open_call"] = bool(state["both_joined"])
+        payload["waiting_for"] = state["waiting_for"]
+        return jsonify(payload), 200
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 500

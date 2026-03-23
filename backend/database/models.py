@@ -1,5 +1,5 @@
 from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime
+from datetime import datetime, timedelta
 from sqlalchemy import UniqueConstraint, CheckConstraint, Index, Enum as SAEnum
 
 db = SQLAlchemy()
@@ -253,6 +253,18 @@ class Appointment(db.Model):
         db.String(20),
         default="in_person"  # in_person / online
     )
+    join_enabled_patient_time = db.Column(db.DateTime, nullable=True)
+    join_enabled_doctor_time = db.Column(db.DateTime, nullable=True)
+    doctor_joined_at = db.Column(db.DateTime, nullable=True)
+    patient_joined_at = db.Column(db.DateTime, nullable=True)
+    call_started_at = db.Column(db.DateTime, nullable=True)
+    call_status = db.Column(
+        db.String(20),
+        default="scheduled"  # scheduled / waiting / ongoing / completed / missed
+    )
+    reminder_30_sent_at = db.Column(db.DateTime, nullable=True)
+    reminder_10_sent_at = db.Column(db.DateTime, nullable=True)
+    missed_notified_at = db.Column(db.DateTime, nullable=True)
 
     # Reschedule tracking
     rescheduled_by = db.Column(db.String(20), nullable=True) # "doctor" / "patient"
@@ -284,7 +296,64 @@ class Appointment(db.Model):
     # =========================================
     # RETURN JSON DATA
     # =========================================
+    def _appointment_datetime(self):
+        if not self.appointment_date or not self.appointment_time:
+            return None
+        return datetime.combine(self.appointment_date, self.appointment_time)
+
+    def _join_window_values(self):
+        appt_dt = self._appointment_datetime()
+        patient_dt = self.join_enabled_patient_time
+        doctor_dt = self.join_enabled_doctor_time
+        if appt_dt:
+            if patient_dt is None:
+                patient_dt = appt_dt - timedelta(minutes=10)
+            if doctor_dt is None:
+                doctor_dt = appt_dt - timedelta(minutes=5)
+        return appt_dt, patient_dt, doctor_dt
+
+    def _call_state(self):
+        now = datetime.now()
+        appt_dt, patient_join_time, doctor_join_time = self._join_window_values()
+        patient_joined = bool(self.patient_joined_at)
+        doctor_joined = bool(self.doctor_joined_at)
+        both_joined = patient_joined and doctor_joined
+        status = (self.call_status or "scheduled").lower()
+
+        if status not in {"scheduled", "waiting", "ongoing", "completed", "missed"}:
+            status = "scheduled"
+
+        if status == "ongoing" and not self.call_started_at and both_joined:
+            status = "waiting"
+
+        if status in {"scheduled", "waiting"} and appt_dt and now >= (appt_dt + timedelta(minutes=10)) and not both_joined:
+            status = "missed"
+
+        join_allowed_status = status in {"scheduled", "waiting", "ongoing"}
+        patient_can_join = bool(patient_join_time and now >= patient_join_time and join_allowed_status)
+        doctor_can_join = bool(doctor_join_time and now >= doctor_join_time and join_allowed_status)
+
+        waiting_for = None
+        if patient_joined and not doctor_joined:
+            waiting_for = "doctor"
+        elif doctor_joined and not patient_joined:
+            waiting_for = "patient"
+
+        return {
+            "status": status,
+            "appointment_time": appt_dt,
+            "patient_join_time": patient_join_time,
+            "doctor_join_time": doctor_join_time,
+            "patient_joined": patient_joined,
+            "doctor_joined": doctor_joined,
+            "both_joined": both_joined,
+            "patient_can_join": patient_can_join,
+            "doctor_can_join": doctor_can_join,
+            "waiting_for": waiting_for,
+        }
+
     def to_dict(self):
+        state = self._call_state()
         return {
             "id": self.id,
             "patient_id": self.patient_id,
@@ -300,6 +369,22 @@ class Appointment(db.Model):
             "priority_level": self.priority_level,
             "consultation_type": self.consultation_type or "in_person",
             "status": self.status,
+            "call_status": state["status"],
+            "join_enabled_patient_time": state["patient_join_time"].isoformat() + 'Z' if state["patient_join_time"] else None,
+            "join_enabled_doctor_time": state["doctor_join_time"].isoformat() + 'Z' if state["doctor_join_time"] else None,
+            "patient_joined_at": self.patient_joined_at.isoformat() + 'Z' if self.patient_joined_at else None,
+            "doctor_joined_at": self.doctor_joined_at.isoformat() + 'Z' if self.doctor_joined_at else None,
+            "call_started_at": self.call_started_at.isoformat() + 'Z' if self.call_started_at else None,
+            "call_state": {
+                "patient_can_join_now": state["patient_can_join"],
+                "doctor_can_join_now": state["doctor_can_join"],
+                "patient_joined": state["patient_joined"],
+                "doctor_joined": state["doctor_joined"],
+                "both_joined": state["both_joined"],
+                "waiting_for": state["waiting_for"],
+                "appointment_started": state["status"] == "ongoing",
+                "missed": state["status"] == "missed",
+            },
             "booking_mode": self.booking_mode,
             "delay_reason": self.delay_reason,
             "extended_from_appointment_id": self.extended_from_appointment_id,

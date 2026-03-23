@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { getDoctorProfile } from '../../services/doctorProfileService';
-import { getDoctorStats, getPatients, getSchedule } from '../../api/doctor';
+import { getDoctorStats, getPatients, getSchedule, joinDoctorAppointmentCall } from '../../api/doctor';
 import '../../styles/dashboard.css';
 
 const StatCard = ({ label, value, hint, icon, tone = 'primary' }) => (
@@ -53,6 +53,13 @@ const formatTime = (value) => {
     hour: 'numeric',
     minute: '2-digit',
   });
+};
+
+const formatJoinTime = (isoString) => {
+  if (!isoString) return 'TBD';
+  const date = new Date(isoString);
+  if (Number.isNaN(date.getTime())) return 'TBD';
+  return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
 };
 
 const getInitials = (name = 'Doctor') =>
@@ -124,6 +131,8 @@ const DoctorDashboard = () => {
     };
 
     fetchData();
+    const timer = window.setInterval(fetchData, 30000);
+    return () => window.clearInterval(timer);
   }, []);
 
   const doctorName = doctorProfile?.full_name || 'Doctor';
@@ -153,6 +162,28 @@ const DoctorDashboard = () => {
       })
       .slice(0, 5);
   }, [appointments]);
+
+  const getDoctorCallStatusText = (appointment) => {
+    const state = appointment?.call_state || {};
+    if (!state || (appointment.consultation_type || 'in_person') !== 'online') return null;
+
+    if (state.missed) return 'Appointment marked as missed';
+    if (state.both_joined || appointment.call_status === 'ongoing') return 'Video call started';
+    if (!state.doctor_can_join_now) return `Join available at ${formatJoinTime(appointment.join_enabled_doctor_time)}`;
+    if (state.doctor_joined && !state.patient_joined) return 'You joined. Waiting for patient';
+    if (!state.doctor_joined && state.patient_joined) return 'Patient has joined and is waiting';
+    return 'Patient not joined yet';
+  };
+
+  const handleJoinAppointmentCall = async (appointment) => {
+    try {
+      const payload = await joinDoctorAppointmentCall(appointment.id);
+      navigate(`/consultation/${payload.room_id || `appointment-${appointment.id}`}`);
+    } catch (error) {
+      const message = error?.response?.data?.message || error?.response?.data?.error || 'Unable to join call right now';
+      window.alert(message);
+    }
+  };
 
   if (loading) {
     return (
@@ -323,9 +354,26 @@ const DoctorDashboard = () => {
                         <span>
                           {formatTime(appointment.appointment_time)} · {(appointment.consultation_type || 'in_person').replace('_', ' ')}
                         </span>
+                        {(appointment.consultation_type || 'in_person') === 'online' && (
+                          <span style={{ fontSize: '12px', color: '#64748b' }}>
+                            {getDoctorCallStatusText(appointment)}
+                          </span>
+                        )}
                       </div>
                     </div>
-                    <span className="nn-appointment-date-badge">{formatDate(appointment.appointment_date)}</span>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px' }}>
+                      <span className="nn-appointment-date-badge">{formatDate(appointment.appointment_date)}</span>
+                      {(appointment.consultation_type || 'in_person') === 'online' && (
+                        <button
+                          type="button"
+                          onClick={() => handleJoinAppointmentCall(appointment)}
+                          disabled={!appointment?.call_state?.doctor_can_join_now || appointment?.call_state?.missed}
+                          className="btn btn-sm btn-outline-primary rounded-pill fw-bold"
+                        >
+                          Join
+                        </button>
+                      )}
+                    </div>
                   </article>
                 ))
               )}
