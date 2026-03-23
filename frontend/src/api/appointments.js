@@ -49,6 +49,7 @@ export const getAvailableSlots = async (doctorId, date) => {
     slots: Array.isArray(payload?.slots) ? payload.slots : [],
     accepting_new_bookings: payload?.accepting_new_bookings !== false,
     message: payload?.message || null,
+    timezone: payload?.timezone || "Asia/Kolkata",
   };
 };
 

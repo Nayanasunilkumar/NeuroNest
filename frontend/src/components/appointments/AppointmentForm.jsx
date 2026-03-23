@@ -25,6 +25,7 @@ const AppointmentForm = ({ onSubmit, loading }) => {
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [slotHint, setSlotHint] = useState("");
   const [isDoctorPaused, setIsDoctorPaused] = useState(false);
+  const [doctorTimezone, setDoctorTimezone] = useState("Asia/Kolkata");
 
   const toYMD = (d) => {
     const year = d.getFullYear();
@@ -44,6 +45,7 @@ const AppointmentForm = ({ onSubmit, loading }) => {
       const response = await getAvailableSlots(doctorId, date);
       const normalized = Array.isArray(response?.slots) ? response.slots : [];
       const paused = response?.accepting_new_bookings === false;
+      setDoctorTimezone(response?.timezone || "Asia/Kolkata");
       setIsDoctorPaused(paused);
 
       if (paused) {
@@ -70,6 +72,7 @@ const AppointmentForm = ({ onSubmit, loading }) => {
         probe.setDate(start.getDate() + i);
         const probeDate = toYMD(probe);
         const nextResp = await getAvailableSlots(doctorId, probeDate);
+        setDoctorTimezone(nextResp?.timezone || response?.timezone || "Asia/Kolkata");
         if (nextResp?.accepting_new_bookings === false) {
           setAvailableSlots([]);
           setSlotHint(nextResp?.message || "Doctor is not accepting new appointments currently.");
@@ -148,11 +151,11 @@ const AppointmentForm = ({ onSubmit, loading }) => {
   };
 
   const handleSlotSelect = (slot) => {
-    const time = new Date(slot.slot_start_utc).toLocaleTimeString("en-IN", {
+    const time = slot.slot_start_local_time_24 || new Date(slot.slot_start_utc).toLocaleTimeString("en-IN", {
       hour: "2-digit",
       minute: "2-digit",
       hour12: false,
-      timeZone: "Asia/Kolkata",
+      timeZone: doctorTimezone || "Asia/Kolkata",
     });
     setFormData((prev) => ({
       ...prev,
@@ -264,11 +267,11 @@ const AppointmentForm = ({ onSubmit, loading }) => {
                         <span style={{ fontSize: "12px", color: "#64748b" }}>No available slots</span>
                       ) : (
                         availableSlots.map((slot) => {
-                          const slotLabel = new Date(slot.slot_start_utc).toLocaleTimeString("en-IN", {
+                          const slotLabel = slot.slot_start_local_time_display || new Date(slot.slot_start_utc).toLocaleTimeString("en-IN", {
                             hour: "2-digit",
                             minute: "2-digit",
                             hour12: true,
-                            timeZone: "Asia/Kolkata",
+                            timeZone: doctorTimezone || "Asia/Kolkata",
                           });
                           const selected = String(slot.id) === String(formData.slot_id);
                           return (
@@ -284,6 +287,11 @@ const AppointmentForm = ({ onSubmit, loading }) => {
                         })
                       )}
                     </div>
+                    {formData.doctor_id && availableSlots.length > 0 && (
+                      <span style={{ fontSize: "11px", color: "#94a3b8", marginTop: "6px", display: "inline-block" }}>
+                        Times shown in doctor timezone: {doctorTimezone}
+                      </span>
+                    )}
                     {slotHint && <span style={{ fontSize: "12px", color: "#64748b", marginTop: "8px", display: "inline-block" }}>{slotHint}</span>}
                   </div>
                 </div>

@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
+from zoneinfo import ZoneInfo
 
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import get_jwt, get_jwt_identity, jwt_required
@@ -336,10 +337,26 @@ def get_available_slots(doctor_id):
             .all()
         )
 
+        doctor_tz = setting.timezone or "Asia/Kolkata"
+        slot_payload = []
+        for slot in slots:
+            raw = slot.to_dict()
+            slot_start = slot.slot_start_utc
+            if slot_start:
+                if slot_start.tzinfo is None:
+                    slot_start = slot_start.replace(tzinfo=timezone.utc)
+                local_dt = slot_start.astimezone(ZoneInfo(doctor_tz))
+                raw["slot_start_local_iso"] = local_dt.isoformat()
+                raw["slot_start_local_time_24"] = local_dt.strftime("%H:%M")
+                raw["slot_start_local_time_display"] = local_dt.strftime("%I:%M %p")
+            raw["slot_timezone"] = doctor_tz
+            slot_payload.append(raw)
+
         return jsonify({
-            "slots": [s.to_dict() for s in slots],
+            "slots": slot_payload,
             "accepting_new_bookings": True,
             "message": None,
+            "timezone": doctor_tz,
         }), 200
     except ValueError:
         return jsonify({"error": "Invalid date format. Use YYYY-MM-DD"}), 400
