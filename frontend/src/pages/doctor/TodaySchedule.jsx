@@ -116,6 +116,23 @@ const TodaySchedule = () => {
         }
     };
 
+    const monthData = useMemo(() => {
+        const d = new Date(selectedDate);
+        const year = d.getFullYear();
+        const month = d.getMonth();
+        const firstDay = new Date(year, month, 1).getDay(); // 0(Sun)-6(Sat)
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        // Adjust for Monday-start grid (0=Mon, 6=Sun)
+        const padding = firstDay === 0 ? 6 : firstDay - 1;
+        
+        return {
+            name: d.toLocaleString('default', { month: 'long' }),
+            year,
+            padding,
+            days: Array.from({ length: daysInMonth }, (_, i) => i + 1)
+        };
+    }, [selectedDate]);
+
     const currentTime = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
     const [liveTime, setLiveTime] = useState(currentTime);
 
@@ -337,25 +354,50 @@ const TodaySchedule = () => {
                     </div>
 
                     {/* Minimal Calendar Mini-Widget */}
-                    <div className="ts-pinned-main-container p-4 shadow-sm">
+                    <div className="ts-pinned-main-container p-4 shadow-sm" style={{ overflow: 'visible', minHeight: 'fit-content' }}>
                         <div className="d-flex justify-content-between align-items-center mb-3">
-                            <span className={`fw-bold fs-6 ${isDark ? 'text-light' : 'text-dark'}`}>March, 2026</span>
+                            <span className={`fw-bold fs-6 ${isDark ? 'text-light' : 'text-dark'}`}>{monthData.name}, {monthData.year}</span>
                             <div className="d-flex gap-2">
-                                <ChevronLeft size={16} className="text-muted" />
-                                <ChevronRight size={16} className="text-muted" />
+                                <button className="btn btn-link p-0 text-muted border-0" onClick={() => handleDateStep(-30)}>
+                                    <ChevronLeft size={16} />
+                                </button>
+                                <button className="btn btn-link p-0 text-muted border-0" onClick={() => handleDateStep(30)}>
+                                    <ChevronRight size={16} />
+                                </button>
                             </div>
                         </div>
                         <div className="d-grid gap-2" style={{ gridTemplateColumns: 'repeat(7, 1fr)' }}>
-                            {['M','T','W','T','F','S','S'].map((d, i) => <span key={i} className={`text-muted text-center fw-bold`} style={{ fontSize: '0.6rem' }}>{d}</span>)}
-                            {Array.from({length: 31}).map((_, i) => {
-                                const dayNum = i + 1;
+                            {['M','T','W','T','F','S','S'].map((d, i) => (
+                                <span key={i} className="text-muted text-center fw-bold" style={{ fontSize: '0.65rem', opacity: 0.6 }}>{d}</span>
+                            ))}
+                            
+                            {/* Padding days */}
+                            {Array.from({ length: monthData.padding }).map((_, i) => (
+                                <div key={`pad-${i}`} style={{ height: '32px' }} />
+                            ))}
+
+                            {/* Actual days */}
+                            {monthData.days.map((dayNum) => {
                                 const isSelected = dayNum === displayDate.day;
-                                const hasAppointment = schedule.some(a => new Date(a.appointment_time).getDate() === dayNum);
+                                // Simple check for any appointments on this day in the loaded schedule
+                                const hasAppointment = schedule.some(a => {
+                                    const aDate = new Date(a.appointment_date || selectedDate);
+                                    return aDate.getDate() === dayNum && aDate.getMonth() === new Date(selectedDate).getMonth();
+                                });
+
                                 return (
                                     <div 
-                                        key={i} 
+                                        key={dayNum} 
                                         className={`text-center py-1 rounded-circle fw-bold transition-all position-relative ${isSelected ? 'bg-primary text-white shadow-sm' : isDark ? 'text-light hover-bg-dark' : 'text-dark hover-bg-light'}`} 
-                                        style={{ fontSize: '0.75rem', cursor: 'pointer', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                        style={{ 
+                                            fontSize: '0.75rem', 
+                                            cursor: 'pointer', 
+                                            height: '32px', 
+                                            display: 'flex', 
+                                            alignItems: 'center', 
+                                            justifyContent: 'center',
+                                            backgroundColor: isSelected ? 'var(--nn-primary)' : 'transparent'
+                                        }}
                                         onClick={() => {
                                             const newDate = new Date(selectedDate);
                                             newDate.setDate(dayNum);
@@ -363,11 +405,17 @@ const TodaySchedule = () => {
                                         }}
                                     >
                                         {dayNum}
-                                        {hasAppointment && !isSelected && (
-                                            <div style={{ position: 'absolute', bottom: '2px', left: '50%', transform: 'translateX(-50%)', width: '4px', height: '4px', borderRadius: '50%', background: 'var(--nn-primary)' }} />
-                                        )}
-                                        {hasAppointment && isSelected && (
-                                            <div style={{ position: 'absolute', bottom: '2px', left: '50%', transform: 'translateX(-50%)', width: '4px', height: '4px', borderRadius: '50%', background: 'white' }} />
+                                        {hasAppointment && (
+                                            <div style={{ 
+                                                position: 'absolute', 
+                                                bottom: '3px', 
+                                                left: '50%', 
+                                                transform: 'translateX(-50%)', 
+                                                width: '3px', 
+                                                height: '3px', 
+                                                borderRadius: '50%', 
+                                                background: isSelected ? 'white' : 'var(--nn-primary)' 
+                                            }} />
                                         )}
                                     </div>
                                 );
