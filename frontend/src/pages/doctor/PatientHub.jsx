@@ -119,7 +119,12 @@ const PatientHub = () => {
             color: '#f97316',
             path: `/doctor/alerts?patientId=${patientId}`
         },
-    ];
+    ].filter(action => {
+        if (action.id === 'assessments') {
+            return identity.email === 'nezrinnoushad20@gmail.com';
+        }
+        return true;
+    });
 
     return (
         <div className={`patient-hub-root min-vh-100 px-3 px-md-4 pb-4 pt-0 ${isDark ? 'dark' : ''}`}>

@@ -5,6 +5,8 @@ import { getModulePathForRole, getModulesForRole } from "../modules/moduleRegist
 import { useTheme } from "../context/ThemeContext";
 import { ChevronRight, ChevronLeft, MoreHorizontal } from "lucide-react";
 
+import { getUser } from "../utils/auth";
+
 /**
  * Premium "Dynamic Island" style navigation component.
  * Replaces the traditional sidebar with a sleek, horizontal, centered pill nav.
@@ -17,7 +19,8 @@ const DynamicIslandNav = ({ role = "patient" }) => {
     const [canScrollLeft, setCanScrollLeft] = useState(false);
     const [canScrollRight, setCanScrollRight] = useState(false);
 
-    const menuItems = getModulesForRole(role, { enabledMap, sidebarOnly: true });
+    const user = getUser();
+    const menuItems = getModulesForRole(role, { enabledMap, sidebarOnly: true, user });
 
     const checkScroll = () => {
         if (scrollRef.current) {

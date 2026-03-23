@@ -11,6 +11,7 @@ const assessmentModule = {
   componentsByRole: {
     patient: AssessmentPage,
   },
+  isVisible: (user) => user?.role !== 'patient' || user?.email === 'nezrinnoushad20@gmail.com',
   orderByRole: { patient: 75 },
 };
 

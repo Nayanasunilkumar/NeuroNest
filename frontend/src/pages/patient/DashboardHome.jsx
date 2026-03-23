@@ -112,6 +112,11 @@ function VitalsSection() {
   const user = getUser();
   const patientId = user?.id;
 
+  // Only show for the patient with assigned hardware
+  if (user?.role === 'patient' && user?.email !== 'nezrinnoushad20@gmail.com') {
+    return null;
+  }
+
   useEffect(() => {
     if (!patientId) return undefined;
     const fetchVitals = async () => {

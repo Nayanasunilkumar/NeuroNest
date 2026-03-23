@@ -111,13 +111,14 @@ export const isModuleVisibleInSidebar = (moduleConfig, role) => {
 };
 
 export const getModulesForRole = (role, options = {}) => {
-  const { enabledMap = {}, sidebarOnly = false } = options;
+  const { enabledMap = {}, sidebarOnly = false, user = null } = options;
 
   return moduleRegistry
     .filter((mod) => mod.rolesAllowed.includes(role))
     .filter((mod) => Boolean(mod.componentsByRole?.[role]))
     .filter((mod) => isModuleEnabled(mod, enabledMap))
     .filter((mod) => (sidebarOnly ? isModuleVisibleInSidebar(mod, role) : true))
+    .filter((mod) => (typeof mod.isVisible === 'function' ? mod.isVisible(user) : true))
     .sort(byOrderForRole(role));
 };
 
