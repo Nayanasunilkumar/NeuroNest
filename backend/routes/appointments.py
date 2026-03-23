@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
 
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import get_jwt, get_jwt_identity, jwt_required
@@ -101,11 +102,16 @@ def _book_slot_atomic(*, current_user_id: int, doctor_id: int, slot_id: int, rea
 
     booking_mode = setting.approval_mode
 
+    slot_start_utc = slot.slot_start_utc
+    if slot_start_utc.tzinfo is None:
+        slot_start_utc = slot_start_utc.replace(tzinfo=timezone.utc)
+    slot_local_dt = slot_start_utc.astimezone(ZoneInfo(setting.timezone or "Asia/Kolkata"))
+
     appointment = Appointment(
         patient_id=current_user_id,
         doctor_id=doctor_id,
-        appointment_date=slot.slot_date_local,
-        appointment_time=slot.slot_start_utc.time(),
+        appointment_date=slot_local_dt.date(),
+        appointment_time=slot_local_dt.time().replace(microsecond=0),
         slot_id=slot.id,
         reason=reason,
         notes=notes,
@@ -594,16 +600,20 @@ def reschedule_appointment(id):
 
             setting = get_or_create_schedule_setting(doctor_id)
             mode = setting.approval_mode
+            slot_start_utc = slot.slot_start_utc
+            if slot_start_utc.tzinfo is None:
+                slot_start_utc = slot_start_utc.replace(tzinfo=timezone.utc)
+            slot_local_dt = slot_start_utc.astimezone(ZoneInfo(setting.timezone or "Asia/Kolkata"))
             appointment.slot_id = slot.id
-            appointment.appointment_date = slot.slot_date_local
-            appointment.appointment_time = slot.slot_start_utc.time()
+            appointment.appointment_date = slot_local_dt.date()
+            appointment.appointment_time = slot_local_dt.time().replace(microsecond=0)
             appointment.status = _appointment_status_for_mode(mode)
             appointment.booking_mode = mode
             
             # Populate reschedule fields
             appointment.rescheduled_by = "patient"
             appointment.old_date_time = old_dt
-            appointment.new_date_time = datetime.combine(slot.slot_date_local, slot.slot_start_utc.time())
+            appointment.new_date_time = datetime.combine(slot_local_dt.date(), slot_local_dt.time().replace(microsecond=0))
             appointment.reschedule_reason = data.get("reason", "")
             appointment.reschedule_status = "Pending"
             _reset_call_lifecycle(appointment)

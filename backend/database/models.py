@@ -1,5 +1,6 @@
 from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
 from sqlalchemy import UniqueConstraint, CheckConstraint, Index, Enum as SAEnum
 
 db = SQLAlchemy()
@@ -297,10 +298,25 @@ class Appointment(db.Model):
     # =========================================
     # RETURN JSON DATA
     # =========================================
-    def _appointment_datetime(self):
+    def _resolved_schedule_datetime(self):
+        if self.slot and self.slot.slot_start_utc:
+            tz_name = "Asia/Kolkata"
+            setting = DoctorScheduleSetting.query.filter_by(doctor_user_id=self.doctor_id).first()
+            if setting and setting.timezone:
+                tz_name = setting.timezone
+
+            slot_start = self.slot.slot_start_utc
+            if slot_start.tzinfo is None:
+                slot_start = slot_start.replace(tzinfo=timezone.utc)
+            local_dt = slot_start.astimezone(ZoneInfo(tz_name))
+            return local_dt.replace(tzinfo=None)
+
         if not self.appointment_date or not self.appointment_time:
             return None
         return datetime.combine(self.appointment_date, self.appointment_time)
+
+    def _appointment_datetime(self):
+        return self._resolved_schedule_datetime()
 
     def _join_window_values(self):
         appt_dt = self._appointment_datetime()
@@ -355,6 +371,7 @@ class Appointment(db.Model):
 
     def to_dict(self):
         state = self._call_state()
+        resolved_dt = self._resolved_schedule_datetime()
         return {
             "id": self.id,
             "patient_id": self.patient_id,
@@ -362,8 +379,8 @@ class Appointment(db.Model):
             "patient_image": self.patient.patient_profile.profile_image if self.patient and self.patient.patient_profile else None,
             "doctor_id": self.doctor_id,
             "doctor_name": self.doctor.full_name if self.doctor else None,
-            "appointment_date": str(self.appointment_date),
-            "appointment_time": str(self.appointment_time),
+            "appointment_date": str(resolved_dt.date()) if resolved_dt else str(self.appointment_date),
+            "appointment_time": str(resolved_dt.time()) if resolved_dt else str(self.appointment_time),
             "slot_id": self.slot_id,
             "reason": self.reason,
             "notes": self.notes,
