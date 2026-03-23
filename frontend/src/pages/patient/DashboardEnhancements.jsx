@@ -513,26 +513,28 @@ export default function DashboardEnhancements() {
                     </div>
                     <div className="nn-appointment-footer">
                       <span className="nn-countdown-chip">{getCountdown(appointment)}</span>
-                      <button
-                        type="button"
-                        className="btn btn-outline-primary rounded-pill fw-bold"
-                        onClick={() => openAppointmentAction(appointment)}
-                        disabled={
-                          type === "Video"
-                          && (
-                            !Number.isFinite(Number(appointment?.id))
-                            || (
-                              callStateById[appointment.id]
-                              && (
-                                callStateById[appointment.id]?.call_state?.missed
-                                || !callStateById[appointment.id]?.call_state?.patient_can_join_now
-                              )
-                            )
-                          )
-                        }
-                      >
-                        {type === "Video" ? "Join Call" : "Get Directions"}
-                      </button>
+                      {type === "Video" ? (
+                        (Number.isFinite(Number(appointment?.id))
+                          && callStateById[appointment.id]
+                          && callStateById[appointment.id]?.call_state?.patient_can_join_now
+                          && !callStateById[appointment.id]?.call_state?.missed) ? (
+                          <button
+                            type="button"
+                            className="btn btn-outline-primary rounded-pill fw-bold"
+                            onClick={() => openAppointmentAction(appointment)}
+                          >
+                            Join Call
+                          </button>
+                        ) : null
+                      ) : (
+                        <button
+                          type="button"
+                          className="btn btn-outline-primary rounded-pill fw-bold"
+                          onClick={() => openAppointmentAction(appointment)}
+                        >
+                          Get Directions
+                        </button>
+                      )}
                     </div>
                     {type === "Video" && callStateById[appointment.id] && (
                       <div style={{ marginTop: 8, fontSize: 12, color: "#64748b", fontWeight: 600 }}>
