@@ -87,6 +87,7 @@ const Profile = () => {
   };
 
   const fetchCountries = async () => {
+    if (countries.length > 0) return; // Already fetched
     try {
       const res = await axios.get("https://countriesnow.space/api/v0.1/countries/positions");
       const list = res.data.data.map((c) => c.name);
@@ -111,7 +112,8 @@ const Profile = () => {
   useEffect(() => {
     const init = async () => {
       setLoading(true);
-      await Promise.all([fetchClinicalData(), fetchEmergencyContact(), fetchCountries()]);
+      // Removed fetchCountries from initial load - only fetch on edit
+      await Promise.all([fetchClinicalData(), fetchEmergencyContact()]);
       setLoading(false);
     };
     init();
@@ -152,6 +154,7 @@ const Profile = () => {
   const removeContact = (index) => setEmergencyContacts(emergencyContacts.filter((_, i) => i !== index));
 
   const startEditing = () => {
+    fetchCountries(); // Lazy load countries on edit click
     setInitialProfileSnapshot(normalizeProfile(profile));
     setInitialEmergencySnapshot(normalizeEmergencyContacts(emergencyContacts));
     setEditing(true);
@@ -196,7 +199,24 @@ const Profile = () => {
     }
   };
 
-  if (loading || !profile) return <div className="loading-spinner">Loading Profile...</div>;
+  if (loading || !profile) {
+      return (
+          <div className="patient-profile-page-wrapper">
+              <div className="profile-container py-4 px-3 px-md-5">
+                  <div className="skeleton-hero skeleton-box" />
+                  <div className="profile-body-grid mb-4">
+                      <div className="skeleton-card skeleton-box" />
+                      <div className="skeleton-card skeleton-box" />
+                  </div>
+                  <div className="row g-4 mb-4">
+                      <div className="col-md-4"><div className="skeleton-mini skeleton-box" /></div>
+                      <div className="col-md-4"><div className="skeleton-mini skeleton-box" /></div>
+                      <div className="col-md-4"><div className="skeleton-mini skeleton-box" /></div>
+                  </div>
+              </div>
+          </div>
+      );
+  }
 
   const calculateAge = (dobString) => {
     if (!dobString || dobString === "N/A") return "N/A";
