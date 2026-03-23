@@ -1,22 +1,21 @@
 .pset-page-wrapper {
-  min-height: calc(100vh - 80px);
-  display: grid;
-  place-items: center;
-  padding: 40px 30px;
+  min-height: auto;
+  display: block;
+  padding: 0;
   box-sizing: border-box;
-  background: var(--nn-bg);
+  background: transparent;
   transition: all 0.4s ease;
 }
 
 .pset-root {
   width: 100%;
-  max-width: 1800px;
-  background: var(--nn-glass);
-  backdrop-filter: blur(16px);
-  padding: 3rem;
-  border-radius: 48px;
-  border: 1px solid var(--nn-border);
-  box-shadow: var(--nn-shadow-lg);
+  max-width: 100%;
+  background: transparent;
+  backdrop-filter: none;
+  padding: 0;
+  border-radius: 0;
+  border: 0;
+  box-shadow: none;
   font-family: 'Outfit', 'Inter', sans-serif;
   color: var(--nn-text-main);
   margin: 0;
