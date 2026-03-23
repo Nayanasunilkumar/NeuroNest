@@ -6,7 +6,6 @@ import {
   Activity,
   ArrowRight,
   AlertTriangle,
-  UserRound,
   Stethoscope,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -70,13 +69,6 @@ const getPatientStatus = (patient) => {
   return 'Stable';
 };
 
-const getAlertSeverity = (alert) => {
-  const severity = String(alert?.severity || '').toLowerCase();
-  if (severity === 'critical') return 'critical';
-  if (severity === 'warning') return 'follow-up';
-  return 'stable';
-};
-
 const PreviewEmpty = ({ title }) => (
   <div className="nn-preview-empty">
     <strong>{title}</strong>
@@ -134,6 +126,8 @@ const DoctorDashboard = () => {
   }, []);
 
   const doctorName = doctorProfile?.full_name || 'Doctor';
+  const doctorLastName = doctorName.split(' ').slice(-1)[0];
+  const doctorHeroInitials = getInitials(`Dr ${doctorLastName}`);
 
   const patientPreview = useMemo(() => {
     return [...patients]
@@ -173,7 +167,7 @@ const DoctorDashboard = () => {
     <div className="nn-dashboard-wrap">
       <section className="nn-dashboard-head">
         <div>
-          <h2 className="nn-title">Welcome back, Dr. {doctorName.split(' ').slice(-1)[0]}</h2>
+          <h2 className="nn-title">Welcome back, Dr. {doctorLastName}</h2>
           <p className="nn-subtitle">
             {new Date().toLocaleDateString('en-US', {
               weekday: 'long',
@@ -230,19 +224,20 @@ const DoctorDashboard = () => {
 
       <section className="row g-4">
         <div className="col-12">
-          <div className="nn-panel nn-overview-card">
-            <div className="nn-overview-avatar">
-              <UserRound size={24} />
-              <span>{getInitials(doctorName)}</span>
-            </div>
-            <div className="nn-overview-copy">
-              <p className="nn-panel-kicker">Doctor Overview</p>
-              <h3>{doctorName}</h3>
-              <div className="nn-overview-meta">
-                <span>{doctorProfile?.specialization || 'Clinical Specialist'}</span>
+          <div className="nn-overview-hero-card">
+            <div className="nn-overview-hero-left">
+              <div className="nn-overview-hero-avatar" aria-hidden="true">
+                <span className="nn-overview-hero-avatar-initials">{doctorHeroInitials}</span>
+              </div>
+              <div className="nn-overview-hero-copy">
+                <p className="nn-panel-kicker nn-overview-hero-kicker">DOCTOR OVERVIEW</p>
+                <h3 className="nn-overview-hero-name">Dr. {doctorLastName}</h3>
+                <div className="nn-overview-hero-meta">
+                  <span>{doctorProfile?.specialization || 'Clinical Specialist'}</span>
+                </div>
               </div>
             </div>
-            <div className="nn-overview-badge">
+            <div className="nn-overview-hero-badge">
               <Stethoscope size={16} />
               <span>Clinician Dashboard</span>
             </div>
@@ -266,15 +261,19 @@ const DoctorDashboard = () => {
               ) : (
                 patientPreview.map((patient) => {
                   const status = getPatientStatus(patient);
+                  const statusKey = status.toLowerCase().replace(/[^a-z]/g, '-');
                   return (
-                    <article key={patient.id} className="nn-preview-item">
-                      <div className="nn-preview-main">
-                        <strong>{patient.full_name}</strong>
-                        <span>Last visit: {formatDate(patient.last_visit)}</span>
+                    <article key={patient.id} className="nn-preview-item nn-patient-preview-item">
+                      <div className="nn-patient-preview-left">
+                        <div className="nn-patient-avatar" aria-hidden="true">
+                          {getInitials(patient.full_name)}
+                        </div>
+                        <div className="nn-preview-main">
+                          <strong>{patient.full_name}</strong>
+                          <span>Last visit: {formatDate(patient.last_visit)}</span>
+                        </div>
                       </div>
-                      <span className={`nn-status-chip nn-status-${status.toLowerCase().replace(/[^a-z]/g, '-')}`}>
-                        {status}
-                      </span>
+                      <span className={`nn-followup-btn nn-followup-${statusKey}`}>Follow-up</span>
                     </article>
                   );
                 })
@@ -299,14 +298,19 @@ const DoctorDashboard = () => {
                 <PreviewEmpty title="No upcoming appointments" />
               ) : (
                 appointmentPreview.map((appointment) => (
-                  <article key={appointment.id} className="nn-preview-item">
-                    <div className="nn-preview-main">
-                      <strong>{appointment.patient_name || 'Patient'}</strong>
-                      <span>
-                        {formatTime(appointment.appointment_time)} · {(appointment.consultation_type || 'in_person').replace('_', ' ')}
-                      </span>
+                  <article key={appointment.id} className="nn-preview-item nn-appointment-preview-item">
+                    <div className="nn-appointment-preview-left">
+                      <div className="nn-patient-avatar nn-appointment-avatar" aria-hidden="true">
+                        {getInitials(appointment.patient_name || 'Patient')}
+                      </div>
+                      <div className="nn-preview-main">
+                        <strong>{appointment.patient_name || 'Patient'}</strong>
+                        <span>
+                          {formatTime(appointment.appointment_time)} · {(appointment.consultation_type || 'in_person').replace('_', ' ')}
+                        </span>
+                      </div>
                     </div>
-                    <span className="nn-preview-date">{formatDate(appointment.appointment_date)}</span>
+                    <span className="nn-appointment-date-badge">{formatDate(appointment.appointment_date)}</span>
                   </article>
                 ))
               )}
