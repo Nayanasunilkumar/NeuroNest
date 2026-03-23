@@ -3,44 +3,19 @@ import {
   Users,
   Calendar,
   ClipboardList,
-  Clock,
   Activity,
   ArrowRight,
-  CheckCircle2,
   AlertTriangle,
   MessageSquare,
+  UserRound,
+  Stethoscope,
+  Star,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import {
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  Tooltip,
-} from 'recharts';
 import { getDoctorProfile } from '../../services/doctorProfileService';
-import { getDoctorStats } from '../../api/doctor';
+import { getDoctorStats, getPatients, getSchedule } from '../../api/doctor';
+import { getAlerts } from '../../api/alerts';
 import '../../styles/dashboard.css';
-
-const ACTIVITY_DATA = [
-  { name: 'Mon', active: 40 },
-  { name: 'Tue', active: 30 },
-  { name: 'Wed', active: 45 },
-  { name: 'Thu', active: 50 },
-  { name: 'Fri', active: 35 },
-  { name: 'Sat', active: 20 },
-  { name: 'Sun', active: 15 },
-];
-
-const GENERAL_OVERVIEW_DATA = [
-  { name: 'Stable', value: 58, color: 'var(--nn-success)' },
-  { name: 'Needs Follow-up', value: 27, color: 'var(--nn-warning)' },
-  { name: 'Critical Watch', value: 15, color: 'var(--nn-danger)' },
-];
 
 const StatCard = ({ label, value, hint, icon, tone = 'primary' }) => (
   <div className={`nn-metric-card nn-tone-${tone}`}>
@@ -57,66 +32,146 @@ const StatCard = ({ label, value, hint, icon, tone = 'primary' }) => (
   </div>
 );
 
-const TimelineItem = ({ time, patient, status, tone }) => (
-  <div className="nn-timeline-item">
-    <div className="nn-time">{time}</div>
-    <div className="nn-timeline-dot" data-tone={tone} />
-    <div className="nn-timeline-body">
-      <div className="nn-patient">{patient}</div>
-      <div className="nn-status">{status}</div>
-    </div>
-  </div>
-);
+const formatDate = (value, options = {}) => {
+  if (!value) return 'Not available';
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return 'Not available';
+  return parsed.toLocaleDateString('en-US', {
+    month: 'short',
+    day: '2-digit',
+    year: 'numeric',
+    ...options,
+  });
+};
 
-const QuickButton = ({ icon, label, onClick }) => (
-  <button className="nn-quick-btn" onClick={onClick}>
-    {React.createElement(icon, { size: 14 })}
-    <span>{label}</span>
-    <ArrowRight size={13} />
-  </button>
+const formatTime = (value) => {
+  if (!value) return 'TBD';
+  const [hourStr, minuteStr = '00'] = String(value).split(':');
+  const hour = Number(hourStr);
+  const minute = Number(minuteStr);
+  if (Number.isNaN(hour) || Number.isNaN(minute)) return value;
+  const date = new Date();
+  date.setHours(hour, minute, 0, 0);
+  return date.toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+};
+
+const getInitials = (name = 'Doctor') =>
+  String(name)
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() || '')
+    .join('') || 'DR';
+
+const getPatientStatus = (patient) => {
+  const raw = String(patient?.status || '').toLowerCase();
+  if (raw.includes('critical') || raw.includes('high')) return 'Critical';
+  if (raw.includes('inactive') || raw.includes('follow')) return 'Follow-up';
+  return 'Stable';
+};
+
+const getAlertSeverity = (alert) => {
+  const severity = String(alert?.severity || '').toLowerCase();
+  if (severity === 'critical') return 'critical';
+  if (severity === 'warning') return 'follow-up';
+  return 'stable';
+};
+
+const PreviewEmpty = ({ title }) => (
+  <div className="nn-preview-empty">
+    <strong>{title}</strong>
+    <span>Nothing to review right now.</span>
+  </div>
 );
 
 const DoctorDashboard = () => {
   const navigate = useNavigate();
-  const [doctorName, setDoctorName] = useState('Doctor');
+  const [doctorProfile, setDoctorProfile] = useState(null);
   const [stats, setStats] = useState({
     total_patients: 0,
     today_appointments: 0,
     pending_requests: 0,
     active_assessments: 0,
   });
+  const [patients, setPatients] = useState([]);
+  const [appointments, setAppointments] = useState([]);
+  const [alerts, setAlerts] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
+      const today = new Date().toISOString().split('T')[0];
       try {
         setLoading(true);
-        const [profileData, statsData] = await Promise.all([
+        const results = await Promise.allSettled([
           getDoctorProfile(),
           getDoctorStats(),
+          getPatients(),
+          getSchedule(today, 'all'),
+          getAlerts(),
         ]);
-        setDoctorName(profileData.full_name || 'Doctor');
-        setStats(statsData);
+
+        const [profileResult, statsResult, patientsResult, appointmentsResult, alertsResult] = results;
+
+        if (profileResult.status === 'fulfilled') {
+          setDoctorProfile(profileResult.value || null);
+        }
+        if (statsResult.status === 'fulfilled') {
+          setStats(statsResult.value || {});
+        }
+        if (patientsResult.status === 'fulfilled') {
+          setPatients(Array.isArray(patientsResult.value) ? patientsResult.value : []);
+        }
+        if (appointmentsResult.status === 'fulfilled') {
+          setAppointments(Array.isArray(appointmentsResult.value) ? appointmentsResult.value : []);
+        }
+        if (alertsResult.status === 'fulfilled') {
+          setAlerts(Array.isArray(alertsResult.value) ? alertsResult.value : []);
+        }
       } catch (err) {
         console.error('Dashboard data fetch error', err);
       } finally {
         setLoading(false);
       }
     };
+
     fetchData();
   }, []);
 
-  const loadFactor = useMemo(() => {
-    const today = Number(stats.today_appointments || 0);
-    if (today === 0) return 0;
-    return Math.min(100, Math.round((today / 10) * 100));
-  }, [stats.today_appointments]);
+  const doctorName = doctorProfile?.full_name || 'Doctor';
 
-  const pendingRatio = useMemo(() => {
-    const total = Number(stats.today_appointments || 0) + Number(stats.pending_requests || 0);
-    if (!total) return 0;
-    return Math.round((Number(stats.pending_requests || 0) / total) * 100);
-  }, [stats.today_appointments, stats.pending_requests]);
+  const patientPreview = useMemo(() => {
+    return [...patients]
+      .sort((a, b) => {
+        const dateA = a.last_visit ? new Date(a.last_visit).getTime() : 0;
+        const dateB = b.last_visit ? new Date(b.last_visit).getTime() : 0;
+        return dateB - dateA;
+      })
+      .slice(0, 6);
+  }, [patients]);
+
+  const appointmentPreview = useMemo(() => {
+    return [...appointments]
+      .filter((item) => {
+        const status = String(item.status || '').toLowerCase();
+        return status !== 'cancelled' && status !== 'completed' && status !== 'no-show';
+      })
+      .sort((a, b) => {
+        const timeA = `${a.appointment_date || ''} ${a.appointment_time || ''}`.trim();
+        const timeB = `${b.appointment_date || ''} ${b.appointment_time || ''}`.trim();
+        return new Date(timeA).getTime() - new Date(timeB).getTime();
+      })
+      .slice(0, 5);
+  }, [appointments]);
+
+  const alertsPreview = useMemo(() => {
+    return [...alerts]
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+      .slice(0, 5);
+  }, [alerts]);
 
   if (loading) {
     return (
@@ -187,142 +242,163 @@ const DoctorDashboard = () => {
         </div>
       </section>
 
-      <section className="row g-4 mb-4">
-        <div className="col-12 col-xl-4">
-          <div className="nn-panel">
-            <div className="nn-panel-head">
-              <h3>Quick Actions</h3>
-            </div>
-            <div className="nn-quick-grid">
-              <QuickButton icon={Calendar} label="Today's Schedule" onClick={() => navigate('/doctor/schedule')} />
-              <QuickButton icon={Clock} label="Appointment Requests" onClick={() => navigate('/doctor/appointment-requests')} />
-              <QuickButton icon={Users} label="My Patients" onClick={() => navigate('/doctor/patients')} />
-              <QuickButton icon={MessageSquare} label="Patient Chat" onClick={() => navigate('/doctor/chat')} />
-            </div>
-          </div>
-
-          <div className="nn-panel mt-4">
-            <div className="nn-panel-head">
-              <h3>Today Timeline</h3>
-            </div>
-            <div className="nn-timeline">
-              <TimelineItem time="09:30" patient="Teresa W." status="Neuropathy follow-up" tone="success" />
-              <TimelineItem time="11:00" patient="Ivan K." status="Pending reports" tone="warning" />
-              <TimelineItem time="14:15" patient="Asha P." status="Cognitive screening" tone="info" />
-              <TimelineItem time="17:30" patient="Ravi S." status="Post-op review" tone="danger" />
-            </div>
-          </div>
-        </div>
-
-        <div className="col-12 col-xl-8">
-          <div className="nn-panel h-100">
-            <div className="nn-panel-head">
-              <h3>Patient Dynamic Activity</h3>
-              <span className="nn-panel-caption">Last 7 days</span>
-            </div>
-            <div className="nn-chart-box">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={ACTIVITY_DATA}>
-                  <defs>
-                    <linearGradient id="nnAreaFill" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="var(--nn-primary)" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="var(--nn-primary)" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <XAxis
-                    dataKey="name"
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fontSize: 12, fontWeight: 600, fill: 'var(--nn-text-muted)' }}
-                    dy={10}
-                  />
-                  <YAxis hide />
-                  <Tooltip
-                    contentStyle={{
-                      borderRadius: '12px',
-                      border: '1px solid var(--nn-border)',
-                      background: 'var(--nn-surface)',
-                    }}
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="active"
-                    stroke="var(--nn-primary)"
-                    strokeWidth={3}
-                    fillOpacity={1}
-                    fill="url(#nnAreaFill)"
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-            <div className="nn-metrics-row">
-              <div className="nn-metric-pill">
-                <span>Load factor</span>
-                <strong>{loadFactor}%</strong>
-              </div>
-              <div className="nn-metric-pill">
-                <span>Pending ratio</span>
-                <strong>{pendingRatio}%</strong>
-              </div>
-              <div className="nn-metric-pill">
-                <span>Completed trend</span>
-                <strong className="text-success">
-                  <CheckCircle2 size={14} /> Stable
-                </strong>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
       <section className="row g-4">
-        <div className="col-12 col-lg-5">
-          <div className="nn-panel">
-            <div className="nn-panel-head">
-              <h3>Case Distribution</h3>
+        <div className="col-12">
+          <div className="nn-panel nn-overview-card">
+            <div className="nn-overview-avatar">
+              <UserRound size={24} />
+              <span>{getInitials(doctorName)}</span>
             </div>
-            <div className="nn-donut-wrap">
-              <div className="nn-donut">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={GENERAL_OVERVIEW_DATA}
-                      innerRadius={55}
-                      outerRadius={78}
-                      paddingAngle={4}
-                      dataKey="value"
-                    >
-                      {GENERAL_OVERVIEW_DATA.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                  </PieChart>
-                </ResponsiveContainer>
+            <div className="nn-overview-copy">
+              <p className="nn-panel-kicker">Doctor Overview</p>
+              <h3>{doctorName}</h3>
+              <div className="nn-overview-meta">
+                <span>{doctorProfile?.department || 'Neurology'}</span>
+                <span>{doctorProfile?.specialization || 'Clinical Specialist'}</span>
               </div>
-              <div className="nn-donut-legend">
-                {GENERAL_OVERVIEW_DATA.map((item) => (
-                  <div key={item.name} className="nn-legend-row">
-                    <span className="nn-legend-dot" style={{ background: item.color }} />
-                    <span>{item.name}</span>
-                    <strong>{item.value}%</strong>
-                  </div>
-                ))}
-              </div>
+            </div>
+            <div className="nn-overview-badge">
+              <Stethoscope size={16} />
+              <span>Clinician Dashboard</span>
             </div>
           </div>
         </div>
 
-        <div className="col-12 col-lg-7">
+        <div className="col-12 col-xl-6">
           <div className="nn-panel">
             <div className="nn-panel-head">
-              <h3>Operational Notes</h3>
+              <div>
+                <p className="nn-panel-kicker">Patients Overview</p>
+                <h3>Recent patient snapshot</h3>
+              </div>
+              <button className="nn-inline-link" onClick={() => navigate('/doctor/patients')}>
+                View All Patients <ArrowRight size={14} />
+              </button>
             </div>
-            <ul className="nn-notes">
-              <li>Review pending appointment approvals before end of day.</li>
-              <li>Complete assessment summaries for unresolved follow-ups.</li>
-              <li>Use Feedback/Reviews to detect repeated patient concerns.</li>
-            </ul>
+            <div className="nn-preview-list">
+              {patientPreview.length === 0 ? (
+                <PreviewEmpty title="No patients found" />
+              ) : (
+                patientPreview.map((patient) => {
+                  const status = getPatientStatus(patient);
+                  return (
+                    <article key={patient.id} className="nn-preview-item">
+                      <div className="nn-preview-main">
+                        <strong>{patient.full_name}</strong>
+                        <span>Last visit: {formatDate(patient.last_visit)}</span>
+                      </div>
+                      <span className={`nn-status-chip nn-status-${status.toLowerCase().replace(/[^a-z]/g, '-')}`}>
+                        {status}
+                      </span>
+                    </article>
+                  );
+                })
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="col-12 col-xl-6">
+          <div className="nn-panel">
+            <div className="nn-panel-head">
+              <div>
+                <p className="nn-panel-kicker">Upcoming Appointments</p>
+                <h3>Next few sessions</h3>
+              </div>
+              <button className="nn-inline-link" onClick={() => navigate('/doctor/schedule')}>
+                View All Appointments <ArrowRight size={14} />
+              </button>
+            </div>
+            <div className="nn-preview-list">
+              {appointmentPreview.length === 0 ? (
+                <PreviewEmpty title="No upcoming appointments" />
+              ) : (
+                appointmentPreview.map((appointment) => (
+                  <article key={appointment.id} className="nn-preview-item">
+                    <div className="nn-preview-main">
+                      <strong>{appointment.patient_name || 'Patient'}</strong>
+                      <span>
+                        {formatTime(appointment.appointment_time)} · {(appointment.consultation_type || 'in_person').replace('_', ' ')}
+                      </span>
+                    </div>
+                    <span className="nn-preview-date">{formatDate(appointment.appointment_date)}</span>
+                  </article>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="col-12 col-xl-7">
+          <div className="nn-panel">
+            <div className="nn-panel-head">
+              <div>
+                <p className="nn-panel-kicker">Alerts Summary</p>
+                <h3>Recent clinical alerts</h3>
+              </div>
+              <button className="nn-inline-link" onClick={() => navigate('/alerts')}>
+                View All Alerts <ArrowRight size={14} />
+              </button>
+            </div>
+            <div className="nn-preview-list">
+              {alertsPreview.length === 0 ? (
+                <PreviewEmpty title="No recent alerts" />
+              ) : (
+                alertsPreview.map((alert) => {
+                  const severity = getAlertSeverity(alert);
+                  return (
+                    <article key={alert.id} className={`nn-preview-item nn-alert-item nn-alert-${severity}`}>
+                      <div className="nn-preview-main">
+                        <strong>{alert.patient_name || `Patient #${alert.patient_id || 'Unknown'}`}</strong>
+                        <span>{alert.message || 'Alert received'}</span>
+                      </div>
+                      <span className="nn-preview-date">{formatTime(alert.created_at)}</span>
+                    </article>
+                  );
+                })
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="col-12 col-xl-5">
+          <div className="nn-panel">
+            <div className="nn-panel-head">
+              <div>
+                <p className="nn-panel-kicker">Quick Navigation</p>
+                <h3>Open key workspaces</h3>
+              </div>
+            </div>
+            <div className="nn-shortcut-grid">
+              <button className="nn-shortcut-card" onClick={() => navigate('/doctor/patients')}>
+                <Users size={18} />
+                <div>
+                  <strong>Go to Patients</strong>
+                  <span>Review dossiers and care history</span>
+                </div>
+              </button>
+              <button className="nn-shortcut-card" onClick={() => navigate('/doctor/schedule')}>
+                <Calendar size={18} />
+                <div>
+                  <strong>Go to Appointments</strong>
+                  <span>Check today’s and upcoming sessions</span>
+                </div>
+              </button>
+              <button className="nn-shortcut-card" onClick={() => navigate('/doctor/feedback-reviews')}>
+                <Star size={18} />
+                <div>
+                  <strong>Go to Reviews</strong>
+                  <span>Track patient feedback and quality</span>
+                </div>
+              </button>
+              <button className="nn-shortcut-card" onClick={() => navigate('/doctor/chat')}>
+                <MessageSquare size={18} />
+                <div>
+                  <strong>Go to Chat</strong>
+                  <span>Continue patient conversations</span>
+                </div>
+              </button>
+            </div>
           </div>
         </div>
       </section>
