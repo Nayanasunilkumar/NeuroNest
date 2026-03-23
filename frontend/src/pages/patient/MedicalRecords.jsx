@@ -6,7 +6,7 @@ import { getPatientDossier } from "../../api/doctor";
 import { getUser } from "../../utils/auth";
 import { getDoctorProfile } from "../../services/doctorProfileService";
 import { getClinicalSummary } from "../../api/profileApi";
-import { formatDateIST, calculateAgeIST as calculateAgeHelper } from "../../utils/time";
+import { formatDateIST, calculateAgeIST as calculateAgeHelper } from "../../../utils/time";
 
 // Components
 import MedicalRecordTable from "../../components/patient/medicalRecords/MedicalRecordTable";

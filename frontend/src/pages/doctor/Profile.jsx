@@ -8,7 +8,7 @@ import AvailabilityModal from '../../components/doctor/AvailabilityModal';
 import { fetchSpecialties } from '../../services/adminDoctorAPI';
 import { toAssetUrl } from '../../utils/media';
 import { useTheme } from '../../context/ThemeContext';
-import { formatDateIST } from '../../utils/time';
+import { formatDateIST } from '../../../utils/time';
 import '../../styles/profile-dark.css';
 
 const Profile = () => {

@@ -17,7 +17,7 @@ const CustomTooltip = ({ active, payload, label }) => {
     return null;
 };
 
-import { formatDateIST } from '../../../utils/time';
+import { formatDateIST } from '../../../../utils/time';
 
 const AppointmentCharts = ({ data }) => {
     // Format dates for display

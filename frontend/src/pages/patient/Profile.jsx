@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { formatDateIST, calculateAgeIST } from "../../utils/time";
+import { formatDateIST, calculateAgeIST } from "../../../utils/time";
 import api from "../../api/axios";
 import axios from "axios";
 import { toAssetUrl } from "../../utils/media";
