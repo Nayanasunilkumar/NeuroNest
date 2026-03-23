@@ -724,7 +724,7 @@ def get_doctor_patients():
             "patient_image": patient_user.patient_profile.profile_image if patient_user.patient_profile else None,
             "last_visit": str(last_visit.appointment_date) if last_visit else None,
             "next_appointment": str(next_visit.appointment_date) if next_visit else None,
-            "status": "Active" if next_visit else "Inactive" # This status is for Clinical Roster, keep as is for UI if needed, but wait.
+            "status": (patient_user.account_status or "active").capitalize()
         })
 
     return jsonify(patients_data), 200
