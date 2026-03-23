@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=DM+Serif+Display:ital@0;1&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Poppins:wght@600;700&display=swap");
 
 /* ========================================= */
 /* PREMIUM PROFILE STYLES (Glassmorphism + Cards) */
@@ -896,7 +896,7 @@ body.dark .tag-add-btn {
 .patient-profile-page-wrapper button,
 .patient-profile-page-wrapper input,
 .patient-profile-page-wrapper select {
-    font-family: "DM Sans", sans-serif;
+    font-family: "Inter", sans-serif;
 }
 
 .patient-profile-page-wrapper .clinical-panel {
@@ -915,7 +915,7 @@ body.dark .tag-add-btn {
 .calm-heading,
 .patient-profile-page-wrapper h1,
 .patient-profile-page-wrapper .panel-title {
-    font-family: "DM Serif Display", serif;
+    font-family: "Poppins", sans-serif;
     letter-spacing: 0.01em;
 }
 
@@ -1090,6 +1090,40 @@ body.dark .tag-add-btn {
     color: #64748b;
 }
 
+.timeline-status-badge {
+    margin-left: auto;
+    border-radius: 999px;
+    padding: 2px 8px;
+    font-size: 0.62rem;
+    letter-spacing: 0.04em;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.timeline-status-badge.upcoming {
+    background: #dbeafe;
+    color: #1d4ed8;
+}
+
+.timeline-status-badge.completed {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.timeline-status-badge.cancelled {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+.timeline-meta {
+    margin-top: 4px;
+    font-size: 0.72rem;
+    color: #6b7280;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
 .pulse-dot {
     width: 8px;
     height: 8px;
@@ -1124,6 +1158,12 @@ body.dark .tag-add-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.emergency-call-btn:hover {
+    background: #eef2ff;
+    transform: translateY(-1px);
 }
 
 .medications-grid {
@@ -1165,7 +1205,7 @@ body.dark .tag-add-btn {
 }
 
 .medication-name {
-    font-family: "DM Serif Display", serif;
+    font-family: "Poppins", sans-serif;
     font-size: 1.02rem;
     color: var(--calm-ink);
 }
@@ -1174,6 +1214,12 @@ body.dark .tag-add-btn {
     margin-top: 4px;
     color: #64748b;
     font-size: 0.84rem;
+}
+
+.medication-started {
+    margin-top: 4px;
+    color: #6b7280;
+    font-size: 0.75rem;
 }
 
 .status-chip {
@@ -1188,6 +1234,11 @@ body.dark .tag-add-btn {
 .severity-active {
     background: #dbeafe !important;
     color: #1d4ed8 !important;
+}
+
+.status-completed {
+    background: #e5e7eb !important;
+    color: #374151 !important;
 }
 
 .severity-severe {
@@ -1239,6 +1290,74 @@ body.dark .tag-add-btn {
     letter-spacing: 0.03em;
     align-self: flex-start;
     padding: 4px 2px 2px;
+}
+
+.condition-meta {
+    font-size: 0.72rem;
+    color: #6b7280;
+    margin-left: 24px;
+    margin-top: 2px;
+}
+
+.dashboard-mini-card {
+    border: 1px solid #e2e8f0 !important;
+}
+
+.mini-card-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #1f2937;
+}
+
+.mini-card-meta {
+    margin-top: 4px;
+    font-size: 0.84rem;
+    color: #6b7280;
+}
+
+.health-metric {
+    font-size: 1.9rem;
+    font-weight: 800;
+    color: #6c63ff;
+    line-height: 1.1;
+}
+
+.bp-chart {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 10px;
+    align-items: end;
+    min-height: 120px;
+}
+
+.bp-bar-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+
+.bp-bar {
+    width: 100%;
+    max-width: 28px;
+    border-radius: 8px 8px 4px 4px;
+    background: linear-gradient(180deg, #6c63ff 0%, #a5b4fc 100%);
+}
+
+.bp-bar-wrap span {
+    font-size: 0.7rem;
+    color: #6b7280;
+}
+
+.mini-list {
+    margin: 0;
+    padding-left: 1rem;
+    color: #374151;
+    font-size: 0.84rem;
+}
+
+.mini-list li {
+    margin-bottom: 6px;
 }
 
 .patient-profile-page-wrapper .diet-list-item {

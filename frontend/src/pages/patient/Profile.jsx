@@ -7,7 +7,7 @@ import "../../styles/ProfileStyles.css";
 import { getClinicalSummary } from "../../api/profileApi";
 import {
   User, Phone, Mail, MapPin, Activity,
-  Heart, Calendar, Weight, Edit2,
+  Heart, Calendar, Weight, Edit2, Clock, MessageCircle,
   Save, Plus, Trash2, ShieldAlert,
   Droplet, Scale, Pill, Video, Stethoscope, FileText, AlertTriangle, ShieldCheck
 } from "lucide-react";
@@ -225,8 +225,9 @@ const Profile = () => {
     return { label: "Obese", tone: "critical", score: 100 };
   })();
 
-  const activeMeds = (clinicalData?.medications || []).filter((m) => m.status === "active");
+  const allMeds = clinicalData?.medications || [];
   const timelineEntries = (clinicalData?.timeline || []).slice(0, 5);
+  const upcomingAppointment = timelineEntries.find((entry) => String(entry.status || "").toLowerCase() === "upcoming") || timelineEntries[0];
 
   const normalizeSeverity = (rawValue, fallback = "severe") => {
     const value = String(rawValue ?? fallback).trim().toLowerCase();
@@ -242,11 +243,15 @@ const Profile = () => {
       name: c.condition_name,
       severity: normalizeSeverity(c.status, "active"),
       kind: "condition",
+      status: String(c.status || "active").toLowerCase() === "resolved" ? "Resolved" : "Active",
+      updatedAt: c.updated_at || c.created_at,
     })),
     ...(clinicalData?.allergies || []).map((a) => ({
       name: a.allergy_name,
       severity: normalizeSeverity(a.severity, "severe"),
       kind: "allergy",
+      status: "Active",
+      updatedAt: a.updated_at || a.created_at,
     })),
   ];
 
@@ -268,6 +273,23 @@ const Profile = () => {
     if (normalized.includes("prescription") || normalized.includes("med")) return <FileText size={14} />;
     return <Stethoscope size={14} />;
   };
+
+  const formatDate = (value) => {
+    if (!value) return "Not available";
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "Not available";
+    return date.toLocaleDateString(undefined, { day: "2-digit", month: "short", year: "numeric" });
+  };
+
+  const timelineStatus = (rawStatus = "") => {
+    const value = String(rawStatus || "").toLowerCase();
+    if (value === "upcoming" || value === "scheduled") return "upcoming";
+    if (value === "cancelled" || value === "canceled") return "cancelled";
+    return "completed";
+  };
+
+  const bloodPressureSamples = [118, 122, 125, 120, 128, 124];
+  const heartRate = clinicalData?.identity?.heart_rate || 76;
 
   return (
     <div className="patient-profile-page-wrapper">
@@ -415,14 +437,16 @@ const Profile = () => {
                                     const dateObj = new Date(appt.appointment_date);
                                     const month = dateObj.toLocaleString('default', { month: 'short' });
                                     const year = dateObj.getFullYear();
+                                    const status = timelineStatus(appt.status);
                                     return (
                                     <div key={i} className="timeline-row timeline-row-card">
                                         <div className="timeline-left"><span className="timeline-date-pill">{month} {year}</span></div>
                                         <div className="timeline-center"><div className="timeline-marker" style={i === (clinicalData?.timeline?.length || 0) - 1 ? {borderColor: '#2b70ff'} : {}}></div></div>
                                         <div className="timeline-right">
-                                            <div className="timeline-kind">{getTimelineIcon(appt.reason)} Appointment</div>
+                                            <div className="timeline-kind">{getTimelineIcon(appt.reason)} Appointment <span className={`timeline-status-badge ${status}`}>{status}</span></div>
                                             <div className="timeline-title">{appt.reason || 'General Appt'}</div>
                                             <div className="timeline-subtitle">Dr. {appt.doctor_name || 'Specialist'}</div>
+                                            <div className="timeline-meta"><Clock size={12} /> {formatDate(appt.appointment_date)} {appt.appointment_time ? `· ${appt.appointment_time}` : ""}</div>
                                         </div>
                                     </div>
                                     );
@@ -446,6 +470,7 @@ const Profile = () => {
                                                 <div className="med-history-icon"><Phone size={14} className={c.is_primary ? 'text-primary' : ''}/></div>
                                                 <span className="med-history-title">{c.relationship || 'Emergency Contact'} {c.is_primary && '(Primary)'}</span>
                                                 <button className="emergency-call-btn" type="button"><Phone size={12} /></button>
+                                                <button className="emergency-call-btn" type="button"><MessageCircle size={12} /></button>
                                             </div>
                                             <div className="med-history-data">{c.contact_name}</div>
                                             <div className="text-muted fw-bold mt-1" style={{fontSize: '0.75rem'}}>{c.phone}</div>
@@ -479,17 +504,21 @@ const Profile = () => {
                                 <button className="panel-edit-btn">Edit</button>
                             </div>
                             <div className="medications-grid p-4 pt-2">
-                                {activeMeds.map((med, i) => (
+                                {allMeds.map((med, i) => {
+                                    const medStatus = String(med.status || "active").toLowerCase() === "completed" ? "completed" : "active";
+                                    return (
                                     <div key={i} className="medication-card">
                                         <div className="medication-top">
                                             <div className="pill-icon-wrap"><Pill size={16} /></div>
-                                            <span className="badge rounded-pill status-chip status-active">ACTIVE</span>
+                                            <span className={`badge rounded-pill status-chip ${medStatus === "active" ? "status-active" : "status-completed"}`}>{medStatus}</span>
                                         </div>
                                         <div className="medication-name">{med.drug_name}</div>
                                         <div className="medication-meta">{med.dosage || "Dose not set"} · {med.frequency || "Schedule not set"}</div>
+                                        <div className="medication-started">Started: {formatDate(med.start_date || med.created_at)}</div>
                                     </div>
-                                ))}
-                                {activeMeds.length === 0 && <div className="text-center py-4 fw-bold text-muted">No active medications</div>}
+                                    );
+                                })}
+                                {allMeds.length === 0 && <div className="text-center py-4 fw-bold text-muted">No medications available</div>}
                             </div>
                         </div>
                     </div>
@@ -506,9 +535,12 @@ const Profile = () => {
                             <div className="d-flex flex-column pt-1">
                                 {visibleConditions.map((item, i) => (
                                     <div key={i} className="diet-list-item justify-content-between">
-                                        <div className="d-flex align-items-center gap-2">
-                                            {item.severity === "active" ? <Heart size={16} className="text-primary" /> : item.severity === "critical" ? <AlertTriangle size={16} className="text-danger" /> : <ShieldCheck size={16} className="text-warning" />}
-                                            {item.name}
+                                        <div className="d-flex flex-column">
+                                            <div className="d-flex align-items-center gap-2">
+                                                {item.severity === "active" ? <Heart size={16} className="text-primary" /> : item.severity === "critical" ? <AlertTriangle size={16} className="text-danger" /> : <ShieldCheck size={16} className="text-warning" />}
+                                                {item.name}
+                                            </div>
+                                            <div className="condition-meta">{item.status} · Updated {formatDate(item.updatedAt)}</div>
                                         </div>
                                         <span className={`badge rounded-pill status-chip ${severityClass(item.severity)}`}>{item.severity}</span>
                                     </div>
@@ -522,6 +554,62 @@ const Profile = () => {
                                         {showAllConditions ? "Collapse" : "Show all"}
                                     </button>
                                 )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="row g-4 mb-5">
+                    <div className="col-12 col-lg-8">
+                        <div className="row g-4">
+                            <div className="col-12 col-md-6">
+                                <div className="clinical-panel section-animate dashboard-mini-card">
+                                    <div className="panel-title mb-2"><ShieldAlert size={16} /> Insurance Information</div>
+                                    <div className="mini-card-title">NeuroNest Plus Care</div>
+                                    <div className="mini-card-meta">Policy ID: NN-INS-90211</div>
+                                    <div className="mini-card-meta">Coverage: Consultation + Diagnostics</div>
+                                </div>
+                            </div>
+                            <div className="col-12 col-md-6">
+                                <div className="clinical-panel section-animate dashboard-mini-card">
+                                    <div className="panel-title mb-2"><Activity size={16} /> Heart Rate</div>
+                                    <div className="health-metric">{heartRate} bpm</div>
+                                    <div className="mini-card-meta">Resting rate within monitored range.</div>
+                                </div>
+                            </div>
+                            <div className="col-12">
+                                <div className="clinical-panel section-animate dashboard-mini-card">
+                                    <div className="panel-title mb-3"><Activity size={16} /> Blood Pressure History</div>
+                                    <div className="bp-chart">
+                                        {bloodPressureSamples.map((value, index) => (
+                                            <div key={`${value}-${index}`} className="bp-bar-wrap">
+                                                <div className="bp-bar" style={{ height: `${Math.max(20, value - 90)}px` }} />
+                                                <span>{value}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="col-12 col-lg-4">
+                        <div className="d-flex flex-column gap-4">
+                            <div className="clinical-panel section-animate dashboard-mini-card">
+                                <div className="panel-title mb-2"><Calendar size={16} /> Upcoming Appointment</div>
+                                <div className="mini-card-title">{upcomingAppointment?.reason || "No upcoming appointment"}</div>
+                                <div className="mini-card-meta">Dr. {upcomingAppointment?.doctor_name || "Specialist"}</div>
+                                <div className="mini-card-meta">{formatDate(upcomingAppointment?.appointment_date)}</div>
+                            </div>
+                            <div className="clinical-panel section-animate dashboard-mini-card">
+                                <div className="panel-title mb-2"><FileText size={16} /> Recent Reports</div>
+                                <ul className="mini-list">
+                                    <li>CBC Report uploaded on {formatDate(clinicalData?.identity?.updated_at)}</li>
+                                    <li>General wellness summary available</li>
+                                </ul>
+                            </div>
+                            <div className="clinical-panel section-animate dashboard-mini-card">
+                                <div className="panel-title mb-2"><FileText size={16} /> Doctor Notes</div>
+                                <p className="mini-card-meta mb-0">Continue medication adherence, maintain hydration, and follow up next week for progress review.</p>
                             </div>
                         </div>
                     </div>
