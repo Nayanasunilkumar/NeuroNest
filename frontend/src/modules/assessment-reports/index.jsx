@@ -1,12 +1,5 @@
 import { Brain } from 'lucide-react';
-import ModuleComingSoon from '../../pages/shared/ModuleComingSoon';
-
-// eslint-disable-next-line react-refresh/only-export-components
-const AssessmentReportsPage = () =>
-  ModuleComingSoon({
-    title: 'Assessment Reports',
-    description: 'Assessment reporting workflows are scaffolded and ready for release.',
-  });
+import AssessmentPage from '../../pages/patient/Assessment';
 
 const assessmentReportsModule = {
   key: 'assessmentReports',
@@ -16,7 +9,7 @@ const assessmentReportsModule = {
   rolesAllowed: ['doctor'],
   enabledByDefault: true,
   componentsByRole: {
-    doctor: AssessmentReportsPage,
+    doctor: AssessmentPage,
   },
   showInSidebarByRole: [],
   orderByRole: { doctor: 70 },

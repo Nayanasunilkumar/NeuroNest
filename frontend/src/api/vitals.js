@@ -32,9 +32,12 @@ export async function getVitalsHistory(patientId) {
   return res.json();
 }
 
-export async function downloadAssessmentReport() {
+export async function downloadAssessmentReport(patientId) {
   const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
-  const urlWithTz = `${baseUrl}/api/vitals/assessment-report?tz=${encodeURIComponent(tz)}`;
+  let urlWithTz = `${baseUrl}/api/vitals/assessment-report?tz=${encodeURIComponent(tz)}`;
+  if (patientId) {
+    urlWithTz += `&patient_id=${patientId}`;
+  }
   
   const fetchBlob = async (url) => {
     const res = await fetch(url, { headers: authHeader() });

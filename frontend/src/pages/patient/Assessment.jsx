@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   LineChart,
   Line,
@@ -191,7 +192,10 @@ function TrendChart({ title, data, dataKey, unit, color, rangeMin, rangeMax }) {
   );
 }
 
-function AssessmentPage() {
+function AssessmentPage({ patientId: propPatientId }) {
+  const [searchParams] = useSearchParams();
+  const patientId = propPatientId || searchParams.get("patientId");
+
   const [latest, setLatest] = useState(null);
   const [history, setHistory] = useState([]);
   const [timeRangeMinutes, setTimeRangeMinutes] = useState(10);
@@ -204,7 +208,10 @@ function AssessmentPage() {
 
     const fetchVitals = async () => {
       try {
-        const [l, h] = await Promise.all([getLatestVitals(), getVitalsHistory()]);
+        const [l, h] = await Promise.all([
+          getLatestVitals(patientId), 
+          getVitalsHistory(patientId)
+        ]);
         if (!active) return;
         setLatest(l);
         setHistory(h);
@@ -226,11 +233,11 @@ function AssessmentPage() {
       active = false;
       clearInterval(interval);
     };
-  }, []);
+  }, [patientId]);
 
   const handleDownloadReport = async () => {
     try {
-      const blob = await downloadAssessmentReport();
+      const blob = await downloadAssessmentReport(patientId);
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;

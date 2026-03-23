@@ -279,14 +279,32 @@ def get_assessment_report():
     if not user:
         return jsonify({"message": "User not found"}), 404
     
+    # Determine target patient
+    requested_patient_id = request.args.get("patient_id", type=int)
+    
+    if requested_patient_id and claims.get("role") in ("doctor", "admin"):
+        target_user = User.query.get(requested_patient_id)
+        if not target_user:
+            return jsonify({"message": "Patient not found"}), 404
+    else:
+        target_user = user
+
     # Prepare data for PDF
     patient_data = {
-        "full_name": user.full_name or "N/A",
-        "email": user.email
+        "full_name": target_user.full_name or "N/A",
+        "email": target_user.email
     }
     
     # Calculate summary
-    history_list = list(_history)
+    # Use global telemetry only if it matches the target patient
+    target_history = []
+    target_latest = {}
+    
+    if str(_latest.get("patient_id")) == str(target_user.id):
+        target_history = list(_history)
+        target_latest = _latest
+    
+    history_list = target_history
     alerts = []
     if history_list:
         hrs = [h['hr'] for h in history_list if h.get('hr')]
@@ -316,7 +334,7 @@ def get_assessment_report():
     
     data = {
         "patient": patient_data,
-        "latest": _latest,
+        "latest": target_latest,
         "history": history_list,
         "summary": summary_data
     }
