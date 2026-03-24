@@ -6,6 +6,7 @@ import { io } from 'socket.io-client';
 import { sendMessage } from '../../api/chat';
 import { getIceConfig } from '../../api/rtc';
 import { useCall } from '../../context/CallContext';
+import { API_BASE_URL } from '../../config/env';
 
 export default function VideoConsultation() {
     const { roomId } = useParams();
@@ -245,9 +246,9 @@ export default function VideoConsultation() {
                 peerConnection.current.oniceconnectionstatechange = () => {
                     console.log("WebRTC iceConnectionState:", peerConnection.current?.iceConnectionState);
                 };
-
+                
                 const token = localStorage.getItem("neuronest_token");
-                const API_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
+                const API_URL = API_BASE_URL;
                 socket.current = io(API_URL, {
                     transports: ['websocket', 'polling'],
                     query: { token },
