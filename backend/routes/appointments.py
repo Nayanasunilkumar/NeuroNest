@@ -115,11 +115,11 @@ def _book_slot_atomic(*, current_user_id: int, doctor_id: int, slot_id: int, rea
         slot_start_utc = slot_start_utc.replace(tzinfo=timezone.utc)
     slot_local_dt = slot_start_utc.astimezone(ZoneInfo("Asia/Kolkata"))
 
-    # Timing Conflict Check (Secondary Guard)
+    # Timing Conflict Check (Secondary Guard) in UTC
     existing_timing_conflict = Appointment.query.filter(
         Appointment.doctor_id == doctor_id,
-        Appointment.appointment_date == slot_local_dt.date(),
-        Appointment.appointment_time == slot_local_dt.time().replace(microsecond=0),
+        Appointment.appointment_date == slot_start_utc.date(),
+        Appointment.appointment_time == slot_start_utc.time().replace(microsecond=0),
         Appointment.status.in_(["pending", "approved", "completed", "no_show", "rescheduled"]),
     ).first()
 
@@ -345,19 +345,34 @@ def get_available_slots(doctor_id):
                 "message": "Doctor is not accepting new appointments currently.",
             }), 200
 
+        now_utc = datetime.now(timezone.utc)
+
         slots = (
             AppointmentSlot.query.filter(
                 AppointmentSlot.doctor_user_id == doctor_id,
                 AppointmentSlot.slot_date_local == target_date,
-                AppointmentSlot.status == "available",
+                AppointmentSlot.status.in_(["available", "booked", "held"])
             )
             .order_by(AppointmentSlot.slot_start_utc.asc())
             .all()
         )
 
+        display_slots = []
+        for slot in slots:
+            # Skip past slots entirely if they are in the past
+            if slot.slot_start_utc.tzinfo is None:
+                slot_start_utc = slot.slot_start_utc.replace(tzinfo=timezone.utc)
+            else:
+                slot_start_utc = slot.slot_start_utc
+
+            if slot_start_utc < now_utc:
+                continue
+
+            display_slots.append(slot)
+
         doctor_tz = "Asia/Kolkata"
         slot_payload = []
-        for slot in slots:
+        for slot in display_slots:
             raw = slot.to_dict()
             slot_start = slot.slot_start_utc
             if slot_start:

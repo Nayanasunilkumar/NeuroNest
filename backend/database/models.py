@@ -202,7 +202,7 @@ class NotificationPreference(db.Model):
 # =========================================
 class Appointment(db.Model):
     __tablename__ = "appointments"
-
+ 
     id = db.Column(db.Integer, primary_key=True)
 
     patient_id = db.Column(

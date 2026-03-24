@@ -12,6 +12,7 @@ from database.models import (
     SlotEventLog,
     DoctorAvailability,
     DoctorBlockedDate,
+    DoctorConsultationSetting,
     DoctorProfile,
     DoctorScheduleSetting,
     DoctorSlotOverride,
@@ -213,11 +214,19 @@ def generate_slots_for_doctor(doctor_user_id: int, start_date: date, end_date: d
             while pointer_local + duration <= end_local:
                 slot_start_utc = _to_utc(pointer_local)
                 slot_end_utc = _to_utc(pointer_local + duration)
-                desired_status = "blocked" if _is_slot_in_override(
+                # Check if an appointment already exists at this time (manual or legacy)
+                appt_exists = Appointment.query.filter(
+                    Appointment.doctor_id == doctor_user_id,
+                    Appointment.appointment_date == current,
+                    Appointment.appointment_time == slot_start_utc.time(),
+                    Appointment.status.in_(["approved", "rescheduled", "pending"])
+                ).first()
+
+                desired_status = "booked" if appt_exists else ("blocked" if _is_slot_in_override(
                     slot_start_utc=slot_start_utc,
                     slot_end_utc=slot_end_utc,
                     overrides=overrides,
-                ) else "available"
+                ) else "available")
 
                 existing = AppointmentSlot.query.filter_by(
                     doctor_user_id=doctor_user_id,
@@ -248,7 +257,8 @@ def generate_slots_for_doctor(doctor_user_id: int, start_date: date, end_date: d
                         slot_end_utc=slot_end_utc,
                         slot_date_local=current,
                         status=desired_status,
-                        source="generated" if desired_status == "available" else "emergency_block",
+                        booked_appointment_id=appt_exists.id if appt_exists else None,
+                        source="generated" if desired_status == "available" else ("legacy_sync" if appt_exists else "emergency_block"),
                     )
                     db.session.add(new_slot)
                     generated += 1
