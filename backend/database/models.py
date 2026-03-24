@@ -299,18 +299,18 @@ class Appointment(db.Model):
     # RETURN JSON DATA
     # =========================================
     def _resolved_schedule_datetime(self):
+        """Returns a timezone-aware UTC datetime for the appointment."""
         if self.slot and self.slot.slot_start_utc:
-            tz_name = "Asia/Kolkata"
-
-            slot_start = self.slot.slot_start_utc
-            if slot_start.tzinfo is None:
-                slot_start = slot_start.replace(tzinfo=timezone.utc)
-            local_dt = slot_start.astimezone(ZoneInfo(tz_name))
-            return local_dt.replace(tzinfo=None)
+            dt = self.slot.slot_start_utc
+            if dt.tzinfo is None:
+                dt = dt.replace(tzinfo=timezone.utc)
+            return dt.astimezone(timezone.utc)
 
         if not self.appointment_date or not self.appointment_time:
             return None
-        return datetime.combine(self.appointment_date, self.appointment_time)
+
+        dt = datetime.combine(self.appointment_date, self.appointment_time)
+        return dt.replace(tzinfo=timezone.utc)
 
     def _appointment_datetime(self):
         return self._resolved_schedule_datetime()
@@ -327,8 +327,14 @@ class Appointment(db.Model):
         return appt_dt, patient_dt, doctor_dt
 
     def _call_state(self):
-        now = datetime.now()
+        now = datetime.now(timezone.utc)
         appt_dt, patient_join_time, doctor_join_time = self._join_window_values()
+        
+        # Ensure UTC awareness
+        if appt_dt and appt_dt.tzinfo is None: appt_dt = appt_dt.replace(tzinfo=timezone.utc)
+        if patient_join_time and patient_join_time.tzinfo is None: patient_join_time = patient_join_time.replace(tzinfo=timezone.utc)
+        if doctor_join_time and doctor_join_time.tzinfo is None: doctor_join_time = doctor_join_time.replace(tzinfo=timezone.utc)
+
         patient_joined = bool(self.patient_joined_at)
         doctor_joined = bool(self.doctor_joined_at)
         both_joined = patient_joined and doctor_joined
@@ -340,7 +346,7 @@ class Appointment(db.Model):
         if status == "ongoing" and not self.call_started_at and both_joined:
             status = "waiting"
 
-        if status in {"scheduled", "waiting"} and appt_dt and now >= (appt_dt + timedelta(minutes=10)) and not both_joined:
+        if status in {"scheduled", "waiting"} and appt_dt and now >= (appt_dt + timedelta(minutes=30)) and not both_joined:
             status = "missed"
 
         join_allowed_status = status in {"scheduled", "waiting", "ongoing"}
@@ -378,6 +384,7 @@ class Appointment(db.Model):
             "doctor_name": self.doctor.full_name if self.doctor else None,
             "appointment_date": str(resolved_dt.date()) if resolved_dt else str(self.appointment_date),
             "appointment_time": str(resolved_dt.time()) if resolved_dt else str(self.appointment_time),
+            "appointment_start_utc": resolved_dt.isoformat() + 'Z' if resolved_dt else None,
             "slot_id": self.slot_id,
             "reason": self.reason,
             "notes": self.notes,

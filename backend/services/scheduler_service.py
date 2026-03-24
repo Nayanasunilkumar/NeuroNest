@@ -1,4 +1,5 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
 from database.models import Appointment, DoctorNotificationSetting, db
 from services.notification_service import NotificationService
 from services.appointment_call_service import ensure_join_windows, send_system_chat_message, sync_call_status
@@ -10,8 +11,8 @@ def check_upcoming_consultations(app):
     """
     with app.app_context():
         try:
-            now = datetime.now()
-            window_start = (now - timedelta(minutes=30)).date()
+            now = datetime.now(timezone.utc)
+            window_start = (now - timedelta(minutes=60)).date()
             window_end = (now + timedelta(days=1)).date()
             upcoming_appointments = Appointment.query.filter(
                 Appointment.status.in_(["approved", "rescheduled", "pending"]),
@@ -24,7 +25,14 @@ def check_upcoming_consultations(app):
                 ensure_join_windows(appt)
                 state, _ = sync_call_status(appt, now=now)
 
-                appt_datetime = datetime.combine(appt.appointment_date, appt.appointment_time)
+                # appt_datetime is now UTC-aware
+                appt_datetime = appt._resolved_schedule_datetime()
+                if not appt_datetime: continue
+                
+                # Format for display in IST
+                ist_tz = ZoneInfo("Asia/Kolkata")
+                appt_display_time = appt_datetime.astimezone(ist_tz).strftime('%I:%M %p')
+
                 minutes_until = int((appt_datetime - now).total_seconds() / 60)
 
                 if appt.reminder_30_sent_at is None and 29 <= minutes_until <= 30:
@@ -36,7 +44,7 @@ def check_upcoming_consultations(app):
                     NotificationService.send_in_app(
                         user_id=appt.patient_id,
                         title="Appointment in 30 minutes",
-                        message=f"Your video appointment starts in 30 minutes at {appt.appointment_time.strftime('%I:%M %p')}.",
+                        message=f"Your video appointment starts in 30 minutes at {appt_display_time}.",
                         notif_type="appointment",
                         payload={"appointment_id": appt.id, "event_type": "appointment_30_min"},
                     )
@@ -51,16 +59,20 @@ def check_upcoming_consultations(app):
                     appt.reminder_30_sent_at = now
 
                 if appt.reminder_10_sent_at is None and 9 <= minutes_until <= 10:
-                    join_time = appt.join_enabled_doctor_time or (appt_datetime - timedelta(minutes=5))
+                    # join_time should also be localized for message
+                    raw_join_time = appt.join_enabled_doctor_time or (appt_datetime - timedelta(minutes=5))
+                    if raw_join_time.tzinfo is None: raw_join_time = raw_join_time.replace(tzinfo=timezone.utc)
+                    join_display_time = raw_join_time.astimezone(ist_tz).strftime('%I:%M %p')
+
                     send_system_chat_message(
                         appt,
-                        f"System: Your video appointment with Dr. {appt.doctor.full_name if appt.doctor else 'your doctor'} starts in 10 minutes. You can join the call at {join_time.strftime('%I:%M %p')}.",
+                        f"System: Your video appointment with Dr. {appt.doctor.full_name if appt.doctor else 'your doctor'} starts in 10 minutes. You can join the call at {join_display_time}.",
                         sender_id=appt.doctor_id,
                     )
                     NotificationService.send_in_app(
                         user_id=appt.patient_id,
                         title="Appointment in 10 minutes",
-                        message=f"Your video appointment starts in 10 minutes. You can join at {join_time.strftime('%I:%M %p')}.",
+                        message=f"Your video appointment starts in 10 minutes. You can join at {join_display_time}.",
                         notif_type="appointment",
                         payload={"appointment_id": appt.id, "event_type": "appointment_10_min"},
                     )

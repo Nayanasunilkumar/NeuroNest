@@ -129,8 +129,8 @@ def _book_slot_atomic(*, current_user_id: int, doctor_id: int, slot_id: int, rea
     appointment = Appointment(
         patient_id=current_user_id,
         doctor_id=doctor_id,
-        appointment_date=slot_local_dt.date(),
-        appointment_time=slot_local_dt.time().replace(microsecond=0),
+        appointment_date=slot_start_utc.date(),
+        appointment_time=slot_start_utc.time().replace(microsecond=0),
         slot_id=slot.id,
         reason=reason,
         notes=notes,
@@ -486,6 +486,9 @@ def book_appointment():
         if existing:
             return jsonify({"error": "Timing conflict: Doctor is already occupied at this time."}), 409
 
+        # Convert legacy local input to UTC if possible
+        # For simplicity, we assume frontend sends the target time.
+        # Ideally, legacy endpoint should also be standardized.
         new_appointment = Appointment(
             patient_id=current_user_id,
             doctor_id=doctor_id,

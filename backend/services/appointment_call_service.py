@@ -8,10 +8,28 @@ from services.notification_service import NotificationService
 VALID_CALL_STATUSES = {"scheduled", "waiting", "ongoing", "completed", "missed"}
 
 
+from datetime import datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
+
 def appointment_datetime(appointment: Appointment):
-    if not appointment or not appointment.appointment_date or not appointment.appointment_time:
+    """Returns a timezone-aware UTC datetime for the appointment."""
+    if not appointment:
         return None
-    return datetime.combine(appointment.appointment_date, appointment.appointment_time)
+        
+    # Priority 1: Use the Slot's precise UTC start time if available
+    if appointment.slot and appointment.slot.slot_start_utc:
+        dt = appointment.slot.slot_start_utc
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        return dt.astimezone(timezone.utc)
+
+    # Priority 2: Use the naive date/time fields (now strictly treated as UTC)
+    if not appointment.appointment_date or not appointment.appointment_time:
+        return None
+        
+    dt = datetime.combine(appointment.appointment_date, appointment.appointment_time)
+    # Treat as UTC by default
+    return dt.replace(tzinfo=timezone.utc)
 
 
 def ensure_join_windows(appointment: Appointment):
@@ -38,10 +56,27 @@ def ensure_join_windows(appointment: Appointment):
 
 
 def evaluate_call_state(appointment: Appointment, now=None):
-    now = now or datetime.now()
+    # Standardize on UTC for all internal logic
+    now = now or datetime.now(timezone.utc)
+    if now.tzinfo is None:
+        now = now.replace(tzinfo=timezone.utc)
+
     appt_dt = appointment_datetime(appointment)
-    patient_join_time = appointment.join_enabled_patient_time or (appt_dt - timedelta(minutes=10) if appt_dt else None)
-    doctor_join_time = appointment.join_enabled_doctor_time or (appt_dt - timedelta(minutes=5) if appt_dt else None)
+    
+    # Use UTC for join windows
+    patient_join_time = appointment.join_enabled_patient_time
+    if patient_join_time and patient_join_time.tzinfo is None:
+        patient_join_time = patient_join_time.replace(tzinfo=timezone.utc)
+        
+    doctor_join_time = appointment.join_enabled_doctor_time
+    if doctor_join_time and doctor_join_time.tzinfo is None:
+        doctor_join_time = doctor_join_time.replace(tzinfo=timezone.utc)
+
+    # Fallback to calculated windows if not set
+    if not patient_join_time and appt_dt:
+        patient_join_time = appt_dt - timedelta(minutes=10)
+    if not doctor_join_time and appt_dt:
+        doctor_join_time = appt_dt - timedelta(minutes=5)
 
     patient_joined = bool(appointment.patient_joined_at)
     doctor_joined = bool(appointment.doctor_joined_at)
@@ -82,7 +117,9 @@ def evaluate_call_state(appointment: Appointment, now=None):
 
 
 def sync_call_status(appointment: Appointment, now=None):
-    now = now or datetime.now()
+    now = now or datetime.now(timezone.utc)
+    if now.tzinfo is None:
+        now = now.replace(tzinfo=timezone.utc)
     ensure_join_windows(appointment)
     state = evaluate_call_state(appointment, now=now)
     changed = False
