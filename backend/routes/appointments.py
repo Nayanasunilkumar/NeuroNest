@@ -9,6 +9,7 @@ from database.models import (
     Appointment,
     AppointmentSlot,
     DoctorProfile,
+    DoctorScheduleSetting,
     User,
     db,
 )
