@@ -1,18 +1,28 @@
 import React, { useState } from 'react';
 import { ShieldCheck, RefreshCcw, AlertTriangle } from 'lucide-react';
 import { useFeedback } from '../../hooks/useFeedback';
+import { useNavigate } from 'react-router-dom';
 import QualityStatsCards from './components/QualityStatsCards';
 import ReviewFilters from './components/ReviewFilters';
 import ReviewTable from './components/ReviewTable';
 import ReviewDetailModal from './components/ReviewDetailModal';
 
 const FeedbackPage = () => {
+  const navigate = useNavigate();
   const { 
     reviews, stats, loading, error, 
     updateFilters, moderateReview, refresh 
   } = useFeedback();
   
   const [selectedReview, setSelectedReview] = useState(null);
+
+  const handleCardClick = (key) => {
+    if (key === 'reported' && stats?.most_reported_doctor_id) {
+        navigate(`/admin/governance/doctor/${stats.most_reported_doctor_id}`);
+    } else if (key === 'escalations') {
+        navigate('/admin/governance/queue');
+    }
+  };
 
   if (error) return (
     <div className="appointments-page" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
@@ -43,7 +53,7 @@ const FeedbackPage = () => {
         </div>
 
         {/* Dynamic Telemetry */}
-        <QualityStatsCards stats={stats} />
+        <QualityStatsCards stats={stats} onCardClick={handleCardClick} />
       </div>
 
       {/* Control Matrix */}

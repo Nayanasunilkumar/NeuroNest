@@ -1,11 +1,12 @@
 import React from 'react';
 import { Star, AlertTriangle, UserX, MessageSquare } from 'lucide-react';
 
-const QualityStatsCards = ({ stats }) => {
+const QualityStatsCards = ({ stats, onCardClick }) => {
   if (!stats) return null;
 
   const cards = [
     {
+      key: 'avg_rating',
       label: 'Average Rating',
       value: stats.avg_rating,
       sub: `${stats.total_reviews} Total Reviews`,
@@ -14,6 +15,7 @@ const QualityStatsCards = ({ stats }) => {
       trend: 'Institutional Quality'
     },
     {
+      key: 'recent_negative',
       label: 'Recent Negatives',
       value: stats.recent_negative,
       sub: 'Last 7 Days',
@@ -22,6 +24,7 @@ const QualityStatsCards = ({ stats }) => {
       trend: 'Triage Required'
     },
     {
+      key: 'reported',
       label: 'Most Reported',
       value: stats.most_reported_doctor,
       sub: 'Action Required',
@@ -30,6 +33,7 @@ const QualityStatsCards = ({ stats }) => {
       trend: 'Escalation Alert'
     },
     {
+      key: 'escalations',
       label: 'Open Escalations',
       value: stats.unresolved_escalations,
       sub: 'Pending Resolution',
@@ -42,7 +46,12 @@ const QualityStatsCards = ({ stats }) => {
   return (
     <div className="summary-cards-grid">
       {cards.map((card, idx) => (
-        <div key={idx} className="summary-card">
+        <div 
+            key={idx} 
+            className={`summary-card ${onCardClick ? 'clickable' : ''}`}
+            onClick={() => onCardClick?.(card.key)}
+            style={{ cursor: onCardClick ? 'pointer' : 'default' }}
+        >
           <div className="card-label">{card.label}</div>
           <div className="card-value" style={{ color: card.color }}>
             {card.value}

@@ -99,6 +99,10 @@ def check_upcoming_consultations(app):
                     )
                     _send_missed_email(appt)
                     appt.missed_notified_at = now
+                    
+                    # 🔗 Governance Hook: Track missed session telemetry
+                    from services.governance_service import GovernanceService
+                    GovernanceService.process_missed_appointment(appt.id)
 
                 # Get doctor's notification settings
                 doc_settings = DoctorNotificationSetting.query.filter_by(doctor_user_id=appt.doctor_id).first()

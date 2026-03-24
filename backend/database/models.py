@@ -1056,6 +1056,16 @@ class DoctorProfile(db.Model):
     consultation_mode = db.Column(db.String(50)) # Online/Offline/Both
     
     profile_image = db.Column(db.String(255)) 
+    
+    # --- Governance & Performance ---
+    report_count = db.Column(db.Integer, default=0)
+    critical_review_count = db.Column(db.Integer, default=0)
+    missed_appointments_count = db.Column(db.Integer, default=0)
+    avg_rating = db.Column(db.Float, default=5.0)
+    risk_level = db.Column(db.String(20), default="low") # low, medium, high, critical
+    # Doctor-specific status (synchronizes with User.account_status)
+    # active, under_review, restricted, suspended, blocked
+    doctor_status = db.Column(db.String(20), default="active") 
 
     created_at = db.Column(
         db.DateTime,
@@ -1100,6 +1110,14 @@ class DoctorProfile(db.Model):
             "consultation_fee": actual_fee,
             "consultation_mode": actual_mode,
             "profile_image": self.profile_image,
+            "telemetry": {
+                "report_count": self.report_count,
+                "critical_review_count": self.critical_review_count,
+                "missed_appointments_count": self.missed_appointments_count,
+                "avg_rating": self.avg_rating,
+                "risk_level": self.risk_level,
+                "doctor_status": self.doctor_status
+            },
             "created_at": self.created_at.isoformat() + 'Z',
             "updated_at": self.updated_at.isoformat() + 'Z',
             "availability": [a.to_dict() for a in self.availability],
@@ -1340,7 +1358,66 @@ class ReviewTag(db.Model):
     tag = db.Column(db.String(50), nullable=False) # Rude, Late, Misdiagnosis etc.
 
 # =========================================
-# REVIEW ESCALATIONS (Governance Control)
+# DOCTOR ESCALATION SYSTEM
+# =========================================
+class DoctorEscalation(db.Model):
+    __tablename__ = "doctor_escalations"
+
+    id = db.Column(db.Integer, primary_key=True)
+    doctor_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    reason = db.Column(db.Text, nullable=False) # "high-risk-review-cluster", "manual-report", "low-rating-avg"
+    risk_level = db.Column(db.String(20), default="medium")
+    status = db.Column(db.String(20), default="open") # open, investigating, resolved, dismissed
+    
+    admin_notes = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    resolved_at = db.Column(db.DateTime)
+
+    # Relationships
+    doctor = db.relationship("User", foreign_keys=[doctor_id], backref="escalations")
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "doctor_id": self.doctor_id,
+            "doctor_name": self.doctor.full_name if self.doctor else "Unknown",
+            "reason": self.reason,
+            "risk_level": self.risk_level,
+            "status": self.status,
+            "admin_notes": self.admin_notes,
+            "created_at": self.created_at.isoformat(),
+            "resolved_at": self.resolved_at.isoformat() if self.resolved_at else None,
+            "actions": [a.to_dict() for a in self.actions]
+        }
+
+class EscalationAction(db.Model):
+    __tablename__ = "escalation_actions"
+
+    id = db.Column(db.Integer, primary_key=True)
+    escalation_id = db.Column(db.Integer, db.ForeignKey("doctor_escalations.id"), nullable=False)
+    admin_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    
+    action_type = db.Column(db.String(50), nullable=False) # warning, suspend, restrict, resolve, note
+    note = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    # Relationships
+    escalation = db.relationship("DoctorEscalation", backref="actions")
+    admin = db.relationship("User", foreign_keys=[admin_id])
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "escalation_id": self.escalation_id,
+            "admin_id": self.admin_id,
+            "admin_name": self.admin.full_name if self.admin else "System",
+            "action_type": self.action_type,
+            "note": self.note,
+            "created_at": self.created_at.isoformat()
+        }
+
+# =========================================
+# REVIEW ESCALATIONS (Original Serious Complaint)
 # =========================================
 class ReviewEscalation(db.Model):
     __tablename__ = "review_escalations"

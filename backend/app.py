@@ -137,6 +137,9 @@ def create_app():
     
     from routes.admin.announcement_routes import admin_announcements_bp
     app.register_blueprint(admin_announcements_bp, url_prefix="/api/admin/announcements")
+    
+    from routes.admin.governance_routes import governance_bp
+    app.register_blueprint(governance_bp, url_prefix="/api/admin/governance")
 
     from routes.rtc import rtc_bp
     app.register_blueprint(rtc_bp, url_prefix="/api/rtc")

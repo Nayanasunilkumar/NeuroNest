@@ -13,6 +13,7 @@ import adminAssessmentManagementModule from './admin-assessment-management';
 import adminReportsAnalyticsModule from './admin-reports-analytics';
 import adminPaymentManagementModule from './admin-payment-management';
 import adminReviewManagementModule from './admin-review-management';
+import adminGovernanceModule from './admin-governance';
 import adminNotificationsModule from './admin-notifications';
 import adminAnnouncementsModule from './admin-announcements';
 import appointmentRequestsModule from './appointment-requests';
@@ -52,6 +53,7 @@ export const moduleRegistry = [
   adminReportsAnalyticsModule,
   adminPaymentManagementModule,
   adminReviewManagementModule,
+  adminGovernanceModule,
   adminNotificationsModule,
   adminAnnouncementsModule,
   appointmentRequestsModule,

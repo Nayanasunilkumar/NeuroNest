@@ -65,6 +65,11 @@ class FeedbackService:
             ))
         
         db.session.commit()
+        
+        # 🔗 Governance Hook: Detection of risk clusters and auto-escalation
+        from services.governance_service import GovernanceService
+        GovernanceService.process_review_event(review.id)
+        
         return review, None
 
     @staticmethod
@@ -203,13 +208,15 @@ class FeedbackService:
          .group_by(Review.doctor_id, User.full_name)\
          .order_by(func.count(Review.id).desc()).first()
          
-        unresolved_escalations = ReviewEscalation.query.filter_by(status='open').count()
+        from database.models import DoctorEscalation
+        unresolved_escalations = DoctorEscalation.query.filter_by(status='open').count()
         
         return {
             "avg_rating": round(float(avg_rating), 1),
             "total_reviews": total_reviews,
             "recent_negative": recent_neg,
             "most_reported_doctor": most_reported[1] if most_reported else "None",
+            "most_reported_doctor_id": most_reported[0] if most_reported else None,
             "unresolved_escalations": unresolved_escalations
         }
 

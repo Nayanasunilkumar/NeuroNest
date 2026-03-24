@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { adminDashboardApi } from '../../api/adminDashboardApi';
-import { Users, UserPlus, Calendar, DollarSign, FileText, CreditCard, Star, Radio, Activity, AlertCircle, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { Users, UserPlus, Calendar, DollarSign, FileText, CreditCard, Star, Radio, Activity, AlertCircle, ArrowUpRight, ArrowDownRight, ShieldAlert } from 'lucide-react';
 
 const AdminDashboard = () => {
     const [data, setData] = useState({
@@ -53,6 +53,7 @@ const AdminDashboard = () => {
         { title: 'Assessments', desc: 'Analyze clinical outcomes and test results.', icon: <FileText size={20} />, path: '/admin/assessment-management', color: 'warning' },
         { title: 'Payments', desc: 'Automated billing and financial reconciliation.', icon: <CreditCard size={20} />, path: '/admin/payment-management', color: 'danger' },
         { title: 'Reviews', desc: 'Monitor and respond to patient feedback.', icon: <Star size={20} />, path: '/admin/review-management', color: 'secondary' },
+        { title: 'Governance', desc: 'Manage doctor escalations and risk events.', icon: <ShieldAlert size={20} />, path: '/admin/governance/queue', color: 'danger' },
     ];
 
     if (loading) return (

@@ -101,13 +101,26 @@ def evaluate_call_state(appointment: Appointment, now=None):
 
     join_allowed_status = status in {"scheduled", "waiting", "ongoing"}
 
+    # 🔒 Governance Enforcement: Check doctor account status
+    from database.models import DoctorProfile
+    doctor_profile = DoctorProfile.query.filter_by(user_id=appointment.doctor_id).first()
+    doctor_status = doctor_profile.doctor_status if doctor_profile else "active"
+    
+    doctor_can_join = bool(doctor_join_time and now >= doctor_join_time and join_allowed_status)
+    patient_can_join = bool(patient_join_time and now >= patient_join_time and join_allowed_status)
+
+    if doctor_status in ["restricted", "suspended", "blocked"]:
+        doctor_can_join = False
+        if doctor_status in ["suspended", "blocked"]:
+            patient_can_join = False # Session void if doctor suspended
+
     return {
         "status": status,
         "appointment_time": appt_dt,
         "patient_join_time": patient_join_time,
         "doctor_join_time": doctor_join_time,
-        "patient_can_join_now": bool(patient_join_time and now >= patient_join_time and join_allowed_status),
-        "doctor_can_join_now": bool(doctor_join_time and now >= doctor_join_time and join_allowed_status),
+        "patient_can_join_now": patient_can_join,
+        "doctor_can_join_now": doctor_can_join,
         "patient_joined": patient_joined,
         "doctor_joined": doctor_joined,
         "both_joined": both_joined,
