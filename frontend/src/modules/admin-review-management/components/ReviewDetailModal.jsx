@@ -26,21 +26,23 @@ const ReviewDetailModal = ({ review, onClose, onModerate }) => {
     <div className="appt-modal-portal">
       <div className="appt-modal-overlay" onClick={onClose} />
       <div className="appt-modal-container">
-        <div className="appt-modal-nexus enterprise-theme">
+        <div className="appt-modal-nexus oversight-card">
           <div className="modal-header-nexus">
             <div className="header-left-nexus">
               <div className="institutional-tag">
                 <Shield size={10} /> Institutional Quality Audit
               </div>
-              <h1>Review Oversight: #{review.id.toString().padStart(4, '0')}</h1>
+              <h1 className="oversight-title">Review Oversight: #{review.id.toString().padStart(4, '0')}</h1>
             </div>
-            <button className="sidebar-close-btn" onClick={onClose}><X size={18} /></button>
+            <button className="sidebar-close-btn" onClick={onClose} aria-label="Close Audit">
+                <X size={18} />
+            </button>
           </div>
 
           <div className="modal-body-scroll">
             {/* Identity Grid */}
             <div className="identity-matrix">
-              <div className="identity-card">
+              <div className="identity-card patient-focus">
                 <div className="card-header"><User size={12} /> Patient Identity</div>
                 <div className="card-content">
                   <h3 className="identity-title">{review.patient_name}</h3>
@@ -49,7 +51,7 @@ const ReviewDetailModal = ({ review, onClose, onModerate }) => {
                 </div>
               </div>
 
-              <div className="identity-card">
+              <div className="identity-card provider-focus">
                 <div className="card-header"><Shield size={12} /> Medical Provider</div>
                 <div className="card-content">
                   <h3 className="identity-title">{review.doctor_name}</h3>
@@ -63,27 +65,26 @@ const ReviewDetailModal = ({ review, onClose, onModerate }) => {
             <div className="operational-matrix">
               <div className="block-group">
                 <span className="block-header">Clinical Feedback Narrative</span>
-                <div className="clinical-narrative" style={{ minHeight: '120px' }}>
+                <div className="clinical-narrative-box">
                   {review.review_text || "No descriptive narrative provided for this quality event."}
                 </div>
               </div>
 
-              <div className="block-group" style={{ marginTop: '1.5rem' }}>
-                <span className="block-header">Sentiment & Metric Matrix</span>
-                <div className="schedule-nexus" style={{ justifyContent: 'space-around' }}>
-                  <div className="sched-item">
+              <div className="score-sentiment-nexus">
+                  <div className="metric-box">
+                    <span className="metric-label">Rating Metric</span>
                     <StarCluster rating={review.rating} />
                   </div>
-                  <div className="sched-divider"></div>
-                  <div className="sched-item">
+                  <div className="metric-divider"></div>
+                  <div className="metric-box">
+                    <span className="metric-label">Sentiment Axis</span>
                     <SentimentBadge sentiment={review.sentiment} />
                   </div>
-                </div>
               </div>
             </div>
 
             {/* Governance Portal */}
-            <div className="governance-portal-section" style={{ marginTop: '2.5rem' }}>
+            <div className="governance-portal-section">
               <span className="block-header">Executive Justification / Administrative Note</span>
               <div className="justification-portal">
                 <textarea 
@@ -97,41 +98,39 @@ const ReviewDetailModal = ({ review, onClose, onModerate }) => {
           </div>
 
           <div className="governance-footer">
-            <div className="override-label-nexus">
-              <div className="label-prime">
-                <AlertOctagon size={14} /> Governance Controls
-              </div>
-              {isSubmitting && <div className="audit-badge verified">Processing Audit...</div>}
+            <div className="override-header">
+                <AlertOctagon size={14} /> <span>Governance Control Panel</span>
+                {isSubmitting && <div className="audit-pulse">Processing Audit...</div>}
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '1rem' }}>
+            <div className="governance-action-grid">
               <button 
                 className="btn-governance approve" 
                 onClick={() => handleAction('approve')}
                 disabled={isSubmitting}
               >
-                <CheckCircle size={14} /> Clear Review
+                <CheckCircle size={14} /> <span>Clear Review</span>
               </button>
               <button 
                 className="btn-governance flag" 
                 onClick={() => handleAction('flag')}
                 disabled={isSubmitting}
               >
-                <Flag size={14} /> Flag Event
+                <Flag size={14} /> <span>Flag Event</span>
               </button>
               <button 
                 className="btn-governance hide" 
                 onClick={() => handleAction('hide')}
                 disabled={isSubmitting}
               >
-                <Trash2 size={14} /> Shadow Hide
+                <Trash2 size={14} /> <span>Shadow Hide</span>
               </button>
               <button 
                 className="btn-governance escalate" 
                 onClick={() => handleAction('escalate')}
                 disabled={isSubmitting}
               >
-                <ShieldAlert size={14} /> Escalate
+                <ShieldAlert size={14} /> <span>Escalate Case</span>
               </button>
             </div>
           </div>
@@ -139,31 +138,232 @@ const ReviewDetailModal = ({ review, onClose, onModerate }) => {
       </div>
 
       <style>{`
-        .btn-governance {
+        .appt-modal-portal {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100vw;
+          height: 100vh;
           display: flex;
           align-items: center;
           justify-content: center;
-          gap: 0.6rem;
-          padding: 0.85rem;
-          border-radius: 12px;
-          font-size: 0.7rem;
-          font-weight: 950;
+          z-index: 9999;
+        }
+
+        .appt-modal-overlay {
+          position: absolute;
+          width: 100%;
+          height: 100%;
+          background: rgba(15, 23, 42, 0.85);
+          backdrop-filter: blur(8px);
+          cursor: pointer;
+        }
+
+        .appt-modal-container {
+          position: relative;
+          z-index: 10000;
+          width: 90%;
+          max-width: 650px;
+          animation: modalEntrance 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes modalEntrance {
+          from { opacity: 0; transform: scale(0.95) translateY(10px); }
+          to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        .oversight-card {
+           background: #1e293b;
+           border: 1px solid rgba(255, 255, 255, 0.1);
+           border-radius: 28px;
+           overflow: hidden;
+           box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+           display: flex;
+           flex-direction: column;
+           max-height: 90vh;
+        }
+
+        .modal-header-nexus {
+          padding: 1.5rem 2rem;
+          background: rgba(255, 255, 255, 0.03);
+          border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        }
+
+        .institutional-tag {
+          font-size: 0.65rem;
+          font-weight: 900;
           text-transform: uppercase;
-          letter-spacing: 0.05em;
-          border: 1px solid var(--admin-border);
+          letter-spacing: 0.1em;
+          color: #10b981;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          margin-bottom: 0.5rem;
+        }
+
+        .oversight-title {
+          font-size: 1.5rem;
+          font-weight: 900;
+          letter-spacing: -0.04em;
+          color: white;
+          margin: 0;
+        }
+
+        .sidebar-close-btn {
+          background: rgba(255, 255, 255, 0.05);
+          border: none;
+          color: white;
+          width: 36px;
+          height: 36px;
+          border-radius: 12px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
           cursor: pointer;
           transition: all 0.2s;
-          background: var(--admin-panel-bg);
-          color: var(--admin-text-main);
         }
-        .btn-governance:hover { transform: translateY(-2px); }
-        .btn-governance:disabled { opacity: 0.5; cursor: not-allowed; }
-        
-        .btn-governance.approve:hover { background: rgba(16, 185, 129, 0.1); color: #10b981; border-color: #10b981; }
-        .btn-governance.flag:hover { background: rgba(245, 158, 11, 0.1); color: #f59e0b; border-color: #f59e0b; }
-        .btn-governance.hide:hover { background: rgba(239, 68, 68, 0.1); color: #ef4444; border-color: #ef4444; }
-        .btn-governance.escalate { background: var(--admin-accent); color: white; border: none; }
-        .btn-governance.escalate:hover { box-shadow: 0 5px 15px var(--admin-accent-soft); }
+
+        .sidebar-close-btn:hover { background: #ef4444; }
+
+        .modal-body-scroll {
+          padding: 2rem;
+          overflow-y: auto;
+          scrollbar-width: thin;
+          scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+        }
+
+        .identity-matrix {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 1rem;
+          margin-bottom: 2rem;
+        }
+
+        .identity-card {
+          padding: 1rem;
+          border-radius: 16px;
+          background: rgba(15, 23, 42, 0.4);
+          border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .card-header {
+          font-size: 0.6rem;
+          font-weight: 800;
+          text-transform: uppercase;
+          color: rgba(255, 255, 255, 0.4);
+          margin-bottom: 0.75rem;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+        }
+
+        .identity-title { font-size: 1.1rem; font-weight: 800; margin: 0; color: white; }
+        .identity-sub { font-size: 0.75rem; color: rgba(255, 255, 255, 0.5); margin: 0.25rem 0 0.75rem; }
+        .meta-tag { font-size: 0.65rem; font-weight: 900; background: rgba(255, 255, 255, 0.05); padding: 2px 8px; border-radius: 4px; width: fit-content; }
+
+        .block-header {
+           display: block;
+           font-size: 0.7rem;
+           font-weight: 950;
+           color: #6366f1;
+           text-transform: uppercase;
+           letter-spacing: 0.1em;
+           margin-bottom: 1rem;
+        }
+
+        .clinical-narrative-box {
+           background: rgba(0, 0, 0, 0.2);
+           border-radius: 16px;
+           padding: 1.25rem;
+           font-size: 0.95rem;
+           line-height: 1.6;
+           color: rgba(255, 255, 255, 0.8);
+           margin-bottom: 2rem;
+           border-left: 4px solid #6366f1;
+        }
+
+        .score-sentiment-nexus {
+           display: flex;
+           align-items: center;
+           justify-content: center;
+           gap: 3rem;
+           background: rgba(255, 255, 255, 0.02);
+           padding: 1.5rem;
+           border-radius: 16px;
+           margin-bottom: 2.5rem;
+        }
+
+        .metric-box { text-align: center; }
+        .metric-label { display: block; font-size: 0.6rem; font-weight: 900; opacity: 0.4; margin-bottom: 0.75rem; text-transform: uppercase; }
+        .metric-divider { height: 40px; width: 1px; background: rgba(255, 255, 255, 0.1); }
+
+        .justification-portal textarea {
+          width: 100%;
+          min-height: 100px;
+          background: rgba(0, 0, 0, 0.3);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: 16px;
+          padding: 1rem;
+          color: white;
+          font-size: 0.9rem;
+          outline: none;
+          transition: all 0.3s;
+        }
+
+        .justification-portal textarea:focus { border-color: #6366f1; background: rgba(0, 0, 0, 0.4); }
+
+        .governance-footer {
+          padding: 1.5rem 2rem 2rem;
+          background: rgba(0, 0, 0, 0.2);
+          border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .override-header {
+           display: flex;
+           align-items: center;
+           gap: 0.5rem;
+           font-size: 0.75rem;
+           font-weight: 800;
+           color: #ef4444;
+           margin-bottom: 1.25rem;
+        }
+
+        .governance-action-grid {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          gap: 0.75rem;
+        }
+
+        .btn-governance {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          gap: 0.5rem;
+          padding: 1rem 0.5rem;
+          border-radius: 12px;
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          background: rgba(255, 255, 255, 0.03);
+          color: white;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+
+        .btn-governance span { font-size: 0.65rem; font-weight: 800; }
+        .btn-governance:hover { transform: translateY(-2px); background: rgba(255, 255, 255, 0.08); }
+        .btn-governance:disabled { opacity: 0.3; cursor: not-allowed; }
+
+        .btn-governance.approve:hover { color: #10b981; border-color: #10b981; }
+        .btn-governance.flag:hover { color: #f59e0b; border-color: #f59e0b; }
+        .btn-governance.hide:hover { color: #ef4444; border-color: #ef4444; }
+        .btn-governance.escalate { background: #6366f1; border-color: #6366f1; }
+        .btn-governance.escalate:hover { background: #4f46e5; box-shadow: 0 0 20px rgba(99, 102, 241, 0.3); }
+
+        .audit-pulse { font-size: 0.7rem; color: #10b981; margin-left: auto; font-weight: 700; animation: auditPulse 2s infinite; }
+        @keyframes auditPulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
       `}</style>
     </div>,
     document.body
