@@ -255,62 +255,55 @@ def mark_as_read(conversation_id):
     return jsonify({"message": "Conversation marked as read"}), 200
 
 # =======================================================
-# 6. DOCTOR: GET PATIENT CONTEXT
+# 6. GET CHAT CONTEXT (Identity + Next Appointment)
 # =======================================================
-@chat_bp.route("/patient-context/<int:patient_id>", methods=["GET"])
+@chat_bp.route("/chat-context/<int:other_user_id>", methods=["GET"])
 @jwt_required()
-def get_patient_context(patient_id):
-    claims = get_jwt()
-    if claims.get("role") != "doctor":
-        return jsonify({"error": "Doctor access only"}), 403
-        
+def get_chat_context(other_user_id):
     current_user_id = int(get_jwt_identity())
     
-    # Get patient identity
-    patient = User.query.get(patient_id)
-    if not patient:
-        return jsonify({"error": "Patient not found"}), 404
+    # Get other user identity
+    other_user = User.query.get(other_user_id)
+    if not other_user:
+        return jsonify({"error": "User not found"}), 404
         
-    profile = patient.patient_profile
+    other_profile = other_user.patient_profile
     
-    # Find next appointment
+    # Find next appointment between these two
     from datetime import datetime
     now = datetime.now()
     
+    # Query logic: either current is doctor & other is patient, or vice versa
     next_apt = Appointment.query.filter(
-        Appointment.doctor_id == current_user_id,
-        Appointment.patient_id == patient_id,
+        or_(
+            and_(Appointment.doctor_id == current_user_id, Appointment.patient_id == other_user_id),
+            and_(Appointment.doctor_id == other_user_id, Appointment.patient_id == current_user_id)
+        ),
         Appointment.appointment_date >= now.date(),
-        Appointment.status == "approved"
+        Appointment.status.in_(["approved", "rescheduled"])
     ).order_by(Appointment.appointment_date.asc(), Appointment.appointment_time.asc()).first()
     
     last_apt = Appointment.query.filter(
-        Appointment.doctor_id == current_user_id,
-        Appointment.patient_id == patient_id,
-        # Logic for last: date < today OR (date == today and time < now)
+        or_(
+            and_(Appointment.doctor_id == current_user_id, Appointment.patient_id == other_user_id),
+            and_(Appointment.doctor_id == other_user_id, Appointment.patient_id == current_user_id)
+        ),
         Appointment.appointment_date <= now.date(),
         Appointment.status == "completed"
     ).order_by(Appointment.appointment_date.desc(), Appointment.appointment_time.desc()).first()
     
     return jsonify({
         "identity": {
-            "full_name": patient.full_name,
-            "email": patient.email,
-            "profile_image": profile.profile_image if profile else None,
-            "gender": profile.gender if profile else "N/A",
-            "blood_group": profile.blood_group if profile else "N/A",
-            "dob": str(profile.date_of_birth) if profile and profile.date_of_birth else "N/A",
-            "allergies": profile.allergies if profile else "None reported",
-            "chronic_conditions": profile.chronic_conditions if profile else "None reported",
-            "height": profile.height_cm if profile else "N/A",
-            "weight": profile.weight_kg if profile else "N/A",
-            "location": f"{profile.city}, {profile.country}" if profile and profile.city else "N/A"
+            "full_name": other_user.full_name,
+            "email": other_user.email,
+            "profile_image": other_profile.profile_image if other_profile else (other_user.doctor_profile.profile_image if other_user.role == 'doctor' and other_user.doctor_profile else None),
+            "role": other_user.role,
+            "specialization": other_user.doctor_profile.specialization if other_user.role == 'doctor' and other_user.doctor_profile else None,
+            "gender": other_profile.gender if other_profile else "N/A",
+            "blood_group": other_profile.blood_group if other_profile else "N/A",
+            "dob": str(other_profile.date_of_birth) if other_profile and other_profile.date_of_birth else "N/A",
         },
-        "next_appointment": {
-            "date": str(next_apt.appointment_date),
-            "time": str(next_apt.appointment_time),
-            "reason": next_apt.reason
-        } if next_apt else None,
+        "next_appointment": next_apt.to_dict() if next_apt else None,
         "last_appointment": {
             "date": str(last_apt.appointment_date),
             "time": str(last_apt.appointment_time),

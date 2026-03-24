@@ -53,6 +53,12 @@ const chatAPI = {
     markAsRead: async (conversationId) => {
         const response = await axios.patch(`${API_URL}/${conversationId}/read`, {}, getAuthHeaders());
         return response.data;
+    },
+
+    // 7. Get Chat Context (Identity + Next Appointment)
+    getChatContext: async (otherUserId) => {
+        const response = await axios.get(`${API_URL}/chat-context/${otherUserId}`, getAuthHeaders());
+        return response.data;
     }
 };
 

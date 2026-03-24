@@ -44,12 +44,15 @@ const Chat = () => {
         }
     }, [joinConversationRooms]);
 
+    const [context, setContext] = useState(null); // Added context state
+
     const handleSelectConversation = async (conv) => {
         if (selectedConv?.id === conv.id) return;
         
         setSelectedConv(conv);
         setShowInfoPanel(false);
         setMessages([]);
+        setContext(null); // Reset context for new doctor
         setLoadingMessages(true);
         setMessagesLoadError('');
 
@@ -65,7 +68,7 @@ const Chat = () => {
             }
         }
 
-        // Fetch Messages
+        // Fetch Messages and Context
         try {
             const data = await chatAPI.getMessages(conv.id);
             const normalized = Array.isArray(data) ? data : [];
@@ -82,6 +85,14 @@ const Chat = () => {
                 }]);
             } else {
                 setMessages(normalized);
+            }
+
+            // Fetch Context
+            try {
+                const contextData = await chatAPI.getChatContext(conv.other_user.id);
+                setContext(contextData);
+            } catch (ctxErr) {
+                console.error("Context sync failed:", ctxErr);
             }
             
             // Join Room
@@ -307,6 +318,7 @@ const Chat = () => {
                 <div className="d-flex flex-column flex-grow-1 min-w-0 bg-transparent position-relative" style={{ minHeight: 0, overflow: 'hidden' }}>
                     <ChatHeader 
                         otherUser={selectedConv.other_user}
+                        context={context}
                         isDoctor={false}
                         showSidebar={showInfoPanel}
                         onToggleSidebar={() => setShowInfoPanel((prev) => !prev)}

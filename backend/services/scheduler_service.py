@@ -36,11 +36,6 @@ def check_upcoming_consultations(app):
                 minutes_until = int((appt_datetime - now).total_seconds() / 60)
 
                 if appt.reminder_30_sent_at is None and 29 <= minutes_until <= 30:
-                    send_system_chat_message(
-                        appt,
-                        f"System: Your video appointment with Dr. {appt.doctor.full_name if appt.doctor else 'your doctor'} starts in 30 minutes.",
-                        sender_id=appt.doctor_id,
-                    )
                     NotificationService.send_in_app(
                         user_id=appt.patient_id,
                         title="Appointment in 30 minutes",
@@ -64,11 +59,6 @@ def check_upcoming_consultations(app):
                     if raw_join_time.tzinfo is None: raw_join_time = raw_join_time.replace(tzinfo=timezone.utc)
                     join_display_time = raw_join_time.astimezone(ist_tz).strftime('%I:%M %p')
 
-                    send_system_chat_message(
-                        appt,
-                        f"System: Your video appointment with Dr. {appt.doctor.full_name if appt.doctor else 'your doctor'} starts in 10 minutes. You can join the call at {join_display_time}.",
-                        sender_id=appt.doctor_id,
-                    )
                     NotificationService.send_in_app(
                         user_id=appt.patient_id,
                         title="Appointment in 10 minutes",
@@ -93,11 +83,6 @@ def check_upcoming_consultations(app):
                     and not state["both_joined"]
                     and now >= (appt_datetime + timedelta(minutes=10))
                 ):
-                    send_system_chat_message(
-                        appt,
-                        "System: Appointment marked as missed. Please reschedule.",
-                        sender_id=appt.doctor_id,
-                    )
                     NotificationService.send_in_app(
                         user_id=appt.patient_id,
                         title="Appointment missed",

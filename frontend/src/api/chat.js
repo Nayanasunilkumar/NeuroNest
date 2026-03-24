@@ -20,8 +20,8 @@ export const markAsRead = async (conversationId) => {
     return response.data;
 };
 
-export const getPatientContext = async (patientId) => {
-    const response = await axios.get(`/api/chat/patient-context/${patientId}`);
+export const getChatContext = async (otherUserId) => {
+    const response = await axios.get(`/api/chat/chat-context/${otherUserId}`);
     return response.data;
 };
 

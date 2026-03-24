@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { initSocket, getSocket } from '../../services/socket';
-import { getConversations, getMessages, markAsRead, getPatientContext, startConversation, sendMessage } from '../../api/chat';
+import { getConversations, getMessages, markAsRead, getChatContext, startConversation, sendMessage } from '../../api/chat';
 import ConversationList from '../../components/chat/ConversationList';
 import ChatWindow from '../../components/chat/ChatWindow';
 import ChatHeader from '../../components/chat/ChatHeader';
@@ -92,7 +92,7 @@ const DoctorChat = ({ isEmbedded = false }) => {
             }
 
             // 4. Fetch Patient Context
-            const contextData = await getPatientContext(conv.other_user.id);
+            const contextData = await getChatContext(conv.other_user.id);
             setPatientContext(contextData);
         } catch (err) {
             console.error("Session synchronization error:", err);

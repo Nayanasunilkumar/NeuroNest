@@ -136,7 +136,14 @@ const ChatWindow = ({ messages, currentUserId, onSendMessage, loadingMessages, m
             }
         });
 
-        messages.forEach((msg, index) => {
+        // Filter out system messages that start with "System:" or have type "system"
+        const filteredMessages = messages.filter(msg => {
+            const isSystemType = msg?.type === 'system';
+            const isSystemContent = String(msg?.content || '').startsWith('System:');
+            return !isSystemType && !isSystemContent;
+        });
+
+        filteredMessages.forEach((msg, index) => {
             const dayKey = getISTDayKey(msg.created_at);
             const key = msg.id != null ? String(msg.id) : `idx-${index}`;
             const isOwn = String(msg.sender_id) === String(currentUserId);

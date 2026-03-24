@@ -306,11 +306,6 @@ def doctor_join_call(appointment_id):
         db.session.commit()
 
     if joined_now and not state["patient_joined"]:
-        send_system_chat_message(
-            appointment,
-            f"System: Dr. {appointment.doctor.full_name if appointment.doctor else 'Doctor'} has joined the call. You can join now.",
-            sender_id=appointment.doctor_id,
-        )
         NotificationService.send_in_app(
             user_id=appointment.patient_id,
             title="Doctor joined video appointment",
@@ -321,11 +316,6 @@ def doctor_join_call(appointment_id):
         db.session.commit()
 
     if started_now:
-        send_system_chat_message(
-            appointment,
-            "System: Video call started.",
-            sender_id=appointment.doctor_id,
-        )
         NotificationService.send_in_app(
             user_id=appointment.patient_id,
             title="Video call started",
