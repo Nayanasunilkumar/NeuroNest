@@ -8,17 +8,72 @@ const ChatWindow = ({ messages, currentUserId, onSendMessage, loadingMessages, m
     const [newMessage, setNewMessage] = useState('');
     const [showTemplates, setShowTemplates] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
+    const [showNewMessagesButton, setShowNewMessagesButton] = useState(false);
     const messagesEndRef = useRef(null);
     const messagesContainerRef = useRef(null);
+    const previousLastMessageKeyRef = useRef(null);
+    const previousMessageCountRef = useRef(0);
+    const previousChatKeyRef = useRef(null);
 
-    const scrollToBottom = () => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    const isNearBottom = () => {
+        const container = messagesContainerRef.current;
+        if (!container) return true;
+        const distanceFromBottom = container.scrollHeight - container.scrollTop - container.clientHeight;
+        return distanceFromBottom <= 120;
     };
 
-    // Auto scroll on new messages
+    const scrollToBottom = (behavior = "smooth") => {
+        const container = messagesContainerRef.current;
+        if (container) {
+            container.scrollTo({ top: container.scrollHeight, behavior });
+        } else {
+            messagesEndRef.current?.scrollIntoView({ behavior });
+        }
+        setShowNewMessagesButton(false);
+    };
+
+    // On conversation switch, always jump to latest messages.
     useEffect(() => {
-        scrollToBottom();
-    }, [messages]);
+        const chatKey = String(otherUser?.id ?? otherUser?.name ?? "unknown-chat");
+        if (previousChatKeyRef.current !== chatKey) {
+            previousChatKeyRef.current = chatKey;
+            setShowNewMessagesButton(false);
+            requestAnimationFrame(() => scrollToBottom("smooth"));
+        }
+    }, [otherUser?.id, otherUser?.name]);
+
+    // Smart auto-scroll for message updates.
+    useEffect(() => {
+        if (loadingMessages) return;
+
+        const lastMessage = messages[messages.length - 1];
+        const lastMessageKey = lastMessage?.id != null
+            ? String(lastMessage.id)
+            : (lastMessage?.created_at ? `${lastMessage.created_at}-${messages.length}` : null);
+
+        const previousLastMessageKey = previousLastMessageKeyRef.current;
+        const previousCount = previousMessageCountRef.current;
+        const hasNewMessage = (
+            messages.length > previousCount &&
+            lastMessageKey &&
+            lastMessageKey !== previousLastMessageKey
+        );
+
+        // First load of a thread should always open at the latest message.
+        if (previousLastMessageKey === null && messages.length > 0) {
+            requestAnimationFrame(() => scrollToBottom("smooth"));
+        } else if (hasNewMessage) {
+            const isOwnMessage = String(lastMessage?.sender_id) === String(currentUserId);
+            if (isOwnMessage || isNearBottom()) {
+                requestAnimationFrame(() => scrollToBottom("smooth"));
+            } else {
+                setShowNewMessagesButton(true);
+            }
+        }
+
+        previousLastMessageKeyRef.current = lastMessageKey;
+        previousMessageCountRef.current = messages.length;
+    }, [messages, loadingMessages, currentUserId]);
 
     const handleSend = (e) => {
         e?.preventDefault();
@@ -26,6 +81,7 @@ const ChatWindow = ({ messages, currentUserId, onSendMessage, loadingMessages, m
         onSendMessage(newMessage, 'text');
         setNewMessage('');
         setShowTemplates(false);
+        requestAnimationFrame(() => scrollToBottom("smooth"));
     };
 
     const handleTemplateClick = (text) => {
@@ -55,6 +111,7 @@ const ChatWindow = ({ messages, currentUserId, onSendMessage, loadingMessages, m
             const type = isImage ? 'image' : 'file';
             
             onSendMessage(data.url, type);
+            requestAnimationFrame(() => scrollToBottom("smooth"));
         } catch (error) {
             console.error("Upload failed", error);
             alert("Failed to upload file.");
@@ -114,7 +171,13 @@ const ChatWindow = ({ messages, currentUserId, onSendMessage, loadingMessages, m
     return (
         <div className="d-flex flex-column flex-grow-1 position-relative bg-transparent min-w-0" style={{ minHeight: 0, overflow: 'hidden' }}>
             {/* MESSAGES AREA */}
-            <div className="flex-grow-1 overflow-y-auto p-4 d-flex flex-column gap-3 custom-scrollbar" ref={messagesContainerRef}>
+            <div
+                className="flex-grow-1 overflow-y-auto p-4 d-flex flex-column gap-3 custom-scrollbar"
+                ref={messagesContainerRef}
+                onScroll={() => {
+                    if (isNearBottom()) setShowNewMessagesButton(false);
+                }}
+            >
                 {loadingMessages ? (
                     <div className="d-flex flex-column align-items-center justify-content-center h-100 text-secondary">
                          <div className="spinner-border text-primary mb-3" style={{ width: '2rem', height: '2rem', borderWidth: '0.15em' }}></div>
@@ -143,6 +206,16 @@ const ChatWindow = ({ messages, currentUserId, onSendMessage, loadingMessages, m
                 )}
                 <div ref={messagesEndRef} />
             </div>
+
+            {showNewMessagesButton && (
+                <button
+                    type="button"
+                    className="chat-new-messages-btn"
+                    onClick={() => scrollToBottom("smooth")}
+                >
+                    New messages ↓
+                </button>
+            )}
 
             <div className="p-3 border-top border-light bg-white d-flex flex-column" style={{ zIndex: 10 }}>
                 {/* QUICK ACTIONS */}
@@ -230,6 +303,26 @@ const ChatWindow = ({ messages, currentUserId, onSendMessage, loadingMessages, m
                 .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
                 .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
                 .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+                .chat-new-messages-btn {
+                    position: absolute;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    bottom: 92px;
+                    z-index: 15;
+                    border: 0;
+                    border-radius: 999px;
+                    padding: 8px 14px;
+                    font-size: 12px;
+                    font-weight: 700;
+                    color: white;
+                    background: #2563eb;
+                    box-shadow: 0 8px 24px rgba(37, 99, 235, 0.25);
+                    animation: chatFadeIn 160ms ease-out;
+                }
+                @keyframes chatFadeIn {
+                    from { opacity: 0; transform: translateX(-50%) translateY(6px); }
+                    to { opacity: 1; transform: translateX(-50%) translateY(0); }
+                }
             `}</style>
         </div>
     );
