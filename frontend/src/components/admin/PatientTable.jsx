@@ -9,7 +9,7 @@ import {
   ShieldCheck 
 } from 'lucide-react';
 
-import { formatDateIST } from '../../../utils/time';
+import { formatDateIST } from '../../utils/time';
 
 const PatientTable = ({ patients, onSelectPatient }) => {
   const getFlagClass = (count) => {

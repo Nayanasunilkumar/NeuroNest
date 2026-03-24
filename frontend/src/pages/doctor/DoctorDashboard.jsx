@@ -11,7 +11,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { getDoctorProfile } from '../../services/doctorProfileService';
 import { getDoctorStats, getPatients, getSchedule, joinDoctorAppointmentCall } from '../../api/doctor';
-import { formatClockTimeIST, formatDateFromISTDate, formatTimeIST, getISTDayKey, parseISTDateTime, formatDateIST } from '../../../utils/time';
+import { formatClockTimeIST, formatDateFromISTDate, formatTimeIST, getISTDayKey, parseISTDateTime, formatDateIST } from '../../utils/time';
 import '../../styles/dashboard.css';
 
 const StatCard = ({ label, value, hint, icon, tone = 'primary' }) => (

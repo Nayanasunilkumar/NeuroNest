@@ -14,7 +14,7 @@ import {
   Wifi,
   WifiOff,
 } from 'lucide-react';
-import { formatTimeIST, formatDateTimeIST, getISTDayKey } from '../../../utils/time';
+import { formatTimeIST, formatDateTimeIST, getISTDayKey } from '../../utils/time';
 
 const SEVERITY_COLORS = {
   critical: { border: '#dc2626', bg: '#fee2e2', text: '#991b1b', chip: 'bg-danger' },
