@@ -265,10 +265,12 @@ const AppointmentForm = ({ onSubmit, loading }) => {
                         <span style={{ fontSize: "12px", color: "#64748b" }}>Select doctor first</span>
                       ) : !formData.date ? (
                         <span style={{ fontSize: "12px", color: "#64748b" }}>Select date first</span>
-                      ) : availableSlots.length === 0 ? (
+                      ) : availableSlots.filter((slot) => slot.status === "available" && !slot.is_past).length === 0 ? (
                         <span style={{ fontSize: "12px", color: "#64748b" }}>No available slots</span>
                       ) : (
-                        availableSlots.map((slot) => {
+                        availableSlots
+                          .filter((slot) => slot.status === "available" && !slot.is_past)
+                          .map((slot) => {
                           const slotLabel = slot.slot_start_local_time_display || new Date(slot.slot_start_utc).toLocaleTimeString("en-IN", {
                             hour: "2-digit",
                             minute: "2-digit",
@@ -276,25 +278,20 @@ const AppointmentForm = ({ onSubmit, loading }) => {
                             timeZone: doctorTimezone || "Asia/Kolkata",
                           });
                           const selected = String(slot.id) === String(formData.slot_id);
-                          const isBooked = slot.status === "booked" || slot.status === "held";
-                          const isPast = slot.is_past;
                           
                           let statusClass = "";
                           if (selected) statusClass = "selected";
-                          else if (isPast) statusClass = "past";
-                          else if (isBooked) statusClass = "booked";
 
                           return (
                             <button
                               key={slot.id}
                               type="button"
                               onClick={() => handleSlotSelect(slot)}
-                              disabled={isBooked || isPast}
+                              disabled={false}
                               className={`slot-select-btn ${statusClass}`}
-                              title={isBooked ? "Slot already booked" : isPast ? "Past time" : "Available"}
+                              title="Available"
                             >
                               {slotLabel}
-                              {isBooked && <span style={{ fontSize: '8px', display: 'block' }}>BOOKED</span>}
                             </button>
                           );
                         })
