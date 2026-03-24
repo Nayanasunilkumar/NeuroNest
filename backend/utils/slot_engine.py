@@ -87,6 +87,7 @@ def _ensure_schedule_settings_schema() -> None:
 
 
 def get_or_create_schedule_setting(doctor_user_id: int) -> DoctorScheduleSetting:
+    from database.models import DoctorScheduleSetting
     _ensure_schedule_settings_schema()
     setting = DoctorScheduleSetting.query.filter_by(doctor_user_id=doctor_user_id).first()
     if setting:
