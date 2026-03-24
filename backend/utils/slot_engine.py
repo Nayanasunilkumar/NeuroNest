@@ -87,14 +87,18 @@ def _ensure_schedule_settings_schema() -> None:
 
 
 def lock_doctor_schedule_setting(doctor_user_id: int) -> Optional[DoctorScheduleSetting]:
-    return DoctorScheduleSetting.query.filter_by(doctor_user_id=doctor_user_id).with_for_update().first()
+    # Local import guards against partial module init / circular import timing in production workers.
+    from database.models import DoctorScheduleSetting as _DoctorScheduleSetting
+    return _DoctorScheduleSetting.query.filter_by(doctor_user_id=doctor_user_id).with_for_update().first()
 
 
 def get_or_create_schedule_setting(doctor_user_id: int) -> DoctorScheduleSetting:
-    setting = DoctorScheduleSetting.query.filter_by(doctor_user_id=doctor_user_id).first()
+    # Local import guards against partial module init / circular import timing in production workers.
+    from database.models import DoctorScheduleSetting as _DoctorScheduleSetting
+    setting = _DoctorScheduleSetting.query.filter_by(doctor_user_id=doctor_user_id).first()
     if not setting:
         _ensure_schedule_settings_schema()
-        setting = DoctorScheduleSetting(doctor_user_id=doctor_user_id, timezone="Asia/Kolkata")
+        setting = _DoctorScheduleSetting(doctor_user_id=doctor_user_id, timezone="Asia/Kolkata")
         db.session.add(setting)
         db.session.flush()
     
