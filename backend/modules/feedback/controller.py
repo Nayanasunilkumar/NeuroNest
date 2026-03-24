@@ -34,19 +34,28 @@ class FeedbackController:
         return jsonify(review.to_dict()), 201
 
     @staticmethod
-    @jwt_required()
     def moderate(review_id):
+        from flask_jwt_extended import verify_jwt_in_request, get_jwt_identity
         from database.models import User
-        admin_id = get_jwt_identity()
-        user = User.query.get(admin_id)
-        if not user or user.role not in ['admin', 'super_admin']:
-            return jsonify({"error": "Unauthorized governance access"}), 403
+        
+        try:
+            # Manual verification for diagnostic clarity
+            verify_jwt_in_request()
+            identity = get_jwt_identity()
+            admin_id = int(identity) if identity else None
             
-        data = request.json
-        success, message = FeedbackService.moderate_review(review_id, admin_id, data)
-        if not success:
-            return jsonify({"error": message}), 400
-        return jsonify({"message": message}), 200
+            user = User.query.get(admin_id)
+            if not user or user.role not in ['admin', 'super_admin']:
+                return jsonify({"error": f"Unauthorized governance access (Admin ID: {admin_id})"}), 403
+                
+            data = request.json
+            success, message = FeedbackService.moderate_review(review_id, admin_id, data)
+            if not success:
+                return jsonify({"error": message}), 400
+            return jsonify({"message": message}), 200
+            
+        except Exception as e:
+            return jsonify({"error": f"Security Verification Failed (CORS/Token): {str(e)}"}), 401
 
     @staticmethod
     def get_stats():
