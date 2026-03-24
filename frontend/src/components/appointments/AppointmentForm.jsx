@@ -151,6 +151,8 @@ const AppointmentForm = ({ onSubmit, loading }) => {
   };
 
   const handleSlotSelect = (slot) => {
+    if (slot.status !== "available" || slot.is_past) return;
+    
     const time = slot.slot_start_local_time_24 || new Date(slot.slot_start_utc).toLocaleTimeString("en-IN", {
       hour: "2-digit",
       minute: "2-digit",
@@ -274,14 +276,25 @@ const AppointmentForm = ({ onSubmit, loading }) => {
                             timeZone: doctorTimezone || "Asia/Kolkata",
                           });
                           const selected = String(slot.id) === String(formData.slot_id);
+                          const isBooked = slot.status === "booked" || slot.status === "held";
+                          const isPast = slot.is_past;
+                          
+                          let statusClass = "";
+                          if (selected) statusClass = "selected";
+                          else if (isPast) statusClass = "past";
+                          else if (isBooked) statusClass = "booked";
+
                           return (
                             <button
                               key={slot.id}
                               type="button"
                               onClick={() => handleSlotSelect(slot)}
-                              className={`slot-select-btn ${selected ? "selected" : ""}`}
+                              disabled={isBooked || isPast}
+                              className={`slot-select-btn ${statusClass}`}
+                              title={isBooked ? "Slot already booked" : isPast ? "Past time" : "Available"}
                             >
                               {slotLabel}
+                              {isBooked && <span style={{ fontSize: '8px', display: 'block' }}>BOOKED</span>}
                             </button>
                           );
                         })
