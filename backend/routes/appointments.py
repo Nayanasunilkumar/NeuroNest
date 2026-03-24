@@ -1,6 +1,5 @@
 from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
-from zoneinfo import ZoneInfo
 
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import get_jwt, get_jwt_identity, jwt_required
