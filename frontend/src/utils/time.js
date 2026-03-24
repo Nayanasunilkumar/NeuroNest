@@ -26,23 +26,15 @@ export const parseServerDate = (value) => {
 
 export const parseISTDateTime = (dateValue, timeValue = "00:00:00") => {
   const dateRaw = String(dateValue || "").trim();
+  const timeRaw = String(timeValue || "00:00:00").trim();
   if (!dateRaw) return null;
-  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateRaw);
-  if (!match) return null;
+  
+  // Format should be YYYY-MM-DD
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateRaw)) return null;
 
-  const [, yearStr, monthStr, dayStr] = match;
-  const [hourStr = "0", minuteStr = "0", secondStr = "0"] = String(timeValue || "00:00:00").split(":");
-  const year = Number(yearStr);
-  const month = Number(monthStr);
-  const day = Number(dayStr);
-  const hour = Number(hourStr);
-  const minute = Number(minuteStr);
-  const second = Number(secondStr);
-  if ([year, month, day, hour, minute, second].some((part) => Number.isNaN(part))) return null;
-
-  // Convert IST wall-clock to UTC epoch.
-  const utcMs = Date.UTC(year, month - 1, day, hour - 5, minute - 30, second, 0);
-  const dt = new Date(utcMs);
+  // Combine with IST offset explicitly
+  const iso = `${dateRaw}T${timeRaw}+05:30`;
+  const dt = new Date(iso);
   return Number.isNaN(dt.getTime()) ? null : dt;
 };
 

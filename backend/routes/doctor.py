@@ -118,6 +118,10 @@ def approve_appointment(appointment_id):
                 source="doctor_approval",
                 reason="Doctor approved appointment",
             )
+    
+    if (appointment.consultation_type or "in_person") == "online" and not appointment.video_room_id:
+        appointment.video_room_id = f"room_{appointment.id}_{appointment.doctor_id}_{appointment.patient_id}"
+        
     NotificationService.notify_appointment_event(appointment.id, "approved")
     db.session.commit()
     
@@ -252,7 +256,7 @@ def get_doctor_call_state(appointment_id):
         db.session.commit()
 
     payload = appointment.to_dict()
-    payload["room_id"] = f"appointment-{appointment.id}"
+    payload["room_id"] = appointment.video_room_id or f"appointment-{appointment.id}"
     payload["doctor_join_allowed"] = state["doctor_can_join_now"]
     payload["join_available_at"] = (
         state["doctor_join_time"].isoformat() + "Z" if state["doctor_join_time"] else None
@@ -339,7 +343,7 @@ def doctor_join_call(appointment_id):
         db.session.commit()
 
     payload = appointment.to_dict()
-    payload["room_id"] = f"appointment-{appointment.id}"
+    payload["room_id"] = appointment.video_room_id or f"appointment-{appointment.id}"
     payload["open_call"] = bool(state["both_joined"])
     payload["waiting_for"] = state["waiting_for"]
     return jsonify(payload), 200

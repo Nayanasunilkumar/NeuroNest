@@ -796,7 +796,7 @@ def get_call_state(id):
             db.session.commit()
 
         payload = appointment.to_dict()
-        payload["room_id"] = f"appointment-{appointment.id}"
+        payload["room_id"] = appointment.video_room_id or f"appointment-{appointment.id}"
         payload["join_available_at"] = (
             state["patient_join_time"].isoformat() + "Z" if state["patient_join_time"] else None
         )
@@ -887,7 +887,7 @@ def patient_join_call(id):
             db.session.commit()
 
         payload = appointment.to_dict()
-        payload["room_id"] = f"appointment-{appointment.id}"
+        payload["room_id"] = appointment.video_room_id or f"appointment-{appointment.id}"
         payload["open_call"] = bool(state["both_joined"])
         payload["waiting_for"] = state["waiting_for"]
         return jsonify(payload), 200

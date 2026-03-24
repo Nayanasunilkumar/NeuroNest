@@ -267,6 +267,7 @@ class Appointment(db.Model):
     reminder_10_sent_at = db.Column(db.DateTime, nullable=True)
     popup_shown_at = db.Column(db.DateTime, nullable=True)
     missed_notified_at = db.Column(db.DateTime, nullable=True)
+    video_room_id = db.Column(db.String(100), nullable=True, index=True)
 
     # Reschedule tracking
     rescheduled_by = db.Column(db.String(20), nullable=True) # "doctor" / "patient"
@@ -388,7 +389,7 @@ class Appointment(db.Model):
             "appointment_date": str(ist_dt.date()) if ist_dt else str(self.appointment_date),
             "appointment_time": str(ist_dt.time().replace(microsecond=0)) if ist_dt else str(self.appointment_time),
             # Keep UTC timestamp for absolute-time operations.
-            "appointment_start_utc": utc_dt.isoformat().replace("+00:00", "Z") if utc_dt else None,
+            "appointment_start_utc": utc_dt.isoformat() if utc_dt else None,
             "slot_id": self.slot_id,
             "reason": self.reason,
             "notes": self.notes,
@@ -396,13 +397,13 @@ class Appointment(db.Model):
             "consultation_type": self.consultation_type or "in_person",
             "status": self.status,
             "call_status": state["status"],
-            "join_enabled_patient_time": state["patient_join_time"].isoformat() + 'Z' if state["patient_join_time"] else None,
-            "join_enabled_doctor_time": state["doctor_join_time"].isoformat() + 'Z' if state["doctor_join_time"] else None,
-            "patient_joined_at": self.patient_joined_at.isoformat() + 'Z' if self.patient_joined_at else None,
-            "doctor_joined_at": self.doctor_joined_at.isoformat() + 'Z' if self.doctor_joined_at else None,
-            "call_started_at": self.call_started_at.isoformat() + 'Z' if self.call_started_at else None,
+            "join_enabled_patient_time": state["patient_join_time"].isoformat() if state["patient_join_time"] else None,
+            "join_enabled_doctor_time": state["doctor_join_time"].isoformat() if state["doctor_join_time"] else None,
+            "patient_joined_at": self.patient_joined_at.isoformat() if self.patient_joined_at else None,
+            "doctor_joined_at": self.doctor_joined_at.isoformat() if self.doctor_joined_at else None,
+            "call_started_at": self.call_started_at.isoformat() if self.call_started_at else None,
             "popup_shown": bool(self.popup_shown_at),
-            "popup_shown_at": self.popup_shown_at.isoformat() + 'Z' if self.popup_shown_at else None,
+            "popup_shown_at": self.popup_shown_at.isoformat() if self.popup_shown_at else None,
             "call_state": {
                 "patient_can_join_now": state["patient_can_join"],
                 "doctor_can_join_now": state["doctor_can_join"],
@@ -418,12 +419,13 @@ class Appointment(db.Model):
             "extended_from_appointment_id": self.extended_from_appointment_id,
             "feedback_given": self.feedback_given,
             "rescheduled_by": self.rescheduled_by,
-            "old_date_time": self.old_date_time.isoformat() + 'Z' if self.old_date_time else None,
-            "new_date_time": self.new_date_time.isoformat() + 'Z' if self.new_date_time else None,
+            "old_date_time": self.old_date_time.isoformat() if self.old_date_time else None,
+            "new_date_time": self.new_date_time.isoformat() if self.new_date_time else None,
             "reschedule_reason": self.reschedule_reason,
             "reschedule_status": self.reschedule_status,
-            "created_at": self.created_at.isoformat() + 'Z',
-            "updated_at": self.updated_at.isoformat() + 'Z'
+            "video_room_id": self.video_room_id,
+            "created_at": self.created_at.isoformat(),
+            "updated_at": self.updated_at.isoformat()
         }
 
 

@@ -73,7 +73,8 @@ def create_app():
                     "ADD COLUMN IF NOT EXISTS reminder_30_sent_at TIMESTAMP, "
                     "ADD COLUMN IF NOT EXISTS reminder_10_sent_at TIMESTAMP, "
                     "ADD COLUMN IF NOT EXISTS popup_shown_at TIMESTAMP, "
-                    "ADD COLUMN IF NOT EXISTS missed_notified_at TIMESTAMP"
+                    "ADD COLUMN IF NOT EXISTS missed_notified_at TIMESTAMP, "
+                    "ADD COLUMN IF NOT EXISTS video_room_id VARCHAR(100)"
                 ))
                 # --- Notification Preferences Missing Columns ---
                 conn.execute(db.text("ALTER TABLE notification_preferences ADD COLUMN IF NOT EXISTS email_alerts BOOLEAN DEFAULT TRUE"))
