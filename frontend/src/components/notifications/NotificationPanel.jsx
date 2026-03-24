@@ -12,7 +12,21 @@ import {
   Stethoscope,
   Heart
 } from 'lucide-react';
-import { format, isToday, isYesterday } from 'date-fns';
+
+const isToday = (date) => {
+  const today = new Date();
+  return date.getDate() === today.getDate() &&
+    date.getMonth() === today.getMonth() &&
+    date.getFullYear() === today.getFullYear();
+};
+
+const isYesterday = (date) => {
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  return date.getDate() === yesterday.getDate() &&
+    date.getMonth() === yesterday.getMonth() &&
+    date.getFullYear() === yesterday.getFullYear();
+};
 
 const NotificationPanel = ({ 
   notifications = [], 
@@ -119,7 +133,7 @@ const NotificationPanel = ({
                     {notif.title}
                   </p>
                   <span className={`flex-shrink-0 ms-2 ${darkMode ? 'text-slate-500' : 'text-muted'}`} style={{ fontSize: '0.65rem' }}>
-                    {format(new Date(notif.created_at), 'h:mm a')}
+                    {new Date(notif.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </span>
                </div>
                <p className={`mb-0 small line-clamp-2 ${darkMode ? 'text-slate-400' : 'text-secondary'}`} style={{ fontSize: '0.78rem', lineHeight: '1.4' }}>
