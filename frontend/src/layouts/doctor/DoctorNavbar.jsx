@@ -6,8 +6,9 @@ import { getAppointmentRequests } from '../../api/doctor';
 import { getConversations } from '../../api/chat';
 import { doctorFeedbackService } from '../../services/doctorFeedbackService';
 import { getUser } from '../../utils/auth';
-import { getMyNotifications, markNotificationRead } from '../../api/profileApi';
+import { getMyNotifications, markNotificationRead, markAllNotificationsRead, deleteNotification } from '../../api/profileApi';
 import DynamicIslandNav from '../../components/DynamicIslandNav';
+import NotificationPanel from '../../components/notifications/NotificationPanel';
 import { Bell, Info, AlertTriangle } from 'lucide-react';
 import { useAlerts } from '../../context/AlertContext';
 
@@ -56,44 +57,44 @@ const DoctorNavbar = ({ darkMode, toggleTheme }) => {
     const loadNotifications = async () => {
       try {
         const notifs = [];
-        try {
-          const reqs = await getAppointmentRequests();
-          const pending = reqs.filter(r => r.status?.toLowerCase() === 'pending').length;
-          if (pending > 0) {
-            notifs.push({
-              id: 'appts',
-              type: 'request',
-              title: `${pending} New Appointment Request${pending > 1 ? 's' : ''}`,
-              desc: 'Requires your approval',
-              link: '/doctor/appointment-requests',
-              icon: <CalendarCheck size={16} className="text-blue-500" />
-            });
-          }
-        } catch {
-          // Optional source; keep navbar resilient.
+        // Sources: Appointment Requests, Chats, Feedback, and General Notifications
+        const [reqs, convs, user] = await Promise.all([
+          getAppointmentRequests().catch(() => []),
+          getConversations().catch(() => []),
+          getUser()
+        ]);
+
+        const pending = reqs.filter(r => r.status?.toLowerCase() === 'pending').length;
+        if (pending > 0) {
+          notifs.push({
+            id: 'appts',
+            type: 'request',
+            title: `${pending} New Appointment Request${pending > 1 ? 's' : ''}`,
+            desc: 'Requires your approval',
+            link: '/doctor/appointment-requests',
+            icon: <CalendarCheck size={16} className="text-blue-500" />,
+            created_at: new Date().toISOString(), // Fallback
+            is_read: false
+          });
         }
 
-        try {
-          const convs = await getConversations();
-          const unreadConvs = convs.filter(c => c.unread_count > 0);
-          if (unreadConvs.length > 0) {
-             const totalUnread = unreadConvs.reduce((acc, c) => acc + c.unread_count, 0);
-             notifs.push({
-               id: 'chat',
-               type: 'chat',
-               title: `${totalUnread} Unread Message${totalUnread > 1 ? 's' : ''}`,
-               desc: `From ${unreadConvs.length} patient${unreadConvs.length > 1 ? 's' : ''}`,
-               link: '/doctor/chat',
-               icon: <MessageSquare size={16} className="text-emerald-500" />
-             });
-          }
-        } catch {
-          // Optional source; keep navbar resilient.
+        const unreadConvs = convs.filter(c => c.unread_count > 0);
+        if (unreadConvs.length > 0) {
+           const totalUnread = unreadConvs.reduce((acc, c) => acc + c.unread_count, 0);
+           notifs.push({
+             id: 'chat',
+             type: 'chat',
+             title: `${totalUnread} Unread Message${totalUnread > 1 ? 's' : ''}`,
+             desc: `From ${unreadConvs.length} patient${unreadConvs.length > 1 ? 's' : ''}`,
+             link: '/doctor/chat',
+             icon: <MessageSquare size={16} className="text-emerald-500" />,
+             created_at: new Date().toISOString(),
+             is_read: false
+           });
         }
 
-        try {
-          const user = getUser();
-          if (user?.id) {
+        if (user?.id) {
+          try {
             const summary = await doctorFeedbackService.getSummary(user.id);
             if (summary && summary.negative_reviews_30d > 0) {
                notifs.push({
@@ -102,40 +103,79 @@ const DoctorNavbar = ({ darkMode, toggleTheme }) => {
                  title: `Review Alert`,
                  desc: `${summary.negative_reviews_30d} recent negative review(s)`,
                  link: '/doctor/feedback-reviews',
-                 icon: <Star size={16} className="text-amber-500" />
+                 icon: <Star size={16} className="text-amber-500" />,
+                 created_at: new Date().toISOString(),
+                 is_read: false
                });
             }
-          }
-        } catch {
-          // Optional source; keep navbar resilient.
-        }
-        try {
-          const generalNotifs = await getMyNotifications(true); // unread only
-          generalNotifs.forEach(n => {
-            notifs.push({
-              id: `gen-${n.id}`,
-              type: 'general',
-              title: n.title,
-              desc: n.message,
-              link: '#', // TODO: Add contextual links if needed
-              icon: n.type === 'error' ? <AlertTriangle size={16} className="text-danger" /> : <Info size={16} className="text-blue-500" />,
-              backend_id: n.id
-            });
-          });
-        } catch {
-          // Optional source; keep navbar resilient.
+          } catch {}
         }
 
-        setNotifications(notifs);
+        const generalNotifs = await getMyNotifications(false); // Fetch all for grouping
+        generalNotifs.forEach(n => {
+          notifs.push({
+            id: `gen-${n.id}`,
+            type: n.type || 'general',
+            title: n.title,
+            message: n.message,
+            link: '#',
+            created_at: n.created_at,
+            is_read: n.is_read,
+            backend_id: n.id
+          });
+        });
+
+        // Deduplication and sorting
+        const uniqueNotifs = Array.from(new Map(notifs.map(item => [item.title + item.desc, item])).values());
+        setNotifications(uniqueNotifs.sort((a,b) => new Date(b.created_at) - new Date(a.created_at)));
       } catch (err) {
         console.error("Failed to load notifications", err);
       }
     };
 
     loadNotifications();
-    const interval = setInterval(loadNotifications, 30000);
+    const interval = setInterval(loadNotifications, 45000);
     return () => clearInterval(interval);
   }, []);
+
+  const handleMarkAllRead = async () => {
+    try {
+      await markAllNotificationsRead();
+      setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+    } catch (err) {
+      console.error("Failed to mark all as read", err);
+    }
+  };
+
+  const handleMarkRead = async (id) => {
+    try {
+      if (id.startsWith('gen-')) {
+        const backendId = id.split('-')[1];
+        await markNotificationRead(backendId);
+      }
+      setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n));
+    } catch (err) {
+      console.error("Failed to mark read", err);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    try {
+      if (id.startsWith('gen-')) {
+        const backendId = id.split('-')[1];
+        await deleteNotification(backendId);
+      }
+      setNotifications(prev => prev.filter(n => n.id !== id));
+    } catch (err) {
+      console.error("Failed to delete notification", err);
+    }
+  };
+
+  useEffect(() => {
+    if (showDropdown && notifications.some(n => !n.is_read)) {
+      handleMarkAllRead();
+    }
+  }, [showDropdown]);
 
   const hasNotifications = notifications.length > 0 || unreadCount > 0;
   const totalNotifications = notifications.length + unreadCount;
@@ -175,52 +215,25 @@ const DoctorNavbar = ({ darkMode, toggleTheme }) => {
             title="Notifications"
           >
             <BellRing size={18} className={darkMode ? 'text-light' : 'text-secondary'} />
-            {hasNotifications && (
+            {notifications.filter(n => !n.is_read).length > 0 && (
               <span className="position-absolute translate-middle p-1 bg-danger border border-light rounded-circle" style={{ top: '8px', right: '4px' }}></span>
             )}
           </button>
           
           {showDropdown && (
-            <div className={`position-absolute top-100 end-0 mt-2 shadow-lg rounded-4 p-2`} style={{ 
-              width: '320px', 
-              zIndex: 1060,
-              background: darkMode ? 'rgba(30, 41, 59, 0.95)' : 'rgba(255, 255, 255, 0.95)',
-              backdropFilter: 'blur(24px)',
-              border: darkMode ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid rgba(0, 0, 0, 0.1)',
-            }}>
-              <div className="d-flex align-items-center justify-content-between p-2 mb-1 border-bottom border-opacity-10 pb-2">
-                <span className={`fw-bold small ${darkMode ? 'text-light' : 'text-dark'}`}>Notifications</span>
-                {totalNotifications > 0 && <span className="badge bg-danger rounded-pill px-2 py-1" style={{ fontSize: '0.6rem' }}>{totalNotifications} NEW</span>}
-              </div>
-              <div className="p-1" style={{ maxHeight: 'calc(100vh - 160px)', overflowY: 'auto' }}>
-                {notifications.length > 0 ? (
-                  notifications.map(n => (
-                    <div 
-                      key={n.id} 
-                      onClick={async () => { 
-                        setShowDropdown(false); 
-                        if (n.backend_id) await markNotificationRead(n.backend_id);
-                        if (n.link !== '#') navigate(n.link); 
-                      }} 
-                      className={`d-flex gap-3 p-2 rounded-3 cursor-pointer mb-1 transition-all ${darkMode ? 'text-light hover-bg-dark' : 'text-dark hover-bg-light'}`}
-                    >
-                      <div className="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0 shadow-sm" style={{ 
-                        width: '38px', height: '38px',
-                        background: n.type === 'request' ? 'rgba(13, 110, 253, 0.1)' : n.type === 'chat' ? 'rgba(25, 135, 84, 0.1)' : 'rgba(255, 193, 7, 0.1)'
-                      }}>{n.icon}</div>
-                      <div className="flex-grow-1">
-                         <div className="fw-bold fs-6 mb-0 lh-sm">{n.title}</div>
-                         <div className={`small fw-medium ${darkMode ? 'text-secondary' : 'text-muted'}`}>{n.desc}</div>
-                      </div>
-                    </div>
-                  ))
-                ) : null}
-
-                {totalNotifications === 0 && (
-                  <div className={`p-4 text-center small fw-medium ${darkMode ? 'text-secondary' : 'text-muted'}`}>You're all caught up!</div>
-                )}
-              </div>
-            </div>
+            <NotificationPanel 
+              notifications={notifications}
+              unreadCount={unreadCount}
+              darkMode={darkMode}
+              onMarkAllRead={handleMarkAllRead}
+              onMarkRead={handleMarkRead}
+              onDelete={handleDelete}
+              onClose={() => setShowDropdown(false)}
+              onNavigate={(link) => {
+                setShowDropdown(false);
+                navigate(link);
+              }}
+            />
           )}
         </div>
 

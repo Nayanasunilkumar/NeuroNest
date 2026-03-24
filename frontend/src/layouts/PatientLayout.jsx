@@ -5,12 +5,15 @@ import { logout } from "../utils/auth";
 import { useTheme } from "../context/ThemeContext";
 import { Sun, Moon, LogOut, Bell } from "lucide-react";
 import { getAlerts, acknowledgeAlert } from "../api/alerts";
-import { getMyNotifications, markNotificationRead } from "../api/profileApi";
+import { getMyNotifications, markNotificationRead, markAllNotificationsRead, deleteNotification } from "../api/profileApi";
 import { initSocket } from "../services/socket";
+import NotificationPanel from "../components/notifications/NotificationPanel";
+import { useNavigate } from "react-router-dom";
 
 const PatientLayout = () => {
     const { isDark: darkMode, toggleTheme } = useTheme();
     const location = useLocation();
+    const navigate = useNavigate();
 
     const [alertCount, setAlertCount] = React.useState(0);
     const [alerts, setAlerts] = React.useState([]);
@@ -38,20 +41,24 @@ const PatientLayout = () => {
         const fetchCount = async () => {
             try {
                 const [alertsData, notificationsData] = await Promise.all([
-                    getAlerts(true),
-                    getMyNotifications(true)
+                    getAlerts(false), // Fetch all for grouping
+                    getMyNotifications(false) 
                 ]);
                 
                 const readAlertIds = getReadAlerts();
-                const filteredAlertsData = (alertsData || []).filter(a => !readAlertIds.includes(a.id));
                 
                 const merged = [
-                    ...filteredAlertsData.map(a => ({ ...a, type: 'alert' })),
-                    ...(notificationsData || []).map(n => ({ ...n, type: 'notification' }))
+                    ...(alertsData || []).map(a => ({ 
+                      ...a, 
+                      type: 'alert',
+                      is_read: readAlertIds.includes(a.id),
+                      title: `${a.vital_type} Critical Alert`,
+                    })),
+                    ...(notificationsData || []).map(n => ({ ...n, type: n.type || 'notification' }))
                 ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
                 setAlerts(merged);
-                setAlertCount(merged.length);
+                setAlertCount(merged.filter(a => !a.is_read).length);
             } catch {
                 // ignore
             }
@@ -74,6 +81,12 @@ const PatientLayout = () => {
         };
     }, []);
 
+    React.useEffect(() => {
+        if (showNotifications && alerts.some(a => !a.is_read)) {
+            handleMarkAllRead();
+        }
+    }, [showNotifications]);
+
     // Handle click outside to close dropdown
     React.useEffect(() => {
         const handleClickOutside = (event) => {
@@ -85,19 +98,48 @@ const PatientLayout = () => {
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    const handleAcknowledge = async (item) => {
+    const handleAcknowledge = async (id) => {
         try {
+            const item = alerts.find(a => a.id === id);
+            if (!item) return;
+
             if (item.type === 'alert') {
-                // For patients, we only "mark as read" locally to hide from bell,
-                // but we DON'T acknowledge in the backend (doctors must do that).
                 markAlertAsReadLocally(item.id);
             } else {
                 await markNotificationRead(item.id);
             }
-            setAlerts((prev) => prev.filter((a) => a.id !== item.id));
+            setAlerts((prev) => prev.map(a => a.id === id ? { ...a, is_read: true } : a));
             setAlertCount((prev) => Math.max(0, prev - 1));
         } catch (err) {
             console.error("Failed to acknowledge notification", err);
+        }
+    };
+
+    const handleMarkAllRead = async () => {
+        try {
+            await markAllNotificationsRead();
+            // Also mark alerts as read locally
+            alerts.filter(a => a.type === 'alert').forEach(a => markAlertAsReadLocally(a.id));
+            
+            setAlerts(prev => prev.map(a => ({ ...a, is_read: true })));
+            setAlertCount(0);
+        } catch (err) {
+            console.error("Failed to mark all as read", err);
+        }
+    };
+
+    const handleDelete = async (id) => {
+        try {
+            const item = alerts.find(a => a.id === id);
+            if (item?.type !== 'alert') {
+                await deleteNotification(id);
+            }
+            setAlerts(prev => prev.filter(a => a.id !== id));
+            // Recalculate unread count
+            const remaining = alerts.filter(a => a.id !== id && !a.is_read);
+            setAlertCount(remaining.length);
+        } catch (err) {
+            console.error("Failed to delete notification", err);
         }
     };
 
@@ -146,59 +188,18 @@ const PatientLayout = () => {
 
                             {/* Notifications Dropdown */}
                             {showNotifications && (
-                                <div className="position-absolute top-100 end-0 mt-2 shadow-lg rounded-4 overflow-hidden border-0" 
-                                    style={{ 
-                                        width: '320px', 
-                                        zIndex: 1100, 
-                                        background: darkMode ? 'rgba(30, 41, 59, 0.95)' : 'rgba(255, 255, 255, 0.95)',
-                                        backdropFilter: 'blur(16px)',
-                                        border: `1px solid ${darkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'}`,
-                                        animation: 'fadeInSlide 0.2s ease-out'
-                                    }}>
-                                    <div className="p-3 border-bottom d-flex justify-content-between align-items-center" style={{ borderColor: darkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }}>
-                                        <h6 className="mb-0 fw-black text-uppercase small tracking-wider" style={{ color: darkMode ? '#cbd5e1' : '#475569' }}>Notifications</h6>
-                                        <span className="badge rounded-pill bg-primary bg-opacity-10 text-primary small fw-bold" style={{ fontSize: '0.65rem' }}>{alertCount} New</span>
-                                    </div>
-                                    <div className="overflow-y-auto custom-scrollbar" style={{ maxHeight: '400px' }}>
-                                        {alerts.length > 0 ? (
-                                            alerts.map((item) => (
-                                                <div key={item.id} className="p-3 border-bottom hover-bg transition-all" style={{ borderColor: darkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)', background: item.severity === 'CRITICAL' ? (darkMode ? 'rgba(220,53,69,0.05)' : 'rgba(220,53,69,0.02)') : 'transparent' }}>
-                                                    <div className="d-flex justify-content-between gap-2 mb-1">
-                                                        <span className={`fw-bold small ${item.severity === 'CRITICAL' ? 'text-danger' : 'text-primary'}`}>
-                                                            {item.type === 'alert' ? `${item.vital_type} Critical` : (item.title || 'Notification')}
-                                                        </span>
-                                                        <span className="text-secondary" style={{ fontSize: '0.65rem' }}>
-                                                            {new Date(item.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                                        </span>
-                                                    </div>
-                                                    <p className="small text-secondary mb-2 lh-sm" style={{ fontSize: '0.75rem' }}>{item.message}</p>
-                                                    <button 
-                                                        onClick={() => handleAcknowledge(item)}
-                                                        className="btn btn-sm p-0 text-primary fw-bold text-decoration-none" 
-                                                        style={{ fontSize: '0.7rem' }}
-                                                    >
-                                                        Mark as read
-                                                    </button>
-                                                </div>
-                                            ))
-                                        ) : (
-                                            <div className="p-5 text-center text-secondary opacity-50">
-                                                <Bell size={24} className="mb-2" />
-                                                <p className="small mb-0">No new notifications</p>
-                                            </div>
-                                        )}
-                                    </div>
-                                    <div className="p-2 text-center bg-light bg-opacity-5 border-top" style={{ borderColor: darkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }}>
-                                        <Link 
-                                            to="/patient/alerts" 
-                                            onClick={() => setShowNotifications(false)}
-                                            className="btn btn-link btn-sm text-secondary text-decoration-none fw-bold w-100" 
-                                            style={{ fontSize: '0.7rem' }}
-                                        >
-                                            View all activity
-                                        </Link>
-                                    </div>
-                                </div>
+                                <NotificationPanel 
+                                    notifications={alerts}
+                                    darkMode={darkMode}
+                                    onMarkAllRead={handleMarkAllRead}
+                                    onMarkRead={handleAcknowledge}
+                                    onDelete={handleDelete}
+                                    onClose={() => setShowNotifications(false)}
+                                    onNavigate={(link) => {
+                                        setShowNotifications(false);
+                                        navigate(link);
+                                    }}
+                                />
                             )}
                         </div>
 
