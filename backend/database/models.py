@@ -375,6 +375,8 @@ class Appointment(db.Model):
     def to_dict(self):
         state = self._call_state()
         resolved_dt = self._resolved_schedule_datetime()
+        ist_dt = resolved_dt.astimezone(ZoneInfo("Asia/Kolkata")) if resolved_dt else None
+        utc_dt = resolved_dt.astimezone(timezone.utc) if resolved_dt else None
         return {
             "id": self.id,
             "patient_id": self.patient_id,
@@ -382,9 +384,11 @@ class Appointment(db.Model):
             "patient_image": self.patient.patient_profile.profile_image if self.patient and self.patient.patient_profile else None,
             "doctor_id": self.doctor_id,
             "doctor_name": self.doctor.full_name if self.doctor else None,
-            "appointment_date": str(resolved_dt.date()) if resolved_dt else str(self.appointment_date),
-            "appointment_time": str(resolved_dt.time()) if resolved_dt else str(self.appointment_time),
-            "appointment_start_utc": resolved_dt.isoformat() + 'Z' if resolved_dt else None,
+            # API contract: expose appointment_date/time in IST wall-clock for UI display and sorting.
+            "appointment_date": str(ist_dt.date()) if ist_dt else str(self.appointment_date),
+            "appointment_time": str(ist_dt.time().replace(microsecond=0)) if ist_dt else str(self.appointment_time),
+            # Keep UTC timestamp for absolute-time operations.
+            "appointment_start_utc": utc_dt.isoformat().replace("+00:00", "Z") if utc_dt else None,
             "slot_id": self.slot_id,
             "reason": self.reason,
             "notes": self.notes,
