@@ -46,7 +46,7 @@ def create_app():
     # Dynamically allow all Vercel preview deployments
     _allowed_origins.append(re.compile(r"^https://.*\.vercel\.app$"))
     
-    CORS(app, origins=_allowed_origins, supports_credentials=True)
+    CORS(app, origins=_allowed_origins, supports_credentials=True, allow_headers=["Content-Type", "Authorization"])
     db.init_app(app)
     jwt = JWTManager(app)
     socketio.init_app(app)
