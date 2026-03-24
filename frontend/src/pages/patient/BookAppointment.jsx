@@ -33,7 +33,12 @@ const BookAppointment = () => {
       navigate("/patient/appointments");
     } catch (err) {
       console.error(err);
-      setError(err.response?.data?.error || "Failed to book appointment.");
+      const rawError = err.response?.data?.error || err.response?.data?.message || "";
+      const safeMessage =
+        typeof rawError === "string" && /name\s+'.+'\s+is not defined/i.test(rawError)
+          ? "Booking failed due to a server issue. Please try again in a moment."
+          : (rawError || "Failed to book appointment.");
+      setError(safeMessage);
     } finally {
       setLoading(false);
     }

@@ -8,7 +8,6 @@ from database.models import (
     Appointment,
     AppointmentSlot,
     DoctorProfile,
-    DoctorScheduleSetting,
     User,
     db,
 )
@@ -83,7 +82,6 @@ def _lock_slot(slot_id: int):
 
 
 def _book_slot_atomic(*, current_user_id: int, doctor_id: int, slot_id: int, reason: str, notes: str, priority_level: str = "routine", consultation_type: str = "in_person"):
-    from database.models import DoctorScheduleSetting
     now_utc = _utc_now()
     # Lock the specialist's schedule setting to serialize concurrent booking attempts
     # and prevent race conditions that bypass slot status.
@@ -317,7 +315,6 @@ def get_doctor_public_profile(doctor_id):
 @appointments_bp.route("/doctors/<int:doctor_id>/available-slots", methods=["GET"])
 @jwt_required()
 def get_available_slots(doctor_id):
-    from database.models import DoctorScheduleSetting
     try:
         if not _is_patient():
             return jsonify({"error": "Patient access required"}), 403
