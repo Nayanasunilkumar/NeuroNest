@@ -261,6 +261,32 @@ def mark_notification_read(id):
     db.session.commit()
     
     return jsonify({"message": "Notification marked as read"}), 200
+
+@profile_bp.route("/notifications/read-all", methods=["PATCH"])
+@jwt_required()
+def mark_all_notifications_read():
+    user_id = int(get_jwt_identity())
+    from database.models import InAppNotification
+    
+    InAppNotification.query.filter_by(user_id=user_id, is_read=False).update({"is_read": True})
+    db.session.commit()
+    
+    return jsonify({"message": "All notifications marked as read"}), 200
+
+@profile_bp.route("/notifications/<int:id>", methods=["DELETE"])
+@jwt_required()
+def delete_notification(id):
+    user_id = int(get_jwt_identity())
+    from database.models import InAppNotification
+    
+    notification = InAppNotification.query.filter_by(id=id, user_id=user_id).first()
+    if not notification:
+        return jsonify({"message": "Notification not found"}), 404
+        
+    db.session.delete(notification)
+    db.session.commit()
+    
+    return jsonify({"message": "Notification deleted"}), 200
 @profile_bp.route("/clinical-summary", methods=["GET"])
 @jwt_required()
 def get_my_clinical_summary():
