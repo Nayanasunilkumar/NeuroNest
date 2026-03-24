@@ -13,13 +13,16 @@ const ReviewDetailModal = ({ review, onClose, onModerate }) => {
 
   const handleAction = async (action) => {
     setIsSubmitting(true);
-    const success = await onModerate(review.id, {
+    const result = await onModerate(review.id, {
       action,
-      note,
-      admin_id: 1, // Mock admin ID
+      note
     });
     setIsSubmitting(false);
-    if (success) onClose();
+    if (result.success) {
+        onClose();
+    } else {
+        alert("Institutional Governance Error: " + result.error);
+    }
   };
 
   return ReactDOM.createPortal(

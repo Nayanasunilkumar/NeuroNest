@@ -156,6 +156,9 @@ class FeedbackService:
         action = data.get('action') # hide, flag, approve, escalate
         note = data.get('note', '')
         
+        from database.models import DoctorEscalation, ReviewEscalation, ReviewModerationLog, ReviewTag, DoctorProfile
+        from services.governance_service import GovernanceService
+
         if action == 'hide':
             review.is_hidden = True
         elif action == 'approve':
@@ -165,12 +168,18 @@ class FeedbackService:
             review.is_flagged = True
         elif action == 'escalate':
             review.is_flagged = True
-            escalation = ReviewEscalation(
+            # Check if doctor escalation already exists or create new
+            GovernanceService.trigger_auto_escalation(review.doctor_id, f"Manual Escalation for Review #{review.id}: {note}")
+            
+            review_esc = ReviewEscalation(
                 review_id=review_id,
                 escalated_by=admin_id,
                 reason=note
             )
-            db.session.add(escalation)
+            db.session.add(review_esc)
+            
+        # 🔗 Governance Hook: Recalculate doctor telemetry after moderation
+        GovernanceService.process_review_event(review.id)
             
         # Log moderation
         log = ReviewModerationLog(

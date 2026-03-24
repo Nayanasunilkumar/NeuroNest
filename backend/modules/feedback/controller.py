@@ -1,4 +1,5 @@
 from flask import jsonify, request
+from flask_jwt_extended import jwt_required, get_jwt_identity
 from .service import FeedbackService
 
 class FeedbackController:
@@ -33,12 +34,15 @@ class FeedbackController:
         return jsonify(review.to_dict()), 201
 
     @staticmethod
+    @jwt_required()
     def moderate(review_id):
-        data = request.json
-        admin_id = data.get('admin_id') # In real app, get from auth token/session
-        if not admin_id:
-            return jsonify({"error": "Unauthorized"}), 401
+        from database.models import User
+        admin_id = get_jwt_identity()
+        user = User.query.get(admin_id)
+        if not user or user.role not in ['admin', 'super_admin']:
+            return jsonify({"error": "Unauthorized governance access"}), 403
             
+        data = request.json
         success, message = FeedbackService.moderate_review(review_id, admin_id, data)
         if not success:
             return jsonify({"error": message}), 400
