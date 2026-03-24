@@ -16,6 +16,7 @@ from utils.slot_engine import (
     find_slot_for_legacy_time,
     generate_slots_for_doctor,
     get_or_create_schedule_setting,
+    lock_doctor_schedule_setting,
     rolling_window_bounds,
     release_expired_holds,
 )
@@ -86,11 +87,11 @@ def _book_slot_atomic(*, current_user_id: int, doctor_id: int, slot_id: int, rea
     now_utc = _utc_now()
     # Lock the specialist's schedule setting to serialize concurrent booking attempts
     # and prevent race conditions that bypass slot status.
-    setting = DoctorScheduleSetting.query.filter_by(doctor_user_id=doctor_id).with_for_update().first()
+    setting = lock_doctor_schedule_setting(doctor_id)
     if not setting:
         # Normal path: create if missing then lock
-        setting = get_or_create_schedule_setting(doctor_id)
-        setting = DoctorScheduleSetting.query.filter_by(doctor_user_id=doctor_id).with_for_update().first()
+        get_or_create_schedule_setting(doctor_id)
+        setting = lock_doctor_schedule_setting(doctor_id)
 
     if not setting.accepting_new_bookings:
         return None, "Doctor is not accepting new appointments currently", 409
@@ -490,7 +491,7 @@ def book_appointment():
             return jsonify(payload), 201
 
         # Serialized mutex lock for legacy fallback
-        DoctorScheduleSetting.query.filter_by(doctor_user_id=doctor_id).with_for_update().first()
+        lock_doctor_schedule_setting(doctor_id)
 
         # legacy fallback with duplicate guard
         existing = Appointment.query.filter(
@@ -700,7 +701,7 @@ def reschedule_appointment(id):
 
         # legacy fallback
         # Mutex lock and duplicate check for legacy path
-        DoctorScheduleSetting.query.filter_by(doctor_user_id=doctor_id).with_for_update().first()
+        lock_doctor_schedule_setting(doctor_id)
 
         target_date = datetime.strptime(data["date"], "%Y-%m-%d").date() if "date" in data else appointment.appointment_date
         target_time = datetime.strptime(data["time"], "%H:%M").time() if "time" in data else appointment.appointment_time
