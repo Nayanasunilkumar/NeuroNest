@@ -83,7 +83,14 @@ def _lock_slot(slot_id: int):
 
 def _book_slot_atomic(*, current_user_id: int, doctor_id: int, slot_id: int, reason: str, notes: str, priority_level: str = "routine", consultation_type: str = "in_person"):
     now_utc = _utc_now()
-    setting = get_or_create_schedule_setting(doctor_id)
+    # Lock the specialist's schedule setting to serialize concurrent booking attempts
+    # and prevent race conditions that bypass slot status.
+    setting = DoctorScheduleSetting.query.filter_by(doctor_user_id=doctor_id).with_for_update().first()
+    if not setting:
+        # Normal path: create if missing then lock
+        setting = get_or_create_schedule_setting(doctor_id)
+        setting = DoctorScheduleSetting.query.filter_by(doctor_user_id=doctor_id).with_for_update().first()
+
     if not setting.accepting_new_bookings:
         return None, "Doctor is not accepting new appointments currently", 409
     release_expired_holds(doctor_id)
@@ -107,6 +114,17 @@ def _book_slot_atomic(*, current_user_id: int, doctor_id: int, slot_id: int, rea
     if slot_start_utc.tzinfo is None:
         slot_start_utc = slot_start_utc.replace(tzinfo=timezone.utc)
     slot_local_dt = slot_start_utc.astimezone(ZoneInfo("Asia/Kolkata"))
+
+    # Timing Conflict Check (Secondary Guard)
+    existing_timing_conflict = Appointment.query.filter(
+        Appointment.doctor_id == doctor_id,
+        Appointment.appointment_date == slot_local_dt.date(),
+        Appointment.appointment_time == slot_local_dt.time().replace(microsecond=0),
+        Appointment.status.in_(["pending", "approved", "completed", "no_show", "rescheduled"]),
+    ).first()
+
+    if existing_timing_conflict:
+        return None, "Technological synchronization error: specialist is already engaged at this time point.", 409
 
     appointment = Appointment(
         patient_id=current_user_id,
@@ -454,16 +472,19 @@ def book_appointment():
             payload["message"] = "Legacy endpoint used; slot-aware booking applied"
             return jsonify(payload), 201
 
+        # Serialized mutex lock for legacy fallback
+        DoctorScheduleSetting.query.filter_by(doctor_user_id=doctor_id).with_for_update().first()
+
         # legacy fallback with duplicate guard
         existing = Appointment.query.filter(
             Appointment.doctor_id == doctor_id,
             Appointment.appointment_date == appointment_date,
             Appointment.appointment_time == appointment_time,
-            Appointment.status.in_(["pending", "approved", "completed", "no_show"]),
+            Appointment.status.in_(["pending", "approved", "completed", "no_show", "rescheduled"]),
         ).first()
 
         if existing:
-            return jsonify({"error": "Slot already booked"}), 409
+            return jsonify({"error": "Timing conflict: Doctor is already occupied at this time."}), 409
 
         new_appointment = Appointment(
             patient_id=current_user_id,
@@ -658,16 +679,33 @@ def reschedule_appointment(id):
             return jsonify({"message": "Appointment rescheduled successfully", "appointment": appointment.to_dict()}), 200
 
         # legacy fallback
+        # Mutex lock and duplicate check for legacy path
+        DoctorScheduleSetting.query.filter_by(doctor_user_id=doctor_id).with_for_update().first()
+
+        target_date = datetime.strptime(data["date"], "%Y-%m-%d").date() if "date" in data else appointment.appointment_date
+        target_time = datetime.strptime(data["time"], "%H:%M").time() if "time" in data else appointment.appointment_time
+
+        existing = Appointment.query.filter(
+             Appointment.doctor_id == doctor_id,
+             Appointment.appointment_date == target_date,
+             Appointment.appointment_time == target_time,
+             Appointment.id != appointment.id,
+             Appointment.status.in_(["pending", "approved", "completed", "no_show", "rescheduled"]),
+        ).first()
+
+        if existing:
+            return jsonify({"error": "Timing conflict: specialist is already occupied at the requested time."}), 409
+
         if "date" in data:
-            appointment.appointment_date = datetime.strptime(data["date"], "%Y-%m-%d").date()
+            appointment.appointment_date = target_date
         if "time" in data:
-            appointment.appointment_time = datetime.strptime(data["time"], "%H:%M").time()
+            appointment.appointment_time = target_time
 
         # Populate reschedule fields for legacy path
         appointment.rescheduled_by = "patient"
         appointment.old_date_time = old_dt
         if "date" in data and "time" in data:
-            appointment.new_date_time = datetime.strptime(f"{data['date']} {data['time']}", "%Y-%m-%d %H:%M")
+            appointment.new_date_time = datetime.combine(target_date, target_time)
         appointment.reschedule_reason = data.get("reason", "")
         appointment.reschedule_status = "Pending"
         _reset_call_lifecycle(appointment)
