@@ -1341,11 +1341,27 @@ class ReviewModerationLog(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     review_id = db.Column(db.Integer, db.ForeignKey("reviews.id"), nullable=False)
-    action = db.Column(db.String(50), nullable=False) # hidden, escalated, approved, removed
+    doctor_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=True)
+    patient_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=True)
+    action = db.Column(db.String(50), nullable=False) # approve, flag, hide, escalate
     performed_by = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
     note = db.Column(db.Text)
-    
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    review = db.relationship("Review", backref="moderation_logs")
+    admin = db.relationship("User", foreign_keys=[performed_by])
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "review_id": self.review_id,
+            "doctor_id": self.doctor_id,
+            "patient_id": self.patient_id,
+            "action": self.action,
+            "performed_by": self.performed_by,
+            "note": self.note,
+            "created_at": self.created_at.isoformat()
+        }
 
 # =========================================
 # REVIEW TAGS (Institutional Triage)
@@ -1425,10 +1441,31 @@ class ReviewEscalation(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     review_id = db.Column(db.Integer, db.ForeignKey("reviews.id"), nullable=False)
     escalated_by = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
-    reason = db.Column(db.Text)
-    status = db.Column(db.String(20), default="open") # open, investigating, resolved, closed
+    
+    severity_level = db.Column(db.String(20), default="Standard") # Standard, Urgent, Emergency
+    category = db.Column(db.String(50), default="Quality of Care") # Quality of Care, Professionalism, Misconduct
+    
+    reason = db.Column(db.Text, nullable=False)
+    status = db.Column(db.String(20), default="Open") # Open, Under Investigation, Resolved, Dismissed
     
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    resolved_at = db.Column(db.DateTime, nullable=True)
+
+    review = db.relationship("Review", backref=db.backref("escalations", cascade="all, delete-orphan"))
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "review_id": self.review_id,
+            "escalated_by": self.escalated_by,
+            "severity_level": self.severity_level,
+            "category": self.category,
+            "reason": self.reason,
+            "status": self.status,
+            "created_at": self.created_at.isoformat(),
+            "resolved_at": self.resolved_at.isoformat() if self.resolved_at else None
+        }
+
 # =========================================
 # SECURITY ACTIVITY LOGS
 # =========================================

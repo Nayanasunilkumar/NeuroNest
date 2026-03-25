@@ -168,13 +168,23 @@ class FeedbackService:
             review.is_flagged = True
         elif action == 'escalate':
             review.is_flagged = True
-            # Check if doctor escalation already exists or create new
-            GovernanceService.trigger_auto_escalation(review.doctor_id, f"Manual Escalation for Review #{review.id}: {note}")
+            
+            severity = data.get('severity', 'Standard')
+            category = data.get('category', 'Quality of Care')
+            
+            # Hook into governance triage
+            GovernanceService.trigger_auto_escalation(
+                review.doctor_id, 
+                f"[MANUAL ESCALATION - {severity}] Review #{review.id}: {note}"
+            )
             
             review_esc = ReviewEscalation(
                 review_id=review_id,
                 escalated_by=admin_id,
-                reason=note
+                severity_level=severity,
+                category=category,
+                reason=note,
+                status="Open"
             )
             db.session.add(review_esc)
             
@@ -184,21 +194,24 @@ class FeedbackService:
         # Log moderation
         log = ReviewModerationLog(
             review_id=review_id,
+            doctor_id=review.doctor_id,
+            patient_id=review.patient_id,
             action=action,
             performed_by=admin_id,
             note=note
         )
+        db.session.add(log)
+        db.session.commit()
         
         # Handle Tags
         if 'tags' in data:
-            # Clear old tags and add new ones
             ReviewTag.query.filter_by(review_id=review_id).delete()
             for tag_name in data['tags']:
-                db.session.add(ReviewTag(review_id=review_id, tag=tag_name))
-        
-        db.session.add(log)
-        db.session.commit()
-        return True, "Review moderated successfully"
+                new_tag = ReviewTag(review_id=review_id, tag_name=tag_name)
+                db.session.add(new_tag)
+            db.session.commit()
+            
+        return True, "Institutional Audit Finalized: Governance status updated successfully."
 
     @staticmethod
     def get_quality_stats():
