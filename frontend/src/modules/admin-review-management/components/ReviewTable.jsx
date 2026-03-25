@@ -1,5 +1,5 @@
 import React from 'react';
-import { Shield, Eye, ShieldAlert, BadgeCheck, Clock } from 'lucide-react';
+import { Shield, Eye, ShieldAlert, BadgeCheck, Clock, EyeOff, AlertTriangle } from 'lucide-react';
 
 const ReviewTable = ({ reviews, onSelectReview }) => {
   const getRatingColor = (rating) => {
@@ -31,6 +31,48 @@ const ReviewTable = ({ reviews, onSelectReview }) => {
     );
   };
 
+  const getGovernanceStatusTag = (review) => {
+    const status = String(review?.status || '').toLowerCase();
+
+    if (status === 'escalated') {
+      return (
+        <span style={escalatedStyle}>
+          <AlertTriangle size={12} /> Escalated
+        </span>
+      );
+    }
+
+    if (status === 'hidden' || review?.is_hidden) {
+      return (
+        <span style={hiddenStyle}>
+          <EyeOff size={12} /> Hidden
+        </span>
+      );
+    }
+
+    if (status === 'flagged' || review?.is_flagged) {
+      return (
+        <span style={flagStyle}>
+          <ShieldAlert size={12} /> Flagged
+        </span>
+      );
+    }
+
+    if (status === 'approved') {
+      return (
+        <span style={verifiedStyle}>
+          <BadgeCheck size={12} /> Approved
+        </span>
+      );
+    }
+
+    return (
+      <span style={verifiedStyle}>
+        <BadgeCheck size={12} /> Verified
+      </span>
+    );
+  };
+
   return (
     <div className="admin-card" style={{ marginTop: '2rem', padding: 0, overflow: 'hidden' }}>
       <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
@@ -47,7 +89,15 @@ const ReviewTable = ({ reviews, onSelectReview }) => {
         </thead>
         <tbody>
           {reviews.map((review) => (
-            <tr key={review.id} style={{ borderBottom: '1px solid var(--admin-border)', transition: 'all 0.2s' }} className="table-row-hover">
+            <tr
+              key={review.id}
+              style={{
+                borderBottom: '1px solid var(--admin-border)',
+                transition: 'all 0.2s',
+                opacity: review.is_hidden ? 0.78 : 1,
+              }}
+              className="table-row-hover"
+            >
               <td style={cellStyle}>
                 <span style={{ fontFamily: 'JetBrains Mono', fontSize: '0.7rem', opacity: 0.6 }}>#{review.id.toString().padStart(4, '0')}</span>
               </td>
@@ -64,13 +114,7 @@ const ReviewTable = ({ reviews, onSelectReview }) => {
                 </div>
               </td>
               <td style={cellStyle}>{getSentimentTag(review.sentiment)}</td>
-              <td style={cellStyle}>
-                {review.is_flagged ? (
-                  <span style={flagStyle}><ShieldAlert size={12} /> Flagged</span>
-                ) : (
-                  <span style={verifiedStyle}><BadgeCheck size={12} /> Verified</span>
-                )}
-              </td>
+              <td style={cellStyle}>{getGovernanceStatusTag(review)}</td>
               <td style={cellStyle}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.7rem', color: 'var(--admin-text-muted)' }}>
                   <Clock size={12} />
@@ -146,6 +190,33 @@ const verifiedStyle = {
   alignItems: 'center',
   gap: '4px',
   textTransform: 'uppercase'
+};
+
+const hiddenStyle = {
+  padding: '0.25rem 0.6rem',
+  borderRadius: '6px',
+  fontSize: '0.6rem',
+  fontWeight: 900,
+  background: 'rgba(148, 163, 184, 0.12)',
+  color: '#cbd5e1',
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: '4px',
+  textTransform: 'uppercase'
+};
+
+const escalatedStyle = {
+  padding: '0.25rem 0.6rem',
+  borderRadius: '6px',
+  fontSize: '0.6rem',
+  fontWeight: 900,
+  background: 'rgba(249, 115, 22, 0.15)',
+  color: '#fb923c',
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: '4px',
+  textTransform: 'uppercase',
+  border: '1px solid rgba(249, 115, 22, 0.28)'
 };
 
 export default ReviewTable;
