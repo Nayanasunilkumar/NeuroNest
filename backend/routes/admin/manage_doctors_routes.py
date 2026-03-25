@@ -24,7 +24,7 @@ from models.chat_models import Participant, Message
 from models.prescription_models import Prescription
 from datetime import datetime
 from utils.security import hash_password
-from sqlalchemy import func
+from sqlalchemy import or_
 
 admin_doctors_bp = Blueprint("admin_doctors", __name__)
 
@@ -51,65 +51,71 @@ def admin_required(fn):
 @admin_doctors_bp.route("/", methods=["GET"])
 @admin_required
 def get_doctors():
-    search_query = request.args.get("search", "").strip()
-    status_filter = request.args.get("status", "")
-    sector_filter = request.args.get("sector", "")
-    page = int(request.args.get("page", 1))
-    limit = int(request.args.get("limit", 20))
-    
-    doctor_role = func.lower(func.trim(User.role))
-    query = User.query.filter(doctor_role.in_(["doctor", "specialist"]))
-    
-    if search_query:
-        query = query.filter(
-            (User.full_name.ilike(f"%{search_query}%")) | 
-            (User.email.ilike(f"%{search_query}%"))
-        )
-        
-    if status_filter:
-        query = query.filter(User.account_status == status_filter.lower())
-
-    if sector_filter:
-        query = query.join(DoctorProfile).filter(DoctorProfile.sector == sector_filter)
-        
-    # Calculate global stats (for the whole roster, not just current page)
-    total_all = User.query.filter(doctor_role.in_(["doctor", "specialist"])).count()
-    verified_count = User.query.filter(doctor_role.in_(["doctor", "specialist"]), User.is_verified == True).count()
-    pending_count = User.query.filter(doctor_role.in_(["doctor", "specialist"]), User.is_verified == False).count()
-    active_count = User.query.filter(doctor_role.in_(["doctor", "specialist"]), User.account_status == "active").count()
-
     try:
+        search_query = request.args.get("search", "").strip()
+        status_filter = request.args.get("status", "")
+        sector_filter = request.args.get("sector", "")
+        page = int(request.args.get("page", 1))
+        limit = int(request.args.get("limit", 20))
+
+        doctor_role_filter = or_(
+            User.role == "doctor",
+            User.role == "Doctor",
+            User.role == "specialist",
+            User.role == "Specialist"
+        )
+
+        query = User.query.filter(doctor_role_filter)
+
+        if search_query:
+            query = query.filter(
+                (User.full_name.ilike(f"%{search_query}%")) |
+                (User.email.ilike(f"%{search_query}%"))
+            )
+
+        if status_filter:
+            query = query.filter(User.account_status == status_filter.lower())
+
+        if sector_filter:
+            query = query.join(DoctorProfile).filter(DoctorProfile.sector == sector_filter)
+
+        # Calculate global stats (for the whole roster, not just current page)
+        total_all = User.query.filter(doctor_role_filter).count()
+        verified_count = User.query.filter(doctor_role_filter, User.is_verified == True).count()
+        pending_count = User.query.filter(doctor_role_filter, User.is_verified == False).count()
+        active_count = User.query.filter(doctor_role_filter, User.account_status == "active").count()
+
         paginated = query.paginate(page=page, per_page=limit)
+
+        doctors_data = []
+        for user in paginated.items:
+            profile = user.doctor_profile
+            doctors_data.append({
+                "id": user.id,
+                "full_name": user.full_name,
+                "email": user.email,
+                "account_status": user.account_status,
+                "is_verified": user.is_verified,
+                "specialization": profile.specialization if profile else "N/A",
+                "license_number": profile.license_number if profile else "N/A",
+                "sector": profile.sector if profile else "North Sector",
+                "created_at": str(profile.created_at) if profile else str(datetime.utcnow())
+            })
+
+        return jsonify({
+            "doctors": doctors_data,
+            "total": paginated.total,
+            "pages": paginated.pages,
+            "current_page": page,
+            "stats": {
+                "total": total_all,
+                "verified": verified_count,
+                "pending": pending_count,
+                "active": active_count
+            }
+        }), 200
     except Exception as e:
-        return jsonify({"error": f"Failed to load doctor roster: {str(e)}"}), 500
-    
-    doctors_data = []
-    for user in paginated.items:
-        profile = user.doctor_profile
-        doctors_data.append({
-            "id": user.id,
-            "full_name": user.full_name,
-            "email": user.email,
-            "account_status": user.account_status,
-            "is_verified": user.is_verified,
-            "specialization": profile.specialization if profile else "N/A",
-            "license_number": profile.license_number if profile else "N/A",
-            "sector": profile.sector if profile else "North Sector",
-            "created_at": str(profile.created_at) if profile else str(datetime.utcnow())
-        })
-        
-    return jsonify({
-        "doctors": doctors_data,
-        "total": paginated.total,
-        "pages": paginated.pages,
-        "current_page": page,
-        "stats": {
-            "total": total_all,
-            "verified": verified_count,
-            "pending": pending_count,
-            "active": active_count
-        }
-    }), 200
+        return jsonify({"error": f"Failed to load doctor roster: {type(e).__name__}: {str(e)}"}), 500
 
 # -----------------------------------------------------------------
 # 2. CREATE NEW DOCTOR (Onboarding)
