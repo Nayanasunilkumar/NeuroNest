@@ -1,0 +1,106 @@
+.admin-theme {
+  --admin-header-bg: color-mix(in srgb, var(--nn-surface) 88%, transparent);
+  --admin-header-border: var(--nn-border);
+  --admin-brand: var(--nn-primary);
+  --admin-toggle-bg: color-mix(in srgb, var(--nn-surface-secondary) 86%, transparent);
+  --admin-toggle-fg: var(--nn-text-secondary);
+  --admin-toggle-border: var(--nn-border);
+  --admin-toggle-hover-bg: color-mix(in srgb, var(--nn-primary) 16%, var(--nn-surface));
+  --admin-logout-bg: #fee2e2;
+  --admin-logout-fg: #b91c1c;
+  --admin-logout-hover-bg: #dc2626;
+  --admin-logout-hover-fg: #ffffff;
+}
+
+.admin-theme.admin-theme-light {
+  --nn-primary: #0f766e;
+  --nn-primary-hover: #0d9488;
+  --nn-primary-light: #ccfbf1;
+  --nn-secondary: #0ea5e9;
+  --nn-accent: #ea580c;
+
+  --nn-bg: #eef4fb;
+  --nn-surface: #ffffff;
+  --nn-surface-secondary: #eaf1f8;
+  --nn-surface-card-alt: #f7fafc;
+
+  --nn-border: #cfd9e7;
+  --nn-border-strong: #9fb2cc;
+  --nn-divider: #d7e2ef;
+
+  --nn-text-main: #0f172a;
+  --nn-text-secondary: #334155;
+  --nn-text-muted: #64748b;
+
+  --admin-header-bg: linear-gradient(180deg, #ffffff 0%, #f2f7fd 100%);
+  --admin-header-border: #d8e3f0;
+  --admin-brand: #0f766e;
+  --admin-toggle-bg: #e6eef7;
+  --admin-toggle-fg: #0f172a;
+  --admin-toggle-border: #c8d6e7;
+}
+
+.admin-theme.admin-theme-dark {
+  --nn-primary: #22d3ee;
+  --nn-primary-hover: #06b6d4;
+  --nn-primary-light: #0f3c4c;
+  --nn-secondary: #38bdf8;
+  --nn-accent: #f97316;
+
+  --nn-bg: #070f1f;
+  --nn-surface: #111d34;
+  --nn-surface-secondary: #0d172a;
+  --nn-surface-card-alt: #16243f;
+
+  --nn-border: #1f3257;
+  --nn-border-strong: #304977;
+  --nn-divider: #233a61;
+
+  --nn-text-main: #e2ecff;
+  --nn-text-secondary: #b6c6e5;
+  --nn-text-muted: #8da4c9;
+
+  --admin-header-bg: linear-gradient(180deg, #0d172a 0%, #0a1324 100%);
+  --admin-header-border: #1f3257;
+  --admin-brand: #67e8f9;
+  --admin-toggle-bg: #1a2a47;
+  --admin-toggle-fg: #dbeafe;
+  --admin-toggle-border: #2b436b;
+  --admin-toggle-hover-bg: #22365a;
+  --admin-logout-bg: #40161d;
+  --admin-logout-fg: #fca5a5;
+  --admin-logout-hover-bg: #b91c1c;
+  --admin-logout-hover-fg: #ffffff;
+}
+
+.admin-theme .admin-shell-header {
+  background: var(--admin-header-bg);
+  border-bottom: 1px solid var(--admin-header-border);
+  backdrop-filter: blur(12px);
+}
+
+.admin-theme .admin-brand-wordmark {
+  color: var(--admin-brand);
+}
+
+.admin-theme .admin-theme-toggle {
+  background: var(--admin-toggle-bg);
+  color: var(--admin-toggle-fg);
+  border: 1px solid var(--admin-toggle-border);
+}
+
+.admin-theme .admin-theme-toggle:hover {
+  background: var(--admin-toggle-hover-bg);
+  transform: translateY(-1px);
+}
+
+.admin-theme .admin-logout-btn {
+  background: var(--admin-logout-bg);
+  color: var(--admin-logout-fg);
+}
+
+.admin-theme .admin-logout-btn:hover {
+  background: var(--admin-logout-hover-bg);
+  color: var(--admin-logout-hover-fg);
+  transform: scale(1.05);
+}

@@ -3,6 +3,7 @@ import { Outlet } from 'react-router-dom';
 import DynamicIslandNav from '../components/DynamicIslandNav';
 import { logout } from '../utils/auth';
 import { useTheme } from '../context/ThemeContext';
+import '../styles/admin-theme.css';
 import { 
     LogOut, Sun, Moon 
 } from 'lucide-react';
@@ -17,16 +18,19 @@ const AdminLayout = () => {
   }, []);
 
   return (
-    <div className={`vh-100 d-flex flex-column overflow-hidden ${darkMode ? 'bg-dark text-light' : 'bg-light text-dark'}`} style={{ transition: 'all 0.3s ease' }}>
+    <div
+      className={`admin-theme ${darkMode ? 'admin-theme-dark' : 'admin-theme-light'} vh-100 d-flex flex-column overflow-hidden`}
+      style={{ transition: 'all 0.3s ease', background: 'var(--nn-bg)', color: 'var(--nn-text-main)' }}
+    >
       {/* Premium Admin Header */}
       <header 
-        className={`navbar sticky-top shadow-sm px-4 ${darkMode ? 'bg-dark border-bottom border-secondary' : 'bg-white'}`}
+        className="navbar sticky-top shadow-sm px-4 admin-shell-header"
         style={{ height: '80px', zIndex: 1050 }}
       >
         <div className="container-fluid align-items-center flex-nowrap">
             {/* Left: Branding */}
             <div className="d-flex align-items-center flex-shrink-0 me-3 me-xl-5">
-                <span className={`h4 fw-black mb-0 ${darkMode ? 'text-white' : 'text-primary'}`} style={{ letterSpacing: '-0.05em' }}>NEURONEST</span>
+                <span className="h4 fw-black mb-0 admin-brand-wordmark" style={{ letterSpacing: '-0.05em' }}>NEURONEST</span>
             </div>
 
             {/* Center: Dynamic Island Navigation */}
@@ -49,7 +53,7 @@ const AdminLayout = () => {
                  </div>
 
                  <button 
-                    className={`btn p-2 rounded-circle border-0 d-flex align-items-center justify-content-center transition-all ${darkMode ? 'btn-outline-light text-warning' : 'btn-outline-dark text-secondary'}`}
+                    className="btn p-2 rounded-circle border-0 d-flex align-items-center justify-content-center transition-all admin-theme-toggle"
                     onClick={toggleTheme}
                     title="Toggle Theme"
                     style={{ width: '40px', height: '40px' }}
@@ -58,7 +62,7 @@ const AdminLayout = () => {
                  </button>
 
                  <button 
-                  className="btn btn-danger-soft rounded-circle p-2 border-0 shadow-sm transition-all d-flex align-items-center justify-content-center"
+                  className="btn rounded-circle p-2 border-0 shadow-sm transition-all d-flex align-items-center justify-content-center admin-logout-btn"
                   onClick={logout}
                   title="Logout"
                   style={{ width: '40px', height: '40px' }}
@@ -86,16 +90,6 @@ const AdminLayout = () => {
 
       <style>{`
         .fw-black { font-weight: 900; }
-        .btn-danger-soft { 
-            background-color: rgba(220, 53, 69, 0.1); 
-            color: #dc3545; 
-            transition: all 0.2s;
-        }
-        .btn-danger-soft:hover { 
-            background-color: #dc3545; 
-            color: white; 
-            transform: scale(1.05);
-        }
         .pulse-slow { animation: pulse 3s infinite; }
         @keyframes pulse {
           0% { opacity: 1; transform: scale(1); }

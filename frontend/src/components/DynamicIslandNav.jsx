@@ -54,7 +54,7 @@ const DynamicIslandNav = ({ role = "patient" }) => {
 
     return (
         <div className="dynamic-island-container">
-            <div className={`dynamic-island-wrapper ${darkMode ? 'dark' : 'light'}`}>
+            <div className={`dynamic-island-wrapper ${darkMode ? 'dark' : 'light'} ${role === 'admin' ? 'admin' : ''}`}>
                 <nav 
                     className="island-nav" 
                     ref={scrollRef} 
@@ -134,6 +134,18 @@ const DynamicIslandNav = ({ role = "patient" }) => {
                     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
                 }
 
+                .dynamic-island-wrapper.admin.dark {
+                    background: rgba(10, 24, 46, 0.92);
+                    border-color: rgba(103, 232, 249, 0.18);
+                    box-shadow: 0 14px 38px rgba(2, 12, 27, 0.55);
+                }
+
+                .dynamic-island-wrapper.admin.light {
+                    background: rgba(242, 248, 255, 0.92);
+                    border-color: rgba(15, 118, 110, 0.22);
+                    box-shadow: 0 12px 34px rgba(15, 23, 42, 0.12);
+                }
+
                 .island-nav {
                     display: flex;
                     align-items: center;
@@ -187,6 +199,16 @@ const DynamicIslandNav = ({ role = "patient" }) => {
                     color: #2563eb;
                     background: #EEF4FF;
                     box-shadow: none;
+                }
+
+                .admin.dark .island-item.active {
+                    color: #67e8f9;
+                    background: rgba(34, 211, 238, 0.16);
+                }
+
+                .admin.light .island-item.active {
+                    color: #0f766e;
+                    background: rgba(20, 184, 166, 0.16);
                 }
 
                 .island-icon {
