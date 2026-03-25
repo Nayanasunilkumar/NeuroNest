@@ -75,11 +75,14 @@ const FeedbackPage = () => {
       )}
 
       {/* Moderation Detail Portal */}
-      <ReviewDetailModal 
-        review={selectedReview}
-        onClose={() => setSelectedReview(null)}
-        onModerate={moderateReview}
-      />
+      {selectedReview && (
+        <ReviewDetailModal 
+          key={selectedReview.id}
+          review={selectedReview}
+          onClose={() => setSelectedReview(null)}
+          onModerate={moderateReview}
+        />
+      )}
 
       <style>{`
         .spin { animation: spin 1s linear infinite; }

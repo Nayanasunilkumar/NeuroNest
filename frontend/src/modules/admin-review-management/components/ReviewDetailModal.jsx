@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import { 
   X, Shield, ShieldAlert, User, MessageSquare, 
@@ -10,8 +10,15 @@ const ReviewDetailModal = ({ review, onClose, onModerate }) => {
   const [severity, setSeverity] = useState('Standard');
   const [category, setCategory] = useState('Quality of Care');
   const [isSubmitting, setIsSubmitting] = useState(false);
-
   const [confirmAction, setConfirmAction] = useState(null);
+
+  // 🏥 Fix: Reset institutional audit state when clinical case changes
+  useEffect(() => {
+    setNote('');
+    setSeverity('Standard');
+    setCategory('Quality of Care');
+    setConfirmAction(null);
+  }, [review?.id]);
 
   if (!review) return null;
 
