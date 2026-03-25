@@ -223,6 +223,8 @@ def login():
                     ).first()
                     profile_status = (prof_status_row[0] or "").lower() if prof_status_row else ""
             except Exception:
+                # Clear failed transaction state from optional profile-status probe.
+                db.session.rollback()
                 profile_status = ""
 
             if account_status == "suspended" or profile_status == "suspended":
