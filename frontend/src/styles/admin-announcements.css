@@ -131,10 +131,10 @@
     text-transform: uppercase;
 }
 
-.badge-low { background: #F1F5F9; color: #475569; }
-.badge-medium { background: #FEF3C7; color: #92400E; }
-.badge-high { background: #FFEDD5; color: #9A3412; }
-.badge-critical { background: #FEE2E2; color: #991B1B; }
+.badge-low { background: color-mix(in srgb, var(--nn-text-muted) 18%, transparent); color: var(--nn-text-secondary); }
+.badge-medium { background: color-mix(in srgb, #f59e0b 20%, transparent); color: #b45309; }
+.badge-high { background: color-mix(in srgb, #f97316 20%, transparent); color: #c2410c; }
+.badge-critical { background: color-mix(in srgb, #ef4444 22%, transparent); color: #b91c1c; }
 
 /* Status Badges */
 .status-pill {
@@ -145,14 +145,14 @@
     text-transform: capitalize;
 }
 
-.status-draft { background: #F3F4F6; color: #374151; }
-.status-published { background: #DCFCE7; color: #166534; }
-.status-scheduled { background: #DBEAFE; color: #1E40AF; }
-.status-expired { background: #FEE2E2; color: #991B1B; }
-.status-archived { background: #E5E7EB; color: #4B5563; }
+.status-draft { background: color-mix(in srgb, var(--nn-text-muted) 16%, transparent); color: var(--nn-text-secondary); }
+.status-published { background: color-mix(in srgb, #22c55e 20%, transparent); color: #15803d; }
+.status-scheduled { background: color-mix(in srgb, var(--nn-primary) 20%, transparent); color: var(--nn-primary); }
+.status-expired { background: color-mix(in srgb, #ef4444 22%, transparent); color: #b91c1c; }
+.status-archived { background: color-mix(in srgb, var(--nn-border-strong) 25%, transparent); color: var(--nn-text-secondary); }
 
 /* Buttons */
-.btn-primary {
+.admin-announcements-root .btn-primary {
     display: inline-flex;
     align-items: center;
     gap: 8px;
@@ -167,7 +167,7 @@
     transition: all 0.2s;
 }
 
-.btn-primary:hover {
+.admin-announcements-root .btn-primary:hover {
     background: var(--nn-primary-hover);
     transform: translateY(-1px);
     box-shadow: var(--nn-shadow-md);
@@ -190,9 +190,9 @@
 }
 
 .btn-icon-delete:hover {
-    background: #FEE2E2;
-    color: #DC2626;
-    border-color: #FECACA;
+    background: color-mix(in srgb, #ef4444 18%, var(--nn-surface));
+    color: #ef4444;
+    border-color: color-mix(in srgb, #ef4444 28%, var(--nn-border));
 }
 
 /* Modal Overlay */
@@ -268,7 +268,7 @@
 .ann-form-group label {
     font-size: 13px;
     font-weight: 700;
-    color: #334155;
+    color: var(--nn-text-secondary);
     letter-spacing: 0.02em;
 }
 
@@ -276,20 +276,20 @@
     width: 100%;
     padding: 12px 16px;
     border-radius: 12px;
-    border: 1px solid #E2E8F0;
+    border: 1px solid var(--nn-border);
     font-size: 14px;
     font-family: inherit;
-    background: #F8FAFC;
+    background: var(--nn-surface-secondary);
     transition: all 0.2s ease;
-    color: #0F172A;
+    color: var(--nn-text-main);
     box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.02);
 }
 
 .ann-form-input:focus, .ann-form-select:focus, .ann-form-textarea:focus {
     outline: none;
-    border-color: #3B82F6;
-    background: white;
-    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1), inset 0 1px 2px rgba(0, 0, 0, 0.02);
+    border-color: var(--nn-primary);
+    background: var(--nn-surface);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--nn-primary) 20%, transparent), inset 0 1px 2px rgba(0, 0, 0, 0.02);
 }
 
 .ann-form-textarea {
@@ -312,18 +312,18 @@
     cursor: pointer;
     font-size: 14px;
     font-weight: 600;
-    color: #334155;
+    color: var(--nn-text-secondary);
     padding: 14px 20px;
-    border: 1px solid #E2E8F0;
+    border: 1px solid var(--nn-border);
     border-radius: 12px;
-    background: #ffffff;
+    background: var(--nn-surface);
     transition: all 0.2s;
     flex: 1;
 }
 
 .ann-checkbox-label:hover {
-    background: #F8FAFC;
-    border-color: #CBD5E1;
+    background: var(--nn-surface-secondary);
+    border-color: var(--nn-border-strong);
 }
 
 .ann-checkbox-label input[type="checkbox"] {
@@ -336,19 +336,19 @@
 
 .btn-add-target {
     padding: 6px 12px;
-    background: #EFF6FF;
-    color: #2563EB;
+    background: color-mix(in srgb, var(--nn-primary) 12%, var(--nn-surface));
+    color: var(--nn-primary);
     border-radius: 8px;
     font-size: 12px;
     font-weight: 700;
     cursor: pointer;
-    border: 1px solid #BFDBFE;
+    border: 1px solid color-mix(in srgb, var(--nn-primary) 35%, var(--nn-border));
     transition: all 0.2s;
 }
 
 .btn-add-target:hover {
-    background: #DBEAFE;
-    color: #1D4ED8;
+    background: color-mix(in srgb, var(--nn-primary) 20%, var(--nn-surface));
+    color: var(--nn-primary-hover);
 }
 
 /* Announcements Table Extra Styling */
@@ -361,16 +361,16 @@
     padding: 16px 24px;
     font-size: 12px;
     font-weight: 700;
-    color: #64748B;
+    color: var(--nn-text-muted);
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    border-bottom: 1px solid #E2E8F0;
-    background: #F8FAFC;
+    border-bottom: 1px solid var(--nn-divider);
+    background: var(--admin-table-head);
     text-align: left;
 }
 
 .announcements-table-custom td {
     padding: 16px 24px;
-    border-bottom: 1px solid #F1F5F9;
+    border-bottom: 1px solid var(--nn-divider);
     vertical-align: middle;
 }

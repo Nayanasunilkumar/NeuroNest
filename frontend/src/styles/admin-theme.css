@@ -228,6 +228,11 @@
 /* Tables */
 .admin-theme .table {
   color: var(--nn-text-main);
+  --bs-table-bg: var(--nn-surface);
+  --bs-table-striped-bg: color-mix(in srgb, var(--nn-surface-secondary) 72%, var(--nn-surface));
+  --bs-table-hover-bg: color-mix(in srgb, var(--nn-primary) 10%, var(--nn-surface));
+  --bs-table-border-color: var(--nn-divider);
+  --bs-table-color: var(--nn-text-main);
 }
 
 .admin-theme .table > :not(caption) > * > * {
@@ -245,6 +250,12 @@
 
 .admin-theme .table-hover tbody tr:hover {
   background: color-mix(in srgb, var(--nn-primary) 8%, var(--nn-surface));
+}
+
+.admin-theme .table-primary {
+  --bs-table-bg: color-mix(in srgb, var(--nn-primary) 16%, var(--nn-surface));
+  --bs-table-color: var(--nn-text-main);
+  --bs-table-border-color: color-mix(in srgb, var(--nn-primary) 26%, var(--nn-divider));
 }
 
 /* Forms */
@@ -342,6 +353,17 @@
 .admin-theme .badge.bg-warning { background: color-mix(in srgb, #f59e0b 20%, transparent) !important; color: #b45309 !important; }
 .admin-theme .badge.bg-danger { background: color-mix(in srgb, #ef4444 20%, transparent) !important; color: #b91c1c !important; }
 .admin-theme .badge.bg-info { background: color-mix(in srgb, #0ea5e9 20%, transparent) !important; color: #0369a1 !important; }
+
+/* Dark-specific polish for low-contrast utility styles in legacy pages */
+.admin-theme.admin-theme-dark .table thead th.opacity-50,
+.admin-theme.admin-theme-dark .small.opacity-50 {
+  opacity: 0.8 !important;
+  color: var(--nn-text-secondary) !important;
+}
+
+.admin-theme.admin-theme-dark .table td .text-secondary {
+  color: var(--nn-text-muted) !important;
+}
 
 /* Scrollbars */
 .admin-theme *::-webkit-scrollbar {

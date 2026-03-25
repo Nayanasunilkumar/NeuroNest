@@ -163,8 +163,7 @@ const ManageDoctors = () => {
                         <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
                     </button>
                     <button 
-                        className="btn btn-primary rounded-pill px-4 py-2 fw-bold d-flex align-items-center gap-2 border-0 shadow-sm"
-                        style={{ background: 'linear-gradient(135deg, #0d6efd, #6610f2)' }}
+                        className="btn btn-primary btn-onboard-specialist rounded-pill px-4 py-2 fw-bold d-flex align-items-center gap-2 border-0 shadow-sm"
                         onClick={() => setIsModalOpen(true)}
                     >
                         <UserPlus size={18} /> Onboard Specialist
@@ -367,6 +366,15 @@ const ManageDoctors = () => {
                 .btn-outline-danger-soft { color: #ff6b6b; }
                 .btn-outline-danger-soft:hover { background: #ff6b6b; color: white; }
                 .dropdown-item:active { background-color: var(--bs-primary); }
+                .btn-onboard-specialist {
+                  background: var(--admin-accent-gradient) !important;
+                  border: 1px solid color-mix(in srgb, var(--admin-accent) 55%, transparent) !important;
+                  box-shadow: 0 8px 20px color-mix(in srgb, var(--admin-accent) 26%, transparent) !important;
+                }
+                .btn-onboard-specialist:hover {
+                  transform: translateY(-1px);
+                  filter: brightness(1.03);
+                }
             `}</style>
         </div>
     );
