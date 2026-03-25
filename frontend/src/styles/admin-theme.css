@@ -82,47 +82,47 @@
 }
 
 .admin-theme.admin-theme-dark {
-  --nn-primary: #22d3ee;
-  --nn-primary-hover: #06b6d4;
-  --nn-primary-light: #0f3c4c;
-  --nn-secondary: #38bdf8;
+  --nn-primary: #22c55e;
+  --nn-primary-hover: #16a34a;
+  --nn-primary-light: #163025;
+  --nn-secondary: #f59e0b;
   --nn-accent: #f97316;
 
-  --nn-bg: #070f1f;
-  --nn-surface: #111d34;
-  --nn-surface-secondary: #0d172a;
-  --nn-surface-card-alt: #16243f;
+  --nn-bg: #0a0f18;
+  --nn-surface: #131b28;
+  --nn-surface-secondary: #0e1622;
+  --nn-surface-card-alt: #182233;
 
-  --nn-border: #1f3257;
-  --nn-border-strong: #304977;
-  --nn-divider: #233a61;
+  --nn-border: #2a3649;
+  --nn-border-strong: #3a4963;
+  --nn-divider: #243246;
 
-  --nn-text-main: #e2ecff;
-  --nn-text-secondary: #b6c6e5;
-  --nn-text-muted: #8da4c9;
+  --nn-text-main: #e7eefb;
+  --nn-text-secondary: #bfccdf;
+  --nn-text-muted: #93a5be;
 
-  --admin-header-bg: linear-gradient(180deg, #0d172a 0%, #0a1324 100%);
-  --admin-header-border: #1f3257;
-  --admin-brand: #67e8f9;
-  --admin-toggle-bg: #1a2a47;
-  --admin-toggle-fg: #dbeafe;
-  --admin-toggle-border: #2b436b;
-  --admin-toggle-hover-bg: #22365a;
-  --admin-logout-bg: #40161d;
-  --admin-logout-fg: #fca5a5;
+  --admin-header-bg: linear-gradient(180deg, #101827 0%, #0b1220 100%);
+  --admin-header-border: #2a3649;
+  --admin-brand: #4ade80;
+  --admin-toggle-bg: #1a2435;
+  --admin-toggle-fg: #d6e1f0;
+  --admin-toggle-border: #32425a;
+  --admin-toggle-hover-bg: #223048;
+  --admin-logout-bg: #3b1518;
+  --admin-logout-fg: #fda4af;
   --admin-logout-hover-bg: #b91c1c;
   --admin-logout-hover-fg: #ffffff;
-  --admin-tone-patients-bg: rgba(56, 189, 248, 0.18);
-  --admin-tone-patients-fg: #7dd3fc;
-  --admin-tone-doctors-bg: rgba(45, 212, 191, 0.18);
-  --admin-tone-doctors-fg: #99f6e4;
-  --admin-tone-load-bg: rgba(167, 139, 250, 0.2);
-  --admin-tone-load-fg: #ddd6fe;
-  --admin-tone-revenue-bg: rgba(251, 146, 60, 0.18);
-  --admin-tone-revenue-fg: #fed7aa;
+  --admin-tone-patients-bg: rgba(34, 197, 94, 0.18);
+  --admin-tone-patients-fg: #86efac;
+  --admin-tone-doctors-bg: rgba(245, 158, 11, 0.18);
+  --admin-tone-doctors-fg: #fcd34d;
+  --admin-tone-load-bg: rgba(14, 165, 164, 0.2);
+  --admin-tone-load-fg: #5eead4;
+  --admin-tone-revenue-bg: rgba(249, 115, 22, 0.2);
+  --admin-tone-revenue-fg: #fdba74;
 
   /* Legacy admin token aliases (used by older admin pages) */
-  --admin-bg: #070f1f;
+  --admin-bg: #0a0f18;
   --admin-panel-bg: var(--nn-surface);
   --admin-card-bg: var(--nn-surface-card-alt);
   --admin-text-main: var(--nn-text-main);
@@ -133,18 +133,18 @@
   --admin-accent-soft: color-mix(in srgb, var(--nn-primary) 20%, transparent);
   --admin-accent-glow: color-mix(in srgb, var(--nn-primary) 34%, transparent);
   --admin-accent-gradient: linear-gradient(135deg, var(--nn-primary) 0%, var(--nn-secondary) 100%);
-  --admin-success: #34d399;
+  --admin-success: #4ade80;
   --admin-warning: #fbbf24;
-  --admin-danger: #f87171;
-  --admin-modal-bg: #111d34;
+  --admin-danger: #fb7185;
+  --admin-modal-bg: #131b28;
   --admin-modal-border: var(--nn-border);
   --admin-modal-overlay: rgba(2, 6, 23, 0.74);
   --admin-input-bg: var(--nn-surface-secondary);
   --admin-terminal-bg: #020617;
   --admin-timeline-line: var(--nn-divider);
   --admin-glass: blur(14px) saturate(170%);
-  --admin-shadow: 0 10px 25px rgba(2, 8, 24, 0.45);
-  --admin-shadow-strong: 0 20px 40px rgba(2, 8, 24, 0.6);
+  --admin-shadow: 0 12px 28px rgba(2, 8, 24, 0.5);
+  --admin-shadow-strong: 0 24px 44px rgba(2, 8, 24, 0.65);
 }
 
 .admin-theme .admin-shell-header {
@@ -194,10 +194,10 @@
 }
 
 .admin-theme.admin-theme-dark {
-  --admin-surface-elevated: color-mix(in srgb, var(--nn-surface) 92%, #0a1322);
-  --admin-surface-muted: color-mix(in srgb, var(--nn-surface-secondary) 92%, #0b1424);
+  --admin-surface-elevated: color-mix(in srgb, var(--nn-surface) 92%, #0c1320);
+  --admin-surface-muted: color-mix(in srgb, var(--nn-surface-secondary) 92%, #0b111a);
   --admin-focus-ring: color-mix(in srgb, var(--nn-primary) 40%, transparent);
-  --admin-table-head: color-mix(in srgb, var(--nn-surface-secondary) 86%, #0a1322);
+  --admin-table-head: color-mix(in srgb, var(--nn-surface-secondary) 86%, #0d1522);
 }
 
 /* Generic surfaces frequently used in admin module */
