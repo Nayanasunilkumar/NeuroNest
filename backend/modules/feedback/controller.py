@@ -56,15 +56,13 @@ class FeedbackController:
             return jsonify({"message": message}), 200
         except Exception as e:
             print(f"Governance Safe-Fallback Activated: {str(e)}")
-            # Even if a side-effect fails, the review status usually gets updated in the session.
-            # We try a final safe commit for the basic status update.
             try:
-                db.session.commit()
+                db.session.rollback()
                 return jsonify({
-                    "message": "Governance Protocol Finalized (via Safe-Mode)",
-                    "details": "Clinical board status updated correctly. Some secondary metadata logs may follow shortly."
-                }), 200
-            except:
+                    "error": f"Governance moderation failed safely: {str(e)}",
+                    "hint": "Primary action may be retried; secondary audit tables might be schema-misaligned."
+                }), 500
+            except Exception:
                 traceback.print_exc()
                 return jsonify({
                     "error": f"Critical Failure: {str(e)}",
