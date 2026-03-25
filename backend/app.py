@@ -85,27 +85,27 @@ def create_app():
                 conn.execute(db.text("ALTER TABLE doctor_notification_settings ADD COLUMN IF NOT EXISTS email_on_alerts BOOLEAN DEFAULT TRUE"))
                 
                 # --- Governance & Oversight (Reviews) ---
-                conn.execute(db.text(
-                    "ALTER TABLE reviews ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'Pending', "
-                    "ADD COLUMN IF NOT EXISTS escalation_severity VARCHAR(50), "
-                    "ADD COLUMN IF NOT EXISTS audit_category VARCHAR(50), "
-                    "ADD COLUMN IF NOT EXISTS admin_note TEXT, "
-                    "ADD COLUMN IF NOT EXISTS escalated_at TIMESTAMP"
-                ))
-                
+                for col, d_type in [("status", "VARCHAR(20) DEFAULT 'Pending'"), ("escalation_severity", "VARCHAR(50)"), ("audit_category", "VARCHAR(50)"), ("admin_note", "TEXT"), ("escalated_at", "TIMESTAMP")]:
+                    try:
+                        conn.execute(db.text(f"ALTER TABLE reviews ADD COLUMN IF NOT EXISTS {col} {d_type}"))
+                    except Exception as col_err:
+                        print(f"[MIGRATION] Reviews.{col} failed: {col_err}")
+
                 # --- Governance & Oversight (Escalations) ---
-                conn.execute(db.text(
-                    "ALTER TABLE review_escalations ADD COLUMN IF NOT EXISTS severity_level VARCHAR(20) DEFAULT 'Standard', "
-                    "ADD COLUMN IF NOT EXISTS category VARCHAR(50) DEFAULT 'Quality of Care', "
-                    "ADD COLUMN IF NOT EXISTS resolved_at TIMESTAMP"
-                ))
-                
+                for col, d_type in [("severity_level", "VARCHAR(20) DEFAULT 'Standard'"), ("category", "VARCHAR(50) DEFAULT 'Quality of Care'"), ("resolved_at", "TIMESTAMP")]:
+                    try:
+                        conn.execute(db.text(f"ALTER TABLE review_escalations ADD COLUMN IF NOT EXISTS {col} {d_type}"))
+                    except Exception as col_err:
+                        print(f"[MIGRATION] ReviewEscalations.{col} failed: {col_err}")
+
                 # --- Governance & Oversight (Logs) ---
-                conn.execute(db.text(
-                    "ALTER TABLE review_moderation_logs ADD COLUMN IF NOT EXISTS doctor_id INTEGER, "
-                    "ADD COLUMN IF NOT EXISTS patient_id INTEGER"
-                ))
-            print("[MIGRATION] ✓ Governance & Oversight columns synced")
+                for col, d_type in [("doctor_id", "INTEGER"), ("patient_id", "INTEGER")]:
+                    try:
+                        conn.execute(db.text(f"ALTER TABLE review_moderation_logs ADD COLUMN IF NOT EXISTS {col} {d_type}"))
+                    except Exception as col_err:
+                        print(f"[MIGRATION] ModerationLogs.{col} failed: {col_err}")
+                
+            print("[MIGRATION] ✓ Governance synchronization cycle complete")
         except Exception as e:
             print(f"[MIGRATION] Warning: {e}")
 
