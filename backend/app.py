@@ -83,7 +83,29 @@ def create_app():
                 conn.execute(db.text("ALTER TABLE notification_preferences ADD COLUMN IF NOT EXISTS inapp_announcements BOOLEAN DEFAULT TRUE"))
                 # --- Doctor Preferences Missing Columns ---
                 conn.execute(db.text("ALTER TABLE doctor_notification_settings ADD COLUMN IF NOT EXISTS email_on_alerts BOOLEAN DEFAULT TRUE"))
-            print("[MIGRATION] ✓ Database columns synced")
+                
+                # --- Governance & Oversight (Reviews) ---
+                conn.execute(db.text(
+                    "ALTER TABLE reviews ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'Pending', "
+                    "ADD COLUMN IF NOT EXISTS escalation_severity VARCHAR(50), "
+                    "ADD COLUMN IF NOT EXISTS audit_category VARCHAR(50), "
+                    "ADD COLUMN IF NOT EXISTS admin_note TEXT, "
+                    "ADD COLUMN IF NOT EXISTS escalated_at TIMESTAMP"
+                ))
+                
+                # --- Governance & Oversight (Escalations) ---
+                conn.execute(db.text(
+                    "ALTER TABLE review_escalations ADD COLUMN IF NOT EXISTS severity_level VARCHAR(20) DEFAULT 'Standard', "
+                    "ADD COLUMN IF NOT EXISTS category VARCHAR(50) DEFAULT 'Quality of Care', "
+                    "ADD COLUMN IF NOT EXISTS resolved_at TIMESTAMP"
+                ))
+                
+                # --- Governance & Oversight (Logs) ---
+                conn.execute(db.text(
+                    "ALTER TABLE review_moderation_logs ADD COLUMN IF NOT EXISTS doctor_id INTEGER, "
+                    "ADD COLUMN IF NOT EXISTS patient_id INTEGER"
+                ))
+            print("[MIGRATION] ✓ Governance & Oversight columns synced")
         except Exception as e:
             print(f"[MIGRATION] Warning: {e}")
 

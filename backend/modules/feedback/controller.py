@@ -37,19 +37,29 @@ class FeedbackController:
     @jwt_required()
     def moderate(review_id):
         from database.models import User
-        # Identity is str(user.id) from auth.py login
-        identity = get_jwt_identity()
-        admin_id = int(identity) if identity else None
+        import traceback
         
-        user = User.query.get(admin_id)
-        if not user or user.role not in ['admin', 'super_admin']:
-            return jsonify({"error": "Unauthorized Governance Access"}), 403
+        try:
+            # Identity is str(user.id) from auth.py login
+            identity = get_jwt_identity()
+            admin_id = int(identity) if identity else None
             
-        data = request.json
-        success, message = FeedbackService.moderate_review(review_id, admin_id, data)
-        if not success:
-            return jsonify({"error": message}), 400
-        return jsonify({"message": message}), 200
+            user = User.query.get(admin_id)
+            if not user or user.role not in ['admin', 'super_admin']:
+                return jsonify({"error": "Unauthorized Governance Access"}), 403
+                
+            data = request.json
+            success, message = FeedbackService.moderate_review(review_id, admin_id, data)
+            if not success:
+                return jsonify({"error": message}), 400
+            return jsonify({"message": message}), 200
+        except Exception as e:
+            print(f"Governance Escalation Crash: {str(e)}")
+            traceback.print_exc()
+            return jsonify({
+                "error": f"Internal Monitoring Failure: {str(e)}", 
+                "hint": "Check if database columns (severity, category) are synchronized."
+            }), 500
 
     @staticmethod
     def get_stats():

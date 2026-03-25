@@ -159,6 +159,17 @@ class FeedbackService:
         from database.models import DoctorEscalation, ReviewEscalation, ReviewModerationLog, ReviewTag, DoctorProfile
         from services.governance_service import GovernanceService
 
+        # Mapping actions to standard statuses
+        status_map = {
+            'hide': 'Hidden',
+            'approve': 'Approved',
+            'flag': 'Flagged',
+            'escalate': 'Escalated'
+        }
+        
+        review.status = status_map.get(action, 'Moderated')
+        review.admin_note = note
+        
         if action == 'hide':
             review.is_hidden = True
         elif action == 'approve':
@@ -168,9 +179,14 @@ class FeedbackService:
             review.is_flagged = True
         elif action == 'escalate':
             review.is_flagged = True
+            review.escalated_at = datetime.utcnow()
             
             severity = data.get('severity', 'Standard')
             category = data.get('category', 'Quality of Care')
+            
+            # Sync to main review metadata for faster lookup
+            review.escalation_severity = severity
+            review.audit_category = category
             
             # Hook into governance triage
             GovernanceService.trigger_auto_escalation(

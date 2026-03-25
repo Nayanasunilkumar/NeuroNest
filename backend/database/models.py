@@ -1309,6 +1309,13 @@ class Review(db.Model):
     is_hidden = db.Column(db.Boolean, default=False)
     is_flagged = db.Column(db.Boolean, default=False)
     
+    # Governance & Oversight Logic
+    status = db.Column(db.String(20), default="Pending") # Pending, Approved, Flagged, Hidden, Escalated
+    escalation_severity = db.Column(db.String(50))
+    audit_category = db.Column(db.String(50))
+    admin_note = db.Column(db.Text)
+    escalated_at = db.Column(db.DateTime)
+    
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -1328,8 +1335,15 @@ class Review(db.Model):
             "rating": self.rating,
             "review_text": self.review_text,
             "sentiment": self.sentiment,
+            "status": self.status,
             "is_hidden": self.is_hidden,
             "is_flagged": self.is_flagged,
+            "governance_details": {
+                "severity": self.escalation_severity,
+                "category": self.audit_category,
+                "note": self.admin_note,
+                "escalated_at": self.escalated_at.isoformat() if self.escalated_at else None
+            },
             "created_at": self.created_at.isoformat() + 'Z'
         }
 
