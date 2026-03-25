@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Info } from 'lucide-react';
-import Sidebar from '../../components/Sidebar';
-import AdminHeader from '../../components/admin/AdminHeader';
+import { Info } from 'lucide-react';
 import AppointmentSummaryCards from '../../components/admin/appointments/AppointmentSummaryCards';
 import AppointmentFilters from '../../components/admin/appointments/AppointmentFilters';
 import AppointmentTable from '../../components/admin/appointments/AppointmentTable';
@@ -16,7 +14,6 @@ import {
 import '../../styles/admin-appointments.css';
 
 const ManageAppointments = () => {
-    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [appointments, setAppointments] = useState([]);
     const [stats, setStats] = useState(null);
     const [loadingData, setLoadingData] = useState(false);
@@ -139,9 +136,7 @@ const ManageAppointments = () => {
     const isFilterIncomplete = !selectedSector || !selectedDept || !selectedDoctor;
 
     return (
-        <div className="admin-layout dark">
-            <Sidebar isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} role="admin" title="NeuroNest Admin" />
-            
+        <div className="admin-layout">
             <main className="admin-main">
                 <div className="appointments-page">
                     <header className="appt-header">

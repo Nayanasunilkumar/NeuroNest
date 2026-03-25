@@ -54,6 +54,31 @@
   --admin-tone-load-fg: #4338ca;
   --admin-tone-revenue-bg: rgba(234, 88, 12, 0.14);
   --admin-tone-revenue-fg: #c2410c;
+
+  /* Legacy admin token aliases (used by older admin pages) */
+  --admin-bg: var(--nn-bg);
+  --admin-panel-bg: var(--nn-surface);
+  --admin-card-bg: var(--nn-surface);
+  --admin-text-main: var(--nn-text-main);
+  --admin-text-muted: var(--nn-text-muted);
+  --admin-border: var(--nn-border);
+  --admin-border-strong: var(--nn-border-strong);
+  --admin-accent: var(--nn-primary);
+  --admin-accent-soft: color-mix(in srgb, var(--nn-primary) 14%, transparent);
+  --admin-accent-glow: color-mix(in srgb, var(--nn-primary) 28%, transparent);
+  --admin-accent-gradient: linear-gradient(135deg, var(--nn-primary) 0%, var(--nn-secondary) 100%);
+  --admin-success: #059669;
+  --admin-warning: #d97706;
+  --admin-danger: #dc2626;
+  --admin-modal-bg: var(--nn-surface);
+  --admin-modal-border: var(--nn-border);
+  --admin-modal-overlay: rgba(15, 23, 42, 0.35);
+  --admin-input-bg: var(--nn-surface-card-alt);
+  --admin-terminal-bg: #0f172a;
+  --admin-timeline-line: var(--nn-divider);
+  --admin-glass: none;
+  --admin-shadow: var(--nn-shadow-sm);
+  --admin-shadow-strong: var(--nn-shadow-lg);
 }
 
 .admin-theme.admin-theme-dark {
@@ -95,6 +120,31 @@
   --admin-tone-load-fg: #ddd6fe;
   --admin-tone-revenue-bg: rgba(251, 146, 60, 0.18);
   --admin-tone-revenue-fg: #fed7aa;
+
+  /* Legacy admin token aliases (used by older admin pages) */
+  --admin-bg: #070f1f;
+  --admin-panel-bg: var(--nn-surface);
+  --admin-card-bg: var(--nn-surface-card-alt);
+  --admin-text-main: var(--nn-text-main);
+  --admin-text-muted: var(--nn-text-muted);
+  --admin-border: var(--nn-border);
+  --admin-border-strong: var(--nn-border-strong);
+  --admin-accent: var(--nn-primary);
+  --admin-accent-soft: color-mix(in srgb, var(--nn-primary) 20%, transparent);
+  --admin-accent-glow: color-mix(in srgb, var(--nn-primary) 34%, transparent);
+  --admin-accent-gradient: linear-gradient(135deg, var(--nn-primary) 0%, var(--nn-secondary) 100%);
+  --admin-success: #34d399;
+  --admin-warning: #fbbf24;
+  --admin-danger: #f87171;
+  --admin-modal-bg: #111d34;
+  --admin-modal-border: var(--nn-border);
+  --admin-modal-overlay: rgba(2, 6, 23, 0.74);
+  --admin-input-bg: var(--nn-surface-secondary);
+  --admin-terminal-bg: #020617;
+  --admin-timeline-line: var(--nn-divider);
+  --admin-glass: blur(14px) saturate(170%);
+  --admin-shadow: 0 10px 25px rgba(2, 8, 24, 0.45);
+  --admin-shadow-strong: 0 20px 40px rgba(2, 8, 24, 0.6);
 }
 
 .admin-theme .admin-shell-header {
