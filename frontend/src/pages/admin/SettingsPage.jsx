@@ -10,6 +10,18 @@ const TABS = [
     { id: 'notifications', label: 'Notifications', icon: Bell },
 ];
 
+const INDIA_DEFAULT_OVERRIDES = {
+    contact_number: '+91-44-4000-0000',
+    default_timezone: 'Asia/Kolkata',
+    default_language: 'en-IN',
+};
+
+const INDIA_LEGACY_VALUES = {
+    contact_number: ['+1-800-neuro-01', '', 'null', 'none'],
+    default_timezone: ['utc', 'gmt', '', 'null', 'none'],
+    default_language: ['en-us', 'en', '', 'null', 'none'],
+};
+
 const SettingsPage = () => {
     const [activeTab, setActiveTab] = useState('general');
     const [settings, setSettings] = useState({});
@@ -40,6 +52,11 @@ const SettingsPage = () => {
             // Transform object to simpler key-value pair for state management
             const formatted = Object.keys(data).reduce((acc, key) => {
                 let value = data[key].value;
+                const normalized = (value ?? '').toString().trim().toLowerCase();
+                const indiaFallback = INDIA_DEFAULT_OVERRIDES[key];
+                if (indiaFallback && INDIA_LEGACY_VALUES[key]?.includes(normalized)) {
+                    value = indiaFallback;
+                }
                 if (data[key].type === 'boolean') {
                     value = value === 'true';
                 }
