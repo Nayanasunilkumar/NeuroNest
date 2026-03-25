@@ -1,4 +1,4 @@
-from database.models import db, Review, Appointment, ReviewModerationLog, ReviewTag, ReviewEscalation, User
+from database.models import db, Review, Appointment, ReviewModerationLog, ReviewTag, ReviewEscalation, User, DoctorProfile
 from sqlalchemy import func
 from sqlalchemy import inspect, text
 from datetime import datetime, timedelta
@@ -9,7 +9,7 @@ class FeedbackService:
         "approve": "Approved",
         "flag": "Flagged",
         "hide": "Hidden",
-        "escalate": "Escalated",
+        "suspend": "Flagged",
     }
 
     @staticmethod
@@ -21,13 +21,42 @@ class FeedbackService:
             return set()
 
     @staticmethod
-    def _generate_case_id(review_id):
-        stamp = datetime.utcnow().strftime("%Y%m%d")
-        return f"CASE-{stamp}-{int(review_id):04d}"
-
-    @staticmethod
     def _normalize_action(action):
         return (action or "").strip().lower()
+
+    @staticmethod
+    def _send_doctor_warning_email(doctor_email, doctor_name, action_label, note):
+        from services.notification_service import NotificationService
+        subject = f"NeuroNest Warning Notice - Review {action_label}"
+        body = (
+            f"Dear Dr. {doctor_name},\n\n"
+            f"A recent patient review linked to your profile was marked as {action_label.lower()} by administration.\n"
+            f"Your account is now under monitoring.\n\n"
+            f"Admin note: {note or 'No additional note provided.'}\n\n"
+            "Please continue to follow platform and clinical standards.\n\n"
+            "NeuroNest Governance Team"
+        )
+        try:
+            NotificationService.send_email(doctor_email, subject, body, event_type="warning")
+        except Exception as e:
+            print(f"[GOV EMAIL] warning email failed: {e}")
+
+    @staticmethod
+    def _send_doctor_suspension_email(doctor_email, doctor_name, note):
+        from services.notification_service import NotificationService
+        subject = "NeuroNest Account Suspension Notice"
+        body = (
+            f"Dear Dr. {doctor_name},\n\n"
+            "Your NeuroNest doctor account has been suspended due to administrative governance action.\n"
+            "You cannot access the doctor dashboard, appointments, patients, or video calls until reactivation.\n\n"
+            f"Admin note: {note or 'No additional note provided.'}\n\n"
+            "Please contact administration for further details.\n\n"
+            "NeuroNest Governance Team"
+        )
+        try:
+            NotificationService.send_email(doctor_email, subject, body, event_type="suspension")
+        except Exception as e:
+            print(f"[GOV EMAIL] suspension email failed: {e}")
 
     @staticmethod
     def get_review_timeline(review_id):
@@ -224,24 +253,21 @@ class FeedbackService:
         note = (payload.get("note") or "").strip()
         if action not in FeedbackService.ACTION_STATUS_MAP:
             return False, {"error_code": "VALIDATION_ERROR", "message": "Invalid moderation action"}
-        if action in {"flag", "hide", "escalate"} and not note:
+        if action in {"flag", "hide", "suspend"} and not note:
             return False, {"error_code": "VALIDATION_ERROR", "message": "Note is required for this action"}
 
-        # Escalated cases are locked until super-admin closes them.
-        if str(getattr(review, "status", "")).lower() == "escalated" and action != "clear":
-            return False, {"error_code": "CONFLICT", "message": "Escalated review is locked for further moderation"}
-        
-        from database.models import DoctorEscalation, ReviewEscalation, ReviewModerationLog, ReviewTag, DoctorProfile
+        from database.models import ReviewEscalation, ReviewModerationLog, ReviewTag
         from services.governance_service import GovernanceService
         reviews_cols = FeedbackService._get_table_columns("reviews")
         review_logs_cols = FeedbackService._get_table_columns("review_moderation_logs")
-        review_escalations_cols = FeedbackService._get_table_columns("review_escalations")
         
         target_status = FeedbackService.ACTION_STATUS_MAP.get(action, "Moderated")
         if action == "clear":
             action = "approve"
         print(f"🔍 [G-PROTOCOL] Attempting action: {action} -> {target_status}")
-        case_id = None
+
+        doctor_profile = DoctorProfile.query.filter_by(user_id=review.doctor_id).first()
+        doctor_user = review.doctor
 
         try:
             if "status" in reviews_cols:
@@ -254,77 +280,35 @@ class FeedbackService:
         
         if action == 'hide':
             review.is_hidden = True
+            review.is_flagged = True
+            if doctor_profile and doctor_profile.doctor_status != "suspended":
+                doctor_profile.doctor_status = "monitoring"
         elif action == 'approve':
             review.is_hidden = False
             review.is_flagged = False
+            if doctor_profile and doctor_profile.doctor_status != "suspended":
+                doctor_profile.doctor_status = "active"
         elif action == 'flag':
             review.is_flagged = True
-        elif action == 'escalate':
+            review.is_hidden = False
+            if doctor_profile and doctor_profile.doctor_status != "suspended":
+                doctor_profile.doctor_status = "monitoring"
+        elif action == 'suspend':
             review.is_flagged = True
-            review.is_hidden = True
+            review.is_hidden = False
+            if doctor_profile:
+                doctor_profile.doctor_status = "suspended"
+            if doctor_user:
+                doctor_user.account_status = "suspended"
+            # Freeze/cancel upcoming active appointments for this doctor.
+            future_appts = Appointment.query.filter(
+                Appointment.doctor_id == review.doctor_id,
+                Appointment.status.in_(["pending", "approved", "rescheduled"])
+            ).all()
+            for appt in future_appts:
+                appt.status = "cancelled_by_doctor"
             
-            # --- HARD FIX: SAFE ESCALATION Fallback ---
-            try:
-                if "escalated_at" in reviews_cols:
-                    review.escalated_at = datetime.utcnow()
-                    print(f"✅ [G-PROTOCOL] Timestamped escalation")
-            except Exception as e:
-                print(f"⚠️ [G-PROTOCOL] Timestamp failed: {e}")
-
-            severity = payload.get('severity', 'Standard')
-            category = payload.get('category', 'Quality of Care')
-            case_id = FeedbackService._generate_case_id(review_id)
-            
-            # Safely sync metadata - don't crash if columns are missing
-            for attr, val in [("escalation_severity", severity), ("audit_category", category), ("admin_note", note)]:
-                try:
-                    if attr in reviews_cols:
-                        setattr(review, attr, val)
-                        print(f"🔗 [G-PROTOCOL] Synced {attr}")
-                except Exception as attr_err:
-                    print(f"⚠️ [G-PROTOCOL] Metadata sync failed for {attr}: {attr_err}")
-            
-            # Persist review escalation in a schema-safe manner (works across old/new DB schemas).
-            try:
-                insert_cols = []
-                insert_values = {}
-
-                if "review_id" in review_escalations_cols:
-                    insert_cols.append("review_id")
-                    insert_values["review_id"] = review_id
-                if "escalated_by" in review_escalations_cols:
-                    insert_cols.append("escalated_by")
-                    insert_values["escalated_by"] = admin_id
-                if "reason" in review_escalations_cols:
-                    insert_cols.append("reason")
-                    insert_values["reason"] = note or "Escalated by admin moderation workflow"
-                if "status" in review_escalations_cols:
-                    insert_cols.append("status")
-                    insert_values["status"] = "Open"
-                if "severity_level" in review_escalations_cols:
-                    insert_cols.append("severity_level")
-                    insert_values["severity_level"] = severity
-                if "category" in review_escalations_cols:
-                    insert_cols.append("category")
-                    insert_values["category"] = category
-                if "case_id" in review_escalations_cols:
-                    insert_cols.append("case_id")
-                    insert_values["case_id"] = case_id
-                if "created_at" in review_escalations_cols:
-                    insert_cols.append("created_at")
-                    insert_values["created_at"] = datetime.utcnow()
-
-                if insert_cols:
-                    placeholders = ", ".join([f":{c}" for c in insert_cols])
-                    sql = f"INSERT INTO review_escalations ({', '.join(insert_cols)}) VALUES ({placeholders})"
-                    db.session.execute(text(sql), insert_values)
-                else:
-                    print("⚠️ [G-PROTOCOL] review_escalations columns unavailable; skipping escalation row insert.")
-                print(f"✅ [G-PROTOCOL] Escalation record staged")
-            except Exception as esc_err:
-                print(f"⚠️ [G-PROTOCOL] Escalation record failed: {esc_err}")
-            
-        # 🔗 Governance Hook: Recalculate doctor telemetry after moderation
+        # Governance telemetry update (best effort)
         try:
             GovernanceService.process_review_event(review.id)
             print(f"✅ [G-PROTOCOL] Analytics recalibrated")
@@ -379,6 +363,22 @@ class FeedbackService:
             
         try:
             db.session.commit()
+            # Email policy:
+            # approve_email=no; flag/hide warning; suspend suspension
+            if doctor_user and doctor_user.email:
+                if action in {"flag", "hide"}:
+                    FeedbackService._send_doctor_warning_email(
+                        doctor_email=doctor_user.email,
+                        doctor_name=doctor_user.full_name or "Doctor",
+                        action_label="Flagged" if action == "flag" else "Hidden",
+                        note=note,
+                    )
+                elif action == "suspend":
+                    FeedbackService._send_doctor_suspension_email(
+                        doctor_email=doctor_user.email,
+                        doctor_name=doctor_user.full_name or "Doctor",
+                        note=note,
+                    )
             print(f"🎉 [OVERSIGHT] Successfully finalized moderation Review #{review_id}")
             return True, {
                 "ok": True,
@@ -386,7 +386,6 @@ class FeedbackService:
                 "action": action,
                 "status": target_status,
                 "message": f"Review {action} completed successfully",
-                "case_id": case_id,
             }
         except Exception as e:
             db.session.rollback()
@@ -406,7 +405,7 @@ class FeedbackService:
                     update_values["is_hidden"] = is_hidden_value
 
                 if "is_flagged" in reviews_cols:
-                    is_flagged_value = action in ("flag", "escalate")
+                    is_flagged_value = action in ("flag", "suspend")
                     if action == "approve":
                         is_flagged_value = False
                     update_cols.append("is_flagged = :is_flagged")
@@ -419,10 +418,6 @@ class FeedbackService:
                 if "admin_note" in reviews_cols:
                     update_cols.append("admin_note = :admin_note")
                     update_values["admin_note"] = note
-
-                if action == "escalate" and "escalated_at" in reviews_cols:
-                    update_cols.append("escalated_at = :escalated_at")
-                    update_values["escalated_at"] = datetime.utcnow()
 
                 if "updated_at" in reviews_cols:
                     update_cols.append("updated_at = :updated_at")
@@ -439,7 +434,6 @@ class FeedbackService:
                         "action": action,
                         "status": target_status,
                         "message": "Governance Protocol Finalized (Safe Mode).",
-                        "case_id": case_id,
                     }
 
                 return False, {"error_code": "SERVER_ERROR", "message": f"Atomic Transaction Failure: {str(e)}"}

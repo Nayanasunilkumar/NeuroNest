@@ -206,6 +206,16 @@ def login():
         if not user:
             return jsonify({"message": "Invalid email or password"}), 401
 
+        # Governance lock: suspended doctors cannot log in.
+        if user.role == "doctor":
+            doctor_profile = DoctorProfile.query.filter_by(user_id=user.id).first()
+            profile_status = (doctor_profile.doctor_status if doctor_profile else "").lower()
+            account_status = (user.account_status or "").lower()
+            if profile_status == "suspended" or account_status == "suspended":
+                return jsonify({
+                    "message": "Your account has been suspended. Please contact administration."
+                }), 403
+
         is_verified = verify_password(password, user.password_hash)
 
         if not is_verified:

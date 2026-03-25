@@ -24,7 +24,7 @@ export const feedbackService = {
   },
 
   moderateReview: async (reviewId, data) => {
-    // data: { action: 'hide'|'approve'|'flag'|'escalate', note: string, tags: string[], admin_id: number }
+    // data: { action: 'hide'|'approve'|'flag'|'suspend', note: string, tags: string[], admin_id: number }
     try {
       const response = await api.post(`${API_PATH}/${reviewId}/moderate`, data);
       return response.data;

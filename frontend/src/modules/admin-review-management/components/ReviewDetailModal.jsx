@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import ReactDOM from 'react-dom';
 import { 
   X, Shield, ShieldAlert, User, MessageSquare, 
@@ -7,24 +7,14 @@ import {
 
 const ReviewDetailModal = ({ review, onClose, onModerate }) => {
   const [note, setNote] = useState('');
-  const [severity, setSeverity] = useState('Standard');
-  const [category, setCategory] = useState('Quality of Care');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [confirmAction, setConfirmAction] = useState(null);
-
-  // 🏥 Fix: Reset institutional audit state when clinical case changes
-  useEffect(() => {
-    setNote('');
-    setSeverity('Standard');
-    setCategory('Quality of Care');
-    setConfirmAction(null);
-  }, [review?.id]);
 
   if (!review) return null;
 
   const handleAction = async (action) => {
     // Require note for negative actions
-    if ((action === 'flag' || action === 'escalate' || action === 'hide') && !note.trim()) {
+    if ((action === 'flag' || action === 'suspend' || action === 'hide') && !note.trim()) {
         alert("Institutional Quality Audit: A descriptive rationale is mandatory for this governance action.");
         return;
     }
@@ -34,15 +24,12 @@ const ReviewDetailModal = ({ review, onClose, onModerate }) => {
         const result = await onModerate(review.id, {
             action,
             note,
-            severity: action === 'escalate' ? severity : 'Standard',
-            category: action === 'escalate' ? category : 'Quality of Care'
         });
 
         setIsSubmitting(false);
         if (result.success) {
-            const caseId = result?.data?.case_id;
             const baseMessage = `Audit Finalized: Review status updated to ${action.toUpperCase()}.`;
-            setConfirmAction({ type: 'success', message: caseId ? `${baseMessage} Case ID: ${caseId}` : baseMessage });
+            setConfirmAction({ type: 'success', message: baseMessage });
             setTimeout(() => {
                 onClose();
             }, 1500);
@@ -134,42 +121,13 @@ const ReviewDetailModal = ({ review, onClose, onModerate }) => {
                   </div>
                 </div>
 
-                {/* Governance Triage Config */}
-                <div className="governance-portal-section triage-matrix">
-                  <div className="triage-group">
-                    <span className="block-header">Escalation Severity</span>
-                    <select 
-                      className="audit-select"
-                      value={severity}
-                      onChange={(e) => setSeverity(e.target.value)}
-                    >
-                      <option value="Standard">Standard Board Review</option>
-                      <option value="Urgent">Urgent Intervention</option>
-                      <option value="Emergency">Emergency Safety Stop</option>
-                    </select>
-                  </div>
-                  <div className="triage-group">
-                    <span className="block-header">Audit Category</span>
-                    <select 
-                      className="audit-select"
-                      value={category}
-                      onChange={(e) => setCategory(e.target.value)}
-                    >
-                      <option value="Quality of Care">Clinical Quality of Care</option>
-                      <option value="Professionalism">Professional Ethics</option>
-                      <option value="Administrative">Administrative Inefficiency</option>
-                      <option value="Misconduct">Alleged Misconduct</option>
-                    </select>
-                  </div>
-                </div>
-
                 {/* Governance Portal */}
                 <div className="governance-portal-section">
                   <span className="block-header">Executive Justification / Administrative Note</span>
                   <div className="justification-portal">
                     <textarea 
                       className="audit-textarea"
-                      placeholder="Record institutional moderation rationale here (Mandatory for Flag/Escalate)..."
+                      placeholder="Record institutional moderation rationale here (Mandatory for Flag/Hide/Suspend)..."
                       value={note}
                       onChange={(e) => setNote(e.target.value)}
                     />
@@ -206,11 +164,11 @@ const ReviewDetailModal = ({ review, onClose, onModerate }) => {
                     <Trash2 size={14} /> <span>Shadow Hide</span>
                   </button>
                   <button 
-                    className="btn-governance escalate" 
-                    onClick={() => handleAction('escalate')}
+                    className="btn-governance suspend" 
+                    onClick={() => handleAction('suspend')}
                     disabled={isSubmitting}
                   >
-                    <ShieldAlert size={14} /> <span>Escalate Case</span>
+                    <ShieldAlert size={14} /> <span>Suspend Doctor</span>
                   </button>
                 </div>
               </div>
@@ -238,35 +196,6 @@ const ReviewDetailModal = ({ review, onClose, onModerate }) => {
 
         .audit-success-nexus h2 { color: white; margin: 0; font-weight: 800; }
         .audit-success-nexus p { color: rgba(255, 255, 255, 0.5); margin: 0; }
-
-        .triage-matrix {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 1.5rem;
-          background: rgba(255, 255, 255, 0.03);
-          border: 1px solid rgba(255, 255, 255, 0.05);
-          border-radius: 12px;
-          padding: 1rem;
-          margin-bottom: 2rem;
-        }
-
-        .audit-select {
-          width: 100%;
-          background: rgba(15, 23, 42, 0.4);
-          border: 1px solid rgba(148, 163, 184, 0.2);
-          color: #f8fafc;
-          padding: 0.75rem;
-          border-radius: 8px;
-          margin-top: 0.5rem;
-          font-size: 0.85rem;
-          outline: none;
-          cursor: pointer;
-        }
-
-        .audit-select:focus {
-          border-color: var(--admin-accent);
-          background: rgba(15, 23, 42, 0.6);
-        }
 
         .appt-modal-portal {
           position: fixed;
@@ -489,8 +418,8 @@ const ReviewDetailModal = ({ review, onClose, onModerate }) => {
         .btn-governance.approve:hover { color: #10b981; border-color: #10b981; }
         .btn-governance.flag:hover { color: #f59e0b; border-color: #f59e0b; }
         .btn-governance.hide:hover { color: #ef4444; border-color: #ef4444; }
-        .btn-governance.escalate { background: #6366f1; border-color: #6366f1; }
-        .btn-governance.escalate:hover { background: #4f46e5; box-shadow: 0 0 20px rgba(99, 102, 241, 0.3); }
+        .btn-governance.suspend { background: #ef4444; border-color: #ef4444; }
+        .btn-governance.suspend:hover { background: #dc2626; box-shadow: 0 0 20px rgba(239, 68, 68, 0.3); }
 
         .audit-pulse { font-size: 0.7rem; color: #10b981; margin-left: auto; font-weight: 700; animation: auditPulse 2s infinite; }
         @keyframes auditPulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }

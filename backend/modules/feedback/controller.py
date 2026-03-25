@@ -110,11 +110,11 @@ class FeedbackController:
                     "hide": "Hidden",
                     "approve": "Approved",
                     "flag": "Flagged",
-                    "escalate": "Escalated",
+                    "suspend": "Flagged",
                 }
                 target_status = status_map.get(action, "Moderated")
                 is_hidden = action == "hide"
-                is_flagged = action in ("flag", "escalate")
+                is_flagged = action in ("flag", "suspend")
                 if action == "approve":
                     is_hidden = False
                     is_flagged = False
