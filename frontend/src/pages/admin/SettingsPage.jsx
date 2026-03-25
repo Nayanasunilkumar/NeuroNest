@@ -1,18 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { 
-    Settings, Shield, Bell, CreditCard, 
-    Calendar, Users, HardDrive, Save, Globe, AlertCircle
+    Bell, Save, Globe, AlertCircle
 } from 'lucide-react';
 import { adminSettingsApi } from '../../api/settingsApi';
 import '../../styles/admin-settings.css';
 
 const TABS = [
     { id: 'general', label: 'General', icon: Globe },
-    { id: 'appointments', label: 'Appointments', icon: Calendar },
-    { id: 'payments', label: 'Payments', icon: CreditCard },
     { id: 'notifications', label: 'Notifications', icon: Bell },
-    { id: 'security', label: 'Security', icon: Shield },
-    { id: 'backup', label: 'Data & Backup', icon: HardDrive },
 ];
 
 const SettingsPage = () => {
