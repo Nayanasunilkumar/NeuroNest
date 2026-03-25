@@ -11,9 +11,11 @@ import DynamicIslandNav from '../../components/DynamicIslandNav';
 import NotificationPanel from '../../components/notifications/NotificationPanel';
 import { Bell, Info, AlertTriangle } from 'lucide-react';
 import { useAlerts } from '../../context/AlertContext';
+import { useSystemConfig } from '../../context/SystemConfigContext';
 
 const DoctorNavbar = ({ darkMode, toggleTheme }) => {
   const navigate = useNavigate();
+  const { platformName } = useSystemConfig();
   const { alerts, unreadCount, markAcknowledged } = useAlerts() || { alerts: [], unreadCount: 0, markAcknowledged: () => {} };
   const [doctorInfo, setDoctorInfo] = useState({
     name: 'Dr. Nayana',
@@ -185,7 +187,9 @@ const DoctorNavbar = ({ darkMode, toggleTheme }) => {
     <div className={`d-flex align-items-center justify-content-between px-3 px-md-4 border-bottom shadow-sm ${darkMode ? 'bg-dark border-secondary' : 'bg-white'}`} style={{ height: '80px', zIndex: 1060, flexShrink: 0, flexWrap: 'nowrap' }}>
       {/* Left: Branding */}
       <div className="d-flex align-items-center flex-shrink-0 me-3 me-xl-5">
-          <span className={`h4 fw-black mb-0 ${darkMode ? 'text-white' : 'text-primary'}`} style={{ letterSpacing: '-0.05em' }}>NEURONEST</span>
+          <span className={`h4 fw-black mb-0 ${darkMode ? 'text-white' : 'text-primary'}`} style={{ letterSpacing: '-0.05em' }}>
+            {(platformName || 'NeuroNest').toUpperCase()}
+          </span>
       </div>
 
       {/* Center: Dynamic Island Navigation */}

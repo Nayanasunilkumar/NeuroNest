@@ -100,6 +100,7 @@ const SettingsPage = () => {
             }, {});
             
             await adminSettingsApi.updateSettings(payload);
+            window.dispatchEvent(new Event("system-config-updated"));
             // Show a success message
             alert("Settings saved successfully.");
         } catch (error) {

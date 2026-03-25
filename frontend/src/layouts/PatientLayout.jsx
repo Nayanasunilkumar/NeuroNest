@@ -3,6 +3,7 @@ import { Outlet, useLocation, Link } from "react-router-dom";
 import DynamicIslandNav from "../components/DynamicIslandNav";
 import { logout } from "../utils/auth";
 import { useTheme } from "../context/ThemeContext";
+import { useSystemConfig } from "../context/SystemConfigContext";
 import { Sun, Moon, LogOut, Bell } from "lucide-react";
 import { getAlerts, acknowledgeAlert } from "../api/alerts";
 import { getMyNotifications, markNotificationRead, markAllNotificationsRead, deleteNotification } from "../api/profileApi";
@@ -12,6 +13,7 @@ import { useNavigate } from "react-router-dom";
 
 const PatientLayout = () => {
     const { isDark: darkMode, toggleTheme } = useTheme();
+    const { platformName } = useSystemConfig();
     const location = useLocation();
     const navigate = useNavigate();
 
@@ -150,7 +152,7 @@ const PatientLayout = () => {
                 <div className="container-fluid align-items-center flex-nowrap">
                     {/* Left: Branding */}
                     <div className="d-flex align-items-center flex-shrink-0 me-3 me-xl-5">
-                        <span className="h4 fw-black mb-0 text-primary" style={{ letterSpacing: '-0.05em' }}>NEURONEST</span>
+                        <span className="h4 fw-black mb-0 text-primary" style={{ letterSpacing: '-0.05em' }}>{(platformName || 'NeuroNest').toUpperCase()}</span>
                     </div>
 
                     {/* Center: Dynamic Island Navigation */}

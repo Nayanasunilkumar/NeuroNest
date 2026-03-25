@@ -1,9 +1,11 @@
 import { getUser, logout } from "../utils/auth";
 import { Sun, Moon } from "lucide-react";
 import { useState } from "react";
+import { useSystemConfig } from "../context/SystemConfigContext";
 
 const Navbar = () => {
   const user = getUser();
+  const { platformName } = useSystemConfig();
   const [darkMode, setDarkMode] = useState(
     () => document.body.classList.contains("dark")
   );
@@ -17,7 +19,7 @@ const Navbar = () => {
   return (
     <nav className="flex items-center justify-between px-6 py-4 bg-indigo-600 dark:bg-slate-900 text-white shadow transition-colors duration-300">
       {/* Left */}
-      <div className="text-xl font-bold tracking-wide">NeuroNest</div>
+      <div className="text-xl font-bold tracking-wide">{platformName || "NeuroNest"}</div>
 
       {/* Right */}
       <div className="flex items-center gap-4">

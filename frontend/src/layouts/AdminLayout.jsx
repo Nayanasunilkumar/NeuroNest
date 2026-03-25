@@ -3,6 +3,7 @@ import { Outlet } from 'react-router-dom';
 import DynamicIslandNav from '../components/DynamicIslandNav';
 import { logout } from '../utils/auth';
 import { useTheme } from '../context/ThemeContext';
+import { useSystemConfig } from '../context/SystemConfigContext';
 import '../styles/admin-theme.css';
 import { 
     LogOut, Sun, Moon 
@@ -10,6 +11,7 @@ import {
 
 const AdminLayout = () => {
   const { isDark: darkMode, toggleTheme } = useTheme();
+  const { platformName } = useSystemConfig();
   const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
@@ -30,7 +32,7 @@ const AdminLayout = () => {
         <div className="container-fluid align-items-center flex-nowrap">
             {/* Left: Branding */}
             <div className="d-flex align-items-center flex-shrink-0 me-3 me-xl-5">
-                <span className="h4 fw-black mb-0 admin-brand-wordmark" style={{ letterSpacing: '-0.05em' }}>NEURONEST</span>
+                <span className="h4 fw-black mb-0 admin-brand-wordmark" style={{ letterSpacing: '-0.05em' }}>{(platformName || 'NeuroNest').toUpperCase()}</span>
             </div>
 
             {/* Center: Dynamic Island Navigation */}

@@ -8,6 +8,7 @@ import { ModuleConfigProvider } from "./context/ModuleConfigContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import { AlertProvider } from "./context/AlertContext";
 import { CallProvider } from "./context/CallContext";
+import { SystemConfigProvider } from "./context/SystemConfigContext";
 import SessionManager from "./components/SessionManager";
 import AlertPopup from "./components/shared/AlertPopup";
 
@@ -53,12 +54,13 @@ export default function App() {
   return (
     <ModuleConfigProvider>
       <ThemeProvider>
-        <BrowserRouter>
-          <AlertProvider>
-            <CallProvider>
-              <AlertPopup />
-              <SessionManager />
-              <Routes>
+        <SystemConfigProvider>
+          <BrowserRouter>
+            <AlertProvider>
+              <CallProvider>
+                <AlertPopup />
+                <SessionManager />
+                <Routes>
             {/* Default */}
             <Route path="/" element={<Navigate to="/login" />} />
 
@@ -118,11 +120,12 @@ export default function App() {
               } 
             />
 
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </CallProvider>
-          </AlertProvider>
-        </BrowserRouter>
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </CallProvider>
+            </AlertProvider>
+          </BrowserRouter>
+        </SystemConfigProvider>
       </ThemeProvider>
     </ModuleConfigProvider>
   );

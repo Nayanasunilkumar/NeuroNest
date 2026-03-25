@@ -27,6 +27,7 @@ from routes.announcements import announcements_bp
 from routes.patient_medical_records import patient_medical_bp
 from routes.modules_config import modules_config_bp
 from routes.vitals_route import vitals_bp
+from routes.system_config_routes import system_config_bp
 
 from extensions.socket import socketio
 from routes.vitals_socket_events import *
@@ -153,6 +154,7 @@ def create_app():
 
     from routes.admin.settings_routes import admin_settings_bp
     app.register_blueprint(admin_settings_bp, url_prefix="/api/admin/settings")
+    app.register_blueprint(system_config_bp, url_prefix="/api/system-config")
 
     from routes.admin.dashboard_routes import admin_dashboard_bp
     app.register_blueprint(admin_dashboard_bp, url_prefix="/api/admin/dashboard")

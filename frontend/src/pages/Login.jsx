@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { loginUser } from "../api/auth";
 import { saveAuth } from "../utils/auth";
+import { useSystemConfig } from "../context/SystemConfigContext";
 import "../styles/auth.css";
 
 const EyeIcon = ({ open }) =>
@@ -35,6 +36,7 @@ const EyeIcon = ({ open }) =>
 
 const Login = () => {
   const navigate = useNavigate();
+  const { platformName } = useSystemConfig();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPw, setShowPw] = useState(false);
@@ -105,7 +107,7 @@ const Login = () => {
                     background: "linear-gradient(135deg,#6366F1,#8B5CF6)",
                   }}
                 />
-                NeuroNest
+                {platformName || "NeuroNest"}
               </h2>
               <p
                 className="text-secondary fw-medium text-uppercase"

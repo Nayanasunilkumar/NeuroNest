@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { registerUser } from "../api/auth";
+import { useSystemConfig } from "../context/SystemConfigContext";
 import "../styles/auth.css";
 
 const EyeIcon = ({ open }) =>
@@ -17,6 +18,7 @@ const EyeIcon = ({ open }) =>
 
 const Register = () => {
   const navigate = useNavigate();
+  const { platformName } = useSystemConfig();
 
   const [fullName, setFullName]               = useState("");
   const [email, setEmail]                     = useState("");
@@ -74,9 +76,9 @@ const Register = () => {
                         <div className="text-center mb-4">
                             <h2 className="fw-bolder text-dark mb-2 d-flex align-items-center justify-content-center gap-2" style={{ letterSpacing: '-0.5px' }}>
                                 <div className="rounded-circle shadow-sm" style={{ width: '12px', height: '12px', background: 'linear-gradient(135deg, #0d6efd, #6610f2)' }} />
-                                NeuroNest
+                                {platformName || "NeuroNest"}
                             </h2>
-                            <p className="text-secondary small fw-medium text-uppercase tracking-wide">Join NeuroNest — it's free</p>
+                            <p className="text-secondary small fw-medium text-uppercase tracking-wide">Join {platformName || "NeuroNest"} — it's free</p>
                         </div>
 
                         {error && (
