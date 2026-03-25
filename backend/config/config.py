@@ -4,9 +4,9 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 class Config:
-    SECRET_KEY = os.getenv("SECRET_KEY") or os.getenv("JWT_SECRET") or os.urandom(32).hex()
-    JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY") or os.getenv("JWT_SECRET") or SECRET_KEY
-    # No forced access-token timeout. Frontend inactivity manager handles session logout.
+    # 💎 HARD FIX: Stable secret for persistent sessions across restarts
+    SECRET_KEY = os.getenv("SECRET_KEY") or "neuronest-production-clinical-nexus-secret-v1"
+    JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY") or SECRET_KEY
     JWT_ACCESS_TOKEN_EXPIRES = False
 
     # Default to sqlite for local development if DATABASE_URL is not provided
