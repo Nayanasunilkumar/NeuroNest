@@ -17,5 +17,13 @@ export const adminSettingsApi = {
             headers: { Authorization: `Bearer ${token}` }
         });
         return response.data;
+    },
+
+    updateSystemConfig: async (settingsData) => {
+        const token = localStorage.getItem('neuronest_token');
+        const response = await axios.put(`${API_BASE_URL}/api/system-config`, settingsData, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        return response.data;
     }
 };

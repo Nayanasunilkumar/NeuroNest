@@ -100,6 +100,13 @@ const SettingsPage = () => {
             }, {});
             
             await adminSettingsApi.updateSettings(payload);
+            // Keep dedicated system-config endpoint in sync (best-effort).
+            try {
+                await adminSettingsApi.updateSystemConfig(payload);
+            } catch {
+                // Ignore if backend does not expose /api/system-config in older deployments.
+            }
+            window.dispatchEvent(new CustomEvent("system-config-updated-payload", { detail: payload }));
             window.dispatchEvent(new Event("system-config-updated"));
             // Show a success message
             alert("Settings saved successfully.");
