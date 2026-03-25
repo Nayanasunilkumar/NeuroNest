@@ -128,3 +128,182 @@
   color: var(--admin-logout-hover-fg);
   transform: scale(1.05);
 }
+
+/* ------------------------------------------------------------------
+   ADMIN-WIDE UI HARMONIZATION
+   Applies to all admin pages through .admin-theme scope only.
+   ------------------------------------------------------------------ */
+.admin-theme {
+  --admin-surface-elevated: color-mix(in srgb, var(--nn-surface) 92%, white);
+  --admin-surface-muted: color-mix(in srgb, var(--nn-surface-secondary) 90%, white);
+  --admin-focus-ring: color-mix(in srgb, var(--nn-primary) 30%, transparent);
+  --admin-table-head: color-mix(in srgb, var(--nn-surface-secondary) 95%, white);
+  --admin-success-soft: color-mix(in srgb, #22c55e 20%, transparent);
+  --admin-warning-soft: color-mix(in srgb, #f59e0b 22%, transparent);
+  --admin-danger-soft: color-mix(in srgb, #ef4444 22%, transparent);
+}
+
+.admin-theme.admin-theme-dark {
+  --admin-surface-elevated: color-mix(in srgb, var(--nn-surface) 92%, #0a1322);
+  --admin-surface-muted: color-mix(in srgb, var(--nn-surface-secondary) 92%, #0b1424);
+  --admin-focus-ring: color-mix(in srgb, var(--nn-primary) 40%, transparent);
+  --admin-table-head: color-mix(in srgb, var(--nn-surface-secondary) 86%, #0a1322);
+}
+
+/* Generic surfaces frequently used in admin module */
+.admin-theme .bg-white { background-color: var(--nn-surface) !important; }
+.admin-theme .bg-light { background-color: var(--nn-surface-secondary) !important; }
+.admin-theme .text-dark { color: var(--nn-text-main) !important; }
+.admin-theme .text-secondary,
+.admin-theme .text-muted { color: var(--nn-text-secondary) !important; }
+.admin-theme .border-light { border-color: var(--nn-divider) !important; }
+.admin-theme .border-secondary { border-color: var(--nn-border) !important; }
+
+/* Cards, panels, wrappers */
+.admin-theme .card,
+.admin-theme .nn-card,
+.admin-theme .nn-metric-card {
+  background: var(--nn-surface) !important;
+  color: var(--nn-text-main);
+  border: 1px solid var(--nn-border) !important;
+  box-shadow: var(--nn-shadow-sm) !important;
+}
+
+.admin-theme .card-header,
+.admin-theme .card-footer {
+  background: var(--admin-surface-muted) !important;
+  border-color: var(--nn-divider) !important;
+}
+
+/* Tables */
+.admin-theme .table {
+  color: var(--nn-text-main);
+}
+
+.admin-theme .table > :not(caption) > * > * {
+  border-bottom-color: var(--nn-divider) !important;
+}
+
+.admin-theme .table thead th,
+.admin-theme .table-light,
+.admin-theme .table-light th,
+.admin-theme .table-light td {
+  background: var(--admin-table-head) !important;
+  color: var(--nn-text-secondary) !important;
+  border-color: var(--nn-divider) !important;
+}
+
+.admin-theme .table-hover tbody tr:hover {
+  background: color-mix(in srgb, var(--nn-primary) 8%, var(--nn-surface));
+}
+
+/* Forms */
+.admin-theme .form-control,
+.admin-theme .form-select,
+.admin-theme .input-group-text,
+.admin-theme textarea,
+.admin-theme input[type="text"],
+.admin-theme input[type="search"],
+.admin-theme input[type="datetime-local"] {
+  background: var(--nn-surface) !important;
+  color: var(--nn-text-main) !important;
+  border: 1px solid var(--nn-border) !important;
+}
+
+.admin-theme .form-control::placeholder,
+.admin-theme textarea::placeholder {
+  color: var(--nn-text-muted) !important;
+}
+
+.admin-theme .form-control:focus,
+.admin-theme .form-select:focus,
+.admin-theme textarea:focus,
+.admin-theme input:focus {
+  border-color: var(--nn-primary) !important;
+  box-shadow: 0 0 0 0.2rem var(--admin-focus-ring) !important;
+}
+
+/* Dropdowns / menus / modals */
+.admin-theme .dropdown-menu,
+.admin-theme .modal-content,
+.admin-theme .popover {
+  background: var(--nn-surface) !important;
+  color: var(--nn-text-main) !important;
+  border: 1px solid var(--nn-border) !important;
+  box-shadow: var(--nn-shadow-md) !important;
+}
+
+.admin-theme .dropdown-item {
+  color: var(--nn-text-main) !important;
+}
+
+.admin-theme .dropdown-item:hover,
+.admin-theme .dropdown-item:focus {
+  background: color-mix(in srgb, var(--nn-primary) 12%, var(--nn-surface)) !important;
+}
+
+/* Buttons */
+.admin-theme .btn {
+  border-radius: 10px;
+}
+
+.admin-theme .btn-primary {
+  background: var(--nn-primary) !important;
+  border-color: var(--nn-primary) !important;
+}
+
+.admin-theme .btn-primary:hover {
+  background: var(--nn-primary-hover) !important;
+  border-color: var(--nn-primary-hover) !important;
+}
+
+.admin-theme .btn-light,
+.admin-theme .btn-outline-secondary,
+.admin-theme .btn-outline-dark {
+  background: var(--nn-surface) !important;
+  color: var(--nn-text-main) !important;
+  border-color: var(--nn-border) !important;
+}
+
+.admin-theme .btn-light:hover,
+.admin-theme .btn-outline-secondary:hover,
+.admin-theme .btn-outline-dark:hover {
+  background: var(--nn-surface-secondary) !important;
+  color: var(--nn-text-main) !important;
+  border-color: var(--nn-border-strong) !important;
+}
+
+/* Alerts & badges */
+.admin-theme .alert-danger {
+  background: var(--admin-danger-soft) !important;
+  color: color-mix(in srgb, #ef4444 72%, var(--nn-text-main)) !important;
+}
+
+.admin-theme .alert-warning {
+  background: var(--admin-warning-soft) !important;
+}
+
+.admin-theme .alert-success {
+  background: var(--admin-success-soft) !important;
+}
+
+.admin-theme .badge.bg-primary { background: color-mix(in srgb, var(--nn-primary) 18%, transparent) !important; color: var(--nn-primary) !important; }
+.admin-theme .badge.bg-success { background: color-mix(in srgb, #22c55e 18%, transparent) !important; color: #16a34a !important; }
+.admin-theme .badge.bg-warning { background: color-mix(in srgb, #f59e0b 20%, transparent) !important; color: #b45309 !important; }
+.admin-theme .badge.bg-danger { background: color-mix(in srgb, #ef4444 20%, transparent) !important; color: #b91c1c !important; }
+.admin-theme .badge.bg-info { background: color-mix(in srgb, #0ea5e9 20%, transparent) !important; color: #0369a1 !important; }
+
+/* Scrollbars */
+.admin-theme *::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.admin-theme *::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--nn-border-strong) 80%, transparent);
+  border-radius: 999px;
+}
+
+.admin-theme *::-webkit-scrollbar-track {
+  background: transparent;
+}
