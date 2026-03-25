@@ -10,6 +10,14 @@
   --admin-logout-fg: #b91c1c;
   --admin-logout-hover-bg: #dc2626;
   --admin-logout-hover-fg: #ffffff;
+  --admin-tone-patients-bg: rgba(56, 189, 248, 0.16);
+  --admin-tone-patients-fg: #0369a1;
+  --admin-tone-doctors-bg: rgba(20, 184, 166, 0.16);
+  --admin-tone-doctors-fg: #0f766e;
+  --admin-tone-load-bg: rgba(139, 92, 246, 0.16);
+  --admin-tone-load-fg: #6d28d9;
+  --admin-tone-revenue-bg: rgba(249, 115, 22, 0.16);
+  --admin-tone-revenue-fg: #c2410c;
 }
 
 .admin-theme.admin-theme-light {
@@ -38,6 +46,14 @@
   --admin-toggle-bg: #e6eef7;
   --admin-toggle-fg: #0f172a;
   --admin-toggle-border: #c8d6e7;
+  --admin-tone-patients-bg: rgba(14, 165, 233, 0.14);
+  --admin-tone-patients-fg: #0369a1;
+  --admin-tone-doctors-bg: rgba(15, 118, 110, 0.14);
+  --admin-tone-doctors-fg: #0f766e;
+  --admin-tone-load-bg: rgba(99, 102, 241, 0.14);
+  --admin-tone-load-fg: #4338ca;
+  --admin-tone-revenue-bg: rgba(234, 88, 12, 0.14);
+  --admin-tone-revenue-fg: #c2410c;
 }
 
 .admin-theme.admin-theme-dark {
@@ -71,6 +87,14 @@
   --admin-logout-fg: #fca5a5;
   --admin-logout-hover-bg: #b91c1c;
   --admin-logout-hover-fg: #ffffff;
+  --admin-tone-patients-bg: rgba(56, 189, 248, 0.18);
+  --admin-tone-patients-fg: #7dd3fc;
+  --admin-tone-doctors-bg: rgba(45, 212, 191, 0.18);
+  --admin-tone-doctors-fg: #99f6e4;
+  --admin-tone-load-bg: rgba(167, 139, 250, 0.2);
+  --admin-tone-load-fg: #ddd6fe;
+  --admin-tone-revenue-bg: rgba(251, 146, 60, 0.18);
+  --admin-tone-revenue-fg: #fed7aa;
 }
 
 .admin-theme .admin-shell-header {
