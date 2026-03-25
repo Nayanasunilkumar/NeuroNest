@@ -3,17 +3,37 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from database.models import db, DoctorEscalation, EscalationAction, DoctorProfile, User
 from services.governance_service import GovernanceService
 from functools import wraps
+from datetime import datetime
 
 governance_bp = Blueprint('governance', __name__)
+
+def _resolve_current_user():
+    identity = get_jwt_identity()
+    if isinstance(identity, int):
+        return User.query.get(identity)
+    if isinstance(identity, str):
+        if identity.isdigit():
+            return User.query.get(int(identity))
+        return User.query.filter_by(email=identity.strip().lower()).first()
+    return None
 
 def admin_required(f):
     @wraps(f)
     @jwt_required()
     def decorated_function(*args, **kwargs):
-        current_user_id = get_jwt_identity()
-        user = User.query.get(current_user_id)
+        user = _resolve_current_user()
         if not user or user.role not in ['admin', 'super_admin']:
             return jsonify({"error": "Admin access required"}), 403
+        return f(*args, **kwargs)
+    return decorated_function
+
+def super_admin_required(f):
+    @wraps(f)
+    @jwt_required()
+    def decorated_function(*args, **kwargs):
+        user = _resolve_current_user()
+        if not user or user.role != 'super_admin':
+            return jsonify({"error": "Super admin access required"}), 403
         return f(*args, **kwargs)
     return decorated_function
 
@@ -43,7 +63,8 @@ def get_escalation(id):
 @admin_required
 def take_action(id):
     data = request.json
-    admin_id = get_jwt_identity()
+    user = _resolve_current_user()
+    admin_id = user.id if user else None
     
     action_type = data.get('action_type') # warning, suspend, restrict, resolve, dismiss
     note = data.get('note', '')
@@ -57,6 +78,32 @@ def take_action(id):
         return jsonify({"error": message}), 400
         
     return jsonify({"message": message}), 200
+
+@governance_bp.route('/escalations/<int:id>/close', methods=['POST'])
+@super_admin_required
+def close_escalation(id):
+    escalation = DoctorEscalation.query.get(id)
+    if not escalation:
+        return jsonify({"error": "Escalation not found"}), 404
+
+    data = request.json or {}
+    final_status = (data.get("status") or "resolved").strip().lower()
+    note = (data.get("note") or "").strip()
+    if final_status not in {"resolved", "dismissed"}:
+        return jsonify({"error": "Invalid close status"}), 400
+
+    escalation.status = final_status
+    escalation.resolved_at = datetime.utcnow()
+
+    user = _resolve_current_user()
+    db.session.add(EscalationAction(
+        escalation_id=escalation.id,
+        admin_id=user.id,
+        action_type=f"close_{final_status}",
+        note=note or f"Escalation closed as {final_status}",
+    ))
+    db.session.commit()
+    return jsonify({"message": f"Escalation {id} closed as {final_status}"}), 200
 
 @governance_bp.route('/doctor/<int:doctor_id>/governance', methods=['GET'])
 @admin_required

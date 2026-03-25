@@ -50,6 +50,16 @@ export const feedbackService = {
     }
   },
 
+  restoreReview: async (reviewId, note = "") => {
+    const response = await api.post(`${API_PATH}/${reviewId}/restore`, { note });
+    return response.data;
+  },
+
+  getReviewTimeline: async (reviewId) => {
+    const response = await api.get(`${API_PATH}/${reviewId}/timeline`);
+    return response.data;
+  },
+
   submitReview: async (reviewData) => {
     const response = await api.post(`${API_PATH}/submit`, reviewData);
     return response.data;

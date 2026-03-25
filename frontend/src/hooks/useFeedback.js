@@ -35,9 +35,9 @@ export const useFeedback = () => {
 
   const moderateReview = async (reviewId, moderationData) => {
     try {
-      await feedbackService.moderateReview(reviewId, moderationData);
+      const result = await feedbackService.moderateReview(reviewId, moderationData);
       await fetchFeedback(); // Refresh data
-      return { success: true };
+      return { success: true, data: result };
     } catch (err) {
       return { success: false, error: err.message };
     }

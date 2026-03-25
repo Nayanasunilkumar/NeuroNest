@@ -40,7 +40,9 @@ const ReviewDetailModal = ({ review, onClose, onModerate }) => {
 
         setIsSubmitting(false);
         if (result.success) {
-            setConfirmAction({ type: 'success', message: `Audit Finalized: Review status updated to ${action.toUpperCase()}.` });
+            const caseId = result?.data?.case_id;
+            const baseMessage = `Audit Finalized: Review status updated to ${action.toUpperCase()}.`;
+            setConfirmAction({ type: 'success', message: caseId ? `${baseMessage} Case ID: ${caseId}` : baseMessage });
             setTimeout(() => {
                 onClose();
             }, 1500);

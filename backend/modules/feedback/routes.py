@@ -20,6 +20,14 @@ def get_review(review_id):
 def moderate_review(review_id):
     return FeedbackController.moderate(review_id)
 
+@feedback_bp.route('/<int:review_id>/restore', methods=['POST'])
+def restore_review(review_id):
+    return FeedbackController.restore(review_id)
+
+@feedback_bp.route('/<int:review_id>/timeline', methods=['GET'])
+def get_review_timeline(review_id):
+    return FeedbackController.get_timeline(review_id)
+
 @feedback_bp.route('/stats', methods=['GET'])
 def get_stats():
     return FeedbackController.get_stats()

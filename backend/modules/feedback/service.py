@@ -4,6 +4,14 @@ from sqlalchemy import inspect, text
 from datetime import datetime, timedelta
 
 class FeedbackService:
+    ACTION_STATUS_MAP = {
+        "clear": "Approved",
+        "approve": "Approved",
+        "flag": "Flagged",
+        "hide": "Hidden",
+        "escalate": "Escalated",
+    }
+
     @staticmethod
     def _get_table_columns(table_name):
         try:
@@ -11,6 +19,52 @@ class FeedbackService:
             return {col["name"] for col in inspector.get_columns(table_name)}
         except Exception:
             return set()
+
+    @staticmethod
+    def _generate_case_id(review_id):
+        stamp = datetime.utcnow().strftime("%Y%m%d")
+        return f"CASE-{stamp}-{int(review_id):04d}"
+
+    @staticmethod
+    def _normalize_action(action):
+        return (action or "").strip().lower()
+
+    @staticmethod
+    def get_review_timeline(review_id):
+        review = Review.query.get(review_id)
+        if not review:
+            return None
+
+        items = []
+        for log in ReviewModerationLog.query.filter_by(review_id=review_id).order_by(ReviewModerationLog.created_at.asc()).all():
+            items.append({
+                "type": "moderation_action",
+                "id": log.id,
+                "action": log.action,
+                "admin_id": log.performed_by,
+                "admin_name": log.admin.full_name if getattr(log, "admin", None) else "System",
+                "note": log.note,
+                "created_at": log.created_at.isoformat() if log.created_at else None,
+            })
+
+        for esc in ReviewEscalation.query.filter_by(review_id=review_id).order_by(ReviewEscalation.created_at.asc()).all():
+            items.append({
+                "type": "escalation",
+                "id": esc.id,
+                "status": esc.status,
+                "severity_level": esc.severity_level,
+                "category": esc.category,
+                "reason": esc.reason,
+                "created_at": esc.created_at.isoformat() if esc.created_at else None,
+                "resolved_at": esc.resolved_at.isoformat() if esc.resolved_at else None,
+            })
+
+        items.sort(key=lambda x: x.get("created_at") or "")
+        return {
+            "review_id": review_id,
+            "review_status": getattr(review, "status", None),
+            "timeline": items,
+        }
 
     @staticmethod
     def get_all_reviews(filters=None):
@@ -163,28 +217,31 @@ class FeedbackService:
         review = Review.query.get(review_id)
         if not review:
             print(f"❌ [G-PROTOCOL] Review #{review_id} not found in database")
-            return False, "Review not found"
+            return False, {"error_code": "NOT_FOUND", "message": "Review not found"}
         
         payload = data or {}
-        action = payload.get('action') # hide, flag, approve, escalate
-        note = payload.get('note', '')
+        action = FeedbackService._normalize_action(payload.get("action"))
+        note = (payload.get("note") or "").strip()
+        if action not in FeedbackService.ACTION_STATUS_MAP:
+            return False, {"error_code": "VALIDATION_ERROR", "message": "Invalid moderation action"}
+        if action in {"flag", "hide", "escalate"} and not note:
+            return False, {"error_code": "VALIDATION_ERROR", "message": "Note is required for this action"}
+
+        # Escalated cases are locked until super-admin closes them.
+        if str(getattr(review, "status", "")).lower() == "escalated" and action != "clear":
+            return False, {"error_code": "CONFLICT", "message": "Escalated review is locked for further moderation"}
         
         from database.models import DoctorEscalation, ReviewEscalation, ReviewModerationLog, ReviewTag, DoctorProfile
         from services.governance_service import GovernanceService
         reviews_cols = FeedbackService._get_table_columns("reviews")
         review_logs_cols = FeedbackService._get_table_columns("review_moderation_logs")
         review_escalations_cols = FeedbackService._get_table_columns("review_escalations")
-
-        # Mapping actions to standard statuses
-        status_map = {
-            'hide': 'Hidden',
-            'approve': 'Approved',
-            'flag': 'Flagged',
-            'escalate': 'Escalated'
-        }
         
-        target_status = status_map.get(action, 'Moderated')
+        target_status = FeedbackService.ACTION_STATUS_MAP.get(action, "Moderated")
+        if action == "clear":
+            action = "approve"
         print(f"🔍 [G-PROTOCOL] Attempting action: {action} -> {target_status}")
+        case_id = None
 
         try:
             if "status" in reviews_cols:
@@ -204,6 +261,7 @@ class FeedbackService:
             review.is_flagged = True
         elif action == 'escalate':
             review.is_flagged = True
+            review.is_hidden = True
             
             # --- HARD FIX: SAFE ESCALATION Fallback ---
             try:
@@ -215,6 +273,7 @@ class FeedbackService:
 
             severity = payload.get('severity', 'Standard')
             category = payload.get('category', 'Quality of Care')
+            case_id = FeedbackService._generate_case_id(review_id)
             
             # Safely sync metadata - don't crash if columns are missing
             for attr, val in [("escalation_severity", severity), ("audit_category", category), ("admin_note", note)]:
@@ -248,6 +307,9 @@ class FeedbackService:
                 if "category" in review_escalations_cols:
                     insert_cols.append("category")
                     insert_values["category"] = category
+                if "case_id" in review_escalations_cols:
+                    insert_cols.append("case_id")
+                    insert_values["case_id"] = case_id
                 if "created_at" in review_escalations_cols:
                     insert_cols.append("created_at")
                     insert_values["created_at"] = datetime.utcnow()
@@ -318,7 +380,14 @@ class FeedbackService:
         try:
             db.session.commit()
             print(f"🎉 [OVERSIGHT] Successfully finalized moderation Review #{review_id}")
-            return True, f"Governance Protocol Finalized: Case {action.upper()} operation successful."
+            return True, {
+                "ok": True,
+                "review_id": review_id,
+                "action": action,
+                "status": target_status,
+                "message": f"Review {action} completed successfully",
+                "case_id": case_id,
+            }
         except Exception as e:
             db.session.rollback()
             print(f"💥 [OVERSIGHT] ATOMIC CRASH Review #{review_id}: {str(e)}")
@@ -364,13 +433,20 @@ class FeedbackService:
                     db.session.execute(text(sql), update_values)
                     db.session.commit()
                     print(f"🛟 [OVERSIGHT] SAFE-FINALIZATION applied for Review #{review_id}")
-                    return True, "Governance Protocol Finalized (Safe Mode)."
+                    return True, {
+                        "ok": True,
+                        "review_id": review_id,
+                        "action": action,
+                        "status": target_status,
+                        "message": "Governance Protocol Finalized (Safe Mode).",
+                        "case_id": case_id,
+                    }
 
-                return False, f"Atomic Transaction Failure: {str(e)}"
+                return False, {"error_code": "SERVER_ERROR", "message": f"Atomic Transaction Failure: {str(e)}"}
             except Exception as safe_err:
                 db.session.rollback()
                 print(f"💥 [OVERSIGHT] SAFE-FINALIZATION FAILED Review #{review_id}: {safe_err}")
-                return False, f"Atomic Transaction Failure: {str(e)} | Safe mode failed: {safe_err}"
+                return False, {"error_code": "SERVER_ERROR", "message": f"Atomic Transaction Failure: {str(e)} | Safe mode failed: {safe_err}"}
 
     @staticmethod
     def get_quality_stats():

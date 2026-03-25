@@ -7,6 +7,25 @@ from .service import FeedbackService
 
 class FeedbackController:
     @staticmethod
+    def _resolve_request_user():
+        from database.models import User
+
+        identity = get_jwt_identity()
+        if isinstance(identity, int):
+            return User.query.get(identity)
+        if isinstance(identity, str):
+            if identity.isdigit():
+                return User.query.get(int(identity))
+            return User.query.filter_by(email=identity.strip().lower()).first()
+        if isinstance(identity, dict):
+            maybe_id = identity.get("id") or identity.get("user_id") or identity.get("sub")
+            if isinstance(maybe_id, int) or (isinstance(maybe_id, str) and maybe_id.isdigit()):
+                return User.query.get(int(maybe_id))
+            if isinstance(maybe_id, str):
+                return User.query.filter_by(email=maybe_id.strip().lower()).first()
+        return None
+
+    @staticmethod
     def marker():
         review_cols = FeedbackService._get_table_columns("reviews")
         escalation_cols = FeedbackService._get_table_columns("review_escalations")
@@ -58,42 +77,27 @@ class FeedbackController:
     @staticmethod
     @jwt_required()
     def moderate(review_id):
-        from database.models import User
         import traceback
         
         try:
-            identity = get_jwt_identity()
-            user = None
-            admin_id = None
-
-            # Identity can vary across historical tokens (id/email/object).
-            if isinstance(identity, int):
-                admin_id = identity
-                user = User.query.get(admin_id)
-            elif isinstance(identity, str):
-                if identity.isdigit():
-                    admin_id = int(identity)
-                    user = User.query.get(admin_id)
-                else:
-                    user = User.query.filter_by(email=identity.strip().lower()).first()
-                    admin_id = user.id if user else None
-            elif isinstance(identity, dict):
-                maybe_id = identity.get("id") or identity.get("user_id") or identity.get("sub")
-                if isinstance(maybe_id, int) or (isinstance(maybe_id, str) and maybe_id.isdigit()):
-                    admin_id = int(maybe_id)
-                    user = User.query.get(admin_id)
-                elif isinstance(maybe_id, str):
-                    user = User.query.filter_by(email=maybe_id.strip().lower()).first()
-                    admin_id = user.id if user else None
+            user = FeedbackController._resolve_request_user()
+            admin_id = user.id if user else None
 
             if not user or user.role not in ['admin', 'super_admin']:
-                return jsonify({"error": "Unauthorized Governance Access"}), 403
+                return jsonify({"ok": False, "error_code": "FORBIDDEN", "message": "Unauthorized Governance Access"}), 403
                 
             data = request.json
-            success, message = FeedbackService.moderate_review(review_id, admin_id, data)
+            success, payload = FeedbackService.moderate_review(review_id, admin_id, data)
             if not success:
-                return jsonify({"error": message}), 400
-            return jsonify({"message": message}), 200
+                status = 400
+                if payload.get("error_code") == "NOT_FOUND":
+                    status = 404
+                elif payload.get("error_code") == "FORBIDDEN":
+                    status = 403
+                elif payload.get("error_code") == "CONFLICT":
+                    status = 409
+                return jsonify({"ok": False, **payload}), status
+            return jsonify(payload), 200
         except Exception as e:
             print(f"Governance Safe-Fallback Activated for Review {review_id}: {str(e)}")
             try:
@@ -154,6 +158,10 @@ class FeedbackController:
 
                 db.session.commit()
                 return jsonify({
+                    "ok": True,
+                    "review_id": review_id,
+                    "action": action,
+                    "status": target_status,
                     "message": "Governance Protocol Finalized (Controller Safe Mode)",
                     "detail": f"Recovered from runtime error: {type(e).__name__}"
                 }), 200
@@ -161,9 +169,39 @@ class FeedbackController:
                 traceback.print_exc()
                 db.session.rollback()
                 return jsonify({
-                    "error": f"Critical Failure: {str(e)}",
+                    "ok": False,
+                    "error_code": "SERVER_ERROR",
+                    "message": f"Critical Failure: {str(e)}",
                     "hint": "Institutional audit database might be temporarily locked."
                 }), 500
+
+    @staticmethod
+    @jwt_required()
+    def restore(review_id):
+        user = FeedbackController._resolve_request_user()
+        if not user or user.role not in ["admin", "super_admin"]:
+            return jsonify({"ok": False, "error_code": "FORBIDDEN", "message": "Unauthorized Governance Access"}), 403
+
+        success, payload = FeedbackService.moderate_review(
+            review_id=review_id,
+            admin_id=user.id,
+            data={"action": "clear", "note": request.json.get("note", "") if request.json else ""},
+        )
+        if not success:
+            return jsonify({"ok": False, **payload}), 400
+        return jsonify(payload), 200
+
+    @staticmethod
+    @jwt_required()
+    def get_timeline(review_id):
+        user = FeedbackController._resolve_request_user()
+        if not user or user.role not in ["admin", "super_admin"]:
+            return jsonify({"ok": False, "error_code": "FORBIDDEN", "message": "Unauthorized Governance Access"}), 403
+
+        timeline = FeedbackService.get_review_timeline(review_id)
+        if not timeline:
+            return jsonify({"ok": False, "error_code": "NOT_FOUND", "message": "Review not found"}), 404
+        return jsonify({"ok": True, **timeline}), 200
 
     @staticmethod
     def get_stats():
