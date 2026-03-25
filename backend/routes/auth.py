@@ -208,10 +208,24 @@ def login():
 
         # Governance lock: suspended doctors cannot log in.
         if user.role == "doctor":
-            doctor_profile = DoctorProfile.query.filter_by(user_id=user.id).first()
-            profile_status = (doctor_profile.doctor_status if doctor_profile else "").lower()
+            profile_status = ""
             account_status = (user.account_status or "").lower()
-            if profile_status == "suspended" or account_status == "suspended":
+            # Avoid hard dependency on optional/new doctor_profile columns during login.
+            # Some deployments may be on legacy schema; account-level suspension still applies.
+            try:
+                prof_row = db.session.query(DoctorProfile.user_id).filter_by(user_id=user.id).first()
+                if prof_row:
+                    # If legacy schema is used and doctor_status column is missing,
+                    # this intentionally remains empty and falls back to account status.
+                    prof_status_row = db.session.execute(
+                        db.text("SELECT doctor_status FROM doctor_profiles WHERE user_id = :uid LIMIT 1"),
+                        {"uid": user.id}
+                    ).first()
+                    profile_status = (prof_status_row[0] or "").lower() if prof_status_row else ""
+            except Exception:
+                profile_status = ""
+
+            if account_status == "suspended" or profile_status == "suspended":
                 return jsonify({
                     "message": "Your account has been suspended. Please contact administration."
                 }), 403
