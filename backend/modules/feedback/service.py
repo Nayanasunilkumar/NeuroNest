@@ -149,8 +149,11 @@ class FeedbackService:
 
     @staticmethod
     def moderate_review(review_id, admin_id, data):
+        print(f"🏥 [G-PROTOCOL] START Review #{review_id} | Admin: {admin_id} | Data: {data}")
+        
         review = Review.query.get(review_id)
         if not review:
+            print(f"❌ [G-PROTOCOL] Review #{review_id} not found in database")
             return False, "Review not found"
         
         action = data.get('action') # hide, flag, approve, escalate
@@ -167,8 +170,15 @@ class FeedbackService:
             'escalate': 'Escalated'
         }
         
-        review.status = status_map.get(action, 'Moderated')
-        review.admin_note = note
+        target_status = status_map.get(action, 'Moderated')
+        print(f"🔍 [G-PROTOCOL] Attempting action: {action} -> {target_status}")
+
+        try:
+            review.status = target_status
+            review.admin_note = note
+            print(f"✅ [G-PROTOCOL] Baseline metadata updated")
+        except Exception as e:
+            print(f"⚠️ [G-PROTOCOL] Schema mismatch on baseline metadata: {e}")
         
         if action == 'hide':
             review.is_hidden = True
@@ -182,10 +192,10 @@ class FeedbackService:
             
             # --- HARD FIX: SAFE ESCALATION Fallback ---
             try:
-                review.status = "Escalated"
                 review.escalated_at = datetime.utcnow()
+                print(f"✅ [G-PROTOCOL] Timestamped escalation")
             except Exception as e:
-                print(f"[OVERSIGHT] Primary status update failed: {e}")
+                print(f"⚠️ [G-PROTOCOL] Timestamp failed: {e}")
 
             severity = data.get('severity', 'Standard')
             category = data.get('category', 'Quality of Care')
@@ -195,8 +205,9 @@ class FeedbackService:
                 try:
                     if hasattr(review, attr):
                         setattr(review, attr, val)
+                        print(f"🔗 [G-PROTOCOL] Synced {attr}")
                 except Exception as attr_err:
-                    print(f"[OVERSIGHT] Metadata sync failed for {attr}: {attr_err}")
+                    print(f"⚠️ [G-PROTOCOL] Metadata sync failed for {attr}: {attr_err}")
             
             # Hook into governance triage
             try:
@@ -204,8 +215,9 @@ class FeedbackService:
                     review.doctor_id, 
                     f"[MANUAL ESCALATION - {severity}] Review #{review.id}: {note}"
                 )
+                print(f"✅ [G-PROTOCOL] Governance Triage Hooked")
             except Exception as hook_err:
-                print(f"[OVERSIGHT] Governance Hook failed: {hook_err}")
+                print(f"⚠️ [G-PROTOCOL] Governance Hook failed: {hook_err}")
             
             try:
                 review_esc = ReviewEscalation(
@@ -217,41 +229,50 @@ class FeedbackService:
                     status="Open"
                 )
                 db.session.add(review_esc)
+                print(f"✅ [G-PROTOCOL] Escalation record staged")
             except Exception as esc_err:
-                print(f"[OVERSIGHT] Escalation object creation failed: {esc_err}")
+                print(f"⚠️ [G-PROTOCOL] Escalation record failed: {esc_err}")
             
         # 🔗 Governance Hook: Recalculate doctor telemetry after moderation
         try:
             GovernanceService.process_review_event(review.id)
+            print(f"✅ [G-PROTOCOL] Analytics recalibrated")
         except Exception as e:
-            print(f"[OVERSIGHT] Analytics hook skipped: {e}")
+            print(f"⚠️ [G-PROTOCOL] Analytics hook failed: {e}")
             
         # Log moderation
-        log = ReviewModerationLog(
-            review_id=review_id,
-            doctor_id=review.doctor_id,
-            patient_id=review.patient_id,
-            action=action,
-            performed_by=admin_id,
-            note=note
-        )
-        db.session.add(log)
+        try:
+            log = ReviewModerationLog(
+                review_id=review_id,
+                doctor_id=review.doctor_id,
+                patient_id=review.patient_id,
+                action=action,
+                performed_by=admin_id,
+                note=note
+            )
+            db.session.add(log)
+            print(f"✅ [G-PROTOCOL] Audit log staged")
+        except Exception as e:
+            print(f"⚠️ [G-PROTOCOL] Audit log staging failed: {e}")
         
         # Handle Tags
         if 'tags' in data:
-            ReviewTag.query.filter_by(review_id=review_id).delete()
-            for tag_name in data['tags']:
-                db.session.add(ReviewTag(review_id=review_id, tag_name=tag_name))
+            try:
+                ReviewTag.query.filter_by(review_id=review_id).delete()
+                for tag_name in data['tags']:
+                    db.session.add(ReviewTag(review_id=review_id, tag_name=tag_name))
+                print(f"✅ [G-PROTOCOL] Tags synchronized")
+            except Exception as e:
+                print(f"⚠️ [G-PROTOCOL] Tag sync failed: {e}")
             
         try:
             db.session.commit()
-            print(f"[OVERSIGHT] Successfully moderated Review #{review_id} action={action}")
+            print(f"🎉 [OVERSIGHT] Successfully finalized moderation Review #{review_id}")
+            return True, f"Governance Protocol Finalized: Case {action.upper()} operation successful."
         except Exception as e:
             db.session.rollback()
-            print(f"[OVERSIGHT] FAILED moderation Review #{review_id}: {str(e)}")
-            raise e
-            
-        return True, f"Governance Protocol Finalized: Case {action.upper()} operation successful."
+            print(f"💥 [OVERSIGHT] ATOMIC CRASH Review #{review_id}: {str(e)}")
+            return False, f"Atomic Transaction Failure: {str(e)}"
 
     @staticmethod
     def get_quality_stats():
