@@ -88,18 +88,32 @@ def get_doctors():
         paginated = query.paginate(page=page, per_page=limit)
 
         doctors_data = []
+        doctor_ids = [u.id for u in paginated.items]
+        profiles_by_user = {}
+        if doctor_ids:
+            profile_rows = db.session.query(
+                DoctorProfile.user_id,
+                DoctorProfile.specialization,
+                DoctorProfile.license_number,
+                DoctorProfile.sector,
+                DoctorProfile.created_at
+            ).filter(DoctorProfile.user_id.in_(doctor_ids)).all()
+            profiles_by_user = {
+                row.user_id: row for row in profile_rows
+            }
+
         for user in paginated.items:
-            profile = user.doctor_profile
+            profile = profiles_by_user.get(user.id)
             doctors_data.append({
                 "id": user.id,
                 "full_name": user.full_name,
                 "email": user.email,
                 "account_status": user.account_status,
                 "is_verified": user.is_verified,
-                "specialization": profile.specialization if profile else "N/A",
-                "license_number": profile.license_number if profile else "N/A",
-                "sector": profile.sector if profile else "North Sector",
-                "created_at": str(profile.created_at) if profile else str(datetime.utcnow())
+                "specialization": getattr(profile, "specialization", None) or "N/A",
+                "license_number": getattr(profile, "license_number", None) or "N/A",
+                "sector": getattr(profile, "sector", None) or "North Sector",
+                "created_at": str(getattr(profile, "created_at", None) or datetime.utcnow())
             })
 
         return jsonify({
@@ -183,8 +197,14 @@ def get_doctor_detail(doctor_id):
     user = User.query.get_or_404(doctor_id)
     if user.role != "doctor":
         return jsonify({"error": "Unauthorized profile access"}), 403
-    
-    profile = user.doctor_profile
+
+    profile = db.session.query(
+        DoctorProfile.specialization,
+        DoctorProfile.license_number,
+        DoctorProfile.bio,
+        DoctorProfile.consultation_fee,
+        DoctorProfile.created_at
+    ).filter(DoctorProfile.user_id == doctor_id).first()
     
     # Get audit history for this doctor
     audit_logs = DoctorAuditLog.query.filter_by(doctor_id=doctor_id).order_by(DoctorAuditLog.created_at.desc()).limit(10).all()
@@ -203,11 +223,11 @@ def get_doctor_detail(doctor_id):
         "email": user.email,
         "account_status": user.account_status,
         "is_verified": user.is_verified,
-        "specialization": profile.specialization if profile else "N/A",
-        "license_number": profile.license_number if profile else "N/A",
-        "bio": profile.bio if profile else "",
-        "consultation_fee": profile.consultation_fee if profile else 0,
-        "created_at": str(profile.created_at) if profile else str(user.created_at),
+        "specialization": getattr(profile, "specialization", None) or "N/A",
+        "license_number": getattr(profile, "license_number", None) or "N/A",
+        "bio": getattr(profile, "bio", None) or "",
+        "consultation_fee": getattr(profile, "consultation_fee", None) or 0,
+        "created_at": str(getattr(profile, "created_at", None) or user.created_at),
         "audit_logs": logs_data
     }), 200
 
