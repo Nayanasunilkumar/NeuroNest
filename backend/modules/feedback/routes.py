@@ -4,6 +4,10 @@ from .controller import FeedbackController
 feedback_bp = Blueprint('feedback', __name__)
 
 # Admin & Super Admin Routes
+@feedback_bp.route('/marker', methods=['GET'])
+def marker():
+    return FeedbackController.marker()
+
 @feedback_bp.route('/list', methods=['GET'])
 def list_reviews():
     return FeedbackController.list_reviews()

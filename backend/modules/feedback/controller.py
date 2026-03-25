@@ -1,9 +1,29 @@
 from flask import jsonify, request
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from database.models import db
+import os
 from .service import FeedbackService
 
 class FeedbackController:
+    @staticmethod
+    def marker():
+        review_cols = FeedbackService._get_table_columns("reviews")
+        escalation_cols = FeedbackService._get_table_columns("review_escalations")
+        moderation_cols = FeedbackService._get_table_columns("review_moderation_logs")
+
+        return jsonify({
+            "marker": "feedback-marker-2026-03-25-r2",
+            "service": "feedback",
+            "commit": os.getenv("RENDER_GIT_COMMIT") or os.getenv("GIT_COMMIT") or "unknown",
+            "request_host": request.host,
+            "has_reviews_status": "status" in review_cols,
+            "has_reviews_admin_note": "admin_note" in review_cols,
+            "has_review_escalations_severity": "severity_level" in escalation_cols,
+            "has_review_escalations_category": "category" in escalation_cols,
+            "has_moderation_doctor_id": "doctor_id" in moderation_cols,
+            "has_moderation_patient_id": "patient_id" in moderation_cols,
+        }), 200
+
     @staticmethod
     def list_reviews():
         # Handle optional filters from query params

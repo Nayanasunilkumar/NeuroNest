@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ShieldCheck, RefreshCcw, AlertTriangle } from 'lucide-react';
 import { useFeedback } from '../../hooks/useFeedback';
 import { useNavigate } from 'react-router-dom';
+import { API_BASE_URL } from '../../config/env';
+import { feedbackService } from '../../services/feedbackService';
 import QualityStatsCards from './components/QualityStatsCards';
 import ReviewFilters from './components/ReviewFilters';
 import ReviewTable from './components/ReviewTable';
@@ -15,6 +17,33 @@ const FeedbackPage = () => {
   } = useFeedback();
   
   const [selectedReview, setSelectedReview] = useState(null);
+  const [apiMismatchWarning, setApiMismatchWarning] = useState('');
+
+  useEffect(() => {
+    let active = true;
+
+    const runApiCheck = async () => {
+      try {
+        const marker = await feedbackService.getMarker(true);
+        if (!active || !marker?.request_host) return;
+        const pointsToHost = API_BASE_URL.includes(marker.request_host);
+        if (!pointsToHost) {
+          setApiMismatchWarning(
+            `API route mismatch detected. Frontend base: ${API_BASE_URL} | responding backend host: ${marker.request_host} | marker: ${marker.marker || 'n/a'}`
+          );
+        } else {
+          setApiMismatchWarning('');
+        }
+      } catch {
+        // Marker check is diagnostic only.
+      }
+    };
+
+    runApiCheck();
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const handleCardClick = (key) => {
     if (key === 'reported' && stats?.most_reported_doctor_id) {
@@ -51,6 +80,11 @@ const FeedbackPage = () => {
             <RefreshCcw size={18} className={loading ? 'spin' : ''} />
           </button>
         </div>
+        {apiMismatchWarning && (
+          <div style={{ marginTop: '0.75rem', color: 'var(--admin-warning)', fontSize: '0.8rem', fontWeight: 700 }}>
+            {apiMismatchWarning}
+          </div>
+        )}
 
         {/* Dynamic Telemetry */}
         <QualityStatsCards stats={stats} onCardClick={handleCardClick} />
