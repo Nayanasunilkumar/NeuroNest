@@ -24,15 +24,21 @@ from models.chat_models import Participant, Message
 from models.prescription_models import Prescription
 from datetime import datetime
 from utils.security import hash_password
+from sqlalchemy import func
 
 admin_doctors_bp = Blueprint("admin_doctors", __name__)
 
 def admin_required(fn):
     @jwt_required()
     def wrapper(*args, **kwargs):
-        current_id = get_jwt_identity()
+        identity = get_jwt_identity()
+        try:
+            current_id = int(identity)
+        except (TypeError, ValueError):
+            return jsonify({"error": "Invalid auth identity"}), 401
+
         user = User.query.get(current_id)
-        if not user or user.role != "admin":
+        if not user or user.role not in ("admin", "super_admin"):
             return jsonify({"error": "Admin access required"}), 403
         return fn(*args, **kwargs)
     wrapper.__name__ = fn.__name__
@@ -50,7 +56,8 @@ def get_doctors():
     page = int(request.args.get("page", 1))
     limit = int(request.args.get("limit", 20))
     
-    query = User.query.filter(User.role == "doctor")
+    doctor_role = func.lower(func.trim(User.role))
+    query = User.query.filter(doctor_role.in_(["doctor", "specialist"]))
     
     if search_query:
         query = query.filter(
@@ -65,10 +72,10 @@ def get_doctors():
         query = query.join(DoctorProfile).filter(DoctorProfile.sector == sector_filter)
         
     # Calculate global stats (for the whole roster, not just current page)
-    total_all = User.query.filter(User.role == "doctor").count()
-    verified_count = User.query.filter(User.role == "doctor", User.is_verified == True).count()
-    pending_count = User.query.filter(User.role == "doctor", User.is_verified == False).count()
-    active_count = User.query.filter(User.role == "doctor", User.account_status == "active").count()
+    total_all = User.query.filter(doctor_role.in_(["doctor", "specialist"])).count()
+    verified_count = User.query.filter(doctor_role.in_(["doctor", "specialist"]), User.is_verified == True).count()
+    pending_count = User.query.filter(doctor_role.in_(["doctor", "specialist"]), User.is_verified == False).count()
+    active_count = User.query.filter(doctor_role.in_(["doctor", "specialist"]), User.account_status == "active").count()
 
     paginated = query.paginate(page=page, per_page=limit)
     

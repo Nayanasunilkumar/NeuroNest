@@ -13,6 +13,7 @@ const ManageDoctors = () => {
     const [doctors, setDoctors] = useState([]);
     const [stats, setStats] = useState({ total: 0, verified: 0, pending: 0, active: 0 });
     const [loading, setLoading] = useState(true);
+    const [loadError, setLoadError] = useState('');
     const [search, setSearch] = useState('');
     const [statusFilter, setStatusFilter] = useState('');
     const [sectorFilter, setSectorFilter] = useState('');
@@ -41,6 +42,7 @@ const ManageDoctors = () => {
 
     const loadDoctors = async () => {
         setLoading(true);
+        setLoadError('');
         try {
             const data = await fetchDoctors({ page, status: statusFilter, search, sector: sectorFilter });
             setDoctors(data.doctors);
@@ -50,6 +52,7 @@ const ManageDoctors = () => {
             setOpenMenuId(null);
         } catch (err) {
             console.error('Failed to load doctors', err);
+            setLoadError(err?.response?.data?.error || 'Unable to load doctor roster. Please refresh or re-login.');
         } finally {
             setLoading(false);
         }
@@ -185,6 +188,11 @@ const ManageDoctors = () => {
             </div>
 
             <div className="card border-0 shadow-sm rounded-4 overflow-hidden mb-5">
+                {loadError && (
+                    <div className="alert alert-danger border-0 rounded-0 mb-0 fw-semibold">
+                        {loadError}
+                    </div>
+                )}
                 <div className="card-header bg-white border-0 p-4 pb-0">
                     <div className="row g-3">
                         <div className="col-12 col-md-6 col-lg-4">
