@@ -5,12 +5,12 @@
     gap: 24px;
     flex: 1 0 auto;
     width: 100%;
-    background: var(--nn-surface);
+    background: var(--admin-panel-bg);
     border-radius: 24px;
-    border: 1px solid var(--nn-border);
+    border: 1px solid var(--admin-border);
     padding: 32px;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
-    box-shadow: var(--nn-shadow-sm);
+    box-shadow: var(--admin-shadow);
 }
 
 .settings-header {
@@ -18,25 +18,25 @@
     justify-content: space-between;
     align-items: flex-start;
     padding-bottom: 16px;
-    border-bottom: 1px solid var(--nn-divider);
+    border-bottom: 1px solid var(--admin-border);
 }
 
 .settings-header h1 {
     font-size: 28px;
     font-weight: 800;
-    color: var(--nn-text-main);
+    color: var(--admin-text-main);
     margin: 0 0 8px 0;
     letter-spacing: -0.02em;
 }
 
 .settings-header p {
     font-size: 14px;
-    color: var(--nn-text-muted);
+    color: var(--admin-text-muted);
     margin: 0;
 }
 
 .admin-settings-root .btn-primary {
-    background: var(--nn-primary);
+    background: var(--admin-accent);
     color: white;
     padding: 10px 20px;
     border-radius: 10px;
@@ -48,9 +48,9 @@
 }
 
 .admin-settings-root .btn-primary:hover:not(:disabled) {
-    background: var(--nn-primary-hover);
+    background: color-mix(in srgb, var(--admin-accent) 86%, black);
     transform: translateY(-1px);
-    box-shadow: var(--nn-shadow-md);
+    box-shadow: var(--admin-shadow);
 }
 
 .admin-settings-root .btn-primary:disabled {
@@ -61,7 +61,7 @@
 .settings-tabs-topbar {
     display: flex;
     overflow-x: auto;
-    border-bottom: 2px solid var(--nn-divider);
+    border-bottom: 2px solid var(--admin-border);
     margin-bottom: 24px;
     gap: 8px;
     /* Hide scrollbar */
@@ -81,7 +81,7 @@
     border: none;
     font-size: 15px;
     font-weight: 600;
-    color: var(--nn-text-muted);
+    color: var(--admin-text-muted);
     cursor: pointer;
     border-bottom: 3px solid transparent;
     margin-bottom: -2px; /* Pull down to overlap the container border */
@@ -90,23 +90,23 @@
 }
 
 .tab-button-top:hover {
-    color: var(--nn-text-main);
-    background: var(--nn-surface-secondary);
+    color: var(--admin-text-main);
+    background: color-mix(in srgb, var(--admin-panel-bg) 92%, var(--admin-bg));
     border-radius: 8px 8px 0 0;
 }
 
 .tab-button-top.active {
-    color: var(--nn-primary);
-    border-bottom-color: var(--nn-primary);
-    background: color-mix(in srgb, var(--nn-primary) 14%, var(--nn-surface));
+    color: var(--admin-accent);
+    border-bottom-color: var(--admin-accent);
+    background: var(--admin-accent-soft);
     border-radius: 8px 8px 0 0;
 }
 
 .settings-content {
-    background: var(--nn-surface);
+    background: var(--admin-panel-bg);
     border-radius: 16px;
-    border: 1px solid var(--nn-border);
-    box-shadow: var(--nn-shadow-sm);
+    border: 1px solid var(--admin-border);
+    box-shadow: var(--admin-shadow);
     overflow: hidden;
 }
 
@@ -117,10 +117,10 @@
 .section-title {
     font-size: 20px;
     font-weight: 800;
-    color: var(--nn-text-main);
+    color: var(--admin-text-main);
     margin-bottom: 24px;
     padding-bottom: 16px;
-    border-bottom: 1px solid var(--nn-divider);
+    border-bottom: 1px solid var(--admin-border);
 }
 
 .settings-grid {
@@ -134,7 +134,7 @@
     justify-content: space-between;
     align-items: center;
     padding-bottom: 16px;
-    border-bottom: 1px solid var(--nn-divider);
+    border-bottom: 1px solid var(--admin-border);
 }
 
 .settings-field:last-child {
@@ -151,12 +151,12 @@
 .field-info label {
     font-size: 15px;
     font-weight: 700;
-    color: var(--nn-text-main);
+    color: var(--admin-text-main);
 }
 
 .field-key-helper {
     font-size: 12px;
-    color: var(--nn-text-muted);
+    color: var(--admin-text-muted);
     font-family: monospace;
 }
 
@@ -169,19 +169,19 @@
 .settings-input {
     width: 100%;
     padding: 10px 14px;
-    border: 1px solid var(--nn-border);
+    border: 1px solid var(--admin-border);
     border-radius: 10px;
     font-size: 14px;
-    background: var(--nn-surface-secondary);
-    color: var(--nn-text-main);
+    background: var(--admin-bg);
+    color: var(--admin-text-main);
     transition: all 0.2s;
 }
 
 .settings-input:focus {
     outline: none;
-    border-color: var(--nn-primary);
-    background: var(--nn-surface);
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--nn-primary) 24%, transparent);
+    border-color: var(--admin-accent);
+    background: var(--admin-panel-bg);
+    box-shadow: 0 0 0 3px var(--admin-accent-soft);
 }
 
 /* Custom Toggle Switch for boolean inputs */
@@ -202,7 +202,7 @@
     position: absolute;
     cursor: pointer;
     top: 0; left: 0; right: 0; bottom: 0;
-    background-color: var(--nn-border-strong);
+    background-color: var(--admin-border-strong);
     transition: .3s;
 }
 
@@ -213,12 +213,12 @@
     width: 18px;
     left: 3px;
     bottom: 3px;
-    background-color: var(--nn-surface);
+    background-color: var(--admin-panel-bg);
     transition: .3s;
 }
 
 input:checked + .slider {
-    background-color: var(--nn-primary);
+    background-color: var(--admin-accent);
 }
 
 input:checked + .slider:before {
