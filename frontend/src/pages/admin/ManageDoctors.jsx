@@ -52,7 +52,13 @@ const ManageDoctors = () => {
             setOpenMenuId(null);
         } catch (err) {
             console.error('Failed to load doctors', err);
-            setLoadError(err?.response?.data?.error || 'Unable to load doctor roster. Please refresh or re-login.');
+            const payload = err?.response?.data;
+            const backendMessage =
+                (typeof payload === 'string' && payload) ||
+                payload?.error ||
+                payload?.msg ||
+                payload?.message;
+            setLoadError(backendMessage || 'Unable to load doctor roster. Please refresh or re-login.');
         } finally {
             setLoading(false);
         }

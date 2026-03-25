@@ -38,7 +38,8 @@ def admin_required(fn):
             return jsonify({"error": "Invalid auth identity"}), 401
 
         user = User.query.get(current_id)
-        if not user or user.role not in ("admin", "super_admin"):
+        normalized_role = (user.role or "").strip().lower() if user else ""
+        if not user or normalized_role not in ("admin", "super_admin"):
             return jsonify({"error": "Admin access required"}), 403
         return fn(*args, **kwargs)
     wrapper.__name__ = fn.__name__
@@ -77,7 +78,10 @@ def get_doctors():
     pending_count = User.query.filter(doctor_role.in_(["doctor", "specialist"]), User.is_verified == False).count()
     active_count = User.query.filter(doctor_role.in_(["doctor", "specialist"]), User.account_status == "active").count()
 
-    paginated = query.paginate(page=page, per_page=limit)
+    try:
+        paginated = query.paginate(page=page, per_page=limit)
+    except Exception as e:
+        return jsonify({"error": f"Failed to load doctor roster: {str(e)}"}), 500
     
     doctors_data = []
     for user in paginated.items:
