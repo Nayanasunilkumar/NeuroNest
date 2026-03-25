@@ -6,6 +6,18 @@ from datetime import datetime
 
 admin_settings_bp = Blueprint("admin_settings", __name__)
 
+INDIA_DEFAULT_OVERRIDES = {
+    "contact_number": "+91-44-4000-0000",
+    "default_timezone": "Asia/Kolkata",
+    "default_language": "en-IN",
+}
+
+INDIA_LEGACY_VALUES = {
+    "contact_number": {"+1-800-neuro-01", "", "null", "none"},
+    "default_timezone": {"utc", "gmt", "", "null", "none"},
+    "default_language": {"en-us", "en", "", "null", "none"},
+}
+
 def super_admin_required(fn):
     @jwt_required()
     def wrapper(*args, **kwargs):
@@ -29,16 +41,28 @@ def get_settings():
         query = query.filter_by(setting_group=group)
         
     settings = query.all()
+    normalized = False
     
     # Return as an object grouped by key for easy React consumption
     settings_dict = {}
     for setting in settings:
+        target = INDIA_DEFAULT_OVERRIDES.get(setting.setting_key)
+        if target:
+            current_value = (setting.setting_value or "").strip()
+            if current_value.lower() in INDIA_LEGACY_VALUES.get(setting.setting_key, set()) and current_value != target:
+                setting.setting_value = target
+                setting.updated_at = datetime.utcnow()
+                normalized = True
+
         settings_dict[setting.setting_key] = {
             "id": setting.id,
             "value": setting.setting_value,
             "type": setting.setting_type,
             "group": setting.setting_group
         }
+
+    if normalized:
+        db.session.commit()
         
     return jsonify(settings_dict), 200
 
