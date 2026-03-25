@@ -12,7 +12,11 @@ announcements_bp = Blueprint('announcements', __name__)
 @announcements_bp.route('/', methods=['GET'])
 @jwt_required()
 def get_user_announcements():
-    current_user_id = get_jwt_identity()
+    try:
+        current_user_id = int(get_jwt_identity())
+    except (TypeError, ValueError):
+        return jsonify({"msg": "Invalid auth identity"}), 401
+
     user = User.query.get(current_user_id)
     if not user:
         return jsonify({"msg": "User not found"}), 404
@@ -21,6 +25,19 @@ def get_user_announcements():
     # Also filter by expiry_at
     now = datetime.utcnow()
     
+    applicable_audiences = {"all_users"}
+    role = (user.role or "").lower()
+    if role == "doctor":
+        applicable_audiences.add("all_doctors")
+        if (user.account_status or "").lower() == "suspended":
+            applicable_audiences.add("suspended_doctors")
+        else:
+            applicable_audiences.add("monitoring_doctors")
+    elif role == "patient":
+        applicable_audiences.add("all_patients")
+    elif role in ("admin", "super_admin"):
+        applicable_audiences.add("admin_only")
+
     announcements = Announcement.query.join(AnnouncementTarget).filter(
         Announcement.status == 'Published',
         or_(Announcement.publish_at <= now, Announcement.publish_at == None),
@@ -28,7 +45,11 @@ def get_user_announcements():
         or_(
             AnnouncementTarget.target_type == 'All',
             and_(AnnouncementTarget.target_type == 'Role', AnnouncementTarget.target_value == user.role),
-            and_(AnnouncementTarget.target_type == 'User', AnnouncementTarget.target_value == str(user.id))
+            and_(AnnouncementTarget.target_type == 'User', AnnouncementTarget.target_value == str(user.id)),
+            and_(
+                AnnouncementTarget.target_type == 'Audience',
+                AnnouncementTarget.target_value.in_(list(applicable_audiences))
+            )
         )
     ).order_by(Announcement.is_pinned.desc(), Announcement.publish_at.desc()).all()
 
@@ -98,4 +119,3 @@ def acknowledge_announcement(announcement_id):
 
     db.session.commit()
     return jsonify({"msg": "Acknowledged"}), 200
-

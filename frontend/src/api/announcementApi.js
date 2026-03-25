@@ -2,9 +2,10 @@ import axios from 'axios';
 import { API_BASE_URL } from '../config/env';
 
 const adminAnnouncementApi = {
-    getAll: async () => {
+    getAll: async (params = {}) => {
         const response = await axios.get(`${API_BASE_URL}/api/admin/announcements/`, {
-            headers: { Authorization: `Bearer ${localStorage.getItem('neuronest_token')}` }
+            headers: { Authorization: `Bearer ${localStorage.getItem('neuronest_token')}` },
+            params
         });
         return response.data;
     },
