@@ -50,9 +50,9 @@ const AddDoctorModal = ({ isOpen, onClose, onAdd }) => {
 
   return (
     <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', zIndex: 1050 }}>
-      <div className="modal-dialog modal-dialog-centered modal-lg">
+      <div className="modal-dialog modal-dialog-centered" style={{ maxWidth: '920px', width: '92vw' }}>
         <div className="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-          <div className="modal-header bg-primary text-white p-4 border-0 position-relative" style={{ background: 'linear-gradient(135deg, #0d6efd, #6610f2)' }}>
+          <div className="modal-header bg-primary text-white p-3 border-0 position-relative" style={{ background: 'linear-gradient(135deg, #0d6efd, #6610f2)' }}>
             <div className="d-flex align-items-center gap-3">
                 <div className="bg-white bg-opacity-20 p-2 rounded-3">
                     <UserPlus size={24} />
@@ -66,20 +66,20 @@ const AddDoctorModal = ({ isOpen, onClose, onAdd }) => {
           </div>
           
           <form onSubmit={handleSubmit}>
-            <div className="modal-body p-4 p-lg-5">
-              <div className="alert alert-info border-0 rounded-3 d-flex align-items-center gap-3 mb-4 bg-primary bg-opacity-10 text-primary border border-primary border-opacity-10">
+            <div className="modal-body p-3 p-lg-4">
+              <div className="alert alert-info border-0 rounded-3 d-flex align-items-center gap-2 mb-3 bg-primary bg-opacity-10 text-primary border border-primary border-opacity-10 py-2 px-3">
                 <Shield size={20} className="flex-shrink-0" />
                 <div className="small fw-bold">
                     Default access key will be set to <span className="badge bg-primary text-white font-monospace">Doctor@123</span>. User will be prompted for mandatory reset on first uplink.
                 </div>
               </div>
 
-              <div className="row g-4">
+              <div className="row g-3">
                 <div className="col-md-6">
                   <label className="form-label small fw-black text-uppercase opacity-50 letter-spacing-1">Professional Name</label>
                   <input 
                     type="text" 
-                    className="form-control bg-light border-0 py-2 px-3 rounded-3 fw-bold" 
+                    className="form-control bg-light border-0 py-1 px-3 rounded-3 fw-bold" 
                     required 
                     placeholder="e.g. Dr. Alexander Wright"
                     value={formData.full_name}
@@ -91,7 +91,7 @@ const AddDoctorModal = ({ isOpen, onClose, onAdd }) => {
                   <label className="form-label small fw-black text-uppercase opacity-50 letter-spacing-1">Institutional Email</label>
                   <input 
                     type="email" 
-                    className="form-control bg-light border-0 py-2 px-3 rounded-3 fw-bold font-monospace" 
+                    className="form-control bg-light border-0 py-1 px-3 rounded-3 fw-bold font-monospace" 
                     required 
                     placeholder="alexander@neuronest.org"
                     value={formData.email}
@@ -102,7 +102,7 @@ const AddDoctorModal = ({ isOpen, onClose, onAdd }) => {
                 <div className="col-md-6">
                   <label className="form-label small fw-black text-uppercase opacity-50 letter-spacing-1">Primary Specialization</label>
                   <select 
-                    className="form-select bg-light border-0 py-2 px-3 rounded-3 fw-bold"
+                    className="form-select bg-light border-0 py-1 px-3 rounded-3 fw-bold"
                     value={formData.specialization}
                     onChange={(e) => setFormData({...formData, specialization: e.target.value})}
                   >
@@ -116,7 +116,7 @@ const AddDoctorModal = ({ isOpen, onClose, onAdd }) => {
                   <label className="form-label small fw-black text-uppercase opacity-50 letter-spacing-1">License Identifier</label>
                   <input 
                     type="text" 
-                    className="form-control bg-light border-0 py-2 px-3 rounded-3 fw-bold font-monospace shadow-none" 
+                    className="form-control bg-light border-0 py-1 px-3 rounded-3 fw-bold font-monospace shadow-none" 
                     required 
                     placeholder="MC-22948-X"
                     value={formData.license_number}
@@ -142,7 +142,7 @@ const AddDoctorModal = ({ isOpen, onClose, onAdd }) => {
               </div>
             </div>
 
-            <div className="modal-footer bg-light p-4 border-0">
+            <div className="modal-footer bg-light p-3 border-0">
               <button type="button" className="btn btn-link text-secondary text-decoration-none fw-black small" onClick={onClose}>
                 ABORT ONBOARDING
               </button>
