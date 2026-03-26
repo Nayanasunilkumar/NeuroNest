@@ -24,9 +24,7 @@ class User(db.Model):
     is_phone_verified = db.Column(db.Boolean, default=False)
     is_verified = db.Column(db.Boolean, default=False) # Clinical/Medical verification
 
-    # Sync with DB reality
-    email_verified = db.Column(db.Boolean, default=False)
-    phone_verified = db.Column(db.Boolean, default=False)
+    # Canonical verification flags used by application code.
     is_deleted = db.Column(db.Boolean, default=False)
     preferred_language = db.Column(db.String(20), default="en")
     is_two_factor_enabled = db.Column(db.Boolean, default=False)

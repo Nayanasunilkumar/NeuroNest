@@ -81,7 +81,9 @@ def get_settings():
             "emergency_contact": dict(ec) if ec else {},
             "security": {
                 "is_two_factor_enabled": getattr(user, "is_two_factor_enabled", False) or False,
-                "email_verified": user.email_verified or False,
+                "email_verified": user.is_email_verified or False,
+                "is_email_verified": user.is_email_verified or False,
+                "is_phone_verified": user.is_phone_verified or False,
             },
             "notifications": {k: v for k, v in notif.items() if k not in ("id", "user_id", "created_at", "updated_at")},
         }), 200
