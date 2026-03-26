@@ -86,11 +86,17 @@ const ManageAppointments = () => {
         loadDocs();
     }, [selectedDept, selectedSector]);
 
+    useEffect(() => {
+        setPage(1);
+    }, [selectedSector, selectedDept, selectedDoctor, statusFilter, search]);
+
     // Effect: Load Main Data (Appointments + Stats)
     useEffect(() => {
-        if (!selectedSector || !selectedDept || !selectedDoctor) {
+        if (!selectedSector || !selectedDept) {
             setAppointments([]);
             setStats(null);
+            setTotalPages(1);
+            setPage(1);
             return;
         }
         
@@ -101,7 +107,7 @@ const ManageAppointments = () => {
                     page,
                     sector: selectedSector,
                     department: selectedDept,
-                    doctor_id: selectedDoctor,
+                    doctor_id: selectedDoctor || undefined,
                     status: statusFilter,
                     search,
                     limit: 15
@@ -123,7 +129,7 @@ const ManageAppointments = () => {
             await updateAppointmentStatus(id, newStatus, notes);
             // Refresh current view
             const data = await fetchAdminAppointments({
-                page, sector: selectedSector, department: selectedDept, doctor_id: selectedDoctor,
+                page, sector: selectedSector, department: selectedDept, doctor_id: selectedDoctor || undefined,
                 status: statusFilter, search, limit: 15
             });
             setAppointments(data.appointments);
@@ -133,7 +139,7 @@ const ManageAppointments = () => {
         }
     };
 
-    const isFilterIncomplete = !selectedSector || !selectedDept || !selectedDoctor;
+    const isFilterIncomplete = !selectedSector || !selectedDept;
 
     return (
         <div className="admin-layout">
@@ -172,7 +178,9 @@ const ManageAppointments = () => {
                                 <span>{selectedDept}</span>
                                 <span style={{ opacity: 0.3 }}>/</span>
                                 <span style={{ color: 'var(--admin-text-main)', fontFamily: 'JetBrains Mono, monospace' }}>
-                                    {doctors.find(d => d.id == selectedDoctor)?.full_name || 'Specialist'}
+                                    {selectedDoctor
+                                        ? (doctors.find(d => d.id == selectedDoctor)?.full_name || 'Specialist')
+                                        : 'All Specialists'}
                                 </span>
                             </div>
                         )}
@@ -184,7 +192,7 @@ const ManageAppointments = () => {
                                 </div>
                                 <div className="placeholder-text">
                                     <h3>Awaiting Structural Selection</h3>
-                                    <p>Select Sector, Specialty, and Specialist to initialize clinical stream.</p>
+                                    <p>Select Sector and Specialty to initialize the clinical stream. Specialist is optional.</p>
                                 </div>
                             </div>
                         ) : loadingData ? (

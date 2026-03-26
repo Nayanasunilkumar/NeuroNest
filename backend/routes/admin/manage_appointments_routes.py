@@ -59,13 +59,13 @@ def get_all_appointments():
     status = request.args.get("status", "")
     sector = request.args.get("sector", "")
     department = request.args.get("department", "")
-    doctor_id = request.args.get("doctor_id", "")
+    doctor_id = request.args.get("doctor_id", "").strip()
     
     page = int(request.args.get("page", 1))
     limit = int(request.args.get("limit", 20))
     
-    # Mandatory Hierarchy Check for V1
-    if not (sector and department and doctor_id):
+    # Sector + department define the clinical stream. Doctor is an optional narrowing filter.
+    if not (sector and department):
         return jsonify({
             "appointments": [],
             "total": 0,
@@ -77,20 +77,32 @@ def get_all_appointments():
                 "completed_today": 0,
                 "cancelled_today": 0
             },
-            "message": "Selection of Sector, Department, and Doctor is mandatory for clinical oversight."
+            "message": "Selection of Sector and Department is mandatory for clinical oversight."
         }), 200
 
-    # Safe casting for Hierarchical Axis
-    try:
-        doc_id_int = int(doctor_id)
-    except (ValueError, TypeError):
-        return jsonify({
-            "appointments": [],
-            "stats": None,
-            "message": "Invalid Specialist Identity Signature."
-        }), 400
+    doc_id_int = None
+    if doctor_id:
+        try:
+            doc_id_int = int(doctor_id)
+        except (ValueError, TypeError):
+            return jsonify({
+                "appointments": [],
+                "stats": None,
+                "message": "Invalid Specialist Identity Signature."
+            }), 400
 
-    query = Appointment.query.filter(Appointment.doctor_id == doc_id_int)
+    def scoped_query():
+        query = Appointment.query.join(
+            DoctorProfile, Appointment.doctor_id == DoctorProfile.user_id
+        ).filter(
+            DoctorProfile.sector == sector,
+            DoctorProfile.department == department
+        )
+        if doc_id_int is not None:
+            query = query.filter(Appointment.doctor_id == doc_id_int)
+        return query
+
+    query = scoped_query()
     
     # 🏷️ Filter by Status (Institutional Mapping)
     if status and status != 'all':
@@ -118,7 +130,7 @@ def get_all_appointments():
     
     # 📊 Real-time Clinical Telemetry (Scoped to Filtered Doctor)
     today = datetime.utcnow().date()
-    stats_base = Appointment.query.filter(Appointment.doctor_id == doc_id_int)
+    stats_base = scoped_query()
     
     total_today = stats_base.filter(Appointment.appointment_date == today).count()
     upcoming = stats_base.filter(

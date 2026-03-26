@@ -179,6 +179,39 @@
   transform: scale(1.05);
 }
 
+/* Shared rounded page container across admin module */
+.admin-theme .admin-page-shell {
+  min-height: calc(100vh - 136px);
+  border-radius: 28px;
+  border: 1px solid var(--nn-border);
+  background: var(--nn-surface);
+  box-shadow: var(--nn-shadow-sm);
+  padding: clamp(1rem, 1.8vw, 2rem);
+  padding-inline: 24px;
+}
+
+.admin-theme.admin-theme-light .admin-page-shell {
+  background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+}
+
+.admin-theme.admin-theme-dark .admin-page-shell {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--nn-surface) 94%, #0a1220) 0%,
+    color-mix(in srgb, var(--nn-surface-secondary) 90%, #0a1220) 100%
+  );
+  border-color: var(--nn-border);
+  box-shadow: 0 24px 44px rgba(2, 8, 24, 0.45);
+}
+
+@media (max-width: 991.98px) {
+  .admin-theme .admin-page-shell {
+    min-height: calc(100vh - 120px);
+    border-radius: 20px;
+    padding: 1rem;
+  }
+}
+
 /* ------------------------------------------------------------------
    ADMIN-WIDE UI HARMONIZATION
    Applies to all admin pages through .admin-theme scope only.

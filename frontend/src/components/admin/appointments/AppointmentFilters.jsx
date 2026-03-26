@@ -47,7 +47,7 @@ const AppointmentFilters = ({
                         onChange={(e) => setSelectedDoctor(e.target.value)}
                         disabled={!selectedDept}
                     >
-                        <option value="">Select Doctor...</option>
+                        <option value="">All Specialists</option>
                         {doctors.map(dr => {
                             const displayName = dr.full_name.startsWith('Dr.') ? dr.full_name : `Dr. ${dr.full_name}`;
                             return <option key={dr.id} value={dr.id}>{displayName}</option>;

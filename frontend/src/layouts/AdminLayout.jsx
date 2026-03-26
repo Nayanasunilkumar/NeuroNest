@@ -4,6 +4,7 @@ import DynamicIslandNav from '../components/DynamicIslandNav';
 import { logout } from '../utils/auth';
 import { useTheme } from '../context/ThemeContext';
 import { useSystemConfig } from '../context/SystemConfigContext';
+import '../styles/admin-theme.css';
 import { 
     LogOut, Sun, Moon, Bell, Search, User
 } from 'lucide-react';
@@ -19,7 +20,7 @@ const AdminLayout = () => {
   }, []);
 
   return (
-    <div className={`min-h-screen flex flex-col overflow-hidden transition-colors duration-500 ${darkMode ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900'}`}>
+    <div className={`admin-theme ${darkMode ? 'admin-theme-dark' : 'admin-theme-light'} min-h-screen flex flex-col overflow-hidden transition-colors duration-500 ${darkMode ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900'}`}>
       
       {/* Premium Admin Header */}
       <header 
@@ -103,9 +104,9 @@ const AdminLayout = () => {
       </div>
 
       {/* Main Execution Flow */}
-      <main className="flex-1 overflow-y-auto scroll-smooth">
-        <div className="min-h-full">
-           <Outlet />
+      <main className="flex-1 overflow-y-auto scroll-smooth px-4 pb-6 pt-4 sm:px-6 lg:px-8">
+        <div className="admin-page-shell min-h-full">
+          <Outlet />
         </div>
       </main>
 
