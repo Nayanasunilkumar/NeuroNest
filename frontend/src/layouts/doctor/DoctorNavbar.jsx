@@ -17,10 +17,13 @@ const DoctorNavbar = ({ darkMode, toggleTheme }) => {
   const navigate = useNavigate();
   const { platformName } = useSystemConfig();
   const { alerts, unreadCount, markAcknowledged } = useAlerts() || { alerts: [], unreadCount: 0, markAcknowledged: () => {} };
+  const currentUser = getUser();
+  const fallbackName = currentUser?.full_name || 'Doctor';
+  const fallbackAvatar = fallbackName.charAt(0).toUpperCase() || 'D';
   const [doctorInfo, setDoctorInfo] = useState({
-    name: 'Dr. Nayana',
-    specialization: 'Neurologist',
-    avatar: 'D'
+    name: fallbackName,
+    specialization: 'Specialist',
+    avatar: fallbackAvatar
   });
 
   const [notifications, setNotifications] = useState([]);
@@ -41,13 +44,11 @@ const DoctorNavbar = ({ darkMode, toggleTheme }) => {
     const fetchInfo = async () => {
       try {
         const data = await getDoctorProfile();
-        if (data && data.full_name) {
-          setDoctorInfo({
-            name: data.full_name,
-            specialization: data.specialization || 'Specialist',
-            avatar: data.full_name.charAt(0).toUpperCase()
-          });
-        }
+        setDoctorInfo({
+          name: data?.full_name || fallbackName,
+          specialization: data?.specialization || 'Specialist',
+          avatar: (data?.full_name || fallbackName).charAt(0).toUpperCase() || fallbackAvatar
+        });
       } catch (err) {
         console.error("Failed to fetch doctor info for navbar", err);
       }

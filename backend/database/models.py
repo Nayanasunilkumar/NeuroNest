@@ -100,8 +100,8 @@ class PatientProfile(db.Model):
             "allergies": self.allergies,
             "chronic_conditions": self.chronic_conditions,
             "profile_image": self.profile_image,
-            "created_at": self.created_at.isoformat() + 'Z',
-            "updated_at": self.updated_at.isoformat() + 'Z',
+            "created_at": self.created_at.isoformat() + 'Z' if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() + 'Z' if self.updated_at else None,
         }
 
 
@@ -1116,8 +1116,8 @@ class DoctorProfile(db.Model):
                 "risk_level": self.risk_level,
                 "doctor_status": self.doctor_status
             },
-            "created_at": self.created_at.isoformat() + 'Z',
-            "updated_at": self.updated_at.isoformat() + 'Z',
+            "created_at": self.created_at.isoformat() + 'Z' if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() + 'Z' if self.updated_at else None,
             "availability": [a.to_dict() for a in self.availability],
             "blocked_dates": [b.to_dict() for b in self.blocked_dates],
             "expertise_tags": [t.to_dict() for t in self.expertise_tags],

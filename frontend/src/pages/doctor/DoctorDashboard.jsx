@@ -11,6 +11,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { getDoctorProfile } from '../../services/doctorProfileService';
 import { getDoctorStats, getPatients, getSchedule, joinDoctorAppointmentCall } from '../../api/doctor';
+import { getUser } from '../../utils/auth';
 import { formatClockTimeIST, formatDateFromISTDate, formatTimeIST, getISTDayKey, parseISTDateTime, formatDateIST } from '../../utils/time';
 import '../../styles/dashboard.css';
 
@@ -65,6 +66,12 @@ const getInitials = (name = 'Doctor') =>
     .map((part) => part[0]?.toUpperCase() || '')
     .join('') || 'DR';
 
+const formatDoctorDisplayName = (name = 'Doctor') => {
+  const trimmed = String(name || '').trim();
+  if (!trimmed) return 'Dr. Doctor';
+  return /^dr\.?\s/i.test(trimmed) ? trimmed : `Dr. ${trimmed}`;
+};
+
 const getPatientStatus = (patient) => {
   const raw = String(patient?.status || '').toLowerCase();
   if (raw.includes('critical') || raw.includes('high')) return 'Critical';
@@ -81,6 +88,7 @@ const PreviewEmpty = ({ title }) => (
 
 const DoctorDashboard = () => {
   const navigate = useNavigate();
+  const currentUser = getUser();
   const [doctorProfile, setDoctorProfile] = useState(null);
   const [stats, setStats] = useState({
     total_patients: 0,
@@ -137,9 +145,9 @@ const DoctorDashboard = () => {
     return () => window.clearInterval(timer);
   }, []);
 
-  const doctorName = doctorProfile?.full_name || 'Doctor';
-  const doctorLastName = doctorName.split(' ').slice(-1)[0];
-  const doctorHeroInitials = getInitials(`Dr ${doctorLastName}`);
+  const doctorName = doctorProfile?.full_name || currentUser?.full_name || 'Doctor';
+  const doctorDisplayName = formatDoctorDisplayName(doctorName);
+  const doctorHeroInitials = getInitials(doctorName);
 
   const patientPreview = useMemo(() => {
     return [...patients]
@@ -288,7 +296,7 @@ const DoctorDashboard = () => {
       })()}
       <section className="nn-dashboard-head">
         <div>
-          <h2 className="nn-title">Welcome back, Dr. {doctorLastName}</h2>
+          <h2 className="nn-title">Welcome back, {doctorDisplayName}</h2>
           <p className="nn-subtitle">
             {formatDateIST(new Date(), { weekday: 'long', month: 'long', day: 'numeric' })}{' '}
             · Clinical operations snapshot
@@ -321,7 +329,7 @@ const DoctorDashboard = () => {
               </div>
               <div className="nn-overview-hero-copy">
                 <p className="nn-panel-kicker nn-overview-hero-kicker">DOCTOR OVERVIEW</p>
-                <h3 className="nn-overview-hero-name">Dr. {doctorLastName}</h3>
+                <h3 className="nn-overview-hero-name">{doctorDisplayName}</h3>
                 <div className="nn-overview-hero-meta">
                   <span>{doctorProfile?.specialization || 'Clinical Specialist'}</span>
                 </div>
