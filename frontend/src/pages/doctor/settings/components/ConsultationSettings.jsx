@@ -7,7 +7,6 @@ const ConsultationSettings = ({ data, onSaveSuccess }) => {
         consultation_fee: data?.consultation_fee || 500,
         consultation_mode: data?.consultation_mode || 'Online',
         cancellation_policy_hours: data?.cancellation_policy_hours || 24,
-        auto_cancel_unpaid_minutes: data?.auto_cancel_unpaid_minutes || 15,
     });
     const [saving, setSaving] = useState(false);
     const [saveStatus, setSaveStatus] = useState(null);

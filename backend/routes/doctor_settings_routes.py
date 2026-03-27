@@ -179,8 +179,6 @@ def update_consultation_settings():
         consultation.consultation_mode = data["consultation_mode"]
     if "cancellation_policy_hours" in data:
         consultation.cancellation_policy_hours = int(data["cancellation_policy_hours"])
-    if "auto_cancel_unpaid_minutes" in data:
-        consultation.auto_cancel_unpaid_minutes = int(data["auto_cancel_unpaid_minutes"])
 
     # Sync with DoctorProfile
     from database.models import DoctorProfile

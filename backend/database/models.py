@@ -701,7 +701,6 @@ class DoctorConsultationSetting(db.Model):
     consultation_fee = db.Column(db.Float, nullable=False, default=500.0)
     consultation_mode = db.Column(db.String(50), default="Online")
     cancellation_policy_hours = db.Column(db.Integer, default=24)
-    auto_cancel_unpaid_minutes = db.Column(db.Integer, default=15)
 
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
@@ -712,7 +711,6 @@ class DoctorConsultationSetting(db.Model):
             "consultation_fee": self.consultation_fee,
             "consultation_mode": self.consultation_mode,
             "cancellation_policy_hours": self.cancellation_policy_hours,
-            "auto_cancel_unpaid_minutes": self.auto_cancel_unpaid_minutes,
         }
 
 
