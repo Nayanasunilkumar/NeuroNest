@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { User, Mail, Lock, KeyRound, Eye, EyeOff, Save, CheckCircle, AlertCircle, ShieldCheck } from 'lucide-react';
 import { updateDoctorAccount, changeDoctorPassword } from '../../../../api/doctor';
+import { updateStoredUser } from '../../../../utils/auth';
 
-const AccountSettings = ({ data, onSaveSuccess }) => {
+const AccountSettings = ({ data, onSaveSuccess, forcePasswordChange = false }) => {
     const [profileForm, setProfileForm] = useState({
         full_name: data?.full_name || '',
     });
@@ -84,6 +85,7 @@ const AccountSettings = ({ data, onSaveSuccess }) => {
                 current_password: passwordForm.current_password,
                 new_password: passwordForm.new_password,
             });
+            updateStoredUser({ must_change_password: false });
             setPwStatus('success');
             setPasswordForm({ current_password: '', new_password: '', confirm_password: '' });
             setTimeout(() => setPwStatus(null), 4000);
@@ -189,6 +191,21 @@ const AccountSettings = ({ data, onSaveSuccess }) => {
                         <ShieldCheck size={16} className="text-emerald-500" />
                         <h3>Change Password</h3>
                     </div>
+
+                    {forcePasswordChange && (
+                        <div style={{
+                            marginBottom: '16px',
+                            padding: '10px 12px',
+                            borderRadius: '10px',
+                            background: '#fff7ed',
+                            border: '1px solid #fdba74',
+                            color: '#9a3412',
+                            fontSize: '0.875rem',
+                            fontWeight: 600
+                        }}>
+                            First login detected. Please change your password to continue securely.
+                        </div>
+                    )}
 
                     {/* Current Password */}
                     <div className="form-field" style={{ marginBottom: '16px' }}>

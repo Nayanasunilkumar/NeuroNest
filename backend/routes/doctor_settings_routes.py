@@ -59,6 +59,7 @@ def get_all_settings():
         "account": {
             "full_name": user.full_name if user else "",
             "email": user.email if user else "",
+            "must_change_password": bool(getattr(user, "must_change_password", False)) if user else False,
         },
         "schedule": schedule.to_dict(),
         "notifications": notifications.to_dict(),
@@ -236,5 +237,6 @@ def change_password():
         return jsonify({"error": "Current password is incorrect"}), 400
 
     user.password_hash = hash_password(new_pw)
+    user.must_change_password = False
     db.session.commit()
     return jsonify({"message": "Password changed successfully"}), 200

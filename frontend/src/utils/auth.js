@@ -13,6 +13,14 @@ export const saveAuth = (token, user) => {
   localStorage.setItem(ACTIVITY_KEY, String(Date.now()));
 };
 
+export const updateStoredUser = (partial) => {
+  const current = getUser();
+  if (!current) return null;
+  const next = { ...current, ...partial };
+  localStorage.setItem(USER_KEY, JSON.stringify(next));
+  return next;
+};
+
 /**
  * Get JWT token
  */

@@ -84,6 +84,8 @@ def create_app():
                 conn.execute(db.text("ALTER TABLE notification_preferences ADD COLUMN IF NOT EXISTS inapp_announcements BOOLEAN DEFAULT TRUE"))
                 # --- Doctor Preferences Missing Columns ---
                 conn.execute(db.text("ALTER TABLE doctor_notification_settings ADD COLUMN IF NOT EXISTS email_on_alerts BOOLEAN DEFAULT TRUE"))
+                # --- Auth Security Missing Columns ---
+                conn.execute(db.text("ALTER TABLE users ADD COLUMN IF NOT EXISTS must_change_password BOOLEAN DEFAULT FALSE"))
                 
                 # --- Governance & Oversight (Reviews) ---
                 for col, d_type in [("status", "VARCHAR(20) DEFAULT 'Pending'"), ("escalation_severity", "VARCHAR(50)"), ("audit_category", "VARCHAR(50)"), ("admin_note", "TEXT"), ("escalated_at", "TIMESTAMP")]:

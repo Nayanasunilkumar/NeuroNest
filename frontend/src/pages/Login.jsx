@@ -52,7 +52,18 @@ const Login = () => {
       saveAuth(data.token, data.user);
       const role = data.user.role;
       if (role === "patient") navigate("/patient/dashboard");
-      else if (role === "doctor") navigate("/doctor/dashboard");
+      else if (role === "doctor") {
+        if (data.user.must_change_password) {
+          navigate("/doctor/settings", {
+            state: {
+              initialTab: "account",
+              forcePasswordChange: true,
+            },
+          });
+        } else {
+          navigate("/doctor/dashboard");
+        }
+      }
       else if (role === "admin") navigate("/admin/dashboard");
       else if (role === "super_admin") navigate("/admin/dashboard");
     } catch {

@@ -1,7 +1,8 @@
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import { getUser, isAuthenticated } from "../utils/auth";
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
+  const location = useLocation();
   // 1️⃣ Not logged in
   if (!isAuthenticated()) {
     return <Navigate to="/login" replace />;
@@ -17,6 +18,21 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
   // 3️⃣ Role not allowed
   if (allowedRoles && !allowedRoles.includes(user.role)) {
     return <Navigate to="/403" replace />;
+  }
+
+  // 4️⃣ Force first-login password reset for doctors
+  if (
+    user.role === "doctor" &&
+    user.must_change_password &&
+    location.pathname !== "/doctor/settings"
+  ) {
+    return (
+      <Navigate
+        to="/doctor/settings"
+        replace
+        state={{ initialTab: "account", forcePasswordChange: true }}
+      />
+    );
   }
 
   // 4️⃣ Access granted

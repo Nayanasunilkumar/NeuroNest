@@ -28,6 +28,7 @@ class User(db.Model):
     is_deleted = db.Column(db.Boolean, default=False)
     preferred_language = db.Column(db.String(20), default="en")
     is_two_factor_enabled = db.Column(db.Boolean, default=False)
+    must_change_password = db.Column(db.Boolean, default=False)
 
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

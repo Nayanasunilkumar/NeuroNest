@@ -23,8 +23,10 @@ from database.models import (
 from models.chat_models import Participant, Message
 from models.prescription_models import Prescription
 from datetime import datetime
+import os
 from utils.security import hash_password
 from sqlalchemy import or_
+from services.notification_service import NotificationService
 
 admin_doctors_bp = Blueprint("admin_doctors", __name__)
 
@@ -140,7 +142,8 @@ def add_doctor():
     data = request.json or {}
     email = data.get("email")
     full_name = data.get("full_name")
-    password = data.get("password", "Doctor@123")
+    # Enforced default for newly provisioned doctors.
+    password = "Doctor@123"
     specialization = data.get("specialization")
     license_number = data.get("license_number")
     sector = data.get("sector", "North Sector")
@@ -157,7 +160,8 @@ def add_doctor():
         password_hash=hash_password(password),
         role="doctor",
         full_name=full_name,
-        account_status="active"
+        account_status="active",
+        must_change_password=True
     )
     db.session.add(new_user)
     db.session.flush()
@@ -185,8 +189,29 @@ def add_doctor():
     db.session.add(audit)
     
     db.session.commit()
-    
-    return jsonify({"message": "Doctor provisioned successfully", "doctor_id": new_user.id}), 201
+
+    frontend_base_url = os.getenv("FRONTEND_URL", "https://neuro-nest-two.vercel.app").rstrip("/")
+    login_link = f"{frontend_base_url}/login"
+    email_subject = "Doctor Account Created – Neuronest"
+    email_body = (
+        f"Dear Dr. {full_name},\n\n"
+        "Your doctor account has been created in the Neuronest Hospital System.\n\n"
+        "Login Credentials:\n"
+        f"Email: {email.lower()}\n"
+        f"Password: {password}\n\n"
+        "Login Link:\n"
+        f"{login_link}\n\n"
+        "For security reasons, please change your password after your first login.\n\n"
+        "Regards,\n"
+        "Neuronest Admin"
+    )
+    email_sent = NotificationService.send_email(email.lower(), email_subject, email_body, event_type="approved")
+
+    return jsonify({
+        "message": "Doctor provisioned successfully",
+        "doctor_id": new_user.id,
+        "email_sent": bool(email_sent)
+    }), 201
 
 # -----------------------------------------------------------------
 # 3. GET SINGLE DOCTOR (Detail Profile)

@@ -20,6 +20,7 @@ const TABS = [
 const DoctorSettingsPage = () => {
     const location = useLocation();
     const [activeTab, setActiveTab] = useState(location.state?.initialTab || "account");
+    const forcePasswordChange = Boolean(location.state?.forcePasswordChange);
     const [settings, setSettings] = useState(null);
     const [loading, setLoading] = useState(true);
 
@@ -44,6 +45,7 @@ const DoctorSettingsPage = () => {
             case "account": return (
                 <AccountSettings
                     data={settings?.account}
+                    forcePasswordChange={forcePasswordChange}
                     onSaveSuccess={(newData) => setSettings(prev => ({...prev, account: newData}))}
                 />
             );

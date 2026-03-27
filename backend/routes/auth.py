@@ -258,7 +258,8 @@ def login():
                 "id": user.id,
                 "email": user.email,
                 "role": user.role,
-                "full_name": user.full_name
+                "full_name": user.full_name,
+                "must_change_password": bool(getattr(user, "must_change_password", False))
             }
         }), 200
     except Exception as e:
