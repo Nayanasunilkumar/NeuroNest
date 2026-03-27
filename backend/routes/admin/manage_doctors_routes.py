@@ -24,11 +24,18 @@ from models.chat_models import Participant, Message
 from models.prescription_models import Prescription
 from datetime import datetime
 import os
+import re
 from utils.security import hash_password
 from sqlalchemy import or_
 from services.notification_service import NotificationService
 
 admin_doctors_bp = Blueprint("admin_doctors", __name__)
+
+def _doctor_salutation_name(full_name: str) -> str:
+    cleaned = (full_name or "").strip()
+    # Remove leading "Dr", "Dr.", and extra spacing if admin already entered title.
+    cleaned = re.sub(r"^\s*dr\.?\s*", "", cleaned, flags=re.IGNORECASE).strip()
+    return cleaned or "Doctor"
 
 def admin_required(fn):
     @jwt_required()
@@ -193,8 +200,9 @@ def add_doctor():
     frontend_base_url = os.getenv("FRONTEND_URL", "https://neuro-nest-two.vercel.app").rstrip("/")
     login_link = f"{frontend_base_url}/login"
     email_subject = "Doctor Account Created – Neuronest"
+    salutation_name = _doctor_salutation_name(full_name)
     email_body = (
-        f"Dear Dr. {full_name},\n\n"
+        f"Dear Dr. {salutation_name},\n\n"
         "Your doctor account has been created in the Neuronest Hospital System.\n\n"
         "Login Credentials:\n"
         f"Email: {email.lower()}\n"
