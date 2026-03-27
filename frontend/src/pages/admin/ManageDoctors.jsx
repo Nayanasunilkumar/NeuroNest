@@ -125,7 +125,12 @@ const ManageDoctors = () => {
     };
 
     const handleOnboard = async (formData) => {
-        await createDoctor(formData);
+        const result = await createDoctor(formData);
+        if (result?.email_sent) {
+            alert('Doctor created and credentials email sent successfully.');
+        } else {
+            alert('Doctor created, but credentials email was NOT sent. Please check email provider keys in Render env.');
+        }
         loadDoctors();
     };
 
