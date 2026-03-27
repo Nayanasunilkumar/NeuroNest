@@ -1,8 +1,8 @@
 from flask import Blueprint, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from database.models import User, Appointment, PatientProfile, DoctorProfile, db
+from database.models import User, Appointment
 from sqlalchemy import func
-from datetime import datetime, timedelta
+from datetime import datetime
 
 admin_dashboard_bp = Blueprint("admin_dashboard", __name__)
 
@@ -26,83 +26,46 @@ def get_dashboard_summary():
     try:
         total_patients = User.query.filter_by(role="patient").count()
         active_doctors = User.query.filter_by(role="doctor").count()
-        
-        # Calculate trend (Mock logic: comparing today's count to past, simplifying here)
-        patients_trend = "+5.2%"
-        doctors_trend = "+2.1%"
-        
+
         total_appointments = Appointment.query.count()
         today_appointments = Appointment.query.filter(
             func.date(Appointment.created_at) == datetime.utcnow().date()
         ).count()
-        
-        # System Load (Mock Data)
-        system_load = "24ms"
-        
-        # Revenue (Mock Data since no Payments table exists yet)
-        revenue_mtd = "$12.5k"
-        revenue_trend = "+18.2%"
-        
-        # Activity Logs (Mock Data)
-        activities = [
-            {"text": "Auth node: Dr. Sarah Smith login established", "time": "12:04:22", "type": "info"},
-            {"text": "Patch 2.4.1 deployed to edge cluster", "time": "11:45:10", "type": "success"},
-            {"text": "Billing Cron: Monthly reports generated", "time": "09:00:00", "type": "info"},
-            {"text": "Access Denied: Multiple failed attempts from IP 192.x", "time": "08:12:45", "type": "error"},
-        ]
-        
-        # Tasks (Mock Data)
-        tasks = [
-            {"title": "Credential Verification", "desc": "Dr. James Wilson (ID: 442)", "priority": "High"},
-            {"title": "Fee Schedule Update", "desc": "Radiology department revisions", "priority": "Medium"},
-            {"title": "SLA Audit", "desc": "Response time threshold analysis", "priority": "High"},
-        ]
-        
-        # Chart Data
-        chart_data = [
-            {"day": "M", "p": 80, "s": 40},
-            {"day": "T", "p": 120, "s": 60},
-            {"day": "W", "p": 150, "s": 90},
-            {"day": "T", "p": 100, "s": 50},
-            {"day": "F", "p": 170, "s": 110},
-            {"day": "S", "p": 60, "s": 30},
-            {"day": "S", "p": 40, "s": 20},
-        ]
 
         return jsonify({
             "stats": [
                 {
                     "label": "Total Patients",
                     "value": f"{total_patients:,}",
-                    "trend": patients_trend,
+                    "trend": "Live",
                     "color": "blue",
                     "id": "patients"
                 },
                 {
                     "label": "Active Doctors",
                     "value": f"{active_doctors:,}",
-                    "trend": doctors_trend,
+                    "trend": "Live",
                     "color": "green",
                     "id": "doctors"
                 },
                 {
-                    "label": "System Load",
-                    "value": system_load,
-                    "trend": "Stable",
+                    "label": "Total Appointments",
+                    "value": f"{total_appointments:,}",
+                    "trend": "Live",
                     "color": "purple",
-                    "id": "load"
+                    "id": "appointments"
                 },
                 {
-                    "label": "Revenue (MTD)",
-                    "value": revenue_mtd,
-                    "trend": revenue_trend,
+                    "label": "Today's Appointments",
+                    "value": f"{today_appointments:,}",
+                    "trend": "Live",
                     "color": "orange",
-                    "id": "revenue"
+                    "id": "today_appointments"
                 }
             ],
-            "activities": activities,
-            "tasks": tasks,
-            "chartData": chart_data
+            "activities": [],
+            "tasks": [],
+            "chartData": []
         }), 200
 
     except Exception as e:

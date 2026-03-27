@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { adminDashboardApi } from '../../api/adminDashboardApi';
 import { 
-    Users, UserPlus, Calendar, DollarSign, FileText, 
-    CreditCard, Star, Radio, Activity, AlertCircle, 
+    Users, UserPlus, Calendar, FileText, 
+    Star, Radio, Activity, AlertCircle, 
     ArrowUpRight, ArrowDownRight, CheckCircle2, Clock, 
     ChevronRight, LayoutDashboard, Settings, MoreVertical,
     ShieldAlert
@@ -48,8 +48,8 @@ const AdminDashboard = () => {
         switch (id) {
             case 'patients': return 'from-blue-500 to-indigo-600';
             case 'doctors': return 'from-emerald-500 to-teal-600';
-            case 'load': return 'from-amber-500 to-orange-600';
-            case 'revenue': return 'from-fuchsia-500 to-purple-600';
+            case 'appointments': return 'from-amber-500 to-orange-600';
+            case 'today_appointments': return 'from-fuchsia-500 to-purple-600';
             default: return 'from-slate-500 to-slate-600';
         }
     };
@@ -58,8 +58,8 @@ const AdminDashboard = () => {
         switch (id) {
             case 'patients': return <Users className="w-6 h-6" />;
             case 'doctors': return <UserPlus className="w-6 h-6" />;
-            case 'load': return <Activity className="w-6 h-6" />;
-            case 'revenue': return <DollarSign className="w-6 h-6" />;
+            case 'appointments': return <Calendar className="w-6 h-6" />;
+            case 'today_appointments': return <Clock className="w-6 h-6" />;
             default: return <Activity className="w-6 h-6" />;
         }
     };
@@ -69,7 +69,6 @@ const AdminDashboard = () => {
         { title: 'Manage Doctors', desc: 'Manage medical staff profiles and credentials.', icon: <UserPlus className="w-6 h-6" />, path: '/admin/manage-doctors', color: 'emerald' },
         { title: 'Appointments', desc: 'Oversee scheduling across all departments.', icon: <Calendar className="w-6 h-6" />, path: '/admin/appointment-management', color: 'sky' },
         { title: 'Assessments', desc: 'Analyze clinical outcomes and test results.', icon: <FileText className="w-6 h-6" />, path: '/admin/assessment-management', color: 'amber' },
-        { title: 'Payments', desc: 'Automated billing and financial reconciliation.', icon: <CreditCard className="w-6 h-6" />, path: '/admin/payment-management', color: 'rose' },
         { title: 'Reviews', desc: 'Monitor and respond to patient feedback.', icon: <Star className="w-6 h-6" />, path: '/admin/review-management', color: 'indigo' },
         { title: 'Governance', desc: 'Manage doctor escalations and risk events.', icon: <ShieldAlert className="w-6 h-6" />, path: '/admin/governance/queue', color: 'rose' },
     ];
