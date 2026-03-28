@@ -642,7 +642,6 @@ class DoctorNotificationSetting(db.Model):
     def to_dict(self):
         return {
             "email_on_booking": self.email_on_booking,
-            "sms_on_booking": self.sms_on_booking,
             "in_app_notifications": self.in_app_notifications,
             "email_on_alerts": self.email_on_alerts,
             "reminder_before_minutes": self.reminder_before_minutes,
