@@ -452,7 +452,12 @@ class AppointmentSlot(db.Model):
     )
     held_by_patient_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=True)
     held_until_utc = db.Column(db.DateTime(timezone=True), nullable=True)
-    booked_appointment_id = db.Column(db.Integer, nullable=True, index=True)
+    booked_appointment_id = db.Column(
+        db.Integer,
+        db.ForeignKey("appointments.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
     source = db.Column(
         SAEnum("generated", "manual_override", "emergency_block", name="slot_source_enum"),
         nullable=False,
