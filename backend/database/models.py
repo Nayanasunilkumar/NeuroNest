@@ -628,7 +628,6 @@ class DoctorNotificationSetting(db.Model):
     )
 
     email_on_booking = db.Column(db.Boolean, default=True)
-    sms_on_booking = db.Column(db.Boolean, default=False)
     in_app_notifications = db.Column(db.Boolean, default=True)
     email_on_alerts = db.Column(db.Boolean, default=True)
 
