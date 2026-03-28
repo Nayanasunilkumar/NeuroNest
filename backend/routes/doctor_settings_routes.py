@@ -128,6 +128,8 @@ def update_notification_settings():
 
     if "email_on_booking" in data:
         notifications.email_on_booking = bool(data["email_on_booking"])
+    if "email_on_alerts" in data:
+        notifications.email_on_alerts = bool(data["email_on_alerts"])
     # SMS delivery is deprecated for doctor notifications.
     # Keep hard-disabled even if legacy clients send this field.
     notifications.sms_on_booking = False

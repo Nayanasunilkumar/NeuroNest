@@ -149,6 +149,7 @@ def _trigger_upcoming_consultation_alert(appt, minutes_until):
 
 
 def _send_scheduled_email_reminder(appt, minutes_before: int):
+    doc_settings = DoctorNotificationSetting.query.filter_by(doctor_user_id=appt.doctor_id).first()
     doctor_name = appt.doctor.full_name if appt.doctor else "Doctor"
     patient_name = appt.patient.full_name if appt.patient else "Patient"
     appt_date = appt.appointment_date.strftime("%B %d, %Y")
@@ -196,13 +197,14 @@ def _send_scheduled_email_reminder(appt, minutes_before: int):
     try:
         if appt.patient and appt.patient.email:
             NotificationService.send_email(appt.patient.email, subject, patient_body, event_type="approved")
-        if appt.doctor and appt.doctor.email:
+        if appt.doctor and appt.doctor.email and (not doc_settings or doc_settings.email_on_booking):
             NotificationService.send_email(appt.doctor.email, subject, doctor_body, event_type="approved")
     except Exception as error:
         print(f"[SCHEDULER EMAIL] reminder email failed: {error}")
 
 
 def _send_missed_email(appt):
+    doc_settings = DoctorNotificationSetting.query.filter_by(doctor_user_id=appt.doctor_id).first()
     doctor_name = appt.doctor.full_name if appt.doctor else "Doctor"
     patient_name = appt.patient.full_name if appt.patient else "Patient"
     subject = "Appointment Missed – NeuroNest"
@@ -222,7 +224,7 @@ def _send_missed_email(appt):
     try:
         if appt.patient and appt.patient.email:
             NotificationService.send_email(appt.patient.email, subject, patient_body, event_type="cancelled")
-        if appt.doctor and appt.doctor.email:
+        if appt.doctor and appt.doctor.email and (not doc_settings or doc_settings.email_on_booking):
             NotificationService.send_email(appt.doctor.email, subject, doctor_body, event_type="cancelled")
     except Exception as error:
         print(f"[SCHEDULER EMAIL] missed email failed: {error}")
