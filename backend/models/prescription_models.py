@@ -94,6 +94,18 @@ class PrescriptionItem(db.Model):
     frequency = db.Column(db.String(100), nullable=False)  # e.g. 1-0-1
     duration = db.Column(db.String(100), nullable=False)   # e.g. 5 days
     instructions = db.Column(db.Text)  # e.g. After food
+    duration_days = db.Column(db.Integer)
+
+    created_at = db.Column(
+        db.DateTime,
+        default=datetime.utcnow
+    )
+
+    updated_at = db.Column(
+        db.DateTime,
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow
+    )
 
     def to_dict(self):
         return {
@@ -104,4 +116,7 @@ class PrescriptionItem(db.Model):
             "frequency": self.frequency,
             "duration": self.duration,
             "instructions": self.instructions,
+            "duration_days": self.duration_days,
+            "created_at": str(self.created_at) if self.created_at else None,
+            "updated_at": str(self.updated_at) if self.updated_at else None,
         }

@@ -97,6 +97,16 @@ def create_app():
                 conn.execute(db.text("ALTER TABLE prescriptions ADD COLUMN IF NOT EXISTS is_deleted BOOLEAN DEFAULT FALSE"))
                 conn.execute(db.text("UPDATE prescriptions SET issued_date = COALESCE(issued_date, DATE(created_at), CURRENT_DATE)"))
                 conn.execute(db.text("UPDATE prescriptions SET is_deleted = COALESCE(is_deleted, FALSE)"))
+                conn.execute(db.text("ALTER TABLE prescription_items ADD COLUMN IF NOT EXISTS duration_days INTEGER"))
+                conn.execute(db.text("ALTER TABLE prescription_items ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP"))
+                conn.execute(db.text("ALTER TABLE prescription_items ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP"))
+                conn.execute(db.text(
+                    "UPDATE prescription_items "
+                    "SET duration_days = CAST(substring(duration FROM '([0-9]+)') AS INTEGER) "
+                    "WHERE duration_days IS NULL AND substring(duration FROM '([0-9]+)') IS NOT NULL"
+                ))
+                conn.execute(db.text("UPDATE prescription_items SET created_at = COALESCE(created_at, CURRENT_TIMESTAMP)"))
+                conn.execute(db.text("UPDATE prescription_items SET updated_at = COALESCE(updated_at, created_at, CURRENT_TIMESTAMP)"))
                 # --- Auth Security Missing Columns ---
                 conn.execute(db.text("ALTER TABLE users ADD COLUMN IF NOT EXISTS must_change_password BOOLEAN DEFAULT FALSE"))
                 

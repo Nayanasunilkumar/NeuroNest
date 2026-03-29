@@ -3,6 +3,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
 from database.models import db, User, Appointment
 from models.prescription_models import Prescription, PrescriptionItem
 from datetime import datetime, timedelta, date
+import re
 
 prescriptions_bp = Blueprint("prescriptions", __name__)
 
@@ -26,6 +27,30 @@ def _serialize_prescription_with_effective_status(prescription: Prescription) ->
     payload = prescription.to_dict()
     payload["status"] = _effective_prescription_status(prescription)
     return payload
+
+
+def _parse_duration_days(raw_duration: str | None, explicit_duration_days=None):
+    if explicit_duration_days in ("", None):
+        explicit_duration_days = None
+
+    if explicit_duration_days is not None:
+        try:
+            parsed = int(explicit_duration_days)
+            return parsed if parsed >= 0 else None
+        except (TypeError, ValueError):
+            return None
+
+    if not raw_duration:
+        return None
+
+    match = re.search(r"(\d+)", str(raw_duration))
+    if not match:
+        return None
+
+    try:
+        return int(match.group(1))
+    except ValueError:
+        return None
 
 # =======================================================
 # 1. CREATE PRESCRIPTION (Doctor Only)
@@ -87,7 +112,11 @@ def create_prescription():
                 dosage=item["dosage"],
                 frequency=item["frequency"],
                 duration=item["duration"],
-                instructions=item.get("instructions", "")
+                instructions=item.get("instructions", ""),
+                duration_days=_parse_duration_days(
+                    item.get("duration"),
+                    item.get("duration_days"),
+                ),
             )
             db.session.add(med)
 
@@ -303,7 +332,11 @@ def update_prescription(id):
                 dosage=item["dosage"],
                 frequency=item["frequency"],
                 duration=item["duration"],
-                instructions=item.get("instructions", "")
+                instructions=item.get("instructions", ""),
+                duration_days=_parse_duration_days(
+                    item.get("duration"),
+                    item.get("duration_days"),
+                ),
             )
             db.session.add(med)
 
