@@ -419,16 +419,7 @@ def get_allergies(patient_id=None):
     if not is_allowed:
         return jsonify({"message": msg}), 403
 
-    # Show inactive allergies by default so patient/doctor timelines remain complete.
-    # Clients can still force active-only by passing include_inactive=false.
-    include_inactive_raw = request.args.get("include_inactive")
-    if include_inactive_raw is None:
-        include_inactive = True
-    else:
-        include_inactive = str(include_inactive_raw).lower() in ("true", "1", "yes")
     query = PatientAllergy.query.filter_by(patient_id=patient_id)
-    if not include_inactive:
-        query = query.filter(func.lower(PatientAllergy.status) == "active")
     rows = query.order_by(PatientAllergy.created_at.desc()).all()
 
     # Enrich with creator name + specialization
