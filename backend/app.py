@@ -92,6 +92,11 @@ def create_app():
                 conn.execute(db.text("ALTER TABLE notification_preferences DROP COLUMN IF EXISTS allow_promotions"))
                 # --- Doctor Preferences Missing Columns ---
                 conn.execute(db.text("ALTER TABLE doctor_notification_settings ADD COLUMN IF NOT EXISTS email_on_alerts BOOLEAN DEFAULT TRUE"))
+                # --- Prescriptions Missing Columns ---
+                conn.execute(db.text("ALTER TABLE prescriptions ADD COLUMN IF NOT EXISTS issued_date DATE DEFAULT CURRENT_DATE"))
+                conn.execute(db.text("ALTER TABLE prescriptions ADD COLUMN IF NOT EXISTS is_deleted BOOLEAN DEFAULT FALSE"))
+                conn.execute(db.text("UPDATE prescriptions SET issued_date = COALESCE(issued_date, DATE(created_at), CURRENT_DATE)"))
+                conn.execute(db.text("UPDATE prescriptions SET is_deleted = COALESCE(is_deleted, FALSE)"))
                 # --- Auth Security Missing Columns ---
                 conn.execute(db.text("ALTER TABLE users ADD COLUMN IF NOT EXISTS must_change_password BOOLEAN DEFAULT FALSE"))
                 

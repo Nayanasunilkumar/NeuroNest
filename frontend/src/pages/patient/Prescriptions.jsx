@@ -41,6 +41,8 @@ const Prescriptions = () => {
         return new Date(dateString).toLocaleDateString("en-US", { year: 'numeric', month: 'short', day: 'numeric' });
     };
 
+    const getIssuedDate = (prescription) => prescription?.issued_date || prescription?.created_at;
+
     const getEffectiveStatus = (prescription) => {
         const rawStatus = String(prescription?.status || "").toLowerCase();
         if (rawStatus === "cancelled" || rawStatus === "draft") return rawStatus;
@@ -108,7 +110,7 @@ const Prescriptions = () => {
                             <div className="rx-card-header">
                                 <div className="rx-date-badge">
                                     <Calendar size={14} />
-                                    {formatDate(p.created_at)}
+                                    {formatDate(getIssuedDate(p))}
                                 </div>
                                 <span className={`rx-status-badge ${effectiveStatus === 'active' ? 'rx-status-active' : 'rx-status-expired'}`}>
                                     {statusLabel}

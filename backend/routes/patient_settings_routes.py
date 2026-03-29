@@ -336,7 +336,7 @@ def export_data():
         {"uid": uid}
     ).mappings().fetchall()
     prescriptions = db.session.execute(
-        text("SELECT p.*, array_agg(COALESCE(pi.medicine_name, 'Unknown') || ' (' || COALESCE(pi.frequency, 'N/A') || ')') AS medicines FROM prescriptions p LEFT JOIN prescription_items pi ON pi.prescription_id = p.id WHERE p.patient_id = :uid GROUP BY p.id"),
+        text("SELECT p.*, array_agg(COALESCE(pi.medicine_name, 'Unknown') || ' (' || COALESCE(pi.frequency, 'N/A') || ')') AS medicines FROM prescriptions p LEFT JOIN prescription_items pi ON pi.prescription_id = p.id WHERE p.patient_id = :uid AND COALESCE(p.is_deleted, FALSE) = FALSE GROUP BY p.id"),
         {"uid": uid}
     ).mappings().fetchall()
 
@@ -385,7 +385,7 @@ def download_report():
 
     # Prescriptions
     prescriptions = db.session.execute(
-        text("SELECT p.*, array_agg(COALESCE(pi.medicine_name, 'Unknown') || ' (' || COALESCE(pi.frequency, 'N/A') || ')') AS medicines FROM prescriptions p LEFT JOIN prescription_items pi ON pi.prescription_id = p.id WHERE p.patient_id = :uid GROUP BY p.id ORDER BY p.created_at DESC LIMIT 10"),
+        text("SELECT p.*, array_agg(COALESCE(pi.medicine_name, 'Unknown') || ' (' || COALESCE(pi.frequency, 'N/A') || ')') AS medicines FROM prescriptions p LEFT JOIN prescription_items pi ON pi.prescription_id = p.id WHERE p.patient_id = :uid AND COALESCE(p.is_deleted, FALSE) = FALSE GROUP BY p.id ORDER BY p.created_at DESC LIMIT 10"),
         {"uid": uid}
     ).mappings().fetchall()
 
@@ -454,7 +454,7 @@ def export_prescriptions():
     user = User.query.get_or_404(uid)
     profile = _get_patient_profile(uid)
     prescriptions = db.session.execute(
-        text("SELECT p.*, array_agg(COALESCE(pi.medicine_name, 'Unknown') || ' (' || COALESCE(pi.frequency, 'N/A') || ')') AS medicines FROM prescriptions p LEFT JOIN prescription_items pi ON pi.prescription_id = p.id WHERE p.patient_id = :uid GROUP BY p.id ORDER BY p.created_at DESC"),
+        text("SELECT p.*, array_agg(COALESCE(pi.medicine_name, 'Unknown') || ' (' || COALESCE(pi.frequency, 'N/A') || ')') AS medicines FROM prescriptions p LEFT JOIN prescription_items pi ON pi.prescription_id = p.id WHERE p.patient_id = :uid AND COALESCE(p.is_deleted, FALSE) = FALSE GROUP BY p.id ORDER BY p.created_at DESC"),
         {"uid": uid}
     ).mappings().fetchall()
 

@@ -94,7 +94,10 @@ def _parse_tags(raw_tags):
 
 def _get_prescription_medications(patient_id, active_only=True):
     today = datetime.utcnow().date()
-    query = Prescription.query.filter(Prescription.patient_id == patient_id)
+    query = Prescription.query.filter(
+        Prescription.patient_id == patient_id,
+        Prescription.is_deleted.is_(False)
+    )
     if active_only:
         query = query.filter(Prescription.status == "active").filter(
             (Prescription.valid_until.is_(None)) | (Prescription.valid_until >= today)

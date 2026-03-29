@@ -1,5 +1,5 @@
 from database.models import db
-from datetime import datetime
+from datetime import datetime, date
 
 # =========================================
 # PRESCRIPTION TABLE
@@ -36,6 +36,8 @@ class Prescription(db.Model):
     )
     
     valid_until = db.Column(db.Date)
+    issued_date = db.Column(db.Date, default=date.today)
+    is_deleted = db.Column(db.Boolean, default=False, nullable=False)
 
     items = db.relationship(
         "PrescriptionItem",
@@ -65,6 +67,8 @@ class Prescription(db.Model):
             "notes": self.notes,
             "status": self.status,
             "valid_until": str(self.valid_until) if self.valid_until else None,
+            "issued_date": str(self.issued_date) if self.issued_date else None,
+            "is_deleted": self.is_deleted,
             "items": [item.to_dict() for item in self.items],
             "created_at": str(self.created_at),
             "updated_at": str(self.updated_at),

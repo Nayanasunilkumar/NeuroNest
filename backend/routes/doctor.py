@@ -988,7 +988,10 @@ def get_patient_clinical_dossier(patient_id):
     manual_meds = [m.to_dict() for m in PatientMedication.query.filter_by(patient_id=patient_id).all()]
     
     # Prescription medications
-    prescriptions = Prescription.query.filter_by(patient_id=patient_id).all()
+    prescriptions = Prescription.query.filter(
+        Prescription.patient_id == patient_id,
+        Prescription.is_deleted.is_(False)
+    ).all()
     rx_meds = []
     today = datetime.utcnow().date()
     for rx in prescriptions:

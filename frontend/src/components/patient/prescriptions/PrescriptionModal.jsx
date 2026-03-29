@@ -47,7 +47,7 @@ const PrescriptionModal = ({ isOpen, onClose, prescription }) => {
 
     // Generate Serial (Mock)
     const getSerial = () => {
-        const year = new Date(prescription.created_at).getFullYear();
+        const year = new Date(prescription.issued_date || prescription.created_at).getFullYear();
         const id = prescription.id.toString().padStart(5, '0');
         return `RX-${year}-${id}`;
     };
@@ -117,7 +117,7 @@ const PrescriptionModal = ({ isOpen, onClose, prescription }) => {
                         </div>
                         <div className="pat-group">
                             <label>Date</label>
-                            <p>{formatDate(prescription.created_at)}</p>
+                            <p>{formatDate(prescription.issued_date || prescription.created_at)}</p>
                         </div>
                         <div className="pat-group" style={{ textAlign: 'right' }}>
                             <label>Prescription Serial</label>

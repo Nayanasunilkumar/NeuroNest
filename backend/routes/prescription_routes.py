@@ -9,6 +9,9 @@ prescriptions_bp = Blueprint("prescriptions", __name__)
 
 def _effective_prescription_status(prescription: Prescription) -> str:
     """Return computed status so expired validity never appears as active."""
+    if prescription.is_deleted:
+        return "deleted"
+
     current_status = (prescription.status or "").lower()
     if current_status in {"draft", "cancelled"}:
         return current_status
@@ -47,6 +50,7 @@ def create_prescription():
         notes = data.get("notes")
         items = data.get("items", []) # List of medicines
         valid_until = data.get("valid_until")
+        issued_date = data.get("issued_date")
 
         # Validation
         if not patient_id or not diagnosis:
@@ -67,7 +71,9 @@ def create_prescription():
             diagnosis=diagnosis,
             notes=notes,
             status=initial_status,
-            valid_until=datetime.strptime(valid_until, "%Y-%m-%d").date() if valid_until else (datetime.utcnow().date() + timedelta(days=30))
+            valid_until=datetime.strptime(valid_until, "%Y-%m-%d").date() if valid_until else (datetime.utcnow().date() + timedelta(days=30)),
+            issued_date=datetime.strptime(issued_date, "%Y-%m-%d").date() if issued_date else datetime.utcnow().date(),
+            is_deleted=False,
         )
 
         db.session.add(new_prescription)
@@ -115,7 +121,10 @@ def get_doctor_prescriptions():
     if claims.get("role") != "doctor":
         return jsonify({"message": "Access denied"}), 403
 
-    prescriptions = Prescription.query.filter_by(doctor_id=current_user_id).order_by(Prescription.created_at.desc()).all()
+    prescriptions = Prescription.query.filter(
+        Prescription.doctor_id == current_user_id,
+        Prescription.is_deleted.is_(False)
+    ).order_by(Prescription.created_at.desc()).all()
     
     # Enrich with patient name?
     results = []
@@ -140,7 +149,10 @@ def get_patient_prescriptions_doctor_view(patient_id):
     if claims.get("role") != "doctor":
         return jsonify({"message": "Access denied"}), 403
 
-    prescriptions = Prescription.query.filter_by(patient_id=patient_id).order_by(Prescription.created_at.desc()).all()
+    prescriptions = Prescription.query.filter(
+        Prescription.patient_id == patient_id,
+        Prescription.is_deleted.is_(False)
+    ).order_by(Prescription.created_at.desc()).all()
     
     results = []
     for p in prescriptions:
@@ -171,7 +183,8 @@ def get_patient_prescriptions():
     # Filter out drafts — patients should not see draft prescriptions
     prescriptions = Prescription.query.filter(
         Prescription.patient_id == current_user_id,
-        Prescription.status != 'draft'
+        Prescription.status != 'draft',
+        Prescription.is_deleted.is_(False)
     ).order_by(Prescription.created_at.desc()).all()
     
     # Enrich with doctor name
@@ -193,6 +206,9 @@ def get_patient_prescriptions():
 def get_prescription_details(id):
     current_user_id = get_jwt_identity()
     prescription = Prescription.query.get_or_404(id)
+
+    if prescription.is_deleted:
+        return jsonify({"message": "Prescription not found"}), 404
 
     # Access Check: Must be Doctor (owner) or Patient (recipient)
     if str(prescription.doctor_id) != str(current_user_id) and str(prescription.patient_id) != str(current_user_id):
@@ -224,6 +240,9 @@ def update_status(id):
 
     prescription = Prescription.query.get_or_404(id)
 
+    if prescription.is_deleted:
+        return jsonify({"message": "Prescription not found"}), 404
+
     if str(prescription.doctor_id) != str(current_user_id):
         return jsonify({"message": "Access denied. Not your prescription."}), 403
 
@@ -253,6 +272,9 @@ def update_prescription(id):
 
     prescription = Prescription.query.get_or_404(id)
 
+    if prescription.is_deleted:
+        return jsonify({"message": "Prescription not found"}), 404
+
     if str(prescription.doctor_id) != str(current_user_id):
         return jsonify({"message": "Access denied. Not your prescription."}), 403
 
@@ -265,6 +287,8 @@ def update_prescription(id):
         prescription.notes = data["notes"]
     if "valid_until" in data and data["valid_until"]:
         prescription.valid_until = datetime.strptime(data["valid_until"], "%Y-%m-%d").date()
+    if "issued_date" in data and data["issued_date"]:
+        prescription.issued_date = datetime.strptime(data["issued_date"], "%Y-%m-%d").date()
 
     # Update Items (if provided) implementation: Replace All
     if "items" in data:
@@ -305,10 +329,14 @@ def delete_prescription(id):
 
     prescription = Prescription.query.get_or_404(id)
 
+    if prescription.is_deleted:
+        return jsonify({"message": "Prescription already deleted"}), 200
+
     if str(prescription.doctor_id) != str(current_user_id):
          return jsonify({"message": "Access denied. Not your prescription."}), 403
 
-    db.session.delete(prescription)
+    prescription.is_deleted = True
+    prescription.status = "cancelled"
     db.session.commit()
 
     return jsonify({"message": "Prescription deleted successfully"}), 200
