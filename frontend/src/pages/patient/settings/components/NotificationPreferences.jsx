@@ -7,7 +7,6 @@ import {
   MessageSquare,
   Monitor,
   ShieldCheck,
-  Smartphone,
   Sparkles,
   UserCheck,
 } from 'lucide-react';
@@ -24,7 +23,7 @@ const Toggle = ({ checked, onChange, disabled }) => (
 );
 
 const DELIVERY_ROWS = [
-  { key: 'appointments', icon: Bell, label: 'Appointments', hint: 'Booking reminders, cancellations, and reschedules', color: '#6366f1', sms: true },
+  { key: 'appointments', icon: Bell, label: 'Appointments', hint: 'Booking reminders, cancellations, and reschedules', color: '#6366f1' },
   { key: 'prescriptions', icon: ShieldCheck, label: 'Prescriptions', hint: 'Medication issues and renewal updates', color: '#10b981' },
   { key: 'messages', icon: MessageSquare, label: 'Messages', hint: 'Provider chat replies and follow-ups', color: '#0ea5e9' },
   { key: 'announcements', icon: Megaphone, label: 'Announcements', hint: 'Clinic-wide updates and important notices', color: '#f97316' },
@@ -63,7 +62,6 @@ const baseNotificationState = {
   email_announcements: true,
   email_feedback: true,
   email_alerts: true,
-  sms_appointments: false,
   inapp_appointments: true,
   inapp_prescriptions: true,
   inapp_messages: true,
@@ -126,11 +124,10 @@ export default function NotificationPreferences({ data, saving, onSave }) {
           <div style={{ flex: 1 }}>Update Type</div>
           <div className="pset-notif-col"><Mail size={12} /> Email</div>
           <div className="pset-notif-col"><Monitor size={12} /> In-App</div>
-          <div className="pset-notif-col"><Smartphone size={12} /> SMS</div>
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-          {DELIVERY_ROWS.map(({ key, icon, label, hint, color, sms }) => (
+          {DELIVERY_ROWS.map(({ key, icon, label, hint, color }) => (
             <div key={key} className="pset-toggle-row" style={{ background: '#fff', padding: '1rem 1.25rem', borderRadius: '20px', display: 'flex', alignItems: 'center', gap: '1rem' }}>
               <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '1rem', minWidth: 0 }}>
                 <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: `${color}10`, color, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -147,13 +144,6 @@ export default function NotificationPreferences({ data, saving, onSave }) {
               </div>
               <div className="pset-notif-col">
                 <Toggle checked={prefs[`inapp_${key}`]} onChange={(value) => set(`inapp_${key}`, value)} disabled={saving} />
-              </div>
-              <div className="pset-notif-col">
-                {sms ? (
-                  <Toggle checked={prefs[`sms_${key}`]} onChange={(value) => set(`sms_${key}`, value)} disabled={saving} />
-                ) : (
-                  <span style={{ fontSize: '0.7rem', fontWeight: 800, color: '#cbd5e1', textTransform: 'uppercase' }}>N/A</span>
-                )}
               </div>
             </div>
           ))}

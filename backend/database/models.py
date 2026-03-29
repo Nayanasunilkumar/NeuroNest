@@ -171,9 +171,6 @@ class NotificationPreference(db.Model):
     email_feedback = db.Column(db.Boolean, default=True)
     email_alerts = db.Column(db.Boolean, default=True)
 
-    # SMS
-    sms_appointments = db.Column(db.Boolean, default=False)
-
     # In-App
     inapp_appointments = db.Column(db.Boolean, default=True)
     inapp_prescriptions = db.Column(db.Boolean, default=True)

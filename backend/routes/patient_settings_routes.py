@@ -163,7 +163,6 @@ def update_notifications():
 
     allowed = [
         "email_appointments","email_prescriptions","email_messages","email_announcements","email_feedback",
-        "sms_appointments",
         "inapp_appointments","inapp_prescriptions","inapp_messages","inapp_announcements","inapp_feedback","inapp_alerts",
         "allow_anonymous_feedback",
         "share_history_with_doctors","allow_analytics",

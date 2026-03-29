@@ -76,12 +76,6 @@ class NotificationService:
             except Exception as e:
                 print(f"[NOTIFICATION] Patient email failed: {e}")
 
-        # SMS (respects setting)
-        if patient_settings.sms_appointments:
-            phone = appointment.patient.patient_profile.phone if appointment.patient.patient_profile else None
-            if phone:
-                NotificationService.send_sms(phone, patient_msg)
-
         # ── 3. FEEDBACK REQUEST (Health Surveys setting) ──
         if event_type == "completed":
             NotificationService.send_in_app(
