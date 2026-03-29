@@ -148,8 +148,12 @@ const Chat = () => {
                     }
                 }
 
-                // Normal de-duplication
-                if (prev.find(m => m.id === msg.id)) return prev;
+                const existingIndex = prev.findIndex(m => m.id === msg.id);
+                if (existingIndex > -1) {
+                    const next = [...prev];
+                    next[existingIndex] = { ...next[existingIndex], ...msg, is_optimistic: false };
+                    return next;
+                }
                 return [...prev, msg];
             });
         }
@@ -165,7 +169,9 @@ const Chat = () => {
                                 content: msg.content,
                                 created_at: msg.created_at,
                                 is_read: false,
-                                sender_id: msg.sender_id
+                                sender_id: msg.sender_id,
+                                type: msg.type,
+                                is_deleted: msg.is_deleted
                             },
                             unread_count:
                                 String(msg.sender_id) !== String(currentUserId) && 
@@ -207,6 +213,16 @@ const Chat = () => {
         }
     }, [fetchConversations]);
 
+    const handleDeleteMessage = async (message) => {
+        try {
+            const deleted = await chatAPI.deleteMessage(message.id);
+            handleNewMessage(deleted);
+        } catch (err) {
+            console.error("Failed to delete message", err);
+            alert("Failed to delete message.");
+        }
+    };
+
     useEffect(() => {
         const user = getUser();
         if (user) setCurrentUser(user);
@@ -223,10 +239,12 @@ const Chat = () => {
             };
             socket.on("new_message", handleNewMessage);
             socket.on("receive_message", handleNewMessage);
+            socket.on("message_deleted", handleNewMessage);
             socket.on("connect", handleSocketConnect);
             return () => {
                 socket.off("new_message", handleNewMessage);
                 socket.off("receive_message", handleNewMessage);
+                socket.off("message_deleted", handleNewMessage);
                 socket.off("connect", handleSocketConnect);
             };
         }
@@ -329,6 +347,7 @@ const Chat = () => {
                             messages={messages}
                             currentUserId={currentUser?.id}
                             onSendMessage={handleSendMessage}
+                            onDeleteMessage={handleDeleteMessage}
                             loadingMessages={loadingMessages}
                             messagesLoadError={messagesLoadError}
                             isDoctor={false}

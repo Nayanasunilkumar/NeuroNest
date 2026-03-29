@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { initSocket, getSocket } from '../../services/socket';
-import { getConversations, getMessages, markAsRead, getChatContext, startConversation, sendMessage } from '../../api/chat';
+import { getConversations, getMessages, markAsRead, getChatContext, startConversation, sendMessage, deleteMessage } from '../../api/chat';
 import ConversationList from '../../components/chat/ConversationList';
 import ChatWindow from '../../components/chat/ChatWindow';
 import ChatHeader from '../../components/chat/ChatHeader';
@@ -143,8 +143,12 @@ const DoctorChat = ({ isEmbedded = false }) => {
                     }
                 }
 
-                // Normal de-duplication
-                if (prev.find(m => m.id === msg.id)) return prev;
+                const existingIndex = prev.findIndex(m => m.id === msg.id);
+                if (existingIndex > -1) {
+                    const next = [...prev];
+                    next[existingIndex] = { ...next[existingIndex], ...msg, is_optimistic: false };
+                    return next;
+                }
                 return [...prev, msg];
             });
         }
@@ -163,7 +167,9 @@ const DoctorChat = ({ isEmbedded = false }) => {
                             content: msg.content,
                             created_at: msg.created_at,
                             is_read: false,
-                            sender_id: msg.sender_id
+                            sender_id: msg.sender_id,
+                            type: msg.type,
+                            is_deleted: msg.is_deleted
                         },
                         unread_count: 
                             String(msg.sender_id) !== String(currentUserId) && 
@@ -205,6 +211,15 @@ const DoctorChat = ({ isEmbedded = false }) => {
         }
     }, [fetchConversations]);
 
+    const handleDeleteMessage = useCallback(async (message) => {
+        try {
+            const deleted = await deleteMessage(message.id);
+            handleIncomingMessage(deleted);
+        } catch (err) {
+            console.error("Failed to delete message", err);
+        }
+    }, [handleIncomingMessage]);
+
     useEffect(() => {
         const user = getUser();
         if (user) setCurrentUser(user);
@@ -242,11 +257,13 @@ const DoctorChat = ({ isEmbedded = false }) => {
             };
             socket.on("new_message", handleIncomingMessage);
             socket.on("receive_message", handleIncomingMessage);
+            socket.on("message_deleted", handleIncomingMessage);
             socket.on("connect", handleSocketConnect);
             initChat();
             return () => {
                 socket.off("new_message", handleIncomingMessage);
                 socket.off("receive_message", handleIncomingMessage);
+                socket.off("message_deleted", handleIncomingMessage);
                 socket.off("connect", handleSocketConnect);
             };
         } else {
@@ -380,6 +397,7 @@ const DoctorChat = ({ isEmbedded = false }) => {
                             messages={messages}
                             currentUserId={currentUser?.id}
                             onSendMessage={handleSendMessage}
+                            onDeleteMessage={handleDeleteMessage}
                             loadingMessages={loadingMessages}
                             isDoctor={currentUser?.role === 'doctor'}
                             templates={DOCTOR_TEMPLATES}

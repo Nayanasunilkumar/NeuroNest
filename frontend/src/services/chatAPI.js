@@ -38,6 +38,11 @@ const chatAPI = {
         return response.data;
     },
 
+    deleteMessage: async (messageId) => {
+        const response = await axios.delete(`${API_URL}/messages/${messageId}`, getAuthHeaders());
+        return response.data;
+    },
+
     // 5. Upload File
     uploadFile: async (file) => {
         const formData = new FormData();

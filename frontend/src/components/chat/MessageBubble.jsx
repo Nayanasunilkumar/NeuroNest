@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Check, CheckCheck, Download, Paperclip, Video, PhoneOff, Clock } from 'lucide-react';
+import { Check, CheckCheck, Download, Paperclip, Video, PhoneOff, Clock, Trash2 } from 'lucide-react';
 import { resolveApiUrl } from '../../config/env';
 import { formatTimeIST } from '../../utils/time';
 
@@ -24,7 +24,7 @@ const getMessageFileUrl = (content = '') => {
     return resolveApiUrl(content.trim());
 };
 
-const MessageBubble = ({ message, isMe, otherUserAvatar, isActiveCallRequest = false }) => {
+const MessageBubble = ({ message, isMe, otherUserAvatar, isActiveCallRequest = false, onDeleteMessage }) => {
     const navigate = useNavigate();
     const content = message?.content || '';
     const isSystem = message?.type === 'system';
@@ -140,6 +140,17 @@ const MessageBubble = ({ message, isMe, otherUserAvatar, isActiveCallRequest = f
                 </div>
                 
                 <div className={`d-flex align-items-center gap-1 ${isMe ? 'justify-content-end' : 'justify-content-start'} w-100 px-1`}>
+                    {isMe && !message.is_optimistic && !message.is_deleted && onDeleteMessage && (
+                        <button
+                            type="button"
+                            onClick={() => onDeleteMessage(message)}
+                            className="btn btn-link p-0 text-secondary opacity-75"
+                            title="Delete message"
+                            style={{ lineHeight: 1 }}
+                        >
+                            <Trash2 size={12} />
+                        </button>
+                    )}
                     <span className="small text-secondary fw-semibold" style={{ fontSize: '0.65rem' }}>
                         {message.is_optimistic ? 'Sending...' : formatTimeIST(message.created_at)}
                     </span>

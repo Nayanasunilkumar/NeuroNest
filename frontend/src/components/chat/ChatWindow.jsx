@@ -4,7 +4,7 @@ import MessageBubble from './MessageBubble';
 import chatAPI from '../../services/chatAPI';
 import { getISTDayKey, getRelativeDayLabelIST } from '../../utils/time';
 
-const ChatWindow = ({ messages, currentUserId, onSendMessage, loadingMessages, messagesLoadError, isDoctor, templates = [], otherUser }) => {
+const ChatWindow = ({ messages, currentUserId, onSendMessage, onDeleteMessage, loadingMessages, messagesLoadError, isDoctor, templates = [], otherUser }) => {
     const [newMessage, setNewMessage] = useState('');
     const [showTemplates, setShowTemplates] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
@@ -164,6 +164,7 @@ const ChatWindow = ({ messages, currentUserId, onSendMessage, loadingMessages, m
                     message={msg} 
                     isMe={isOwn}
                     otherUserAvatar={otherUser?.profile_image}
+                    onDeleteMessage={onDeleteMessage}
                     isActiveCallRequest={
                         (msg?.type === 'call_request' || msg?.type === 'consultation_started') &&
                         key === latestActiveCallRequestKey

@@ -77,6 +77,8 @@ def get_conversations():
             is_read=False
         ).filter(Message.sender_id != current_user_id).count()
         
+        last_payload = last_message.to_dict() if last_message else None
+
         results.append({
             "id": conv.id,
             "other_user": {
@@ -87,12 +89,13 @@ def get_conversations():
                 "profile_image": other_participant.user.patient_profile.profile_image if other_participant and other_participant.user and other_participant.user.patient_profile else None
             },
             "last_message": {
-                "content": last_message.content,
-                "created_at": to_utc_iso(last_message.created_at),
-                "is_read": last_message.is_read,
-                "sender_id": last_message.sender_id,
-                "type": getattr(last_message, 'type', 'text')
-            } if last_message else None,
+                "content": last_payload["content"],
+                "created_at": last_payload["created_at"],
+                "is_read": last_payload["is_read"],
+                "sender_id": last_payload["sender_id"],
+                "type": last_payload["type"],
+                "is_deleted": last_payload["is_deleted"],
+            } if last_payload else None,
             "unread_count": unread_count
         })
         
@@ -233,6 +236,40 @@ def send_message_http(conversation_id):
         )
     
     return jsonify(msg.to_dict()), 201
+
+
+@chat_bp.route("/messages/<int:message_id>", methods=["DELETE"])
+@jwt_required()
+def delete_message(message_id):
+    current_user_id = int(get_jwt_identity())
+
+    msg = Message.query.get_or_404(message_id)
+    part = Participant.query.filter_by(conversation_id=msg.conversation_id, user_id=current_user_id).first()
+    if not part:
+        return jsonify({"error": "Access denied"}), 403
+
+    if msg.sender_id != current_user_id:
+        return jsonify({"error": "Only the sender can delete this message"}), 403
+
+    if msg.is_deleted:
+        return jsonify(msg.to_dict()), 200
+
+    msg.is_deleted = True
+    db.session.commit()
+
+    from extensions.socket import socketio
+    payload = msg.to_dict()
+    socketio.emit("message_deleted", payload, room=f"conversation_{msg.conversation_id}")
+    socketio.emit("message_deleted", payload, room=f"user_{current_user_id}")
+
+    others = Participant.query.filter(
+        Participant.conversation_id == msg.conversation_id,
+        Participant.user_id != current_user_id
+    ).all()
+    for p in others:
+        socketio.emit("message_deleted", payload, room=f"user_{p.user_id}")
+
+    return jsonify(payload), 200
 
 # =======================================================
 # 5. MARK AS READ

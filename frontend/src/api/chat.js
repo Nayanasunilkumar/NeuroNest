@@ -29,3 +29,8 @@ export const sendMessage = async (conversationId, content, type = 'text') => {
     const response = await axios.post(`/api/chat/${conversationId}/messages`, { content, type });
     return response.data;
 };
+
+export const deleteMessage = async (messageId) => {
+    const response = await axios.delete(`/api/chat/messages/${messageId}`);
+    return response.data;
+};
