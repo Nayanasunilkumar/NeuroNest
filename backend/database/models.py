@@ -1298,6 +1298,7 @@ class Review(db.Model):
     rating = db.Column(db.Integer, CheckConstraint('rating >= 1 AND rating <= 5'), nullable=False)
     review_text = db.Column(db.Text)
     sentiment = db.Column(db.String(20)) # positive, neutral, negative
+    is_anonymous = db.Column(db.Boolean, default=False)
     
     is_hidden = db.Column(db.Boolean, default=False)
     is_flagged = db.Column(db.Boolean, default=False)
@@ -1318,16 +1319,20 @@ class Review(db.Model):
     doctor = db.relationship("User", foreign_keys=[doctor_id], backref="reviews_received")
 
     def to_dict(self):
+        patient_name = self.patient.full_name if self.patient else "Anonymous"
+        if self.is_anonymous:
+            patient_name = "Anonymous"
         return {
             "id": self.id,
             "appointment_id": self.appointment_id,
             "patient_id": self.patient_id,
-            "patient_name": self.patient.full_name if self.patient else "Anonymous",
+            "patient_name": patient_name,
             "doctor_id": self.doctor_id,
             "doctor_name": self.doctor.full_name if self.doctor else "N/A",
             "rating": self.rating,
             "review_text": self.review_text,
             "sentiment": self.sentiment,
+            "is_anonymous": self.is_anonymous,
             "status": self.status,
             "is_hidden": self.is_hidden,
             "is_flagged": self.is_flagged,

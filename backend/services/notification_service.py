@@ -59,6 +59,7 @@ class NotificationService:
             db.session.commit()
 
         patient_msg = NotificationService._generate_message(appointment, event_type, recipient_role="patient")
+        doctor_name = appointment.doctor.full_name if appointment.doctor else "your doctor"
 
         # In-app (respects setting)
         NotificationService.send_in_app(

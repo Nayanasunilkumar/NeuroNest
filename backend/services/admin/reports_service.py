@@ -1,8 +1,23 @@
 from datetime import datetime, timedelta
 from sqlalchemy import func, case, cast, String
-from database.models import db, User, Appointment, Review, ReviewEscalation, PatientFlag, SecurityActivity, DoctorStatusLog, PatientStatusLog
+from database.models import db, User, Appointment, Review, ReviewEscalation, PatientFlag, SecurityActivity, DoctorStatusLog, PatientStatusLog, NotificationPreference
 
 class AdminReportsService:
+    @staticmethod
+    def _analytics_enabled_appointment_query():
+        return (
+            db.session.query(Appointment)
+            .outerjoin(NotificationPreference, NotificationPreference.user_id == Appointment.patient_id)
+            .filter(func.coalesce(NotificationPreference.allow_analytics, True).is_(True))
+        )
+
+    @staticmethod
+    def _analytics_enabled_review_query():
+        return (
+            db.session.query(Review)
+            .outerjoin(NotificationPreference, NotificationPreference.user_id == Review.patient_id)
+            .filter(func.coalesce(NotificationPreference.allow_analytics, True).is_(True))
+        )
     
     @staticmethod
     def get_system_overview_metrics():
@@ -13,13 +28,14 @@ class AdminReportsService:
         doctor_count = db.session.query(func.count(User.id)).filter(User.role == 'doctor').scalar() or 0
         
         # Appointment volume metrics 
-        total_appointments = db.session.query(func.count(Appointment.id)).scalar() or 0
-        today_appointments = db.session.query(func.count(Appointment.id)).filter(
+        appointment_query = AdminReportsService._analytics_enabled_appointment_query()
+        total_appointments = appointment_query.with_entities(func.count(Appointment.id)).scalar() or 0
+        today_appointments = appointment_query.filter(
             func.date(Appointment.appointment_date) == today
-        ).scalar() or 0
+        ).with_entities(func.count(Appointment.id)).scalar() or 0
         
         # Advanced aggregations utilizing PostgreSQL CASE for conditional counting
-        appointment_states = db.session.query(
+        appointment_states = appointment_query.with_entities(
             func.sum(case((cast(Appointment.status, String).ilike('Completed'), 1), else_=0)).label('completed_count'),
             func.sum(case((cast(Appointment.status, String).ilike('Pending'), 1), else_=0)).label('pending_count'),
             func.sum(case((cast(Appointment.status, String).ilike('%Cancelled%'), 1), else_=0)).label('cancelled_count')
@@ -30,7 +46,7 @@ class AdminReportsService:
         cancelled_count = appointment_states.cancelled_count or 0
 
         # Review overview
-        reviews_agg = db.session.query(
+        reviews_agg = AdminReportsService._analytics_enabled_review_query().with_entities(
             func.count(Review.id).label('total_reviews'),
             func.avg(Review.rating).label('average_rating')
         ).first()
@@ -61,7 +77,7 @@ class AdminReportsService:
         target_date = datetime.now() - timedelta(days=days)
         
         # PostgreSQL specific aggregation for daily appointment volume
-        daily_trends = db.session.query(
+        daily_trends = AdminReportsService._analytics_enabled_appointment_query().with_entities(
             func.date(Appointment.appointment_date).label('date'),
             func.count(Appointment.id).label('count')
         ).filter(
@@ -89,8 +105,11 @@ class AdminReportsService:
             func.sum(case((cast(Appointment.status, String).ilike('%Cancelled%'), 1), else_=0)).label('cancelled_count')
         ).join(
             Appointment, User.id == Appointment.doctor_id, isouter=True
+        ).outerjoin(
+            NotificationPreference, NotificationPreference.user_id == Appointment.patient_id
         ).filter(
-            User.role == 'doctor'
+            User.role == 'doctor',
+            func.coalesce(NotificationPreference.allow_analytics, True).is_(True)
         ).group_by(
             User.id, User.full_name
         ).all()
@@ -159,4 +178,3 @@ class AdminReportsService:
                 "failed_authentications": int(security_agg.failed_attempts or 0)
             }
         }
-

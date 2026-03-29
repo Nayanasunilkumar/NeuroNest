@@ -100,6 +100,10 @@ def create_app():
                         conn.execute(db.text(f"ALTER TABLE reviews ADD COLUMN IF NOT EXISTS {col} {d_type}"))
                     except Exception as col_err:
                         print(f"[MIGRATION] Reviews.{col} failed: {col_err}")
+                try:
+                    conn.execute(db.text("ALTER TABLE reviews ADD COLUMN IF NOT EXISTS is_anonymous BOOLEAN DEFAULT FALSE"))
+                except Exception as col_err:
+                    print(f"[MIGRATION] Reviews.is_anonymous failed: {col_err}")
 
                 # --- Governance & Oversight (Escalations) ---
                 for col, d_type in [("severity_level", "VARCHAR(20) DEFAULT 'Standard'"), ("category", "VARCHAR(50) DEFAULT 'Quality of Care'"), ("resolved_at", "TIMESTAMP")]:

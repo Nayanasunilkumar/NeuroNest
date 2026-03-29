@@ -1,4 +1,4 @@
-from database.models import db, Review, Appointment, ReviewModerationLog, ReviewTag, ReviewEscalation, User, DoctorProfile
+from database.models import db, Review, Appointment, ReviewModerationLog, ReviewTag, ReviewEscalation, User, DoctorProfile, NotificationPreference
 from sqlalchemy import func
 from sqlalchemy import inspect, text
 from datetime import datetime, timedelta
@@ -131,6 +131,9 @@ class FeedbackService:
         rating = int(data['rating'])
         sentiment = "positive" if rating >= 4 else ("negative" if rating <= 2 else "neutral")
         is_serious = bool(data.get('is_serious_complaint', False))
+        requested_anonymous = bool(data.get('is_anonymous', False))
+        pref = NotificationPreference.query.filter_by(user_id=data['patient_id']).first()
+        is_anonymous = requested_anonymous and (pref.allow_anonymous_feedback if pref else True)
         
         review = Review(
             appointment_id=data['appointment_id'],
@@ -139,6 +142,7 @@ class FeedbackService:
             rating=rating,
             review_text=data.get('review_text', ''),
             sentiment=sentiment,
+            is_anonymous=is_anonymous,
             is_flagged=is_serious,
         )
         appt.feedback_given = True
@@ -182,6 +186,7 @@ class FeedbackService:
                 "rating": r.rating,
                 "review_text": r.review_text,
                 "sentiment": r.sentiment,
+                "is_anonymous": r.is_anonymous,
                 "tags": tags,
                 "is_flagged": r.is_flagged,
                 "date": r.created_at.strftime("%Y-%m-%d"),

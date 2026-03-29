@@ -959,6 +959,10 @@ def get_patient_clinical_dossier(patient_id):
     patient_user = User.query.get(patient_id)
     if not patient_user:
         return jsonify({"message": "Patient not found"}), 404
+
+    patient_prefs = getattr(patient_user, "notification_preferences", None)
+    if patient_prefs and patient_prefs.share_history_with_doctors is False:
+        return jsonify({"message": "This patient has disabled clinical history sharing with doctors."}), 403
     
     # Allow doctors to view their OWN dossier
     # Access logic: Allowing doctors/admins to view dossiers for all patients to support initial review
