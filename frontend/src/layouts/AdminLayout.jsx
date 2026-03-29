@@ -8,7 +8,6 @@ import {
   BarChart3,
   Bell,
   CalendarDays,
-  ChevronDown,
   Clock3,
   LayoutDashboard,
   LogOut,
@@ -32,6 +31,7 @@ const ADMIN_NAV_ITEMS = [
   { label: 'Appointments', to: '/admin/appointment-management', icon: CalendarDays },
   { label: 'Feedback & Reviews', to: '/admin/review-management', icon: Star },
   { label: 'Reports', to: '/admin/reports-analytics', icon: BarChart3 },
+  { label: 'Settings', to: '/admin/settings', icon: Settings },
 ];
 
 const SEARCH_ITEMS = [
@@ -135,16 +135,20 @@ const AdminLayout = () => {
             </button>
 
             <nav className="admin-navbar-nav" aria-label="Admin Primary Navigation">
-              {ADMIN_NAV_ITEMS.map(({ label, to, icon: Icon, end }) => (
-                <NavLink
-                  key={to}
-                  to={to}
-                  end={end}
-                  className={({ isActive }) => `admin-navbar-link ${isActive ? 'active' : ''}`}
-                >
-                  <Icon size={18} />
-                  <span>{label}</span>
-                </NavLink>
+              {ADMIN_NAV_ITEMS.map(({ label, to, icon: Icon, end }, index) => (
+                <div key={to} className="admin-navbar-navitem">
+                  <NavLink
+                    to={to}
+                    end={end}
+                    className={({ isActive }) => `admin-navbar-link ${isActive ? 'active' : ''}`}
+                  >
+                    <Icon size={18} />
+                    <span>{label}</span>
+                  </NavLink>
+                  {index < ADMIN_NAV_ITEMS.length - 1 ? (
+                    <span className="admin-navbar-navseparator" aria-hidden="true" />
+                  ) : null}
+                </div>
               ))}
             </nav>
           </div>
@@ -188,16 +192,11 @@ const AdminLayout = () => {
 
             <button
               type="button"
-              className={`admin-navbar-profile ${profileOpen ? 'active' : ''}`}
+              className={`admin-navbar-iconbtn ${profileOpen ? 'active' : ''}`}
               onClick={() => togglePanel('profile')}
               aria-label="Open admin profile menu"
             >
-              <span className="admin-navbar-avatar">{adminName.slice(0, 1).toUpperCase()}</span>
-              <span className="admin-navbar-profilecopy">
-                <strong>{adminName}</strong>
-                <span>Admin Console</span>
-              </span>
-              <ChevronDown size={16} />
+              <User size={19} />
             </button>
 
             <button
@@ -377,11 +376,24 @@ const AdminLayout = () => {
         .admin-navbar-nav {
           display: flex;
           align-items: center;
-          gap: 24px;
+          gap: 0;
           min-width: 0;
           overflow-x: auto;
           scrollbar-width: none;
           padding: 0 6px;
+        }
+        .admin-navbar-navitem {
+          display: inline-flex;
+          align-items: center;
+          flex-shrink: 0;
+        }
+        .admin-navbar-navseparator {
+          width: 1px;
+          height: 24px;
+          margin: 0 10px;
+          background: color-mix(in srgb, var(--nn-border) 78%, transparent);
+          border-radius: 999px;
+          flex-shrink: 0;
         }
         .admin-navbar-nav::-webkit-scrollbar {
           display: none;
@@ -683,8 +695,8 @@ const AdminLayout = () => {
             gap: 16px;
             padding-inline: 16px;
           }
-          .admin-navbar-nav {
-            gap: 14px;
+          .admin-navbar-navseparator {
+            margin: 0 6px;
           }
           .admin-navbar-link {
             padding-inline: 14px;
