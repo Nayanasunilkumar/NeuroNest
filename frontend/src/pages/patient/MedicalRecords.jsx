@@ -427,6 +427,9 @@ const MedicalRecords = ({ patientId: propPatientId = null }) => {
                             <span className={`pill-badge-tiny prm-severity-${item.severity || 'mild'}`}>
                               {item.severity}
                             </span>
+                            <span className={`pill-badge-tiny ${item.status === 'active' ? 'prm-status-active' : 'prm-status-inactive'}`}>
+                              {item.status || 'active'}
+                            </span>
                           </div>
                         </div>
                         <div className="item-premium-meta-grid">

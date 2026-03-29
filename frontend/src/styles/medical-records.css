@@ -284,6 +284,7 @@
 .prm-severity-moderate { background: #ffedd5; color: #d97706; }
 .prm-severity-mild { background: #f0fdf4; color: #16a34a; }
 .prm-status-active { background: #eff6ff; color: #2563eb; }
+.prm-status-inactive { background: #e2e8f0; color: #475569; }
 
 .pill-badge-tiny {
   padding: 2px 8px;
