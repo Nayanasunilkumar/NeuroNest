@@ -36,7 +36,8 @@ const getSummary = async (patientId = null) => {
 const getAllergies = async (patientId = null) => {
   const url = patientId ? `/api/patient/doctor/patients/${patientId}/allergies` : "/api/patient/allergies";
   const separator = url.includes('?') ? '&' : '?';
-  const response = await api.get(`${url}${separator}include_inactive=true`);
+  // Add cache-busting so stale CDN/browser responses don't hide inactive rows.
+  const response = await api.get(`${url}${separator}include_inactive=true&_ts=${Date.now()}`);
   return response.data;
 };
 
