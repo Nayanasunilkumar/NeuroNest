@@ -173,19 +173,15 @@ class NotificationPreference(db.Model):
 
     # SMS
     sms_appointments = db.Column(db.Boolean, default=False)
-    sms_prescriptions = db.Column(db.Boolean, default=False)
-    sms_messages = db.Column(db.Boolean, default=False)
-    sms_announcements = db.Column(db.Boolean, default=False)
 
     # In-App
     inapp_appointments = db.Column(db.Boolean, default=True)
     inapp_prescriptions = db.Column(db.Boolean, default=True)
     inapp_messages = db.Column(db.Boolean, default=True)
     inapp_announcements = db.Column(db.Boolean, default=True)
+    inapp_feedback = db.Column(db.Boolean, default=True)
     inapp_alerts = db.Column(db.Boolean, default=True)
 
-    allow_doctor_followup = db.Column(db.Boolean, default=True)
-    allow_promotions = db.Column(db.Boolean, default=False)
     allow_anonymous_feedback = db.Column(db.Boolean, default=True)
     share_history_with_doctors = db.Column(db.Boolean, default=True)
     allow_analytics = db.Column(db.Boolean, default=True)

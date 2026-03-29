@@ -82,6 +82,12 @@ def create_app():
                 conn.execute(db.text("ALTER TABLE notification_preferences ADD COLUMN IF NOT EXISTS inapp_alerts BOOLEAN DEFAULT TRUE"))
                 conn.execute(db.text("ALTER TABLE notification_preferences ADD COLUMN IF NOT EXISTS inapp_messages BOOLEAN DEFAULT TRUE"))
                 conn.execute(db.text("ALTER TABLE notification_preferences ADD COLUMN IF NOT EXISTS inapp_announcements BOOLEAN DEFAULT TRUE"))
+                conn.execute(db.text("ALTER TABLE notification_preferences ADD COLUMN IF NOT EXISTS inapp_feedback BOOLEAN DEFAULT TRUE"))
+                conn.execute(db.text("ALTER TABLE notification_preferences DROP COLUMN IF EXISTS sms_prescriptions"))
+                conn.execute(db.text("ALTER TABLE notification_preferences DROP COLUMN IF EXISTS sms_messages"))
+                conn.execute(db.text("ALTER TABLE notification_preferences DROP COLUMN IF EXISTS sms_announcements"))
+                conn.execute(db.text("ALTER TABLE notification_preferences DROP COLUMN IF EXISTS allow_doctor_followup"))
+                conn.execute(db.text("ALTER TABLE notification_preferences DROP COLUMN IF EXISTS allow_promotions"))
                 # --- Doctor Preferences Missing Columns ---
                 conn.execute(db.text("ALTER TABLE doctor_notification_settings ADD COLUMN IF NOT EXISTS email_on_alerts BOOLEAN DEFAULT TRUE"))
                 # --- Auth Security Missing Columns ---

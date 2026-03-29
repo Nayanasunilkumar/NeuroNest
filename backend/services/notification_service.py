@@ -117,7 +117,7 @@ class NotificationService:
             elif notif_type == "vitals_alert": should_send_in_app = pref.inapp_alerts
             elif notif_type == "message": should_send_in_app = pref.inapp_messages
             elif notif_type == "announcement": should_send_in_app = pref.inapp_announcements
-            elif notif_type == "feedback": should_send_in_app = pref.email_feedback # Patient profile doesn't have inapp_feedback, use email_feedback as proxy for all feedback request
+            elif notif_type == "feedback": should_send_in_app = pref.inapp_feedback
         else: # Doctor
             d_pref = DoctorNotificationSetting.query.filter_by(doctor_user_id=user_id).first()
             if not d_pref:
