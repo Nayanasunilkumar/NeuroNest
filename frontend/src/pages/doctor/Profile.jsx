@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import ExpertiseTags from '../../components/doctor/ExpertiseTags';
 import AvailabilityModal from '../../components/doctor/AvailabilityModal';
+import ScheduleOverrideModal from '../../components/doctor/ScheduleOverrideModal';
 import { fetchSpecialties } from '../../services/adminDoctorAPI';
 import { toAssetUrl } from '../../utils/media';
 import { useTheme } from '../../context/ThemeContext';
@@ -22,6 +23,7 @@ const Profile = () => {
     // Core state
     const [isEditing, setIsEditing] = useState(false);
     const [isAvailabilityModalOpen, setIsAvailabilityModalOpen] = useState(false);
+    const [isOverrideModalOpen, setIsOverrideModalOpen] = useState(false);
     const [formData, setFormData] = useState({});
     const [specialties, setSpecialties] = useState([]);
     const [activeTab, setActiveTab] = useState('overview');
@@ -265,7 +267,14 @@ const Profile = () => {
                         
                         <div className="dark-tabs d-flex flex-wrap">
                             <button className={`dark-tab ${activeTab === 'overview' ? 'dark-tab-box' : ''}`} onClick={() => setActiveTab('overview')}>Overview</button>
-                            <button className="dark-btn-primary d-flex align-items-center gap-2 shadow-sm" style={{ marginLeft: 'auto', padding: '8px 20px', fontSize: '0.85rem' }} onClick={() => setIsAvailabilityModalOpen(true)}>
+                            <button
+                                className="dark-btn-secondary d-flex align-items-center gap-2 shadow-sm"
+                                style={{ marginLeft: 'auto', padding: '8px 20px', fontSize: '0.85rem' }}
+                                onClick={() => setIsOverrideModalOpen(true)}
+                            >
+                                <Calendar size={16} /> Block Dates
+                            </button>
+                            <button className="dark-btn-primary d-flex align-items-center gap-2 shadow-sm" style={{ marginLeft: '12px', padding: '8px 20px', fontSize: '0.85rem' }} onClick={() => setIsAvailabilityModalOpen(true)}>
                                 <Clock size={16} /> Scheduling
                             </button>
                         </div>
@@ -625,6 +634,10 @@ const Profile = () => {
                 onClose={() => setIsAvailabilityModalOpen(false)}
                 availability={profile.availability}
                 onUpdate={handleAvailabilityUpdate}
+            />
+            <ScheduleOverrideModal
+                isOpen={isOverrideModalOpen}
+                onClose={() => setIsOverrideModalOpen(false)}
             />
         </div>
     );

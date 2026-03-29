@@ -68,6 +68,22 @@ export const unblockSlot = async (slotId) => {
   return response.data;
 };
 
+export const getScheduleOverrides = async (date = null) => {
+  const suffix = date ? `?date=${encodeURIComponent(date)}` : "";
+  const response = await axios.get(`/doctor/schedule/overrides${suffix}`);
+  return response.data;
+};
+
+export const createScheduleOverride = async (payload) => {
+  const response = await axios.post("/doctor/schedule/overrides", payload);
+  return response.data;
+};
+
+export const deleteScheduleOverride = async (overrideId) => {
+  const response = await axios.delete(`/doctor/schedule/overrides/${overrideId}`);
+  return response.data;
+};
+
 export const extendAppointment = async (appointmentId, minutes) => {
   const response = await axios.post(`/doctor/appointments/${appointmentId}/extend`, { minutes });
   return response.data;
