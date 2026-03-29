@@ -162,7 +162,7 @@ def update_notifications():
     _ensure_notification_prefs(uid)
 
     allowed = [
-        "email_appointments","email_prescriptions","email_messages","email_announcements","email_feedback",
+        "email_appointments","email_prescriptions","email_announcements","email_feedback",
         "inapp_appointments","inapp_prescriptions","inapp_messages","inapp_announcements","inapp_feedback","inapp_alerts",
         "allow_anonymous_feedback",
         "share_history_with_doctors","allow_analytics",

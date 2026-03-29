@@ -166,7 +166,6 @@ class NotificationPreference(db.Model):
     # Email
     email_appointments = db.Column(db.Boolean, default=True)
     email_prescriptions = db.Column(db.Boolean, default=True)
-    email_messages = db.Column(db.Boolean, default=True)
     email_announcements = db.Column(db.Boolean, default=True)
     email_feedback = db.Column(db.Boolean, default=True)
     email_alerts = db.Column(db.Boolean, default=True)

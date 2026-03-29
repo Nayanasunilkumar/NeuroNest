@@ -58,7 +58,6 @@ const PRIVACY_ROWS = [
 const baseNotificationState = {
   email_appointments: true,
   email_prescriptions: true,
-  email_messages: true,
   email_announcements: true,
   email_feedback: true,
   email_alerts: true,
@@ -140,7 +139,11 @@ export default function NotificationPreferences({ data, saving, onSave }) {
               </div>
 
               <div className="pset-notif-col">
-                <Toggle checked={prefs[`email_${key}`]} onChange={(value) => set(`email_${key}`, value)} disabled={saving} />
+                {key === 'messages' ? (
+                  <span style={{ fontSize: '0.7rem', fontWeight: 800, color: '#cbd5e1', textTransform: 'uppercase' }}>N/A</span>
+                ) : (
+                  <Toggle checked={prefs[`email_${key}`]} onChange={(value) => set(`email_${key}`, value)} disabled={saving} />
+                )}
               </div>
               <div className="pset-notif-col">
                 <Toggle checked={prefs[`inapp_${key}`]} onChange={(value) => set(`inapp_${key}`, value)} disabled={saving} />

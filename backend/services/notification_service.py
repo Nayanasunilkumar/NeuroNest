@@ -146,14 +146,18 @@ class NotificationService:
                 if notif_type == "vitals_alert":  should_send_email = pref.email_alerts
                 elif notif_type == "prescription": should_send_email = pref.email_prescriptions
                 elif notif_type == "appointment":  should_send_email = pref.email_appointments
-                elif notif_type == "message":      should_send_email = pref.email_messages
+                elif notif_type == "message":      should_send_email = False
                 elif notif_type == "announcement": should_send_email = pref.email_announcements
                 elif notif_type == "feedback":     should_send_email = pref.email_feedback
                 else: should_send_email = True
                 print(f"[NOTIF] Patient (UID: {user_id}) Email Pref Eval: {should_send_email} (type: {notif_type})")
             else:
-                if notif_type == "vitals_alert": should_send_email = d_pref.email_on_alerts
-                else: should_send_email = d_pref.email_on_booking
+                if notif_type == "vitals_alert":
+                    should_send_email = d_pref.email_on_alerts
+                elif notif_type == "message":
+                    should_send_email = False
+                else:
+                    should_send_email = d_pref.email_on_booking
                 print(f"[NOTIF] Doctor (UID: {user_id}) Email Pref Eval: {should_send_email} (type: {notif_type})")
 
             if should_send_email:

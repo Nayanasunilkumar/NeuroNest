@@ -83,6 +83,7 @@ def create_app():
                 conn.execute(db.text("ALTER TABLE notification_preferences ADD COLUMN IF NOT EXISTS inapp_messages BOOLEAN DEFAULT TRUE"))
                 conn.execute(db.text("ALTER TABLE notification_preferences ADD COLUMN IF NOT EXISTS inapp_announcements BOOLEAN DEFAULT TRUE"))
                 conn.execute(db.text("ALTER TABLE notification_preferences ADD COLUMN IF NOT EXISTS inapp_feedback BOOLEAN DEFAULT TRUE"))
+                conn.execute(db.text("ALTER TABLE notification_preferences DROP COLUMN IF EXISTS email_messages"))
                 conn.execute(db.text("ALTER TABLE notification_preferences DROP COLUMN IF EXISTS sms_appointments"))
                 conn.execute(db.text("ALTER TABLE notification_preferences DROP COLUMN IF EXISTS sms_prescriptions"))
                 conn.execute(db.text("ALTER TABLE notification_preferences DROP COLUMN IF EXISTS sms_messages"))
