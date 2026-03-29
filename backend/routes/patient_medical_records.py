@@ -419,10 +419,10 @@ def get_allergies(patient_id=None):
     if not is_allowed:
         return jsonify({"message": msg}), 403
 
+    include_inactive = str(request.args.get("include_inactive", "")).lower() in ("true", "1", "yes")
     query = PatientAllergy.query.filter_by(patient_id=patient_id)
-    # Temporary: disable active filter to debug visibility
-    # if not include_inactive:
-    #     query = query.filter(func.lower(PatientAllergy.status) == "active")
+    if not include_inactive:
+        query = query.filter(func.lower(PatientAllergy.status) == "active")
     rows = query.order_by(PatientAllergy.created_at.desc()).all()
 
     # Enrich with creator name + specialization
