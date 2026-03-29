@@ -461,9 +461,14 @@ const PatientRecords = () => {
                               <div className="item-premium-body">
                                 <div className="item-premium-main">
                                   <p className="item-title-prm">{item.allergy_name}</p>
-                                  <span className={`pill-badge-tiny prm-severity-${item.severity || 'mild'}`}>
-                                    {item.severity}
-                                  </span>
+                                  <div className="item-premium-badges">
+                                    <span className={`pill-badge-tiny prm-severity-${item.severity || 'mild'}`}>
+                                      {item.severity}
+                                    </span>
+                                    <span className={`pill-badge-tiny ${item.status === 'active' ? 'prm-status-active' : 'prm-status-inactive'}`}>
+                                      {item.status || 'active'}
+                                    </span>
+                                  </div>
                                 </div>
                                 <div className="item-premium-meta-grid">
                                    <div className="meta-cell">
