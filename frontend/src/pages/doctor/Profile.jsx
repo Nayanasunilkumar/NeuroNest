@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { getDoctorProfile, updateDoctorProfile, uploadProfileImage, addExperience, deleteExperience } from '../../services/doctorProfileService';
 import { 
-  Camera, Briefcase, FileText, Phone, Award, Shield, DollarSign, Hospital, Globe, Clock, Settings, ArrowRight, User, Trash2, Plus
+  Camera, Briefcase, FileText, Phone, Award, Shield, DollarSign, Hospital, Globe, Clock, Calendar, Settings, ArrowRight, User, Trash2, Plus
 } from 'lucide-react';
 import ExpertiseTags from '../../components/doctor/ExpertiseTags';
 import AvailabilityModal from '../../components/doctor/AvailabilityModal';
