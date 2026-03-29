@@ -313,6 +313,22 @@ const MedicalRecords = ({ patientId: propPatientId = null }) => {
     }
   };
 
+  const deactivateAllergy = async (allergyId) => {
+    try {
+      await medicalRecordService.deleteAllergy(allergyId, patientId);
+      // Keep it visible immediately as "inactive" even if a stale API response follows.
+      setAllergies((prev) =>
+        prev.map((item) =>
+          item.id === allergyId ? { ...item, status: "inactive" } : item,
+        ),
+      );
+      fetchRecords();
+    } catch (err) {
+      console.error("Failed to mark allergy inactive:", err);
+      alert(err.response?.data?.message || "Unable to mark this allergy as inactive.");
+    }
+  };
+
   const addCondition = async () => {
     if (!conditionForm.condition_name.trim()) return;
     setIsSubmitting(true);
@@ -445,7 +461,7 @@ const MedicalRecords = ({ patientId: propPatientId = null }) => {
                       </div>
                       {canManageClinical && (
                         <div className="item-premium-actions">
-                          <button onClick={() => medicalRecordService.deleteAllergy(item.id, patientId).then(fetchRecords)} className="btn-icon-tiny">
+                          <button onClick={() => deactivateAllergy(item.id)} className="btn-icon-tiny">
                             <X size={14} />
                           </button>
                         </div>
