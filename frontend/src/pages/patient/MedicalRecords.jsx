@@ -776,6 +776,7 @@ const MedicalRecords = ({ patientId: propPatientId = null }) => {
         isOpen={isViewOpen}
         onClose={() => setIsViewOpen(false)}
         record={recordToView}
+        patientId={patientId}
       />
 
       {canManageClinical && allergyFormOpen && (

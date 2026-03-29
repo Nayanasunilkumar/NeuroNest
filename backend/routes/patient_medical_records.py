@@ -41,6 +41,13 @@ def _doctor_only_clinical_write():
         return None, (jsonify({"message": "Only doctors can modify allergies, conditions, and medications"}), 403)
     return actor_id, None
 
+
+def _require_patient():
+    claims = get_jwt()
+    if (claims.get("role") or "").lower() != "patient":
+        return jsonify({"message": "Access denied"}), 403
+    return None
+
 def _verify_patient_access(patient_id):
     actor_id, actor_role = _actor_info()
     if actor_role == "patient" and actor_id != patient_id:
@@ -261,12 +268,14 @@ def create_medical_record(patient_id=None):
         category=(request.form.get("category") or "Other")[:100],
         doctor_name=(request.form.get("doctor_name") or None),
         hospital_name=(request.form.get("hospital_name") or None),
+        appointment_id=request.form.get("appointment_id", type=int),
         description=(request.form.get("description") or None),
         notes=(request.form.get("notes") or None),
         file_path=file_url,             # Cloudinary HTTPS URL
         file_type=extension,
         file_size_bytes=file_size,
         uploaded_by=actor_id,
+        verified_by_doctor=(actor_role == "doctor"),
         record_date=_parse_date(request.form.get("record_date")),
     )
     db.session.add(record)
@@ -316,6 +325,8 @@ def update_medical_record(record_id):
         record.doctor_name = data.get("doctor_name")
     if "hospital_name" in data:
         record.hospital_name = data.get("hospital_name")
+    if "appointment_id" in data:
+        record.appointment_id = data.get("appointment_id")
     if "description" in data:
         record.description = data.get("description")
     if "notes" in data:
@@ -324,6 +335,8 @@ def update_medical_record(record_id):
         record.record_date = _parse_date(data.get("record_date"))
     if "status" in data:
         record.status = str(data.get("status") or "active")[:30]
+    if "verified_by_doctor" in data:
+        record.verified_by_doctor = bool(data.get("verified_by_doctor"))
 
     if "tags" in data:
         MedicalRecordTag.query.filter_by(record_id=record.id).delete()

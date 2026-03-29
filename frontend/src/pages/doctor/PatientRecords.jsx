@@ -684,6 +684,7 @@ const PatientRecords = () => {
                 isOpen={isViewOpen}
                 onClose={() => setIsViewOpen(false)}
                 record={recordToView}
+                patientId={patientId}
             />
         </div>
     );
@@ -710,4 +711,3 @@ const SimpleMedicalModal = ({ title, children, onClose, onSave }) => (
 );
 
 export default PatientRecords;
-

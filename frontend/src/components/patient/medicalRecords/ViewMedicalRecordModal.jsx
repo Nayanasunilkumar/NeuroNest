@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom';
 import { X, Loader2, Download, Calendar, User, FileText, Tag } from 'lucide-react';
 import medicalRecordService from '../../../services/medicalRecordService';
 
-const ViewMedicalRecordModal = ({ isOpen, onClose, record }) => {
+const ViewMedicalRecordModal = ({ isOpen, onClose, record, patientId = null }) => {
     const [loading, setLoading] = useState(true);
     const [content, setContent] = useState(null);
     const [fileType, setFileType] = useState(null);
@@ -13,7 +13,7 @@ const ViewMedicalRecordModal = ({ isOpen, onClose, record }) => {
             const fetchBlob = async () => {
                 try {
                     setLoading(true);
-                    const blobData = await medicalRecordService.getRecordBlob(record.id);
+                    const blobData = await medicalRecordService.getRecordBlob(record.id, patientId);
                     setContent(blobData.url);
                     setFileType(blobData.type);
                 } catch (err) {
@@ -134,7 +134,7 @@ const ViewMedicalRecordModal = ({ isOpen, onClose, record }) => {
                             }}
                             onMouseEnter={(e) => e.target.style.backgroundColor = '#374151'}
                             onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
-                            onClick={() => medicalRecordService.downloadRecord(record.id, record.title, record.file_type)}
+                            onClick={() => medicalRecordService.downloadRecord(record.id, record.title, record.file_type, patientId)}
                         >
                             <Download size={16} />
                             <span>Download</span>
@@ -207,7 +207,7 @@ const ViewMedicalRecordModal = ({ isOpen, onClose, record }) => {
                                         margin: '0 auto',
                                         cursor: 'pointer'
                                     }}
-                                    onClick={() => medicalRecordService.downloadRecord(record.id, record.title, record.file_type)}
+                                    onClick={() => medicalRecordService.downloadRecord(record.id, record.title, record.file_type, patientId)}
                                 >
                                     <Download size={18} /> Download to View
                                 </button>
