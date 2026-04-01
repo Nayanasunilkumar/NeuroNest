@@ -72,3 +72,8 @@ export const joinAppointmentCall = async (id) => {
   const response = await axios.post(`/appointments/${id}/join-call`);
   return response.data;
 };
+
+export const leaveAppointmentCall = async (id) => {
+  const response = await axios.post(`/appointments/${id}/leave-call`);
+  return response.data;
+};

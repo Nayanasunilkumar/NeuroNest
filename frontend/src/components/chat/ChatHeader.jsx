@@ -61,7 +61,9 @@ const ChatHeader = ({ otherUser, context, isDoctor, onToggleSidebar, showSidebar
             
             const response = await api.post(endpoint);
             const { room_id } = response.data;
-            navigate(`/consultation/${room_id || nextAppt.video_room_id || `appointment-${nextAppt.id}`}`);
+            navigate(`/consultation/${room_id || nextAppt.video_room_id || `appointment-${nextAppt.id}`}`, {
+                state: { appointmentId: nextAppt.id },
+            });
         } catch (error) {
             console.error("Clinical join failed:", error);
             alert(error.response?.data?.error || "Consultation room is not yet accessible.");

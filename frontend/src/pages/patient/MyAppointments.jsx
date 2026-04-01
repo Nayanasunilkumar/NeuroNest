@@ -207,7 +207,9 @@ const MyAppointments = () => {
     try {
       const payload = await joinAppointmentCall(appointmentId);
       setCallStateById((prev) => ({ ...prev, [appointmentId]: payload }));
-      navigate(`/consultation/${payload.room_id || `appointment-${appointmentId}`}`);
+      navigate(`/consultation/${payload.room_id || `appointment-${appointmentId}`}`, {
+        state: { appointmentId },
+      });
     } catch (err) {
       alert(err.response?.data?.error || err.response?.data?.message || "Unable to join call right now");
     } finally {

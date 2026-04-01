@@ -96,7 +96,9 @@ const TodaySchedule = () => {
     const handleJoinCall = async (appointmentId) => {
         try {
             const payload = await joinDoctorAppointmentCall(appointmentId);
-            navigate(`/consultation/${payload.room_id || `appointment-${appointmentId}`}`);
+            navigate(`/consultation/${payload.room_id || `appointment-${appointmentId}`}`, {
+                state: { appointmentId },
+            });
         } catch (error) {
             alert(error?.response?.data?.message || error?.response?.data?.error || 'Unable to join call');
         }

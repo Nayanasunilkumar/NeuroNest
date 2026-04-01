@@ -114,6 +114,11 @@ export const joinDoctorAppointmentCall = async (id) => {
   return response.data;
 };
 
+export const leaveDoctorAppointmentCall = async (id) => {
+  const response = await axios.post(`/doctor/appointments/${id}/leave-call`);
+  return response.data;
+};
+
 export const getAppointmentHistory = async () => {
   const response = await axios.get("/doctor/appointments/history");
   return response.data;

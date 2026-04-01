@@ -220,7 +220,9 @@ const DoctorDashboard = () => {
   const handleJoinAppointmentCall = async (appointment) => {
     try {
       const payload = await joinDoctorAppointmentCall(appointment.id);
-      navigate(`/consultation/${payload.room_id || `appointment-${appointment.id}`}`);
+      navigate(`/consultation/${payload.room_id || `appointment-${appointment.id}`}`, {
+        state: { appointmentId: appointment.id },
+      });
     } catch (error) {
       const message = error?.response?.data?.message || error?.response?.data?.error || 'Unable to join call right now';
       window.alert(message);

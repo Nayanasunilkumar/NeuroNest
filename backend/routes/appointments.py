@@ -884,3 +884,40 @@ def patient_join_call(id):
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
+
+
+@appointments_bp.route("/<int:id>/leave-call", methods=["POST"])
+@jwt_required()
+def patient_leave_call(id):
+    try:
+        if not _is_patient():
+            return jsonify({"error": "Patient access required"}), 403
+
+        current_user_id = int(get_jwt_identity())
+        appointment = Appointment.query.filter_by(id=id, patient_id=current_user_id).first()
+        if not appointment:
+            return jsonify({"error": "Appointment not found"}), 404
+
+        if (appointment.consultation_type or "in_person") != "online":
+            return jsonify({"error": "Only online appointments have call sessions"}), 400
+
+        now = _utc_now()
+        state, _ = sync_call_status(appointment, now=now)
+        was_active = bool(state["both_joined"] or (appointment.call_status or "").lower() == "ongoing")
+
+        appointment.patient_joined_at = None
+        appointment.doctor_joined_at = None
+        if was_active and appointment.call_started_at is None:
+            appointment.call_started_at = now
+        appointment.call_status = "completed"
+
+        db.session.commit()
+
+        payload = appointment.to_dict()
+        payload["room_id"] = appointment.video_room_id or f"appointment-{appointment.id}"
+        payload["event_type"] = "call_ended"
+        payload["ended_by"] = "patient"
+        return jsonify(payload), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500

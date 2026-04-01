@@ -1,5 +1,5 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Video, Mic, MicOff, VideoOff, PhoneOff } from 'lucide-react';
 import { getUser } from '../../utils/auth';
 import { io } from 'socket.io-client';
@@ -7,10 +7,13 @@ import { sendMessage } from '../../api/chat';
 import { getIceConfig } from '../../api/rtc';
 import { useCall } from '../../context/CallContext';
 import { API_BASE_URL } from '../../config/env';
+import { leaveAppointmentCall } from '../../api/appointments';
+import { leaveDoctorAppointmentCall } from '../../api/doctor';
 
 export default function VideoConsultation() {
     const { roomId } = useParams();
     const navigate = useNavigate();
+    const location = useLocation();
     const user = getUser();
     
     const localVideo = useRef(null);
@@ -21,6 +24,7 @@ export default function VideoConsultation() {
     const remoteStreamRef = useRef(null);
     const iceCandidateQueue = useRef([]);
     const hasSentCallEndedRef = useRef(false);
+    const hasSentLeaveCallRef = useRef(false);
     const selfSidRef = useRef(null);
     const remoteSidRef = useRef(null);
     const makingOfferRef = useRef(false);
@@ -37,6 +41,36 @@ export default function VideoConsultation() {
     const [isRemoteConnected, setIsRemoteConnected] = useState(false);
     const [needsAudioResume, setNeedsAudioResume] = useState(false);
     const [mediaError, setMediaError] = useState('');
+
+    const getAppointmentIdFromRoom = (roomValue) => {
+        if (!roomValue) return null;
+        const appointmentPattern = /^appointment-(\d+)$/;
+        const roomPattern = /^room_(\d+)_/;
+        const apptMatch = String(roomValue).match(appointmentPattern);
+        if (apptMatch?.[1]) return Number(apptMatch[1]);
+        const roomMatch = String(roomValue).match(roomPattern);
+        if (roomMatch?.[1]) return Number(roomMatch[1]);
+        return null;
+    };
+
+    const stateAppointmentId = Number(location?.state?.appointmentId);
+    const parsedAppointmentId = Number.isInteger(stateAppointmentId)
+        ? stateAppointmentId
+        : getAppointmentIdFromRoom(roomId);
+
+    const leaveAppointmentSession = useCallback(async () => {
+        if (!Number.isInteger(parsedAppointmentId) || hasSentLeaveCallRef.current) return;
+        hasSentLeaveCallRef.current = true;
+        try {
+            if (user?.role === 'doctor') {
+                await leaveDoctorAppointmentCall(parsedAppointmentId);
+            } else if (user?.role === 'patient') {
+                await leaveAppointmentCall(parsedAppointmentId);
+            }
+        } catch (err) {
+            console.error("Failed to close appointment call session:", err);
+        }
+    }, [parsedAppointmentId, user?.role]);
 
     useEffect(() => {
         const room = `consult_${roomId}`;
@@ -428,6 +462,7 @@ export default function VideoConsultation() {
         const remoteVideoEl = remoteVideo.current;
         return () => {
             isDisposed = true;
+            void leaveAppointmentSession();
             void notifyCallEnded();
             if (socket.current) {
                 socket.current.emit("leave_video_room", { room });
@@ -458,11 +493,14 @@ export default function VideoConsultation() {
             if (restartTimer) clearTimeout(restartTimer);
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [activeCall?.caller_id, roomId, user?.id, user?.role]);
+    }, [activeCall?.caller_id, leaveAppointmentSession, roomId, user?.id, user?.role]);
 
     const handleHangup = async () => {
         try {
-            await endActiveCall();
+            await leaveAppointmentSession();
+            if (activeCall?.call_id) {
+                await endActiveCall();
+            }
         } catch (err) {
             console.error("Failed to end active call cleanly:", err);
         } finally {

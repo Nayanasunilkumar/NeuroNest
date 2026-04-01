@@ -517,7 +517,9 @@ export default function DashboardEnhancements() {
       try {
         const payload = await joinAppointmentCall(appointment.id);
         setCallStateById((prev) => ({ ...prev, [appointment.id]: payload }));
-        navigate(`/consultation/${payload.room_id || `appointment-${appointment.id}`}`);
+        navigate(`/consultation/${payload.room_id || `appointment-${appointment.id}`}`, {
+          state: { appointmentId: appointment.id },
+        });
       } catch (error) {
         const message = error?.response?.data?.error || error?.response?.data?.message || "Join is not available yet";
         window.alert(message);
