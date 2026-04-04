@@ -12,7 +12,7 @@ const alertsModule = {
     doctor: AlertsPage,
     patient: AlertsPage,
   },
-  showInSidebarByRole: ['patient', 'doctor'],
+  showInSidebarByRole: ['patient'],
   orderByRole: { doctor: 90, patient: 80 },
 };
 

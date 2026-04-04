@@ -3,19 +3,13 @@ import { Link } from 'react-router-dom';
 import {
   Activity,
   AlertCircle,
-  ArrowRight,
-  Calendar,
-  CheckCircle2,
-  ChevronRight,
   Clock3,
-  FileText,
   Megaphone,
   Radio,
   Settings,
-  ShieldAlert,
-  Star,
-  UserPlus,
   Users,
+  UserPlus,
+  Calendar,
 } from 'lucide-react';
 import { adminDashboardApi } from '../../api/adminDashboardApi';
 import './AdminDashboard.css';
@@ -46,86 +40,6 @@ const STAT_META = {
     tone: 'slate',
     accent: 'linear-gradient(135deg, #475569 0%, #0f172a 100%)',
   },
-};
-
-const MODULES = [
-  {
-    title: 'Manage Patients',
-    desc: 'Access patient records, account states, and care-facing identity details.',
-    icon: Users,
-    path: '/admin/manage-patients',
-    tone: 'sky',
-  },
-  {
-    title: 'Manage Doctors',
-    desc: 'Review provider profiles, staffing quality, and platform readiness.',
-    icon: UserPlus,
-    path: '/admin/manage-doctors',
-    tone: 'teal',
-  },
-  {
-    title: 'Appointments',
-    desc: 'Monitor scheduling flow, conflicts, and daily service throughput.',
-    icon: Calendar,
-    path: '/admin/appointment-management',
-    tone: 'amber',
-  },
-  {
-    title: 'Assessments',
-    desc: 'Track clinical assessments, reports, and outcome visibility.',
-    icon: FileText,
-    path: '/admin/assessment-management',
-    tone: 'indigo',
-  },
-  {
-    title: 'Reviews',
-    desc: 'Moderate patient feedback and surface experience patterns early.',
-    icon: Star,
-    path: '/admin/review-management',
-    tone: 'violet',
-  },
-  {
-    title: 'Governance',
-    desc: 'Handle escalations, operational risk, and sensitive intervention cases.',
-    icon: ShieldAlert,
-    path: '/admin/governance/queue',
-    tone: 'rose',
-  },
-];
-
-const EMPTY_CHART_BARS = [
-  { day: 'Mon', p: 0, s: 0 },
-  { day: 'Tue', p: 0, s: 0 },
-  { day: 'Wed', p: 0, s: 0 },
-  { day: 'Thu', p: 0, s: 0 },
-  { day: 'Fri', p: 0, s: 0 },
-  { day: 'Sat', p: 0, s: 0 },
-  { day: 'Sun', p: 0, s: 0 },
-];
-
-const PRIORITY_META = {
-  High: { label: 'High', tone: 'critical' },
-  Medium: { label: 'Medium', tone: 'watch' },
-  Low: { label: 'Low', tone: 'calm' },
-  default: { label: 'Routine', tone: 'neutral' },
-};
-
-const clampPercent = (value) => {
-  const parsed = Number(value);
-  if (!Number.isFinite(parsed)) return 0;
-  return Math.max(0, Math.min(100, parsed));
-};
-
-const normalizeChartData = (chartData = []) => {
-  if (!Array.isArray(chartData) || chartData.length === 0) {
-    return EMPTY_CHART_BARS;
-  }
-
-  return chartData.map((item, index) => ({
-    day: item.day || `Day ${index + 1}`,
-    p: clampPercent(item.p),
-    s: clampPercent(item.s),
-  }));
 };
 
 const normalizeTrend = (trend) => {
@@ -168,9 +82,6 @@ const AdminDashboard = () => {
     }
   };
 
-  const chartBars = useMemo(() => normalizeChartData(data.chartData), [data.chartData]);
-  const intakePeak = useMemo(() => Math.max(0, ...chartBars.map((item) => item.p)), [chartBars]);
-  const outflowPeak = useMemo(() => Math.max(0, ...chartBars.map((item) => item.s)), [chartBars]);
   const highPriorityCount = useMemo(
     () => data.tasks.filter((task) => String(task.priority).toLowerCase() === 'high').length,
     [data.tasks],
@@ -284,165 +195,6 @@ const AdminDashboard = () => {
               </article>
             );
           })}
-        </section>
-
-        <section className="admin-dashboard-main-grid">
-          <article className="admin-dashboard-panel admin-dashboard-panel-chart">
-            <div className="admin-dashboard-panel-head">
-              <div>
-                <span className="admin-dashboard-section-kicker">Throughput</span>
-                <h2>Engagement metrics</h2>
-              </div>
-              <div className="admin-dashboard-legend">
-                <span><i className="is-intake" /> Intake</span>
-                <span><i className="is-outflow" /> Outflow</span>
-              </div>
-            </div>
-
-            {data.chartData.length ? (
-              <>
-                <div className="admin-dashboard-chart-summary">
-                  <div>
-                    <span>Peak intake</span>
-                    <strong>{intakePeak}%</strong>
-                  </div>
-                  <div>
-                    <span>Peak outflow</span>
-                    <strong>{outflowPeak}%</strong>
-                  </div>
-                </div>
-
-                <div className="admin-dashboard-chart">
-                  <div className="admin-dashboard-chart-grid" aria-hidden="true">
-                    {[0, 1, 2, 3].map((item) => (
-                      <span key={item} />
-                    ))}
-                  </div>
-
-                  {chartBars.map((item) => (
-                    <div key={item.day} className="admin-dashboard-chart-col">
-                      <div className="admin-dashboard-chart-bars">
-                        <div
-                          className="admin-dashboard-bar is-intake"
-                          style={{ height: `${item.p}%` }}
-                          title={`${item.day} intake ${item.p}%`}
-                        />
-                        <div
-                          className="admin-dashboard-bar is-outflow"
-                          style={{ height: `${item.s}%` }}
-                          title={`${item.day} outflow ${item.s}%`}
-                        />
-                      </div>
-                      <span>{item.day}</span>
-                    </div>
-                  ))}
-                </div>
-              </>
-            ) : (
-              <div className="admin-dashboard-empty-state">
-                <Activity size={18} />
-                <p>No throughput history is available yet.</p>
-              </div>
-            )}
-          </article>
-
-          <article className="admin-dashboard-panel admin-dashboard-panel-queue">
-            <div className="admin-dashboard-panel-head">
-              <div>
-                <span className="admin-dashboard-section-kicker">Queue</span>
-                <h2>Task pipeline</h2>
-              </div>
-            </div>
-
-            <div className="admin-dashboard-queue-list">
-              {data.tasks.length ? (
-                data.tasks.map((task, index) => {
-                  const meta = PRIORITY_META[task.priority] || PRIORITY_META.default;
-                  return (
-                    <div key={`${task.title}-${index}`} className={`admin-dashboard-task tone-${meta.tone}`}>
-                      <div className="admin-dashboard-task-top">
-                        <h3>{task.title}</h3>
-                        <span>{meta.label}</span>
-                      </div>
-                      <p>{task.desc}</p>
-                    </div>
-                  );
-                })
-              ) : (
-                <div className="admin-dashboard-empty-state">
-                  <CheckCircle2 size={18} />
-                  <p>No active admin tasks are waiting right now.</p>
-                </div>
-              )}
-            </div>
-          </article>
-        </section>
-
-        <section className="admin-dashboard-lower-grid">
-          <article className="admin-dashboard-panel">
-            <div className="admin-dashboard-panel-head">
-              <div>
-                <span className="admin-dashboard-section-kicker">Workspace</span>
-                <h2>Administrative modules</h2>
-              </div>
-              <Link to="/admin/settings" className="admin-dashboard-icon-link" aria-label="Open settings">
-                <Settings size={16} />
-              </Link>
-            </div>
-
-            <div className="admin-dashboard-module-grid">
-              {MODULES.map((module) => {
-                const Icon = module.icon;
-                return (
-                  <Link key={module.title} to={module.path} className={`admin-dashboard-module-card tone-${module.tone}`}>
-                    <div className="admin-dashboard-module-icon">
-                      <Icon size={20} />
-                    </div>
-                    <div className="admin-dashboard-module-copy">
-                      <h3>{module.title}</h3>
-                      <p>{module.desc}</p>
-                    </div>
-                    <ChevronRight size={18} className="admin-dashboard-module-arrow" />
-                  </Link>
-                );
-              })}
-            </div>
-          </article>
-
-          <article className="admin-dashboard-panel">
-            <div className="admin-dashboard-panel-head">
-              <div>
-                <span className="admin-dashboard-section-kicker">Timeline</span>
-                <h2>Recent system activity</h2>
-              </div>
-              <Link to="/admin/reports-analytics" className="admin-dashboard-inline-link">
-                Audit view
-                <ArrowRight size={14} />
-              </Link>
-            </div>
-
-            <div className="admin-dashboard-activity-list">
-              {data.activities.length ? (
-                data.activities.map((activity, index) => (
-                  <div key={`${activity.time}-${index}`} className="admin-dashboard-activity-item">
-                    <div className={`admin-dashboard-activity-dot is-${activity.type === 'error' ? 'error' : 'success'}`} />
-                    <div className="admin-dashboard-activity-copy">
-                      <div className="admin-dashboard-activity-meta">
-                        <span>{activity.time || 'System'}</span>
-                        <strong>{activity.type === 'error' ? 'Failure' : 'Nominal'}</strong>
-                      </div>
-                      <p>{activity.text}</p>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="admin-dashboard-empty-state">
-                  <Clock3 size={18} />
-                  <p>No recent activity has been recorded yet.</p>
-                </div>
-              )}
-            </div>
-          </article>
         </section>
       </div>
     </div>

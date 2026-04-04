@@ -3,7 +3,7 @@ import TodaySchedule from '../../pages/doctor/TodaySchedule';
 
 const todayScheduleModule = {
   key: 'todaySchedule',
-  label: "Appointments",
+  label: "Schedule",
   icon: CalendarDays,
   route: '/schedule',
   rolesAllowed: ['doctor', 'admin'],

@@ -19,7 +19,7 @@ const patientChatModule = {
     patient: Chat,
   },
   showInSidebarByRole: ['doctor', 'patient', 'admin'],
-  orderByRole: { doctor: 100, patient: 70, admin: 110 },
+  orderByRole: { doctor: 35, patient: 70, admin: 110 },
 };
 
 export default patientChatModule;

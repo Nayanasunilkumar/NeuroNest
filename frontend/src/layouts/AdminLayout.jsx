@@ -8,6 +8,8 @@ import {
   BarChart3,
   Bell,
   CalendarDays,
+  ChevronLeft,
+  ChevronRight,
   Clock3,
   LayoutDashboard,
   LogOut,
@@ -61,12 +63,15 @@ const AdminLayout = () => {
   const { platformName } = useSystemConfig();
   const location = useLocation();
   const overlayRef = useRef(null);
+  const navScrollRef = useRef(null);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [canScrollNavLeft, setCanScrollNavLeft] = useState(false);
+  const [canScrollNavRight, setCanScrollNavRight] = useState(false);
 
   const user = getUser();
   const adminName = user?.full_name || 'Admin';
@@ -96,6 +101,26 @@ const AdminLayout = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  useEffect(() => {
+    const navElement = navScrollRef.current;
+    if (!navElement) return undefined;
+
+    const updateNavScrollState = () => {
+      const maxScrollLeft = navElement.scrollWidth - navElement.clientWidth;
+      setCanScrollNavLeft(navElement.scrollLeft > 4);
+      setCanScrollNavRight(maxScrollLeft - navElement.scrollLeft > 4);
+    };
+
+    updateNavScrollState();
+    navElement.addEventListener('scroll', updateNavScrollState, { passive: true });
+    window.addEventListener('resize', updateNavScrollState);
+
+    return () => {
+      navElement.removeEventListener('scroll', updateNavScrollState);
+      window.removeEventListener('resize', updateNavScrollState);
+    };
+  }, [location.pathname]);
+
   const filteredSearchItems = useMemo(() => {
     const normalized = searchQuery.trim().toLowerCase();
     if (!normalized) return SEARCH_ITEMS;
@@ -106,6 +131,14 @@ const AdminLayout = () => {
     setSearchOpen(panel === 'search' ? !searchOpen : false);
     setNotificationsOpen(panel === 'notifications' ? !notificationsOpen : false);
     setProfileOpen(panel === 'profile' ? !profileOpen : false);
+  };
+
+  const scrollAdminNav = (direction) => {
+    if (!navScrollRef.current) return;
+    navScrollRef.current.scrollBy({
+      left: direction * 220,
+      behavior: 'smooth',
+    });
   };
 
   return (
@@ -135,23 +168,47 @@ const AdminLayout = () => {
               {mobileMenuOpen ? <X size={19} /> : <Menu size={19} />}
             </button>
 
-            <nav className="admin-navbar-nav" aria-label="Admin Primary Navigation">
-              {ADMIN_NAV_ITEMS.map(({ label, to, icon: Icon, end }, index) => (
-                <div key={to} className="admin-navbar-navitem">
-                  <NavLink
-                    to={to}
-                    end={end}
-                    className={({ isActive }) => `admin-navbar-link ${isActive ? 'active' : ''}`}
-                  >
-                    <Icon size={18} />
-                    <span>{label}</span>
-                  </NavLink>
-                  {index < ADMIN_NAV_ITEMS.length - 1 ? (
-                    <span className="admin-navbar-navseparator" aria-hidden="true" />
-                  ) : null}
-                </div>
-              ))}
-            </nav>
+            <div className="admin-navbar-navshell">
+              {canScrollNavLeft ? (
+                <button
+                  type="button"
+                  className="admin-navbar-scrollbtn"
+                  aria-label="Scroll navigation left"
+                  onClick={() => scrollAdminNav(-1)}
+                >
+                  <ChevronLeft size={16} />
+                </button>
+              ) : null}
+
+              <nav ref={navScrollRef} className="admin-navbar-nav" aria-label="Admin Primary Navigation">
+                {ADMIN_NAV_ITEMS.map(({ label, to, icon: Icon, end }, index) => (
+                  <div key={to} className="admin-navbar-navitem">
+                    <NavLink
+                      to={to}
+                      end={end}
+                      className={({ isActive }) => `admin-navbar-link ${isActive ? 'active' : ''}`}
+                    >
+                      <Icon size={18} />
+                      <span>{label}</span>
+                    </NavLink>
+                    {index < ADMIN_NAV_ITEMS.length - 1 ? (
+                      <span className="admin-navbar-navseparator" aria-hidden="true" />
+                    ) : null}
+                  </div>
+                ))}
+              </nav>
+
+              {canScrollNavRight ? (
+                <button
+                  type="button"
+                  className="admin-navbar-scrollbtn"
+                  aria-label="Scroll navigation right"
+                  onClick={() => scrollAdminNav(1)}
+                >
+                  <ChevronRight size={16} />
+                </button>
+              ) : null}
+            </div>
           </div>
 
           <div className="admin-navbar-right" ref={overlayRef}>
@@ -379,9 +436,35 @@ const AdminLayout = () => {
           align-items: center;
           gap: 0;
           min-width: 0;
+          flex: 1 1 auto;
           overflow-x: auto;
           scrollbar-width: none;
           padding: 0 6px;
+        }
+        .admin-navbar-navshell {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          min-width: 0;
+          flex: 1 1 auto;
+        }
+        .admin-navbar-scrollbtn {
+          width: 34px;
+          height: 34px;
+          border: 1px solid var(--nn-border);
+          border-radius: 999px;
+          background: color-mix(in srgb, var(--nn-surface) 92%, transparent);
+          color: var(--nn-text-secondary);
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          flex: 0 0 auto;
+          transition: all 0.2s ease;
+        }
+        .admin-navbar-scrollbtn:hover {
+          color: var(--nn-text-main);
+          border-color: color-mix(in srgb, var(--nn-primary) 35%, var(--nn-border));
+          background: color-mix(in srgb, var(--nn-primary) 10%, var(--nn-surface));
         }
         .admin-navbar-navitem {
           display: inline-flex;
@@ -705,7 +788,7 @@ const AdminLayout = () => {
         }
         @media (max-width: 1023.98px) {
           .admin-navbar-divider,
-          .admin-navbar-nav {
+          .admin-navbar-navshell {
             display: none;
           }
           .admin-navbar-mobiletoggle,

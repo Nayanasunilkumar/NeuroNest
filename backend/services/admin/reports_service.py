@@ -4,6 +4,23 @@ from database.models import db, User, Appointment, Review, ReviewEscalation, Pat
 
 class AdminReportsService:
     @staticmethod
+    def _appointment_trends_for_window(start_date, end_date):
+        return (
+            AdminReportsService._analytics_enabled_appointment_query()
+            .with_entities(
+                func.date(Appointment.appointment_date).label('date'),
+                func.count(Appointment.id).label('count')
+            )
+            .filter(
+                Appointment.appointment_date >= start_date,
+                Appointment.appointment_date <= end_date,
+            )
+            .group_by(func.date(Appointment.appointment_date))
+            .order_by(func.date(Appointment.appointment_date))
+            .all()
+        )
+
+    @staticmethod
     def _analytics_enabled_appointment_query():
         return (
             db.session.query(Appointment)
@@ -74,19 +91,25 @@ class AdminReportsService:
 
     @staticmethod
     def get_appointment_analytics(days=7):
-        target_date = datetime.now() - timedelta(days=days)
-        
-        # PostgreSQL specific aggregation for daily appointment volume
-        daily_trends = AdminReportsService._analytics_enabled_appointment_query().with_entities(
-            func.date(Appointment.appointment_date).label('date'),
-            func.count(Appointment.id).label('count')
-        ).filter(
-            Appointment.created_at >= target_date
-        ).group_by(
-            func.date(Appointment.appointment_date)
-        ).order_by(
-            func.date(Appointment.appointment_date)
-        ).all()
+        today = datetime.now().date()
+        window_start = today - timedelta(days=max(days - 1, 0))
+
+        daily_trends = AdminReportsService._appointment_trends_for_window(window_start, today)
+
+        if not daily_trends:
+            latest_appointment_date = (
+                AdminReportsService._analytics_enabled_appointment_query()
+                .with_entities(func.max(Appointment.appointment_date))
+                .scalar()
+            )
+
+            if latest_appointment_date:
+                fallback_end = latest_appointment_date
+                fallback_start = fallback_end - timedelta(days=max(days - 1, 0))
+                daily_trends = AdminReportsService._appointment_trends_for_window(
+                    fallback_start,
+                    fallback_end,
+                )
 
         return {
             "daily_trends": [{"date": str(d.date), "count": d.count} for d in daily_trends],

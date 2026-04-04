@@ -30,9 +30,15 @@ const TodaySchedule = () => {
         try {
             setLoading(true);
             const [scheduleData, pinsData] = await Promise.all([
-                getSchedule(selectedDate, statusFilter),
+                getSchedule(selectedDate, statusFilter, 'nearest'),
                 getClinicalPins()
             ]);
+            if (Array.isArray(scheduleData) && scheduleData.length > 0) {
+                const resolvedDate = scheduleData[0]?.appointment_date;
+                if (resolvedDate && resolvedDate !== selectedDate) {
+                    setSelectedDate(resolvedDate);
+                }
+            }
             setSchedule(scheduleData);
             setPinnedItems(pinsData);
         } catch (err) {

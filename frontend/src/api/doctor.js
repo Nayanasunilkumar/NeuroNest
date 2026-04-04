@@ -27,11 +27,12 @@ export const rescheduleAppointment = async (id, date, time, consultationType = n
   return response.data;
 };
 
-export const getSchedule = async (date = null, status = 'all') => {
+export const getSchedule = async (date = null, status = 'all', fallback = null) => {
   let url = "/doctor/schedule";
   const params = new URLSearchParams();
   if (date) params.append("date", date);
   if (status) params.append("status", status);
+  if (fallback) params.append("fallback", fallback);
   if (params.toString()) url += `?${params.toString()}`;
   
   const response = await axios.get(url);

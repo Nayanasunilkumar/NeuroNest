@@ -111,7 +111,7 @@ const DoctorDashboard = () => {
           getDoctorProfile(),
           getDoctorStats(),
           getPatients(),
-          getSchedule(today, 'all'),
+          getSchedule(today, 'all', 'nearest'),
         ]);
 
         const [profileResult, statsResult, patientsResult, appointmentsResult] = results;

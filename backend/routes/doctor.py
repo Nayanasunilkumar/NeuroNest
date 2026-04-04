@@ -42,6 +42,15 @@ from services.appointment_call_service import (
 
 doctor_bp = Blueprint("doctor", __name__)
 
+DOCTOR_SCHEDULE_HIDDEN_STATUSES = ["pending", "rejected"]
+DOCTOR_ROSTER_EXCLUDED_STATUSES = ["rejected"]
+DOCTOR_TERMINAL_APPOINTMENT_STATUSES = [
+    "rejected",
+    "cancelled",
+    "cancelled_by_doctor",
+    "cancelled_by_patient",
+]
+
 def check_doctor_role():
     claims = get_jwt()
     if claims.get("role") != "doctor":
@@ -384,6 +393,7 @@ def get_doctor_schedule():
     current_user_id = int(get_jwt_identity())
     date_str = request.args.get('date')
     status_filter = request.args.get('status')
+    fallback_mode = (request.args.get('fallback') or '').strip().lower()
     
     if date_str:
         try:
@@ -402,10 +412,52 @@ def get_doctor_schedule():
         normalized_status = status_filter.lower().replace("-", "_")
         query = query.filter(Appointment.status == normalized_status)
     else:
-        # Default: Show everything except 'Pending' which should be in Requests
-        query = query.filter(Appointment.status.notin_(["pending"]))
+        # Default: Show schedule-facing records only. Pending belongs in Requests.
+        query = query.filter(Appointment.status.notin_(DOCTOR_SCHEDULE_HIDDEN_STATUSES))
         
     schedule = query.order_by(Appointment.appointment_time.asc()).all()
+
+    if not schedule and fallback_mode == "nearest":
+        nearest_date_query = Appointment.query.filter(
+            Appointment.doctor_id == current_user_id,
+            Appointment.appointment_date != target_date,
+        )
+
+        if status_filter and status_filter.lower() != 'all':
+            nearest_date_query = nearest_date_query.filter(Appointment.status == normalized_status)
+        else:
+            nearest_date_query = nearest_date_query.filter(
+                Appointment.status.notin_(DOCTOR_SCHEDULE_HIDDEN_STATUSES)
+            )
+
+        candidate_dates = [
+            row[0]
+            for row in nearest_date_query.with_entities(Appointment.appointment_date).distinct().all()
+            if row[0]
+        ]
+
+        if candidate_dates:
+            nearest_date = min(
+                candidate_dates,
+                key=lambda candidate: (
+                    abs((candidate - target_date).days),
+                    0 if candidate >= target_date else 1,
+                    candidate,
+                ),
+            )
+            schedule = (
+                Appointment.query.filter(
+                    Appointment.doctor_id == current_user_id,
+                    Appointment.appointment_date == nearest_date,
+                )
+                .filter(
+                    Appointment.status == normalized_status
+                    if status_filter and status_filter.lower() != 'all'
+                    else Appointment.status.notin_(DOCTOR_SCHEDULE_HIDDEN_STATUSES)
+                )
+                .order_by(Appointment.appointment_time.asc())
+                .all()
+            )
     
     return jsonify([appt.to_dict() for appt in schedule]), 200
 
@@ -840,10 +892,10 @@ def get_doctor_patients():
     
     current_user_id = int(get_jwt_identity())
     
-    # A patient belongs to a doctor if they have an Approved or Completed appointment
+    # A patient belongs to a doctor if they have a real clinical booking history.
     patient_ids = db.session.query(Appointment.patient_id).filter(
         Appointment.doctor_id == current_user_id,
-        Appointment.status.in_(['approved', 'completed'])
+        Appointment.status.notin_(DOCTOR_ROSTER_EXCLUDED_STATUSES)
     ).distinct().all()
     
     patient_ids = [pid[0] for pid in patient_ids]
@@ -859,27 +911,32 @@ def get_doctor_patients():
         if not patient_user:
             continue
         
-        # Fetch Last Visit (Completed or past Approved)
+        # Fetch the latest historical interaction from a real appointment record.
         last_visit = Appointment.query.filter(
             Appointment.patient_id == pid,
             Appointment.doctor_id == current_user_id,
-            Appointment.status.in_(['completed', 'approved']),
+            Appointment.status.notin_(DOCTOR_TERMINAL_APPOINTMENT_STATUSES),
             or_(
                 Appointment.appointment_date < now.date(),
                 and_(Appointment.appointment_date == now.date(), Appointment.appointment_time <= now.time())
             )
         ).order_by(desc(Appointment.appointment_date), desc(Appointment.appointment_time)).first()
 
-        # Fetch Next Visit (Upcoming Approved, Pending, or Rescheduled)
+        # Fetch the next real upcoming appointment the doctor still needs to service.
         next_visit = Appointment.query.filter(
             Appointment.patient_id == pid,
             Appointment.doctor_id == current_user_id,
-            Appointment.status.in_(['approved', 'pending', 'rescheduled']),
+            Appointment.status.notin_(DOCTOR_TERMINAL_APPOINTMENT_STATUSES),
             or_(
                 Appointment.appointment_date > now.date(),
                 and_(Appointment.appointment_date == now.date(), Appointment.appointment_time > now.time())
             )
         ).order_by(Appointment.appointment_date.asc(), Appointment.appointment_time.asc()).first()
+
+        is_active = bool(next_visit)
+        if not is_active and last_visit:
+            last_visit_dt = datetime.combine(last_visit.appointment_date, last_visit.appointment_time)
+            is_active = (now - last_visit_dt).days <= 180
 
         patients_data.append({
             "id": pid,
@@ -890,7 +947,7 @@ def get_doctor_patients():
             "next_appointment": str(next_visit.appointment_date) if next_visit else None,
             "next_appointment_time": str(next_visit.appointment_time) if next_visit else None,
             "next_appointment_status": next_visit.status if next_visit else None,
-            "status": "Active" if patient_user.email == 'nezrinnoushad20@gmail.com' else "Inactive"
+            "status": "Active" if is_active else "Inactive"
         })
 
     return jsonify(patients_data), 200
