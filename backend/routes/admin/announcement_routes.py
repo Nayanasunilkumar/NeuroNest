@@ -15,6 +15,7 @@ admin_announcements_bp = Blueprint("admin_announcements", __name__)
 VALID_STATUSES = {"Draft", "Scheduled", "Published", "Expired", "Archived"}
 VALID_PRIORITIES = {"Low", "Medium", "High", "Critical"}
 VALID_CATEGORIES = ("System", "Policy", "Emergency", "General")
+DEMO_ANNOUNCEMENT_PREFIX = "Demo Announcement | "
 ANNOUNCEMENT_AUDIENCE_MATRIX = (
     ("all_users", [{"type": "All", "value": None}]),
     ("all_doctors", [{"type": "Role", "value": "doctor"}]),
@@ -128,107 +129,250 @@ def _audience_key_from_targets(targets):
     return "all_users"
 
 
-def _seed_announcement_matrix(admin_user, only_if_empty=False):
-    if only_if_empty and Announcement.query.count() > 0:
-        return 0
+def _is_demo_announcement_row(announcement):
+    return bool(
+        (announcement.title or "").startswith(DEMO_ANNOUNCEMENT_PREFIX)
+        or (announcement.content or "").startswith("Demo announcement for ")
+    )
 
-    doctor_user, patient_user = _get_seed_target_users()
-    audience_keys = [
-        "all_users",
-        "all_doctors",
-        "all_patients",
-        "admin_only",
-        "monitoring_doctors",
-        "suspended_doctors",
+
+def _demo_blueprints(doctor_user, patient_user):
+    rows = [
+        {
+            "status": "Published",
+            "priority": "Medium",
+            "category": "System",
+            "audience_key": "all_users",
+            "title_suffix": "Platform service window",
+            "content": "Demo announcement for a platform-wide service notice and general product update.",
+        },
+        {
+            "status": "Published",
+            "priority": "High",
+            "category": "Policy",
+            "audience_key": "all_patients",
+            "title_suffix": "Consent policy reminder",
+            "content": "Demo announcement for updated patient consent guidance and compliance visibility.",
+        },
+        {
+            "status": "Published",
+            "priority": "Critical",
+            "category": "Emergency",
+            "audience_key": "all_doctors",
+            "title_suffix": "Urgent escalation pathway",
+            "content": "Demo announcement for urgent doctor communication and emergency escalation handling.",
+        },
+        {
+            "status": "Published",
+            "priority": "Low",
+            "category": "General",
+            "audience_key": "admin_only",
+            "title_suffix": "Admin workflow note",
+            "content": "Demo announcement for internal admin operations and housekeeping communication.",
+        },
+        {
+            "status": "Scheduled",
+            "priority": "Medium",
+            "category": "System",
+            "audience_key": "all_users",
+            "title_suffix": "Scheduled maintenance reminder",
+            "content": "Demo announcement for an upcoming maintenance reminder visible before publish time.",
+        },
+        {
+            "status": "Scheduled",
+            "priority": "High",
+            "category": "Policy",
+            "audience_key": "monitoring_doctors",
+            "title_suffix": "Monitoring review update",
+            "content": "Demo announcement for monitoring doctors about a scheduled governance review window.",
+        },
+        {
+            "status": "Scheduled",
+            "priority": "Critical",
+            "category": "Emergency",
+            "audience_key": "suspended_doctors",
+            "title_suffix": "Account remediation notice",
+            "content": "Demo announcement for suspended doctors covering the next remediation checkpoint.",
+        },
+        {
+            "status": "Draft",
+            "priority": "Medium",
+            "category": "Policy",
+            "audience_key": "admin_only",
+            "title_suffix": "Draft handbook revision",
+            "content": "Demo announcement draft for a policy handbook revision awaiting admin approval.",
+        },
+        {
+            "status": "Draft",
+            "priority": "Low",
+            "category": "General",
+            "audience_key": "all_patients",
+            "title_suffix": "Wellness campaign preview",
+            "content": "Demo announcement draft for a future patient-facing wellness communication.",
+        },
+        {
+            "status": "Archived",
+            "priority": "Low",
+            "category": "System",
+            "audience_key": "all_users",
+            "title_suffix": "Past release summary",
+            "content": "Demo announcement showing an archived platform release summary for demonstration.",
+        },
+        {
+            "status": "Archived",
+            "priority": "High",
+            "category": "Emergency",
+            "audience_key": "all_doctors",
+            "title_suffix": "Resolved outage bulletin",
+            "content": "Demo announcement showing a completed emergency bulletin kept for audit history.",
+        },
     ]
-    if doctor_user:
-        audience_keys.append("specific_doctor")
-    if patient_user:
-        audience_keys.append("specific_patient")
 
-    existing_signatures = set()
-    for row in Announcement.query.all():
-        existing_signatures.add(
-            (
-                row.status or "",
-                row.priority or "",
-                row.category or "",
-                bool(row.is_pinned),
-                bool(row.require_acknowledgement),
-                _audience_key_from_targets(row.targets),
-            )
+    if doctor_user:
+        rows.append(
+            {
+                "status": "Scheduled",
+                "priority": "Medium",
+                "category": "General",
+                "audience_key": "specific_doctor",
+                "title_suffix": f"Doctor briefing for #{doctor_user.id}",
+                "content": "Demo announcement for a doctor-specific operational briefing.",
+            }
+        )
+    if patient_user:
+        rows.append(
+            {
+                "status": "Draft",
+                "priority": "Medium",
+                "category": "General",
+                "audience_key": "specific_patient",
+                "title_suffix": f"Patient outreach for #{patient_user.id}",
+                "content": "Demo announcement draft for a patient-specific outreach message.",
+            }
         )
 
+    return rows
+
+
+def _demo_signature_from_values(status, priority, category, is_pinned, require_ack, audience_key):
+    return (
+        status or "",
+        priority or "",
+        category or "",
+        bool(is_pinned),
+        bool(require_ack),
+        audience_key or "all_users",
+    )
+
+
+def _demo_signature_from_announcement(announcement):
+    return _demo_signature_from_values(
+        announcement.status,
+        announcement.priority,
+        announcement.category,
+        announcement.is_pinned,
+        announcement.require_acknowledgement,
+        _audience_key_from_targets(announcement.targets),
+    )
+
+
+def _sync_demo_announcements(admin_user):
+    doctor_user, patient_user = _get_seed_target_users()
     now = datetime.utcnow().replace(microsecond=0)
+    desired = {}
+
+    for blueprint in _demo_blueprints(doctor_user, patient_user):
+        is_pinned = blueprint["priority"] == "Critical"
+        require_ack = blueprint["priority"] in ("High", "Critical") or blueprint["category"] == "Policy"
+        signature = _demo_signature_from_values(
+            blueprint["status"],
+            blueprint["priority"],
+            blueprint["category"],
+            is_pinned,
+            require_ack,
+            blueprint["audience_key"],
+        )
+        desired[signature] = {
+            **blueprint,
+            "is_pinned": is_pinned,
+            "require_ack": require_ack,
+        }
+
+    existing_demo_by_signature = {}
+    duplicate_demo_rows = []
+    stale_demo_rows = []
+
+    for row in Announcement.query.order_by(Announcement.id.asc()).all():
+        if not _is_demo_announcement_row(row):
+            continue
+        signature = _demo_signature_from_announcement(row)
+        if signature not in desired:
+            stale_demo_rows.append(row)
+            continue
+        if signature in existing_demo_by_signature:
+            duplicate_demo_rows.append(row)
+            continue
+        existing_demo_by_signature[signature] = row
+
+    removed = 0
+    for row in stale_demo_rows + duplicate_demo_rows:
+        db.session.delete(row)
+        removed += 1
+
     created = 0
+    for signature, blueprint in desired.items():
+        if signature in existing_demo_by_signature:
+            row = existing_demo_by_signature[signature]
+            row.title = f"{DEMO_ANNOUNCEMENT_PREFIX}{blueprint['title_suffix']}"
+            row.content = blueprint["content"]
+            row.updated_by = admin_user.id
+            continue
 
-    for status in ("Draft", "Scheduled", "Published", "Expired", "Archived"):
-        for priority in ("Low", "Medium", "High", "Critical"):
-            for category in VALID_CATEGORIES:
-                for audience_key in audience_keys:
-                    is_pinned = priority == "Critical"
-                    require_ack = priority in ("High", "Critical") or category == "Policy"
-                    signature = (
-                        status,
-                        priority,
-                        category,
-                        bool(is_pinned),
-                        bool(require_ack),
-                        audience_key,
-                    )
-                    if signature in existing_signatures:
-                        continue
+        publish_at = None
+        expiry_at = None
+        if blueprint["status"] == "Scheduled":
+            publish_at = now + timedelta(hours=3)
+        elif blueprint["status"] == "Published":
+            publish_at = now - timedelta(hours=1)
+        elif blueprint["status"] == "Archived":
+            publish_at = now - timedelta(days=5)
+            expiry_at = now - timedelta(days=2)
 
-                    publish_at = None
-                    expiry_at = None
-                    if status == "Scheduled":
-                        publish_at = now + timedelta(hours=2)
-                    elif status == "Published":
-                        publish_at = now
-                    elif status == "Expired":
-                        publish_at = now.replace(day=now.day)
-                        expiry_at = now
-                    elif status == "Archived":
-                        publish_at = now
-                        expiry_at = now
+        announcement = Announcement(
+            title=f"{DEMO_ANNOUNCEMENT_PREFIX}{blueprint['title_suffix']}",
+            content=blueprint["content"],
+            category=blueprint["category"],
+            priority=blueprint["priority"],
+            status=blueprint["status"],
+            publish_at=publish_at,
+            expiry_at=expiry_at,
+            created_by=admin_user.id,
+            updated_by=admin_user.id,
+            is_pinned=blueprint["is_pinned"],
+            require_acknowledgement=blueprint["require_ack"],
+        )
+        db.session.add(announcement)
+        db.session.flush()
 
-                    title = f"{category} {priority} {status} | {audience_key.replace('_', ' ').title()}"
-                    content = (
-                        f"Demo announcement for {category.lower()} communication, "
-                        f"{priority.lower()} priority, {status.lower()} lifecycle, "
-                        f"targeted to {audience_key.replace('_', ' ')}."
-                    )
-                    announcement = Announcement(
-                        title=title,
-                        content=content,
-                        category=category,
-                        priority=priority,
-                        status=status,
-                        publish_at=publish_at,
-                        expiry_at=expiry_at,
-                        created_by=admin_user.id,
-                        updated_by=admin_user.id,
-                        is_pinned=is_pinned,
-                        require_acknowledgement=require_ack,
-                    )
-                    db.session.add(announcement)
-                    db.session.flush()
+        for target in _build_seed_targets(blueprint["audience_key"], doctor_user, patient_user):
+            db.session.add(
+                AnnouncementTarget(
+                    announcement_id=announcement.id,
+                    target_type=target["type"],
+                    target_value=target["value"],
+                )
+            )
+        created += 1
 
-                    for target in _build_seed_targets(audience_key, doctor_user, patient_user):
-                        db.session.add(
-                            AnnouncementTarget(
-                                announcement_id=announcement.id,
-                                target_type=target["type"],
-                                target_value=target["value"],
-                            )
-                        )
-
-                    existing_signatures.add(signature)
-                    created += 1
-
-    if created:
+    if created or removed:
         db.session.commit()
-    return created
+    return {"created": created, "removed": removed, "total_demo": len(desired)}
+
+
+def _seed_announcement_matrix(admin_user, only_if_empty=False):
+    if only_if_empty and Announcement.query.count() > 0:
+        return {"created": 0, "removed": 0, "total_demo": 0}
+    return _sync_demo_announcements(admin_user)
 
 
 def _normalize_targets(data):
@@ -412,9 +556,15 @@ def get_all_announcements():
     user, err = _require_admin_user()
     if err:
         return err
-    if Announcement.query.count() == 0:
+    demo_count = Announcement.query.filter(
+        or_(
+            Announcement.title.like(f"{DEMO_ANNOUNCEMENT_PREFIX}%"),
+            Announcement.content.like("Demo announcement for %"),
+        )
+    ).count()
+    if Announcement.query.count() == 0 or demo_count > 24:
         try:
-            _seed_announcement_matrix(user, only_if_empty=True)
+            _sync_demo_announcements(user)
         except Exception:
             db.session.rollback()
 
@@ -475,8 +625,8 @@ def seed_announcement_combinations():
         return err
 
     try:
-        created = _seed_announcement_matrix(user, only_if_empty=False)
-        return jsonify({"message": "Announcement combinations seeded", "created": created}), 200
+        result = _sync_demo_announcements(user)
+        return jsonify({"message": "Announcement demo set synced", **result}), 200
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 400
