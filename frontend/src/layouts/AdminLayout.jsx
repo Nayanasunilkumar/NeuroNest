@@ -30,6 +30,7 @@ const ADMIN_NAV_ITEMS = [
   { label: 'Doctors', to: '/admin/manage-doctors', icon: Stethoscope },
   { label: 'Appointments', to: '/admin/appointment-management', icon: CalendarDays },
   { label: 'Feedback & Reviews', to: '/admin/review-management', icon: Star },
+  { label: 'Announcements', to: '/admin/announcements', icon: Bell },
   { label: 'Reports', to: '/admin/reports-analytics', icon: BarChart3 },
   { label: 'Settings', to: '/admin/settings', icon: Settings },
 ];
