@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import get_jwt_identity, jwt_required
@@ -14,6 +14,15 @@ admin_announcements_bp = Blueprint("admin_announcements", __name__)
 
 VALID_STATUSES = {"Draft", "Scheduled", "Published", "Expired", "Archived"}
 VALID_PRIORITIES = {"Low", "Medium", "High", "Critical"}
+VALID_CATEGORIES = ("System", "Policy", "Emergency", "General")
+ANNOUNCEMENT_AUDIENCE_MATRIX = (
+    ("all_users", [{"type": "All", "value": None}]),
+    ("all_doctors", [{"type": "Role", "value": "doctor"}]),
+    ("all_patients", [{"type": "Role", "value": "patient"}]),
+    ("admin_only", [{"type": "Audience", "value": "admin_only"}]),
+    ("monitoring_doctors", [{"type": "Audience", "value": "monitoring_doctors"}]),
+    ("suspended_doctors", [{"type": "Audience", "value": "suspended_doctors"}]),
+)
 
 
 def _to_int_identity(identity):
@@ -56,6 +65,170 @@ def _normalize_status(value, publish_at):
 def _normalize_priority(value):
     priority = (value or "Low").title()
     return priority if priority in VALID_PRIORITIES else "Low"
+
+
+def _get_seed_target_users():
+    doctor_user = (
+        User.query.filter(
+            User.is_deleted == False,
+            User.role.ilike("doctor"),
+        )
+        .order_by(User.id.asc())
+        .first()
+    )
+    patient_user = (
+        User.query.filter(
+            User.is_deleted == False,
+            User.role.ilike("patient"),
+        )
+        .order_by(User.id.asc())
+        .first()
+    )
+    return doctor_user, patient_user
+
+
+def _build_seed_targets(audience_key, doctor_user, patient_user):
+    if audience_key == "specific_doctor" and doctor_user:
+        return [
+            {"type": "Audience", "value": "specific_doctor"},
+            {"type": "User", "value": str(doctor_user.id)},
+        ]
+    if audience_key == "specific_patient" and patient_user:
+        return [
+            {"type": "Audience", "value": "specific_patient"},
+            {"type": "User", "value": str(patient_user.id)},
+        ]
+    for key, targets in ANNOUNCEMENT_AUDIENCE_MATRIX:
+        if key == audience_key:
+            return targets
+    return [{"type": "All", "value": None}]
+
+
+def _audience_key_from_targets(targets):
+    if not targets:
+        return "all_users"
+
+    target_pairs = {(t.target_type, t.target_value or "") for t in targets}
+    if ("Audience", "specific_doctor") in target_pairs:
+        return "specific_doctor"
+    if ("Audience", "specific_patient") in target_pairs:
+        return "specific_patient"
+    if ("Audience", "monitoring_doctors") in target_pairs:
+        return "monitoring_doctors"
+    if ("Audience", "suspended_doctors") in target_pairs:
+        return "suspended_doctors"
+    if ("Audience", "admin_only") in target_pairs:
+        return "admin_only"
+    if ("All", "") in target_pairs or ("All", None) in target_pairs:
+        return "all_users"
+    if ("Role", "doctor") in target_pairs:
+        return "all_doctors"
+    if ("Role", "patient") in target_pairs:
+        return "all_patients"
+    return "all_users"
+
+
+def _seed_announcement_matrix(admin_user, only_if_empty=False):
+    if only_if_empty and Announcement.query.count() > 0:
+        return 0
+
+    doctor_user, patient_user = _get_seed_target_users()
+    audience_keys = [
+        "all_users",
+        "all_doctors",
+        "all_patients",
+        "admin_only",
+        "monitoring_doctors",
+        "suspended_doctors",
+    ]
+    if doctor_user:
+        audience_keys.append("specific_doctor")
+    if patient_user:
+        audience_keys.append("specific_patient")
+
+    existing_signatures = set()
+    for row in Announcement.query.all():
+        existing_signatures.add(
+            (
+                row.status or "",
+                row.priority or "",
+                row.category or "",
+                bool(row.is_pinned),
+                bool(row.require_acknowledgement),
+                _audience_key_from_targets(row.targets),
+            )
+        )
+
+    now = datetime.utcnow().replace(microsecond=0)
+    created = 0
+
+    for status in ("Draft", "Scheduled", "Published", "Expired", "Archived"):
+        for priority in ("Low", "Medium", "High", "Critical"):
+            for category in VALID_CATEGORIES:
+                for audience_key in audience_keys:
+                    is_pinned = priority == "Critical"
+                    require_ack = priority in ("High", "Critical") or category == "Policy"
+                    signature = (
+                        status,
+                        priority,
+                        category,
+                        bool(is_pinned),
+                        bool(require_ack),
+                        audience_key,
+                    )
+                    if signature in existing_signatures:
+                        continue
+
+                    publish_at = None
+                    expiry_at = None
+                    if status == "Scheduled":
+                        publish_at = now + timedelta(hours=2)
+                    elif status == "Published":
+                        publish_at = now
+                    elif status == "Expired":
+                        publish_at = now.replace(day=now.day)
+                        expiry_at = now
+                    elif status == "Archived":
+                        publish_at = now
+                        expiry_at = now
+
+                    title = f"{category} {priority} {status} | {audience_key.replace('_', ' ').title()}"
+                    content = (
+                        f"Demo announcement for {category.lower()} communication, "
+                        f"{priority.lower()} priority, {status.lower()} lifecycle, "
+                        f"targeted to {audience_key.replace('_', ' ')}."
+                    )
+                    announcement = Announcement(
+                        title=title,
+                        content=content,
+                        category=category,
+                        priority=priority,
+                        status=status,
+                        publish_at=publish_at,
+                        expiry_at=expiry_at,
+                        created_by=admin_user.id,
+                        updated_by=admin_user.id,
+                        is_pinned=is_pinned,
+                        require_acknowledgement=require_ack,
+                    )
+                    db.session.add(announcement)
+                    db.session.flush()
+
+                    for target in _build_seed_targets(audience_key, doctor_user, patient_user):
+                        db.session.add(
+                            AnnouncementTarget(
+                                announcement_id=announcement.id,
+                                target_type=target["type"],
+                                target_value=target["value"],
+                            )
+                        )
+
+                    existing_signatures.add(signature)
+                    created += 1
+
+    if created:
+        db.session.commit()
+    return created
 
 
 def _normalize_targets(data):
@@ -239,7 +412,11 @@ def get_all_announcements():
     user, err = _require_admin_user()
     if err:
         return err
-    _ = user
+    if Announcement.query.count() == 0:
+        try:
+            _seed_announcement_matrix(user, only_if_empty=True)
+        except Exception:
+            db.session.rollback()
 
     _auto_transition_announcement_statuses()
 
@@ -288,6 +465,21 @@ def get_all_announcements():
     }
 
     return jsonify({"items": filtered, "stats": stats}), 200
+
+
+@admin_announcements_bp.route("/seed-combinations", methods=["POST"])
+@jwt_required()
+def seed_announcement_combinations():
+    user, err = _require_admin_user()
+    if err:
+        return err
+
+    try:
+        created = _seed_announcement_matrix(user, only_if_empty=False)
+        return jsonify({"message": "Announcement combinations seeded", "created": created}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 400
 
 
 @admin_announcements_bp.route("/", methods=["POST"])
