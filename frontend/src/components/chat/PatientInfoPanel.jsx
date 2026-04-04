@@ -31,7 +31,7 @@ const PatientInfoPanel = ({ context, loading }) => {
     };
 
     return (
-        <div className="d-flex flex-column bg-light border-start border-light h-100 overflow-y-auto custom-scrollbar" style={{ width: '380px', flexShrink: 0 }}>
+        <div className="doctor-chat-info-panel d-flex flex-column bg-light border-start border-light h-100 overflow-y-auto custom-scrollbar" style={{ width: '380px', flexShrink: 0 }}>
             {/* Identity Card */}
             <div className="p-4 text-center bg-white border-bottom border-light">
                 <Avatar 
@@ -176,6 +176,47 @@ const PatientInfoPanel = ({ context, loading }) => {
                 .custom-scrollbar::-webkit-scrollbar { width: 4px; }
                 .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
                 .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+                body.dark .doctor-chat-info-panel {
+                    background-color: var(--nn-surface-secondary) !important;
+                    border-color: var(--nn-border) !important;
+                }
+                body.dark .doctor-chat-info-panel .bg-white {
+                    background-color: var(--nn-surface) !important;
+                }
+                body.dark .doctor-chat-info-panel .bg-light {
+                    background-color: var(--nn-surface-secondary) !important;
+                }
+                body.dark .doctor-chat-info-panel .text-dark,
+                body.dark .doctor-chat-info-panel h3,
+                body.dark .doctor-chat-info-panel h4 {
+                    color: var(--nn-text-main) !important;
+                }
+                body.dark .doctor-chat-info-panel .text-secondary,
+                body.dark .doctor-chat-info-panel p,
+                body.dark .doctor-chat-info-panel span,
+                body.dark .doctor-chat-info-panel .small {
+                    color: var(--nn-text-muted) !important;
+                }
+                body.dark .doctor-chat-info-panel .border,
+                body.dark .doctor-chat-info-panel .border-light,
+                body.dark .doctor-chat-info-panel .border-start,
+                body.dark .doctor-chat-info-panel .border-end,
+                body.dark .doctor-chat-info-panel .border-bottom,
+                body.dark .doctor-chat-info-panel .border-top {
+                    border-color: var(--nn-border) !important;
+                }
+                body.dark .doctor-chat-info-panel .btn-light {
+                    background-color: color-mix(in srgb, var(--nn-surface-secondary) 88%, transparent) !important;
+                    color: var(--nn-text-secondary) !important;
+                    border-color: var(--nn-border) !important;
+                }
+                body.dark .doctor-chat-info-panel .hover-bg-light:hover {
+                    background-color: color-mix(in srgb, var(--nn-primary) 18%, var(--nn-surface-secondary)) !important;
+                    color: var(--nn-text-main) !important;
+                }
+                body.dark .doctor-chat-info-panel .custom-scrollbar::-webkit-scrollbar-thumb {
+                    background: #475569;
+                }
             `}</style>
         </div>
     );

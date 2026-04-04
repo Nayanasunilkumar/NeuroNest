@@ -177,7 +177,7 @@ const ChatWindow = ({ messages, currentUserId, onSendMessage, onDeleteMessage, l
     };
 
     return (
-        <div className="d-flex flex-column flex-grow-1 position-relative bg-transparent min-w-0" style={{ minHeight: 0, overflow: 'hidden' }}>
+        <div className="doctor-chat-window d-flex flex-column flex-grow-1 position-relative bg-transparent min-w-0" style={{ minHeight: 0, overflow: 'hidden' }}>
             {/* MESSAGES AREA */}
             <div
                 className="flex-grow-1 overflow-y-auto p-4 d-flex flex-column gap-3 custom-scrollbar"
@@ -311,6 +311,40 @@ const ChatWindow = ({ messages, currentUserId, onSendMessage, onDeleteMessage, l
                 .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
                 .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
                 .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+                body.dark .doctor-chat-window .text-dark,
+                body.dark .doctor-chat-window h3 {
+                    color: var(--nn-text-main) !important;
+                }
+                body.dark .doctor-chat-window .text-secondary,
+                body.dark .doctor-chat-window p,
+                body.dark .doctor-chat-window .small {
+                    color: var(--nn-text-muted) !important;
+                }
+                body.dark .doctor-chat-window .bg-white {
+                    background-color: var(--nn-surface) !important;
+                }
+                body.dark .doctor-chat-window .border-light,
+                body.dark .doctor-chat-window .border-top {
+                    border-color: var(--nn-border) !important;
+                }
+                body.dark .doctor-chat-window .btn-light {
+                    background-color: color-mix(in srgb, var(--nn-surface-secondary) 88%, transparent) !important;
+                    color: var(--nn-text-secondary) !important;
+                    border-color: var(--nn-border) !important;
+                }
+                body.dark .doctor-chat-window .hover-bg-light:hover {
+                    background-color: color-mix(in srgb, var(--nn-primary) 18%, var(--nn-surface-secondary)) !important;
+                    color: var(--nn-text-main) !important;
+                }
+                body.dark .doctor-chat-window textarea {
+                    color: var(--nn-text-main) !important;
+                }
+                body.dark .doctor-chat-window textarea::placeholder {
+                    color: var(--nn-text-muted) !important;
+                }
+                body.dark .doctor-chat-window .custom-scrollbar::-webkit-scrollbar-thumb {
+                    background: #475569;
+                }
                 .chat-new-messages-btn {
                     position: absolute;
                     left: 50%;

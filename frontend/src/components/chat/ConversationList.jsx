@@ -86,7 +86,7 @@ const ConversationList = ({ conversations, selectedId, onSelect, currentUserId }
     };
 
     return (
-        <div className="d-flex flex-column border-end h-100" style={{ width: '400px', flexShrink: 0, backgroundColor: '#f8fafc', borderColor: '#e2e8f0' }}>
+        <div className="doctor-chat-sidebar d-flex flex-column border-end h-100" style={{ width: '400px', flexShrink: 0, backgroundColor: '#f8fafc', borderColor: '#e2e8f0' }}>
             {/* Header */}
             <div className="p-4 pb-3">
                 <div className="position-relative">
@@ -158,6 +158,36 @@ const ConversationList = ({ conversations, selectedId, onSelect, currentUserId }
                 .custom-scrollbar::-webkit-scrollbar { width: 5px; }
                 .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
                 .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+                body.dark .doctor-chat-sidebar {
+                    background-color: var(--nn-surface-secondary) !important;
+                    border-color: var(--nn-border) !important;
+                }
+                body.dark .doctor-chat-sidebar .search-input {
+                    background-color: var(--nn-surface) !important;
+                    color: var(--nn-text-main) !important;
+                }
+                body.dark .doctor-chat-sidebar .search-input::placeholder {
+                    color: var(--nn-text-muted) !important;
+                }
+                body.dark .doctor-chat-sidebar h3,
+                body.dark .doctor-chat-sidebar .text-dark {
+                    color: var(--nn-text-main) !important;
+                }
+                body.dark .doctor-chat-sidebar p,
+                body.dark .doctor-chat-sidebar .text-secondary,
+                body.dark .doctor-chat-sidebar .small,
+                body.dark .doctor-chat-sidebar .text-uppercase {
+                    color: var(--nn-text-muted) !important;
+                }
+                body.dark .doctor-chat-sidebar .conv-item:hover,
+                body.dark .doctor-chat-sidebar .conv-item.active {
+                    background-color: color-mix(in srgb, var(--nn-surface) 92%, #020617) !important;
+                    border-color: var(--nn-border) !important;
+                    box-shadow: 0 10px 24px rgba(2, 6, 23, 0.28) !important;
+                }
+                body.dark .doctor-chat-sidebar .custom-scrollbar::-webkit-scrollbar-thumb {
+                    background: #475569;
+                }
             `}</style>
         </div>
     );

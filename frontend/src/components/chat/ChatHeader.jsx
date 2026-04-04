@@ -73,7 +73,7 @@ const ChatHeader = ({ otherUser, context, isDoctor, onToggleSidebar, showSidebar
     };
 
     return (
-        <div className="d-flex align-items-center justify-content-between px-4 py-3 border-bottom bg-white bg-opacity-75" style={{ backdropFilter: 'blur(12px)', position: 'sticky', top: 0, zIndex: 10 }}>
+        <div className="doctor-chat-header d-flex align-items-center justify-content-between px-4 py-3 border-bottom bg-white bg-opacity-75" style={{ backdropFilter: 'blur(12px)', position: 'sticky', top: 0, zIndex: 10 }}>
             {/* Identity Area */}
             <div className="d-flex align-items-center gap-3">
                 <div 
@@ -161,6 +161,33 @@ const ChatHeader = ({ otherUser, context, isDoctor, onToggleSidebar, showSidebar
                 .btn-primary { background: var(--nn-primary); border: none; }
                 .btn-primary:hover { background: var(--nn-primary-dark); transform: translateY(-1px); }
                 .bg-light { background-color: #f8fafc !important; }
+                body.dark .doctor-chat-header {
+                    background: color-mix(in srgb, var(--nn-surface) 94%, #020617) !important;
+                    border-color: var(--nn-border) !important;
+                }
+                body.dark .doctor-chat-header .bg-light {
+                    background-color: var(--nn-surface-secondary) !important;
+                }
+                body.dark .doctor-chat-header .text-dark,
+                body.dark .doctor-chat-header h3 {
+                    color: var(--nn-text-main) !important;
+                }
+                body.dark .doctor-chat-header .text-secondary,
+                body.dark .doctor-chat-header span,
+                body.dark .doctor-chat-header .opacity-50 {
+                    color: var(--nn-text-muted) !important;
+                }
+                body.dark .doctor-chat-header .border,
+                body.dark .doctor-chat-header .vr,
+                body.dark .doctor-chat-header .border-end {
+                    border-color: var(--nn-border) !important;
+                    background-color: var(--nn-border) !important;
+                }
+                body.dark .doctor-chat-header .btn-light {
+                    background-color: color-mix(in srgb, var(--nn-surface-secondary) 88%, transparent) !important;
+                    color: var(--nn-text-secondary) !important;
+                    border-color: var(--nn-border) !important;
+                }
             `}</style>
         </div>
     );

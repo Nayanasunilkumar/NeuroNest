@@ -145,19 +145,37 @@
 
 /* Dark Mode Overrides */
 .dark .doc-settings-root {
-    background: var(--nn-surface);
-    border-color: var(--nn-text-secondary);
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+    background:
+        radial-gradient(circle at top left, rgba(37, 99, 235, 0.14), transparent 28%),
+        linear-gradient(180deg, #162033 0%, #0f172a 100%);
+    border-color: var(--nn-border);
+    box-shadow: 0 24px 60px rgba(2, 6, 23, 0.36);
 }
-.dark .doc-settings-title { color: var(--nn-bg); }
-.dark .doc-settings-subtitle { color: var(--nn-text-disabled); }
-.dark .doc-settings-header { border-color: var(--nn-text-secondary); }
-.dark .doc-settings-tabs-topbar { border-color: var(--nn-text-secondary); }
-.dark .doc-tab-button-top { color: var(--nn-text-disabled); }
-.dark .doc-tab-button-top:hover { background: var(--nn-text-secondary); color: var(--nn-bg); }
-.dark .doc-tab-button-top.active { background: rgba(59, 130, 246, 0.15); color: var(--nn-info-text); border-bottom-color: var(--nn-primary); }
+.dark .doc-settings-title { color: var(--nn-text-main); }
+.dark .doc-settings-subtitle { color: var(--nn-text-muted); }
+.dark .doc-settings-header { border-color: var(--nn-border); }
+.dark .doc-settings-tabs-topbar {
+    border-color: var(--nn-border);
+    background: color-mix(in srgb, var(--nn-surface) 92%, transparent);
+    box-shadow: inset 0 0 0 1px rgba(51, 65, 85, 0.9);
+}
+.dark .doc-tab-button-top { color: var(--nn-text-muted); }
+.dark .doc-tab-button-top:hover {
+    background: color-mix(in srgb, var(--nn-primary) 16%, var(--nn-surface-secondary));
+    color: var(--nn-text-main);
+}
+.dark .doc-tab-button-top.active {
+    background: linear-gradient(135deg, rgba(37, 99, 235, 0.28) 0%, rgba(79, 70, 229, 0.22) 100%);
+    color: #bfdbfe;
+    border-bottom-color: transparent;
+    box-shadow: 0 10px 24px rgba(37, 99, 235, 0.2);
+}
 .dark .settings-pane-placeholder,
-.dark .loading-state-vault { background: var(--nn-surface); border-color: var(--nn-text-secondary); color: var(--nn-text-muted); }
+.dark .loading-state-vault {
+    background: color-mix(in srgb, var(--nn-surface) 94%, #020617);
+    border-color: var(--nn-border);
+    color: var(--nn-text-muted);
+}
 
 /* Responsive Flow */
 @media (max-width: 960px) {
@@ -414,18 +432,59 @@
 .error-text { color: var(--nn-danger); font-size: 13px; font-weight: 600; }
 
 /* Dark Mode Extends */
-.dark .settings-pane-container { border-color: var(--nn-text-secondary); }
-.dark .pane-header { border-color: var(--nn-text-secondary); }
-.dark .pane-header h2, .dark .form-group-header h3 { color: var(--nn-bg); }
-.dark .form-field label { color: var(--nn-divider); }
-.dark .premium-select, .dark .premium-input { background: var(--nn-text-main); border-color: var(--nn-text-secondary); color: var(--nn-bg); }
-.dark .helper-text-block { background: var(--nn-text-main); }
-.dark .radio-card { background: var(--nn-text-main); border-color: var(--nn-text-secondary); }
-.dark .radio-card:hover { border-color: var(--nn-divider); }
-.dark .radio-card.active { background: rgba(59, 130, 246, 0.1); border-color: var(--nn-primary); }
-.dark .card-content h4 { color: var(--nn-bg); }
+.dark .settings-pane-container { border-color: var(--nn-border); }
+.dark .pane-header { border-color: var(--nn-border); }
+.dark .pane-header h2,
+.dark .form-group-header h3,
+.dark .settings-pane-container .form-group-header h3,
+.dark .privacy-toggle-info h4 { color: var(--nn-text-main) !important; }
+.dark .pane-header p,
+.dark .settings-pane-container .pane-header p,
+.dark .card-content p,
+.dark .privacy-toggle-info p,
+.dark .settings-pane-container .field-hint,
+.dark .settings-pane-container .form-field .field-hint { color: var(--nn-text-muted) !important; }
+.dark .form-group-box,
+.dark .privacy-toggle-row {
+    background: color-mix(in srgb, var(--nn-surface) 94%, #020617);
+    border-color: var(--nn-border);
+    box-shadow: 0 18px 44px rgba(2, 6, 23, 0.28);
+}
+.dark .settings-pane-container .form-field label,
+.dark .settings-pane-container .form-field > label { color: var(--nn-text-secondary) !important; }
+.dark .premium-select,
+.dark .premium-input {
+    background: linear-gradient(180deg, #162033 0%, #0f172a 100%);
+    border-color: var(--nn-border);
+    color: var(--nn-text-main);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.02);
+}
+.dark .premium-select::placeholder,
+.dark .premium-input::placeholder { color: var(--nn-text-muted); }
+.dark .premium-select:focus,
+.dark .premium-input:focus {
+    border-color: var(--nn-primary);
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.18);
+}
+.dark .helper-text-block {
+    background: color-mix(in srgb, var(--nn-surface-secondary) 82%, #020617);
+    color: var(--nn-text-muted);
+    border-color: var(--nn-border);
+}
+.dark .radio-card {
+    background: linear-gradient(180deg, #162033 0%, #111827 100%);
+    border-color: var(--nn-border);
+    box-shadow: 0 12px 28px rgba(2, 6, 23, 0.22);
+}
+.dark .radio-card:hover { border-color: var(--nn-border-strong); }
+.dark .radio-card.active {
+    background: linear-gradient(180deg, rgba(37, 99, 235, 0.22) 0%, rgba(29, 78, 216, 0.16) 100%);
+    border-color: var(--nn-primary);
+}
+.dark .card-content h4 { color: var(--nn-text-main); }
+.dark .card-indicator { border-color: var(--nn-border-strong); }
 .dark .alert-box.warning { background: rgba(245, 158, 11, 0.1); border-color: rgba(245, 158, 11, 0.2); color: var(--nn-warning); }
-.dark .pane-footer { border-color: var(--nn-text-secondary); }
+.dark .pane-footer { border-color: var(--nn-border); }
 
 /* Privacy Toggle Row */
 .privacy-toggle-group {
@@ -525,7 +584,8 @@
     transform: translateX(22px);
 }
 
-.dark .privacy-toggle-row { background: var(--nn-text-main); border-color: var(--nn-text-secondary); }
-.dark .privacy-toggle-info h4 { color: var(--nn-bg); }
-.dark .privacy-toggle-info .icon-wrap { background: var(--nn-surface); color: var(--nn-text-disabled); }
-.dark .toggle-slider { background-color: var(--nn-text-secondary); }
+.dark .privacy-toggle-info .icon-wrap {
+    background: color-mix(in srgb, var(--nn-surface-secondary) 84%, #020617);
+    color: var(--nn-text-secondary);
+}
+.dark .toggle-slider { background-color: var(--nn-border-strong); }
