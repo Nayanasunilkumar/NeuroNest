@@ -10,6 +10,22 @@ from models.announcement import Announcement
 admin_dashboard_bp = Blueprint("admin_dashboard", __name__)
 
 
+def _safe_count(label, query):
+    try:
+        return query.count()
+    except Exception as exc:
+        print(f"[ADMIN DASHBOARD] count failed for {label}: {exc}")
+        return 0
+
+
+def _safe_all(label, query):
+    try:
+        return query.all()
+    except Exception as exc:
+        print(f"[ADMIN DASHBOARD] query failed for {label}: {exc}")
+        return []
+
+
 def _format_relative_time(value):
     if not value:
         return "System"
@@ -55,15 +71,21 @@ def _build_chart_data():
 
     for day in days:
         next_day = day + timedelta(days=1)
-        intake = Appointment.query.filter(
-            Appointment.created_at >= day,
-            Appointment.created_at < next_day,
-        ).count()
-        outflow = Appointment.query.filter(
-            func.lower(Appointment.status) == "completed",
-            Appointment.updated_at >= day,
-            Appointment.updated_at < next_day,
-        ).count()
+        intake = _safe_count(
+            f"appointments intake {day}",
+            Appointment.query.filter(
+                Appointment.created_at >= day,
+                Appointment.created_at < next_day,
+            ),
+        )
+        outflow = _safe_count(
+            f"appointments outflow {day}",
+            Appointment.query.filter(
+                func.lower(Appointment.status) == "completed",
+                Appointment.updated_at >= day,
+                Appointment.updated_at < next_day,
+            ),
+        )
         chart_data.append({"day": day.strftime("%a"), "p": intake, "s": outflow})
 
     max_value = max((max(item["p"], item["s"]) for item in chart_data), default=0)
@@ -83,9 +105,12 @@ def _build_chart_data():
 def _build_tasks():
     tasks = []
 
-    pending_appointments = Appointment.query.filter(
-        func.lower(Appointment.status).in_(["pending", "rescheduled"])
-    ).count()
+    pending_appointments = _safe_count(
+        "pending appointments",
+        Appointment.query.filter(
+            func.lower(Appointment.status).in_(["pending", "rescheduled"])
+        ),
+    )
     if pending_appointments:
         tasks.append(
             {
@@ -95,9 +120,12 @@ def _build_tasks():
             }
         )
 
-    pending_reviews = Review.query.filter(
-        func.lower(Review.status).in_(["pending", "flagged", "escalated"])
-    ).count()
+    pending_reviews = _safe_count(
+        "pending reviews",
+        Review.query.filter(
+            func.lower(Review.status).in_(["pending", "flagged", "escalated"])
+        ),
+    )
     if pending_reviews:
         tasks.append(
             {
@@ -107,9 +135,12 @@ def _build_tasks():
             }
         )
 
-    open_escalations = DoctorEscalation.query.filter(
-        func.lower(DoctorEscalation.status).in_(["open", "investigating"])
-    ).count()
+    open_escalations = _safe_count(
+        "open escalations",
+        DoctorEscalation.query.filter(
+            func.lower(DoctorEscalation.status).in_(["open", "investigating"])
+        ),
+    )
     if open_escalations:
         tasks.append(
             {
@@ -119,9 +150,12 @@ def _build_tasks():
             }
         )
 
-    scheduled_announcements = Announcement.query.filter(
-        func.lower(Announcement.status) == "scheduled"
-    ).count()
+    scheduled_announcements = _safe_count(
+        "scheduled announcements",
+        Announcement.query.filter(
+            func.lower(Announcement.status) == "scheduled"
+        ),
+    )
     if scheduled_announcements:
         tasks.append(
             {
@@ -131,11 +165,14 @@ def _build_tasks():
             }
         )
 
-    unverified_doctors = User.query.filter(
-        User.role == "doctor",
-        User.is_verified.is_(False),
-        User.is_deleted.is_(False),
-    ).count()
+    unverified_doctors = _safe_count(
+        "unverified doctors",
+        User.query.filter(
+            User.role == "doctor",
+            User.is_verified.is_(False),
+            User.is_deleted.is_(False),
+        ),
+    )
     if unverified_doctors:
         tasks.append(
             {
@@ -153,7 +190,10 @@ def _build_tasks():
 def _build_activities():
     items = []
 
-    recent_appointments = Appointment.query.order_by(Appointment.created_at.desc()).limit(3).all()
+    recent_appointments = _safe_all(
+        "recent appointments",
+        Appointment.query.order_by(Appointment.created_at.desc()).limit(3),
+    )
     for appointment in recent_appointments:
         patient_name = appointment.patient.full_name if appointment.patient else f"patient {appointment.patient_id}"
         items.append(
@@ -165,7 +205,10 @@ def _build_activities():
             }
         )
 
-    recent_reviews = Review.query.order_by(Review.created_at.desc()).limit(3).all()
+    recent_reviews = _safe_all(
+        "recent reviews",
+        Review.query.order_by(Review.created_at.desc()).limit(3),
+    )
     for review in recent_reviews:
         doctor_name = review.doctor.full_name if review.doctor else f"doctor {review.doctor_id}"
         status = (review.status or "").lower()
@@ -178,7 +221,10 @@ def _build_activities():
             }
         )
 
-    recent_escalations = DoctorEscalation.query.order_by(DoctorEscalation.created_at.desc()).limit(3).all()
+    recent_escalations = _safe_all(
+        "recent escalations",
+        DoctorEscalation.query.order_by(DoctorEscalation.created_at.desc()).limit(3),
+    )
     for escalation in recent_escalations:
         doctor_name = escalation.doctor.full_name if escalation.doctor else f"doctor {escalation.doctor_id}"
         items.append(
@@ -190,7 +236,10 @@ def _build_activities():
             }
         )
 
-    recent_announcements = Announcement.query.order_by(Announcement.created_at.desc()).limit(2).all()
+    recent_announcements = _safe_all(
+        "recent announcements",
+        Announcement.query.order_by(Announcement.created_at.desc()).limit(2),
+    )
     for announcement in recent_announcements:
         items.append(
             {
