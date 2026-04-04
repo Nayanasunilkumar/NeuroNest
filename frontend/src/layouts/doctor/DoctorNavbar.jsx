@@ -185,7 +185,7 @@ const DoctorNavbar = ({ darkMode, toggleTheme }) => {
   const unacknowledgedAlerts = alerts?.filter(a => !a.is_acknowledged) || [];
 
   return (
-    <div className={`d-flex align-items-center justify-content-between px-3 px-md-4 border-bottom shadow-sm ${darkMode ? 'bg-dark border-secondary' : 'bg-white'}`} style={{ height: '80px', zIndex: 1060, flexShrink: 0, flexWrap: 'nowrap' }}>
+    <div className={`doctor-navbar-root d-flex align-items-center justify-content-between px-3 px-md-4 border-bottom shadow-sm ${darkMode ? 'bg-dark border-secondary' : 'bg-white'}`} style={{ height: '80px', zIndex: 1060, flexShrink: 0, flexWrap: 'nowrap' }}>
       {/* Left: Branding */}
       <div className="d-flex align-items-center flex-shrink-0 me-3 me-xl-5">
           <span className={`h4 fw-black mb-0 ${darkMode ? 'text-white' : 'text-primary'}`} style={{ letterSpacing: '-0.05em' }}>

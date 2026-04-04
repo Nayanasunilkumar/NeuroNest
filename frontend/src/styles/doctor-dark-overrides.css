@@ -1,0 +1,164 @@
+body.dark .doctor-layout-root {
+  background:
+    radial-gradient(circle at top left, rgba(37, 99, 235, 0.14), transparent 24%),
+    radial-gradient(circle at top right, rgba(79, 70, 229, 0.12), transparent 22%),
+    linear-gradient(180deg, #0b1220 0%, #0f172a 100%);
+  color: var(--nn-text-main);
+}
+
+body.dark .doctor-main-shell {
+  background: transparent;
+  color: var(--nn-text-main);
+}
+
+body.dark .doctor-navbar-root {
+  background: color-mix(in srgb, var(--nn-surface) 88%, #020617) !important;
+  border-color: var(--nn-border) !important;
+  box-shadow: 0 8px 30px rgba(2, 6, 23, 0.34) !important;
+}
+
+body.dark .doctor-layout-root .bg-white,
+body.dark .doctor-layout-root .bg-light {
+  background-color: var(--nn-surface) !important;
+}
+
+body.dark .doctor-layout-root .bg-light.bg-opacity-50,
+body.dark .doctor-layout-root .bg-white.bg-opacity-50,
+body.dark .doctor-layout-root .bg-light.bg-opacity-75 {
+  background-color: color-mix(in srgb, var(--nn-surface-secondary) 82%, transparent) !important;
+}
+
+body.dark .doctor-layout-root .text-dark,
+body.dark .doctor-layout-root .text-black,
+body.dark .doctor-layout-root .text-body,
+body.dark .doctor-layout-root h1,
+body.dark .doctor-layout-root h2,
+body.dark .doctor-layout-root h3,
+body.dark .doctor-layout-root h4,
+body.dark .doctor-layout-root h5,
+body.dark .doctor-layout-root h6 {
+  color: var(--nn-text-main) !important;
+}
+
+body.dark .doctor-layout-root .text-secondary,
+body.dark .doctor-layout-root .text-muted,
+body.dark .doctor-layout-root p,
+body.dark .doctor-layout-root small,
+body.dark .doctor-layout-root label,
+body.dark .doctor-layout-root .small {
+  color: var(--nn-text-muted) !important;
+}
+
+body.dark .doctor-layout-root .border,
+body.dark .doctor-layout-root .border-top,
+body.dark .doctor-layout-root .border-bottom,
+body.dark .doctor-layout-root .border-start,
+body.dark .doctor-layout-root .border-end,
+body.dark .doctor-layout-root .border-light,
+body.dark .doctor-layout-root .border-secondary,
+body.dark .doctor-layout-root hr {
+  border-color: var(--nn-border) !important;
+}
+
+body.dark .doctor-layout-root .card,
+body.dark .doctor-layout-root .modal-content,
+body.dark .doctor-layout-root .dropdown-menu,
+body.dark .doctor-layout-root .table-card-premium,
+body.dark .doctor-layout-root .nn-card,
+body.dark .doctor-layout-root .ts-pinned-main-container,
+body.dark .doctor-layout-root .roster-main-card,
+body.dark .doctor-layout-root .doc-settings-root,
+body.dark .doctor-layout-root .chat-container {
+  background: color-mix(in srgb, var(--nn-surface) 94%, #020617) !important;
+  border-color: var(--nn-border) !important;
+  box-shadow: 0 18px 48px rgba(2, 6, 23, 0.3) !important;
+}
+
+body.dark .doctor-layout-root input,
+body.dark .doctor-layout-root select,
+body.dark .doctor-layout-root textarea,
+body.dark .doctor-layout-root .form-control,
+body.dark .doctor-layout-root .form-select {
+  background: var(--nn-surface-secondary) !important;
+  border-color: var(--nn-border) !important;
+  color: var(--nn-text-main) !important;
+}
+
+body.dark .doctor-layout-root input::placeholder,
+body.dark .doctor-layout-root textarea::placeholder,
+body.dark .doctor-layout-root .form-control::placeholder {
+  color: var(--nn-text-muted) !important;
+  opacity: 1;
+}
+
+body.dark .doctor-layout-root input:focus,
+body.dark .doctor-layout-root select:focus,
+body.dark .doctor-layout-root textarea:focus,
+body.dark .doctor-layout-root .form-control:focus,
+body.dark .doctor-layout-root .form-select:focus {
+  background: color-mix(in srgb, var(--nn-surface-secondary) 92%, #0f172a) !important;
+  border-color: var(--nn-primary) !important;
+  box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.18) !important;
+}
+
+body.dark .doctor-layout-root .btn-outline-secondary,
+body.dark .doctor-layout-root .btn-outline-dark,
+body.dark .doctor-layout-root .btn-light,
+body.dark .doctor-layout-root .btn-dark {
+  background: color-mix(in srgb, var(--nn-surface-secondary) 82%, transparent) !important;
+  border-color: var(--nn-border) !important;
+  color: var(--nn-text-main) !important;
+}
+
+body.dark .doctor-layout-root .btn-outline-secondary:hover,
+body.dark .doctor-layout-root .btn-outline-dark:hover,
+body.dark .doctor-layout-root .btn-light:hover,
+body.dark .doctor-layout-root .btn-dark:hover {
+  background: color-mix(in srgb, var(--nn-primary) 22%, var(--nn-surface-secondary)) !important;
+  border-color: var(--nn-primary) !important;
+}
+
+body.dark .doctor-layout-root table,
+body.dark .doctor-layout-root .table {
+  --bs-table-bg: transparent;
+  --bs-table-color: var(--nn-text-main);
+  --bs-table-border-color: var(--nn-border);
+  color: var(--nn-text-main) !important;
+}
+
+body.dark .doctor-layout-root .table thead th,
+body.dark .doctor-layout-root .premium-table th {
+  color: var(--nn-text-secondary) !important;
+  border-color: var(--nn-border) !important;
+}
+
+body.dark .doctor-layout-root .table td,
+body.dark .doctor-layout-root .premium-table td {
+  color: var(--nn-text-main) !important;
+  border-color: var(--nn-border) !important;
+}
+
+body.dark .doctor-layout-root .badge.bg-light,
+body.dark .doctor-layout-root .badge.text-dark,
+body.dark .doctor-layout-root .badge.bg-white {
+  background: color-mix(in srgb, var(--nn-surface-secondary) 88%, transparent) !important;
+  color: var(--nn-text-secondary) !important;
+}
+
+body.dark .doctor-layout-root .shadow-sm,
+body.dark .doctor-layout-root .shadow,
+body.dark .doctor-layout-root .shadow-lg {
+  box-shadow: 0 18px 48px rgba(2, 6, 23, 0.28) !important;
+}
+
+body.dark .doctor-layout-root .vr {
+  background-color: var(--nn-border) !important;
+  opacity: 0.4;
+}
+
+body.dark .doctor-layout-root .opacity-50,
+body.dark .doctor-layout-root .opacity-60,
+body.dark .doctor-layout-root .opacity-70 {
+  opacity: 0.85 !important;
+}
+

@@ -5,13 +5,14 @@ import { useTheme } from "../../context/ThemeContext";
 
 import Sidebar from "../../components/Sidebar";
 import DynamicIslandNav from "../../components/DynamicIslandNav";
+import "../../styles/doctor-dark-overrides.css";
 
 const DoctorLayout = () => {
   const { isDark: darkMode, toggleTheme } = useTheme();
   const location = useLocation();
 
   return (
-    <div className="vh-100 d-flex flex-column overflow-hidden" style={{ transition: 'all 0.3s' }}>
+    <div className="doctor-layout-root vh-100 d-flex flex-column overflow-hidden" style={{ transition: 'all 0.3s' }}>
       <DoctorNavbar
         darkMode={darkMode}
         toggleTheme={toggleTheme}
@@ -23,7 +24,7 @@ const DoctorLayout = () => {
 
       <div className="d-flex flex-grow-1 overflow-hidden" style={{ position: 'relative' }}>
         <main
-          className={`flex-grow-1 d-flex flex-column overflow-y-auto p-3 p-md-4 pb-5 pb-lg-4`}
+          className={`doctor-main-shell flex-grow-1 d-flex flex-column overflow-y-auto p-3 p-md-4 pb-5 pb-lg-4`}
         >
           <Outlet />
         </main>
