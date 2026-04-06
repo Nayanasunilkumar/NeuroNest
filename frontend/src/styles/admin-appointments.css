@@ -515,6 +515,7 @@
 
 .appt-modal-nexus.enterprise-theme {
   background: var(--admin-modal-bg);
+  background-color: var(--admin-modal-bg);
   border: 1px solid var(--admin-modal-border);
   border-radius: 28px;
   box-shadow: var(--admin-shadow-strong);
@@ -522,12 +523,14 @@
   max-height: 94vh;
   display: flex;
   flex-direction: column;
+  opacity: 1;
+  isolation: isolate;
 }
 
 /* Header Hierarchy */
 .modal-header-nexus {
   padding: 1.75rem 2.25rem;
-  background: rgba(255, 255, 255, 0.015);
+  background: var(--admin-modal-bg);
   border-bottom: 1px solid var(--admin-border);
   display: flex;
   justify-content: space-between;
@@ -583,6 +586,7 @@
   padding: 2.25rem;
   overflow-y: auto;
   flex: 1;
+  background: var(--admin-modal-bg);
 }
 
 /* Identity Matrix */
@@ -595,6 +599,7 @@
 
 .identity-card {
   background: var(--admin-panel-bg);
+  background-color: var(--admin-panel-bg);
   border: 1px solid var(--admin-border);
   border-radius: 20px;
   overflow: hidden;
@@ -694,6 +699,7 @@
 .clinical-narrative {
   padding: 1.5rem;
   background: var(--admin-panel-bg);
+  background-color: var(--admin-panel-bg);
   border: 1px solid var(--admin-border);
   border-radius: 16px;
   font-size: 0.95rem;
@@ -740,6 +746,7 @@
 
 .timeline-content {
   background: var(--admin-panel-bg);
+  background-color: var(--admin-panel-bg);
   padding: 0.75rem 1.25rem;
   border-radius: 12px;
   border: 1px solid var(--admin-border);
@@ -767,6 +774,7 @@
 .governance-footer {
   padding: 2.25rem;
   background: var(--admin-bg);
+  background-color: var(--admin-bg);
   border-top: 1px solid var(--admin-border);
 }
 
@@ -818,6 +826,7 @@
 .audit-textarea {
   width: 100%;
   background: var(--admin-input-bg);
+  background-color: var(--admin-input-bg);
   border: 1px solid var(--admin-border-strong);
   border-radius: 18px;
   padding: 1.25rem;
