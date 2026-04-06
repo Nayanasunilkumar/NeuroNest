@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { initSocket, getSocket } from '../../services/socket';
 import chatAPI from '../../services/chatAPI';
 import ConversationList from '../../components/chat/ConversationList';
@@ -11,6 +11,7 @@ import { useCall } from '../../context/CallContext';
 
 const Chat = () => {
     const navigate = useNavigate();
+    const location = useLocation();
     const [conversations, setConversations] = useState([]);
     const [selectedConv, setSelectedConv] = useState(null);
     const [messages, setMessages] = useState([]);
@@ -23,6 +24,7 @@ const Chat = () => {
     const messagesRef = React.useRef([]);
     const selectedConvRef = React.useRef(selectedConv);
     const syncInFlightRef = React.useRef(false);
+    const pendingFocusRef = React.useRef(location.state || null);
 
     const joinConversationRooms = useCallback((socketClient, convs) => {
         if (!socketClient || !Array.isArray(convs) || convs.length === 0) return;
@@ -127,6 +129,10 @@ const Chat = () => {
         messagesRef.current = messages;
     }, [messages]);
 
+    useEffect(() => {
+        pendingFocusRef.current = location.state || null;
+    }, [location.state]);
+
     const handleNewMessage = useCallback((msg) => {
         if (!msg) return;
 
@@ -222,6 +228,29 @@ const Chat = () => {
             alert("Failed to delete message.");
         }
     };
+
+    useEffect(() => {
+        if (!conversations.length) return;
+
+        const pendingFocus = pendingFocusRef.current;
+        if (pendingFocus?.conversationId || pendingFocus?.otherUserId) {
+            const targetConversation = conversations.find((conversation) => (
+                (pendingFocus.conversationId && String(conversation.id) === String(pendingFocus.conversationId)) ||
+                (pendingFocus.otherUserId && String(conversation.other_user?.id) === String(pendingFocus.otherUserId))
+            ));
+
+            if (targetConversation) {
+                handleSelectConversation(targetConversation);
+                pendingFocusRef.current = null;
+                navigate(location.pathname, { replace: true, state: null });
+                return;
+            }
+        }
+
+        if (!selectedConvRef.current && conversations[0]) {
+            handleSelectConversation(conversations[0]);
+        }
+    }, [conversations, handleSelectConversation, location.pathname, navigate]);
 
     useEffect(() => {
         const user = getUser();

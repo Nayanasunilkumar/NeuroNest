@@ -34,6 +34,7 @@ export default function VideoConsultation() {
     const reconnectAttemptsRef = useRef(0);
     const restartDebounceRef = useRef(null);
     const hasSentInitialOfferRef = useRef(false);
+    const hasSeenActiveCallRef = useRef(false);
     const { endActiveCall, activeCall } = useCall();
     
     const [isMuted, setIsMuted] = useState(false);
@@ -57,6 +58,44 @@ export default function VideoConsultation() {
     const parsedAppointmentId = Number.isInteger(stateAppointmentId)
         ? stateAppointmentId
         : getAppointmentIdFromRoom(roomId);
+    const hasReturnedToChatRef = useRef(false);
+
+    const getChatReturnTarget = useCallback(() => {
+        const currentUserId = user?.id;
+        const activeConversationId = activeCall?.conversation_id || Number(roomId);
+        const callerId = activeCall?.caller_id;
+        const receiverId = activeCall?.receiver_id;
+        const otherUserId = String(callerId) === String(currentUserId) ? receiverId : callerId;
+
+        if (user?.role === 'doctor') {
+            if (otherUserId) {
+                return {
+                    pathname: '/doctor/chat',
+                    search: `?patientId=${otherUserId}`,
+                };
+            }
+            return { pathname: '/doctor/chat', search: '' };
+        }
+
+        return {
+            pathname: '/messages',
+            search: '',
+            state: {
+                conversationId: activeConversationId || null,
+                otherUserId: otherUserId || null,
+            },
+        };
+    }, [activeCall?.caller_id, activeCall?.conversation_id, activeCall?.receiver_id, roomId, user?.id, user?.role]);
+
+    const returnToChat = useCallback(() => {
+        if (hasReturnedToChatRef.current) return;
+        hasReturnedToChatRef.current = true;
+        const target = getChatReturnTarget();
+        navigate(`${target.pathname}${target.search || ''}`, {
+            replace: true,
+            state: target.state,
+        });
+    }, [getChatReturnTarget, navigate]);
 
     const leaveAppointmentSession = useCallback(async () => {
         if (!Number.isInteger(parsedAppointmentId) || hasSentLeaveCallRef.current) return;
@@ -71,6 +110,12 @@ export default function VideoConsultation() {
             console.error("Failed to close appointment call session:", err);
         }
     }, [parsedAppointmentId, user?.role]);
+
+    useEffect(() => {
+        if (activeCall?.call_id) {
+            hasSeenActiveCallRef.current = true;
+        }
+    }, [activeCall?.call_id]);
 
     useEffect(() => {
         const room = `consult_${roomId}`;
@@ -343,7 +388,7 @@ export default function VideoConsultation() {
 
                 socket.current.on("room_full", () => {
                     alert("Consultation room is full. Only two participants are allowed.");
-                    navigate(-1);
+                    returnToChat();
                 });
 
                 socket.current.on("user_joined", ({ sid }) => {
@@ -493,7 +538,13 @@ export default function VideoConsultation() {
             if (restartTimer) clearTimeout(restartTimer);
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [activeCall?.caller_id, leaveAppointmentSession, roomId, user?.id, user?.role]);
+    }, [activeCall?.caller_id, leaveAppointmentSession, returnToChat, roomId, user?.id, user?.role]);
+
+    useEffect(() => {
+        if (hasSeenActiveCallRef.current && !hasReturnedToChatRef.current && !activeCall?.call_id) {
+            returnToChat();
+        }
+    }, [activeCall?.call_id, returnToChat]);
 
     const handleHangup = async () => {
         try {
@@ -504,7 +555,7 @@ export default function VideoConsultation() {
         } catch (err) {
             console.error("Failed to end active call cleanly:", err);
         } finally {
-            navigate(-1);
+            returnToChat();
         }
     };
 
