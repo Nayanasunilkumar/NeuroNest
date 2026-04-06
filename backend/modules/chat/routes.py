@@ -7,6 +7,11 @@ from models.chat_models import Conversation, Participant, Message, to_utc_iso
 from sqlalchemy import and_, or_, desc
 from flask_jwt_extended import get_jwt
 from services.notification_service import NotificationService
+from services.appointment_call_service import get_or_create_direct_conversation
+from services.doctor_patient_service import (
+    get_related_doctor_ids_for_patient,
+    get_related_patient_ids_for_doctor,
+)
 
 # ... (rest of imports)
 
@@ -50,6 +55,18 @@ def uploaded_file(filename):
 @jwt_required()
 def get_conversations():
     current_user_id = int(get_jwt_identity())
+    current_user = User.query.get(current_user_id)
+
+    if current_user and current_user.role == "doctor":
+        for patient_id in get_related_patient_ids_for_doctor(current_user_id):
+            get_or_create_direct_conversation(current_user_id, patient_id)
+        db.session.flush()
+        db.session.commit()
+    elif current_user and current_user.role == "patient":
+        for doctor_id in get_related_doctor_ids_for_patient(current_user_id):
+            get_or_create_direct_conversation(current_user_id, doctor_id)
+        db.session.flush()
+        db.session.commit()
     
     # query participants where user_id matches
     # This is a bit complex in SQL.

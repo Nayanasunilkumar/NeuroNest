@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import prescriptionService from '../../services/prescriptionService';
-import { getConversations } from '../../api/chat';
+import { getPatients } from '../../api/doctor';
 import MedicineRow from '../../components/prescription/MedicineRow';
 import PrescriptionList from '../../components/prescription/PrescriptionList';
 import Avatar from '../../components/shared/Avatar';
@@ -36,15 +36,11 @@ const WritePrescription = ({ isEmbedded = false }) => {
     useEffect(() => {
         const fetchPatients = async () => {
             try {
-                const convs = await getConversations();
-                const patientList = convs.map(c => c.other_user);
-                const uniquePatients = Array.from(new Set(patientList.map(p => p.id)))
-                    .map(id => patientList.find(p => p.id === id));
-                
-                setPatients(uniquePatients);
+                const rosterPatients = await getPatients();
+                setPatients(Array.isArray(rosterPatients) ? rosterPatients : []);
 
                 if (patientIdParam) {
-                    const found = uniquePatients.find(p => p.id === parseInt(patientIdParam));
+                    const found = (rosterPatients || []).find(p => p.id === parseInt(patientIdParam));
                     if (found) setSelectedPatient(found);
                 }
             } catch (err) {

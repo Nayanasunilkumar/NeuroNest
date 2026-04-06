@@ -29,6 +29,7 @@ from services.notification_service import NotificationService
 from services.appointment_call_service import (
     ensure_join_windows,
     evaluate_call_state,
+    get_or_create_direct_conversation,
     send_system_chat_message,
     sync_call_status,
 )
@@ -142,6 +143,7 @@ def _book_slot_atomic(*, current_user_id: int, doctor_id: int, slot_id: int, rea
     _reset_call_lifecycle(appointment)
     db.session.add(appointment)
     db.session.flush()
+    get_or_create_direct_conversation(current_user_id, doctor_id)
 
     if booking_mode == "doctor_approval":
         mark_slot_held(
@@ -519,6 +521,7 @@ def book_appointment():
 
         db.session.add(new_appointment)
         db.session.flush() # ensure ID is generated
+        get_or_create_direct_conversation(current_user_id, doctor_id)
         NotificationService.notify_appointment_event(new_appointment.id, "new_booking")
         db.session.commit()
 

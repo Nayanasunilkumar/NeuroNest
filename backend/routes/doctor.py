@@ -39,18 +39,15 @@ from services.appointment_call_service import (
     send_system_chat_message,
     sync_call_status,
 )
+from services.doctor_patient_service import (
+    DOCTOR_PATIENT_TERMINAL_STATUSES,
+    doctor_has_patient_relationship,
+    get_related_patient_ids_for_doctor,
+)
 
 doctor_bp = Blueprint("doctor", __name__)
 
 DOCTOR_SCHEDULE_HIDDEN_STATUSES = ["pending", "rejected"]
-DOCTOR_ROSTER_EXCLUDED_STATUSES = ["rejected"]
-DOCTOR_TERMINAL_APPOINTMENT_STATUSES = [
-    "rejected",
-    "cancelled",
-    "cancelled_by_doctor",
-    "cancelled_by_patient",
-]
-
 def check_doctor_role():
     claims = get_jwt()
     if claims.get("role") != "doctor":
@@ -861,8 +858,7 @@ def get_doctor_stats():
     today = date.today()
     
     # 1. Total Patients (Unique)
-    total_patients = db.session.query(func.count(func.distinct(Appointment.patient_id)))\
-        .filter(Appointment.doctor_id == current_user_id).scalar()
+    total_patients = len(get_related_patient_ids_for_doctor(current_user_id))
         
     # 2. Today's Appointments
     today_count = Appointment.query.filter(
@@ -893,12 +889,7 @@ def get_doctor_patients():
     current_user_id = int(get_jwt_identity())
     
     # A patient belongs to a doctor if they have a real clinical booking history.
-    patient_ids = db.session.query(Appointment.patient_id).filter(
-        Appointment.doctor_id == current_user_id,
-        Appointment.status.notin_(DOCTOR_ROSTER_EXCLUDED_STATUSES)
-    ).distinct().all()
-    
-    patient_ids = [pid[0] for pid in patient_ids]
+    patient_ids = get_related_patient_ids_for_doctor(current_user_id)
     
     if not patient_ids:
         return jsonify([]), 200
@@ -915,7 +906,7 @@ def get_doctor_patients():
         last_visit = Appointment.query.filter(
             Appointment.patient_id == pid,
             Appointment.doctor_id == current_user_id,
-            Appointment.status.notin_(DOCTOR_TERMINAL_APPOINTMENT_STATUSES),
+            Appointment.status.notin_(DOCTOR_PATIENT_TERMINAL_STATUSES),
             or_(
                 Appointment.appointment_date < now.date(),
                 and_(Appointment.appointment_date == now.date(), Appointment.appointment_time <= now.time())
@@ -926,7 +917,7 @@ def get_doctor_patients():
         next_visit = Appointment.query.filter(
             Appointment.patient_id == pid,
             Appointment.doctor_id == current_user_id,
-            Appointment.status.notin_(DOCTOR_TERMINAL_APPOINTMENT_STATUSES),
+            Appointment.status.notin_(DOCTOR_PATIENT_TERMINAL_STATUSES),
             or_(
                 Appointment.appointment_date > now.date(),
                 and_(Appointment.appointment_date == now.date(), Appointment.appointment_time > now.time())
@@ -960,9 +951,7 @@ def get_patient_records(patient_id):
     
     # Check if the doctor has (or had) an appointment with this patient
     current_user_id = int(get_jwt_identity())
-    exists = Appointment.query.filter_by(doctor_id=current_user_id, patient_id=patient_id).first()
-    
-    if not exists:
+    if not doctor_has_patient_relationship(current_user_id, patient_id):
         return jsonify({"message": "Access denied. No clinical relationship found."}), 403
         
     records = MedicalRecord.query.filter_by(patient_id=patient_id).all()
@@ -1058,10 +1047,7 @@ def get_patient_clinical_dossier(patient_id):
     if patient_prefs and patient_prefs.share_history_with_doctors is False:
         return jsonify({"message": "This patient has disabled clinical history sharing with doctors."}), 403
     
-    # Allow doctors to view their OWN dossier
-    # Access logic: Allowing doctors/admins to view dossiers for all patients to support initial review
-    exists = True
-    if not exists:
+    if not doctor_has_patient_relationship(current_user_id, patient_id):
         return jsonify({"message": "Access denied. No clinical relationship found."}), 403
 
     # 2. Fetch Clinical Timeline (All except Pending)
