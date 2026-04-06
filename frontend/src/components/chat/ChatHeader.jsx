@@ -32,9 +32,10 @@ const ChatHeader = ({ otherUser, context, isDoctor, onToggleSidebar, showSidebar
 
         // Countdown for UI
         const delta = apptTs - now;
-        const mins = Math.floor(Math.abs(delta) / 60000);
-        const secs = Math.floor((Math.abs(delta) % 60000) / 1000);
-        const countdownStr = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+        const totalMinutes = Math.floor(Math.abs(delta) / 60000);
+        const hours = Math.floor(totalMinutes / 60);
+        const minutes = totalMinutes % 60;
+        const countdownStr = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
 
         return {
             apptTs,
