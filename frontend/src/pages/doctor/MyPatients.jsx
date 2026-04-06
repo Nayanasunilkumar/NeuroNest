@@ -2,12 +2,38 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Users, Search, Filter, Loader2, ArrowUpDown, UserPlus, SlidersHorizontal, UserX, MessageSquare, ExternalLink, Clock } from 'lucide-react';
 import { getPatients } from '../../api/doctor';
+import { getConversations } from '../../api/chat';
 import { toAssetUrl } from '../../utils/media';
 import "../../styles/my-patients.css";
 import { useTheme } from "../../context/ThemeContext";
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { FileJson, FileText, ChevronDown } from 'lucide-react';
+
+const buildRosterFallbackFromConversations = (conversations = []) => {
+    const byPatientId = new Map();
+
+    conversations.forEach((conversation) => {
+        const user = conversation?.other_user;
+        if (!user?.id) return;
+
+        if (!byPatientId.has(user.id)) {
+            byPatientId.set(user.id, {
+                id: user.id,
+                full_name: user.name || user.full_name || `Patient #${user.id}`,
+                email: user.email || "N/A",
+                patient_image: user.profile_image || null,
+                last_visit: null,
+                next_appointment: null,
+                next_appointment_time: null,
+                next_appointment_status: null,
+                status: "Active",
+            });
+        }
+    });
+
+    return Array.from(byPatientId.values());
+};
 
 const MyPatients = () => {
     const [patients, setPatients] = useState([]);
@@ -27,10 +53,30 @@ const MyPatients = () => {
         try {
             setLoading(true);
             const data = await getPatients();
-            setPatients(data);
-            setFilteredPatients(data);
+            const normalizedData = Array.isArray(data) ? data : [];
+
+            if (normalizedData.length > 0) {
+                setPatients(normalizedData);
+                setFilteredPatients(normalizedData);
+                return;
+            }
+
+            const conversations = await getConversations();
+            const fallbackPatients = buildRosterFallbackFromConversations(conversations);
+            setPatients(fallbackPatients);
+            setFilteredPatients(fallbackPatients);
         } catch (error) {
             console.error("Failed to load clinical roster:", error);
+            try {
+                const conversations = await getConversations();
+                const fallbackPatients = buildRosterFallbackFromConversations(conversations);
+                setPatients(fallbackPatients);
+                setFilteredPatients(fallbackPatients);
+            } catch (fallbackError) {
+                console.error("Fallback clinical roster load failed:", fallbackError);
+                setPatients([]);
+                setFilteredPatients([]);
+            }
         } finally {
             setLoading(false);
         }

@@ -11,6 +11,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { getDoctorProfile } from '../../services/doctorProfileService';
 import { getDoctorStats, getPatients, getSchedule, joinDoctorAppointmentCall } from '../../api/doctor';
+import { getConversations } from '../../api/chat';
 import { getUser } from '../../utils/auth';
 import { formatClockTimeIST, formatDateFromISTDate, formatTimeIST, getISTDayKey, parseISTDateTime, formatDateIST } from '../../utils/time';
 import '../../styles/dashboard.css';
@@ -86,6 +87,31 @@ const PreviewEmpty = ({ title }) => (
   </div>
 );
 
+const buildPatientFallbackFromConversations = (conversations = []) => {
+  const byPatientId = new Map();
+
+  conversations.forEach((conversation) => {
+    const user = conversation?.other_user;
+    if (!user?.id) return;
+
+    if (!byPatientId.has(user.id)) {
+      byPatientId.set(user.id, {
+        id: user.id,
+        full_name: user.name || user.full_name || `Patient #${user.id}`,
+        email: user.email || 'N/A',
+        patient_image: user.profile_image || null,
+        last_visit: null,
+        next_appointment: null,
+        next_appointment_time: null,
+        next_appointment_status: null,
+        status: 'Active',
+      });
+    }
+  });
+
+  return Array.from(byPatientId.values());
+};
+
 const DoctorDashboard = () => {
   const navigate = useNavigate();
   const currentUser = getUser();
@@ -123,7 +149,26 @@ const DoctorDashboard = () => {
           setStats(statsResult.value || {});
         }
         if (patientsResult.status === 'fulfilled') {
-          setPatients(Array.isArray(patientsResult.value) ? patientsResult.value : []);
+          const rosterPatients = Array.isArray(patientsResult.value) ? patientsResult.value : [];
+          if (rosterPatients.length > 0) {
+            setPatients(rosterPatients);
+          } else {
+            try {
+              const conversations = await getConversations();
+              setPatients(buildPatientFallbackFromConversations(conversations));
+            } catch (fallbackError) {
+              console.error('Dashboard patient fallback failed', fallbackError);
+              setPatients([]);
+            }
+          }
+        } else {
+          try {
+            const conversations = await getConversations();
+            setPatients(buildPatientFallbackFromConversations(conversations));
+          } catch (fallbackError) {
+            console.error('Dashboard patient fallback failed', fallbackError);
+            setPatients([]);
+          }
         }
         if (appointmentsResult.status === 'fulfilled') {
           setAppointments(Array.isArray(appointmentsResult.value) ? appointmentsResult.value : []);
