@@ -1,5 +1,5 @@
 import { FileSearch } from 'lucide-react';
-import PatientRecords from '../../pages/doctor/PatientRecords';
+import PatientRecordsPage from './PatientRecordsPage';
 
 const patientRecordsModule = {
   key: 'patientRecords',
@@ -10,7 +10,7 @@ const patientRecordsModule = {
   enabledByDefault: true,
   showInSidebarByRole: ['admin'],
   componentsByRole: {
-    doctor: PatientRecords,
+    doctor: PatientRecordsPage,
   },
   orderByRole: { doctor: 999, admin: 999 },
 };

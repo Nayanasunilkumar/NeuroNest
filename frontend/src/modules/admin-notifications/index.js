@@ -1,11 +1,5 @@
 import { Bell } from 'lucide-react';
-import ModuleComingSoon from '../../pages/shared/ModuleComingSoon';
-
-const AdminNotificationsPage = () =>
-  ModuleComingSoon({
-    title: 'Notifications',
-    description: 'Notification templates, delivery queues, and channel controls are prepared.',
-  });
+import AdminNotificationsPage from './AdminNotificationsPage';
 
 const adminNotificationsModule = {
   key: 'adminNotifications',

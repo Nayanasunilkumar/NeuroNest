@@ -1,5 +1,5 @@
 import { Calendar } from 'lucide-react';
-import PatientTimelinePage from '../../pages/doctor/PatientTimeline';
+import PatientTimelinePage from './PatientTimelinePage';
 
 const patientTimelineModule = {
   key: 'patientTimeline',

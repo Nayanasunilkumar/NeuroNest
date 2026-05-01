@@ -1,5 +1,5 @@
 import { Megaphone } from 'lucide-react';
-import AnnouncementsPage from '../../pages/admin/AnnouncementsPage';
+import AdminAnnouncementsPage from './AdminAnnouncementsPage';
 
 const adminAnnouncementsModule = {
   key: 'adminAnnouncements',
@@ -10,7 +10,7 @@ const adminAnnouncementsModule = {
   group: 'Administration',
   enabledByDefault: true,
   componentsByRole: {
-    admin: AnnouncementsPage,
+    admin: AdminAnnouncementsPage,
   },
   orderByRole: { admin: 80 },
 };

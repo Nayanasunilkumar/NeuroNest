@@ -1,7 +1,7 @@
 import { LayoutDashboard } from 'lucide-react';
-import DashboardHome from '../../pages/patient/DashboardHome';
-import DoctorDashboard from '../../pages/doctor/DoctorDashboard';
-import AdminDashboard from '../../pages/admin/AdminDashboard';
+import PatientDashboardPage from './PatientDashboardPage';
+import DoctorDashboardPage from './DoctorDashboardPage';
+import AdminDashboardPage from './AdminDashboardPage';
 
 const dashboardModule = {
   key: 'dashboard',
@@ -12,9 +12,9 @@ const dashboardModule = {
   group: 'Clinical',
   enabledByDefault: true,
   componentsByRole: {
-    patient: DashboardHome,
-    doctor: DoctorDashboard,
-    admin: AdminDashboard,
+    patient: PatientDashboardPage,
+    doctor: DoctorDashboardPage,
+    admin: AdminDashboardPage,
   },
   orderByRole: { patient: 10, doctor: 10, admin: 10 },
 };

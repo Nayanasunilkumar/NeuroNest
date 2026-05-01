@@ -1,6 +1,6 @@
 import { MessageSquare } from 'lucide-react';
-import Chat from '../../pages/patient/Chat';
-import DoctorChat from '../../pages/doctor/DoctorChat';
+import DoctorChatPage from './DoctorChatPage';
+import PatientChatPage from './PatientChatPage';
 
 const patientChatModule = {
   key: 'patientChat',
@@ -15,8 +15,8 @@ const patientChatModule = {
   rolesAllowed: ['doctor', 'patient', 'admin'],
   enabledByDefault: true,
   componentsByRole: {
-    doctor: DoctorChat,
-    patient: Chat,
+    doctor: DoctorChatPage,
+    patient: PatientChatPage,
   },
   showInSidebarByRole: ['doctor', 'patient', 'admin'],
   orderByRole: { doctor: 35, patient: 70, admin: 110 },

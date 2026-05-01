@@ -1,4 +1,4 @@
-import DoctorProfileView from '../../pages/patient/DoctorProfileView';
+import DoctorProfileViewPage from './DoctorProfileViewPage';
 
 const patientDoctorProfileModule = {
   key: 'patientDoctorProfile',
@@ -7,7 +7,7 @@ const patientDoctorProfileModule = {
   rolesAllowed: ['patient'],
   enabledByDefault: true,
   componentsByRole: {
-    patient: DoctorProfileView,
+    patient: DoctorProfileViewPage,
   },
   showInSidebarByRole: [],
   orderByRole: { patient: 999 },

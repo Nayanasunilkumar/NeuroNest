@@ -1,5 +1,5 @@
 import { CalendarDays } from 'lucide-react';
-import TodaySchedule from '../../pages/doctor/TodaySchedule';
+import TodaySchedulePage from './TodaySchedulePage';
 
 const todayScheduleModule = {
   key: 'todaySchedule',
@@ -9,7 +9,7 @@ const todayScheduleModule = {
   rolesAllowed: ['doctor', 'admin'],
   enabledByDefault: true,
   componentsByRole: {
-    doctor: TodaySchedule,
+    doctor: TodaySchedulePage,
   },
   orderByRole: { doctor: 20, admin: 50 },
 };

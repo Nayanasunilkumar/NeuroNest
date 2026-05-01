@@ -1,4 +1,6 @@
 .admin-theme {
+  --admin-section-gap: clamp(24px, 2vw, 32px);
+  --admin-page-bottom-padding: clamp(32px, 4vw, 48px);
   --admin-header-bg: color-mix(in srgb, var(--nn-surface) 88%, transparent);
   --admin-header-border: var(--nn-border);
   --admin-brand: var(--nn-primary);
@@ -181,13 +183,37 @@
 
 /* Shared rounded page container across admin module */
 .admin-theme .admin-page-shell {
+  display: flex;
+  flex-direction: column;
+  gap: var(--admin-section-gap);
   min-height: calc(100vh - 136px);
   border-radius: 28px;
   border: 1px solid var(--nn-border);
   background: var(--nn-surface);
   box-shadow: var(--nn-shadow-sm);
   padding: clamp(1rem, 1.8vw, 2rem);
+  padding-bottom: var(--admin-page-bottom-padding);
   padding-inline: 24px;
+}
+
+.admin-theme .admin-page-shell > * {
+  width: 100%;
+}
+
+.admin-theme .admin-dashboard-page,
+.admin-theme .appointments-page,
+.admin-theme .manage-patients-page,
+.admin-theme .admin-announcements-root,
+.admin-theme .admin-settings-root,
+.admin-theme .admin-reports-root {
+  display: flex;
+  flex-direction: column;
+  gap: var(--admin-section-gap);
+  min-height: 100%;
+}
+
+.admin-theme .appointments-page > .admin-card {
+  margin-top: 0 !important;
 }
 
 .admin-theme.admin-theme-light .admin-page-shell {
@@ -206,9 +232,12 @@
 
 @media (max-width: 991.98px) {
   .admin-theme .admin-page-shell {
+    --admin-section-gap: 24px;
+    --admin-page-bottom-padding: 32px;
     min-height: calc(100vh - 120px);
     border-radius: 20px;
     padding: 1rem;
+    padding-bottom: var(--admin-page-bottom-padding);
   }
 }
 

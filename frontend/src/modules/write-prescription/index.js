@@ -1,5 +1,5 @@
 import { FilePenLine } from 'lucide-react';
-import WritePrescription from '../../pages/doctor/WritePrescription';
+import WritePrescriptionPage from './WritePrescriptionPage';
 
 const writePrescriptionModule = {
   key: 'writePrescription',
@@ -9,7 +9,7 @@ const writePrescriptionModule = {
   rolesAllowed: ['doctor', 'admin'],
   enabledByDefault: true,
   componentsByRole: {
-    doctor: WritePrescription,
+    doctor: WritePrescriptionPage,
   },
   showInSidebarByRole: ['admin'],
   orderByRole: { doctor: 60, admin: 70 },

@@ -1,384 +1,469 @@
+import hmac
 import json
 import threading
+from collections import defaultdict, deque
+from datetime import datetime, timedelta, timezone
 
-from flask import Blueprint, request, jsonify, send_file
-from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
-from database.models import db, User, Alert, Appointment
-from datetime import datetime, timedelta
-from collections import deque
+from flask import Blueprint, current_app, jsonify, request, send_file
+from flask_jwt_extended import get_jwt, get_jwt_identity, jwt_required
+
+from database.models import Alert, Appointment, User, db
 from extensions.socket import socketio
 from services.notification_service import NotificationService
 from utils.pdf_generator import generate_assessment_report
 
 vitals_bp = Blueprint("vitals", __name__)
 
-# ─── In-memory latest reading (for real-time display) ───────────
-_latest = {
-    "hr": None, "spo2": None, "temp": None,
-    "signal": "na",
-    "hr_alert": 0, "spo2_alert": 0, "temp_alert": 0,
-    "ts": None
-}
-_history = deque(maxlen=60)  # last 60 valid readings
-
-
-# ─── Alert State Tracking ───────────
+_vitals_lock = threading.Lock()
+_latest_by_patient = {}
+_history_by_patient = defaultdict(lambda: deque(maxlen=60))
 _last_alert_time = {}
 ALERT_COOLDOWN_MINUTES = 5
+STALE_READING_SECONDS = 30
+
+
+def _utc_now():
+    return datetime.now(timezone.utc)
+
+
+def _serialize_timestamp(ts: datetime) -> str:
+    return ts.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
+
+
+def _parse_timestamp(ts):
+    if not ts:
+        return None
+    try:
+        return datetime.fromisoformat(str(ts).replace("Z", "+00:00"))
+    except ValueError:
+        return None
+
+
+def _coerce_patient_id(raw_value):
+    if raw_value in (None, ""):
+        return None
+    try:
+        return int(raw_value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _configured_device_patient_id():
+    configured_patient_id = current_app.config.get("VITALS_DEVICE_PATIENT_ID")
+    if configured_patient_id:
+        return int(configured_patient_id)
+
+    configured_email = current_app.config.get("VITALS_DEVICE_PATIENT_EMAIL")
+    if configured_email:
+        patient = User.query.filter_by(email=configured_email).first()
+        if patient and patient.role == "patient":
+            return int(patient.id)
+
+    return None
+
+
+def _require_device_auth(data):
+    if not current_app.config.get("VITALS_REQUIRE_DEVICE_AUTH", False):
+        return None
+
+    expected_token = current_app.config.get("VITALS_DEVICE_TOKEN")
+    if not expected_token:
+        current_app.logger.error("Vitals device auth is enabled but VITALS_DEVICE_TOKEN is missing")
+        return jsonify({"error": "Vitals device is not configured"}), 503
+
+    presented_token = (
+        request.headers.get("X-Device-Token")
+        or request.args.get("device_token")
+        or (data or {}).get("device_token")
+    )
+    if not presented_token or not hmac.compare_digest(str(presented_token), str(expected_token)):
+        return jsonify({"error": "Unauthorized device"}), 401
+
+    return None
+
+
+def _resolve_ingest_patient_id(data):
+    explicit_patient_id = _coerce_patient_id((data or {}).get("patient_id"))
+    if explicit_patient_id:
+        return explicit_patient_id
+    return _configured_device_patient_id()
+
+
+def _user_can_access_patient(user: User, patient_id: int) -> bool:
+    if not user or not patient_id:
+        return False
+
+    if user.role == "patient":
+        return int(user.id) == int(patient_id)
+
+    if user.role in ("admin", "super_admin"):
+        return True
+
+    if user.role == "doctor":
+        relationship = Appointment.query.filter_by(
+            doctor_id=int(user.id),
+            patient_id=int(patient_id),
+        ).first()
+        return relationship is not None
+
+    return False
+
+
+def _known_device_patient_ids():
+    patient_ids = set()
+    configured_patient_id = _configured_device_patient_id()
+    if configured_patient_id:
+        patient_ids.add(int(configured_patient_id))
+
+    with _vitals_lock:
+        patient_ids.update(int(patient_id) for patient_id in _latest_by_patient.keys())
+        patient_ids.update(int(patient_id) for patient_id in _history_by_patient.keys())
+
+    return patient_ids
+
+
+def _history_snapshot(patient_id: int):
+    with _vitals_lock:
+        history = list(_history_by_patient.get(int(patient_id), []))
+    return history
+
+
+def _latest_snapshot(patient_id: int):
+    with _vitals_lock:
+        latest = dict(_latest_by_patient.get(int(patient_id), {}))
+
+    if not latest:
+        return None
+
+    parsed_ts = _parse_timestamp(latest.get("ts"))
+    if not parsed_ts or (_utc_now() - parsed_ts) > timedelta(seconds=STALE_READING_SECONDS):
+        latest["signal"] = "disconnected"
+
+    return latest
+
+
+def _most_recent_accessible_patient_id(user: User):
+    candidates = []
+    with _vitals_lock:
+        latest_items = [(int(patient_id), dict(payload)) for patient_id, payload in _latest_by_patient.items()]
+
+    for patient_id, payload in latest_items:
+        if not _user_can_access_patient(user, patient_id):
+            continue
+        parsed_ts = _parse_timestamp(payload.get("ts"))
+        if parsed_ts is None:
+            continue
+        candidates.append((parsed_ts, patient_id))
+
+    if candidates:
+        candidates.sort(reverse=True)
+        return candidates[0][1]
+
+    configured_patient_id = _configured_device_patient_id()
+    if configured_patient_id and _user_can_access_patient(user, configured_patient_id):
+        return configured_patient_id
+
+    history_candidates = []
+    known_ids = _known_device_patient_ids()
+    for patient_id in known_ids:
+        if not _user_can_access_patient(user, patient_id):
+            continue
+        history = _history_snapshot(patient_id)
+        parsed_ts = _parse_timestamp(history[-1].get("ts")) if history else None
+        if parsed_ts is not None:
+            history_candidates.append((parsed_ts, patient_id))
+
+    if history_candidates:
+        history_candidates.sort(reverse=True)
+        return history_candidates[0][1]
+
+    return None
+
+
+def _resolve_target_patient_id(user: User, requested_patient_id):
+    if user.role == "patient":
+        if requested_patient_id and int(requested_patient_id) != int(user.id):
+            return None, (jsonify({"message": "Access denied"}), 403)
+        return int(user.id), None
+
+    if user.role not in ("doctor", "admin", "super_admin"):
+        return None, (jsonify({"message": "Access denied"}), 403)
+
+    if requested_patient_id:
+        if not _user_can_access_patient(user, requested_patient_id):
+            return None, (jsonify({"message": "Access denied"}), 403)
+        return int(requested_patient_id), None
+
+    return _most_recent_accessible_patient_id(user), None
+
 
 def check_and_trigger_alerts(patient_id, data):
-    # Thresholds
     thresholds = [
         {"type": "SPO2", "val": data.get("spo2"), "is_crit": lambda v: v < 90, "msg": "Oxygen level below safe threshold ({}%)"},
         {"type": "Heart Rate", "val": data.get("hr"), "is_crit": lambda v: v > 120 or v < 40, "msg": "Heart rate critical ({} BPM)"},
-        {"type": "Temperature", "val": data.get("temp"), "is_crit": lambda v: v > 39.0 or v < 35.0, "msg": "Temperature critical ({}°C)"}
+        {"type": "Temperature", "val": data.get("temp"), "is_crit": lambda v: v > 39.0 or v < 35.0, "msg": "Temperature critical ({}°C)"},
     ]
 
-    now = datetime.utcnow()
+    now = _utc_now()
 
-    for t in thresholds:
-        val = t["val"]
-        if val is None:
+    for threshold in thresholds:
+        value = threshold["val"]
+        if value is None:
             continue
+
         try:
-            val = float(val)
-        except ValueError:
+            value = float(value)
+        except (TypeError, ValueError):
             continue
-            
-        if t["is_crit"](val):
-            vital_type = t["type"]
-            key = (patient_id, vital_type)
-            
-            # Check cooldown
-            if key in _last_alert_time:
-                last_time = _last_alert_time[key]
-                if now - last_time < timedelta(minutes=ALERT_COOLDOWN_MINUTES):
-                    continue # Skip, in cooldown
-            
-            # Trigger alert
-            _last_alert_time[key] = now
-            msg = t["msg"].format(val)
-            
-            try:
-                alert = Alert(
-                    patient_id=patient_id,
-                    vital_type=vital_type,
-                    value=val,
-                    severity="CRITICAL",
-                    message=msg,
-                    created_at=now
-                )
-                db.session.add(alert)
-                db.session.commit()
-                
-                # Emit WebSocket ONLY to the specific patient's room (Secure Alert Mapping)
-                room = f"patient_vitals_{patient_id}"
-                socketio.emit("critical_alert", alert.to_dict(), room=room)
-                
-                # Also notify via their personal user room for general notification popups
-                socketio.emit("new_in_app_notification", alert.to_dict(), room=f"user_{patient_id}")
-                
-                # Standardized Notification (In-App + Email/SMS)
-                NotificationService.notify_critical_vitals(patient_id, alert)
-                
-            except Exception as e:
-                db.session.rollback()
-                print(f"[VITALS ALERT ERROR] {e}")
 
-# (send_critical_alert_email function removed and consolidated into NotificationService)
+        if not threshold["is_crit"](value):
+            continue
+
+        vital_type = threshold["type"]
+        alert_key = (patient_id, vital_type)
+        last_time = _last_alert_time.get(alert_key)
+        if last_time and now - last_time < timedelta(minutes=ALERT_COOLDOWN_MINUTES):
+            continue
+
+        _last_alert_time[alert_key] = now
+        message = threshold["msg"].format(value)
+
+        try:
+            alert = Alert(
+                patient_id=patient_id,
+                vital_type=vital_type,
+                value=value,
+                severity="CRITICAL",
+                message=message,
+                created_at=now,
+            )
+            db.session.add(alert)
+            db.session.commit()
+
+            room = f"patient_vitals_{patient_id}"
+            socketio.emit("critical_alert", alert.to_dict(), room=room)
+            socketio.emit("new_in_app_notification", alert.to_dict(), room=f"user_{patient_id}")
+            NotificationService.notify_critical_vitals(patient_id, alert)
+        except Exception:
+            db.session.rollback()
+            current_app.logger.exception("Failed to persist or emit vitals alert for patient %s", patient_id)
 
 
-# =========================================
-# ESP32 → POST /api/vitals/update
-# No auth needed (device posts directly)
-# =========================================
 @vitals_bp.route("/api/vitals/update", methods=["POST"])
 def receive_vitals():
     data = request.get_json(silent=True)
     if not data:
-        raw = request.get_data(as_text=True) or ""
+        raw_body = request.get_data(as_text=True) or ""
         try:
-            data = json.loads(raw)
+            data = json.loads(raw_body)
         except Exception:
-            print("[VITALS] Invalid payload:", raw)
+            current_app.logger.warning("Invalid vitals payload received")
             return jsonify({"error": "No data"}), 400
 
-    # Identify targeted patient.
-    # Hardware device (ESP32) is assigned ONLY to Patient ABC (nezrinnoushad20@gmail.com)
-    patient_id = int(data.get("patient_id") or 0)
-    if not patient_id:
-        target_patient = User.query.filter_by(email='nezrinnoushad20@gmail.com').first()
-        # If mapping fails, default safely to Patient 1 but log the mismatch
-        patient_id = target_patient.id if target_patient else 1
+    auth_error = _require_device_auth(data)
+    if auth_error:
+        return auth_error
 
-    _latest.update({
+    patient_id = _resolve_ingest_patient_id(data)
+    if not patient_id:
+        return jsonify({"error": "patient_id is required"}), 400
+
+    patient = User.query.get(patient_id)
+    if not patient or patient.role != "patient":
+        return jsonify({"error": "Target patient not found"}), 404
+
+    now = _utc_now()
+    payload = {
         "patient_id": patient_id,
-        "hr":         data.get("hr"),
-        "spo2":       data.get("spo2"),
-        "temp":       data.get("temp"),
-        "signal":     data.get("signal", "na"),
-        "hr_alert":   int(data.get("hr_alert", 0)),
+        "hr": data.get("hr"),
+        "spo2": data.get("spo2"),
+        "temp": data.get("temp"),
+        "signal": (data.get("signal") or "na"),
+        "hr_alert": int(data.get("hr_alert", 0)),
         "spo2_alert": int(data.get("spo2_alert", 0)),
         "temp_alert": int(data.get("temp_alert", 0)),
-        # Include Z so JS treats this as UTC (avoids local timezone skew)
-        "ts":         datetime.utcnow().isoformat() + "Z"
-    })
+        "ts": _serialize_timestamp(now),
+    }
 
-    # Debug log: show incoming vitals
-    print("[VITALS] Received", _latest)
-    
-    # Emit ONLY to the specific patient's room (Secure Data Mapping)
-    socketio.emit("vitals_update", _latest, room=f"patient_vitals_{patient_id}")
+    with _vitals_lock:
+        _latest_by_patient[patient_id] = payload
+        if payload["signal"] in ("ok", "weak"):
+            _history_by_patient[patient_id].append(dict(payload))
 
-    # Save to history only when signal is valid
-    if data.get("signal") in ("ok", "weak"):
-        _history.append({**_latest})
+    socketio.emit("vitals_update", payload, room=f"patient_vitals_{patient_id}")
 
-    # Trigger Critical Alerts based on thresholds
-    # (Do not require a signal field so alerts show even when signal is 'na' or missing)
     if patient_id > 0:
         check_and_trigger_alerts(patient_id, data)
-
-    # Optionally persist to DB (uncomment if you want DB storage)
-    # try:
-    #     reading = VitalReading(
-    #         hr=data.get("hr"),
-    #         spo2=data.get("spo2"),
-    #         temp=data.get("temp"),
-    #         signal=data.get("signal", "na"),
-    #         hr_alert=bool(data.get("hr_alert")),
-    #         spo2_alert=bool(data.get("spo2_alert")),
-    #         temp_alert=bool(data.get("temp_alert")),
-    #     )
-    #     db.session.add(reading)
-    #     db.session.commit()
-    # except Exception as e:
-    #     print(f"[VITALS DB] Warning: {e}")
 
     return jsonify({"status": "ok"}), 200
 
 
-# =========================================
-# Frontend → GET /api/vitals/latest
-# Requires JWT (patient only)
-# =========================================
 @vitals_bp.route("/api/vitals/latest", methods=["GET"])
 @jwt_required()
 def get_latest():
-    user_id = get_jwt_identity()
-    user = User.query.get(user_id)
+    user = User.query.get(int(get_jwt_identity()))
     if not user:
         return jsonify({"message": "User not found"}), 404
 
-    # Optional patient_id parameter (sent by Doctor Dashboard via useLiveVitals hook)
     requested_patient_id = request.args.get("patient_id", type=int)
-    active_patient_id = _latest.get("patient_id")
+    target_patient_id, error_response = _resolve_target_patient_id(user, requested_patient_id)
+    if error_response:
+        return error_response
 
-    # Access Control & Isolation
-    target_user = User.query.filter_by(email='nezrinnoushad20@gmail.com').first()
-    is_primary_patient = (target_user and requested_patient_id == target_user.id)
-    is_target_patient_user = (user.email == 'nezrinnoushad20@gmail.com')
-    is_clinical_staff = (user.role in ("doctor", "admin", "super_admin"))
+    if target_patient_id is None:
+        return jsonify({"signal": "no_device"}), 200
 
-    if user.role == 'patient':
-        # ONLY Patient ABC has a device. Others see "no_device".
-        if not is_target_patient_user:
-            return jsonify({"signal": "no_device"}), 200
-        # If Patient ABC is viewing, don't show data if the device is mapped elsewhere
-        if active_patient_id and active_patient_id != user.id:
-            return jsonify({"signal": "disconnected"}), 200
-    
-    elif is_clinical_staff:
-        # If doctor selecting a patient, only show vitals if it matches the selected patient
-        if requested_patient_id and active_patient_id != requested_patient_id:
-            # If the requested patient IS the primary one who has the device, return 'disconnected' instead of 'no_device'
-            if is_primary_patient:
-                return jsonify({"signal": "disconnected"}), 200
-            return jsonify({"signal": "no_device"}), 200
-    else:
-        return jsonify({"message": "Access denied"}), 403
+    latest = _latest_snapshot(target_patient_id)
+    if latest:
+        return jsonify(latest), 200
 
-    # If the device hasn't sent an update recently, treat it as disconnected.
-    latest = dict(_latest)
-    ts = latest.get("ts")
-    if ts:
-        try:
-            last_update = datetime.fromisoformat(ts.replace("Z", "+00:00"))
-            if datetime.utcnow() - last_update > timedelta(seconds=30):
-                latest["signal"] = "disconnected"
-        except Exception:
-            pass
-    elif is_primary_patient:
-        # Force disconnected signal if no latest TS but it's the primary patient
-        return jsonify({"signal": "disconnected"}), 200
+    if target_patient_id in _known_device_patient_ids():
+        return jsonify({"patient_id": target_patient_id, "signal": "disconnected"}), 200
 
-    return jsonify(latest), 200
+    return jsonify({"patient_id": target_patient_id, "signal": "no_device"}), 200
 
 
-# =========================================
-# Frontend → GET /api/vitals/history
-# Requires JWT (patient only)
-# =========================================
 @vitals_bp.route("/api/vitals/history", methods=["GET"])
 @jwt_required()
 def get_history():
-    user_id = get_jwt_identity()
-    user = User.query.get(user_id)
-    
+    user = User.query.get(int(get_jwt_identity()))
+    if not user:
+        return jsonify({"message": "User not found"}), 404
+
     requested_patient_id = request.args.get("patient_id", type=int)
-    active_patient_id = _latest.get("patient_id")
+    target_patient_id, error_response = _resolve_target_patient_id(user, requested_patient_id)
+    if error_response:
+        return error_response
 
-    # Isolation
-    target_user = User.query.filter_by(email='nezrinnoushad20@gmail.com').first()
-    is_primary_patient = (target_user and requested_patient_id == target_user.id)
-    is_target_patient_user = (user.email == 'nezrinnoushad20@gmail.com')
-    is_clinical_staff = (user.role in ("doctor", "admin", "super_admin"))
-    
-    if user.role == 'patient':
-        if not is_target_patient_user or (active_patient_id and active_patient_id != user.id):
-            return jsonify([]), 200
-    elif is_clinical_staff:
-        if requested_patient_id and active_patient_id != requested_patient_id:
-            if is_primary_patient:
-                return jsonify(list(_history)), 200
-            return jsonify([]), 200
-    else:
+    if target_patient_id is None:
         return jsonify([]), 200
-        
-    return jsonify(list(_history)), 200
+
+    return jsonify(_history_snapshot(target_patient_id)), 200
 
 
-# =========================================
-# Doctor → GET /api/vitals/patients
-# Returns list of monitored patients
-# =========================================
 @vitals_bp.route("/api/vitals/patients", methods=["GET"])
 @jwt_required()
 def get_monitored_patients():
     claims = get_jwt()
-    if claims.get("role") not in ("doctor", "admin"):
+    role = claims.get("role")
+    current_user_id = int(get_jwt_identity())
+    if role not in ("doctor", "admin", "super_admin"):
         return jsonify({"message": "Access denied"}), 403
-    
-    patients = User.query.filter_by(role='patient').all()
+
+    if role == "doctor":
+        patients = (
+            User.query.join(Appointment, Appointment.patient_id == User.id)
+            .filter(Appointment.doctor_id == current_user_id, User.role == "patient")
+            .distinct()
+            .all()
+        )
+    else:
+        patients = User.query.filter_by(role="patient").all()
+
+    active_patient_ids = _known_device_patient_ids()
     patients_list = []
-    active_patient_id = _latest.get("patient_id") if _latest.get("ts") else None
-    
-    for p in patients:
-        name = p.full_name or f"Patient {p.id}"
-        if active_patient_id == p.id:
-            name += " (ESP32)"
+    for patient in patients:
+        patient_name = patient.full_name or f"Patient {patient.id}"
+        if patient.id in active_patient_ids:
+            patient_name += " (device)"
         patients_list.append({
-            "patient_id": p.id,
-            "patient_name": name
+            "patient_id": patient.id,
+            "patient_name": patient_name,
         })
-        
+
     return jsonify(patients_list), 200
 
 
-# =========================================
-# Patient → GET /api/vitals/assessment-report
-# Generates and downloads PDF assessment report
-# =========================================
 @vitals_bp.route("/api/vitals/assessment-report", methods=["GET"])
 @jwt_required()
 def get_assessment_report():
     claims = get_jwt()
-    if claims.get("role") not in ("patient", "doctor", "admin"):
+    role = claims.get("role")
+    if role not in ("patient", "doctor", "admin", "super_admin"):
         return jsonify({"message": "Access denied"}), 403
-    
-    user_id = get_jwt_identity()
-    user = User.query.get(user_id)
-    if not user:
-        return jsonify({"message": "User not found"}), 404
-    
-    # Determine target patient
-    requested_patient_id = request.args.get("patient_id", type=int)
-    
-    if requested_patient_id and claims.get("role") in ("doctor", "admin"):
-        target_user = User.query.get(requested_patient_id)
-        if not target_user:
-            return jsonify({"message": "Patient not found"}), 404
-    else:
-        target_user = user
 
-    # Prepare data for PDF
+    current_user = User.query.get(int(get_jwt_identity()))
+    if not current_user:
+        return jsonify({"message": "User not found"}), 404
+
+    requested_patient_id = request.args.get("patient_id", type=int)
+    if requested_patient_id:
+        if role == "patient" and requested_patient_id != current_user.id:
+            return jsonify({"message": "Access denied"}), 403
+        if role in ("doctor", "admin", "super_admin") and not _user_can_access_patient(current_user, requested_patient_id):
+            return jsonify({"message": "Access denied"}), 403
+        target_user = User.query.get(requested_patient_id)
+    else:
+        target_user = current_user
+
+    if not target_user or target_user.role != "patient":
+        return jsonify({"message": "Patient not found"}), 404
+
     patient_data = {
         "full_name": target_user.full_name or "N/A",
-        "email": target_user.email
+        "email": target_user.email,
     }
-    
-    # Calculate summary
-    # Use global telemetry only if it matches the target patient
-    target_history = []
-    target_latest = {}
-    
-    if str(_latest.get("patient_id")) == str(target_user.id):
-        target_history = list(_history)
-        target_latest = _latest
-    
-    history_list = target_history
+
+    target_history = _history_snapshot(target_user.id)
+    target_latest = _latest_snapshot(target_user.id) or {}
+
     alerts = []
-    if history_list:
-        hrs = [h['hr'] for h in history_list if h.get('hr')]
-        spo2s = [h['spo2'] for h in history_list if h.get('spo2')]
-        temps = [h['temp'] for h in history_list if h.get('temp')]
-        
-        hr_avg = round(sum(hrs) / len(hrs), 1) if hrs else None
-        spo2_avg = round(sum(spo2s) / len(spo2s), 1) if spo2s else None
-        temp_avg = round(sum(temps) / len(temps), 1) if temps else None
-        
-        # Simple alert logic
+    if target_history:
+        heart_rates = [item["hr"] for item in target_history if item.get("hr")]
+        spo2_values = [item["spo2"] for item in target_history if item.get("spo2")]
+        temperatures = [item["temp"] for item in target_history if item.get("temp")]
+
+        hr_avg = round(sum(heart_rates) / len(heart_rates), 1) if heart_rates else None
+        spo2_avg = round(sum(spo2_values) / len(spo2_values), 1) if spo2_values else None
+        temp_avg = round(sum(temperatures) / len(temperatures), 1) if temperatures else None
+
         if hr_avg and (hr_avg < 60 or hr_avg > 100):
             alerts.append(f"Average heart rate ({hr_avg} BPM) is outside normal range (60-100 BPM)")
         if spo2_avg and spo2_avg < 95:
-            alerts.append(f"Average SpO2 ({spo2_avg}%) is below normal (≥95%)")
+            alerts.append(f"Average SpO2 ({spo2_avg}%) is below normal (>=95%)")
         if temp_avg and (temp_avg < 36.1 or temp_avg > 37.5):
-            alerts.append(f"Average temperature ({temp_avg}°C) is outside normal range (36.1-37.5°C)")
+            alerts.append(f"Average temperature ({temp_avg}C) is outside normal range (36.1-37.5C)")
     else:
         hr_avg = spo2_avg = temp_avg = None
-    
+
     summary_data = {
         "hr_avg": hr_avg,
         "spo2_avg": spo2_avg,
         "temp_avg": temp_avg,
-        "alerts": alerts
+        "alerts": alerts,
     }
-    
-    data = {
+
+    report_data = {
         "patient": patient_data,
         "latest": target_latest,
-        "history": history_list,
-        "summary": summary_data
+        "history": target_history,
+        "summary": summary_data,
     }
-    
-    # Determine timezone (passed from browser so report matches what the user sees)
-    tz = request.args.get("tz", "UTC")
 
-    # Generate PDF
+    tz_name = request.args.get("tz", "UTC")
     try:
-        pdf_buffer = generate_assessment_report(data, tz_name=tz)
-    except Exception as e:
-        # If PDF generation fails, return a helpful JSON error for easier debugging.
-        return jsonify({"message": "Failed to generate assessment report", "error": str(e)}), 500
-    # Return PDF
-    filename = f"NeuroNest_Assessment_{user.full_name.replace(' ', '_')}_{datetime.now().strftime('%Y%m%d')}.pdf"
+        pdf_buffer = generate_assessment_report(report_data, tz_name=tz_name)
+    except Exception:
+        current_app.logger.exception("Failed to generate assessment report for patient %s", target_user.id)
+        return jsonify({"message": "Failed to generate assessment report"}), 500
+
+    safe_name = (target_user.full_name or f"patient_{target_user.id}").replace(" ", "_")
+    filename = f"NeuroNest_Assessment_{safe_name}_{datetime.now().strftime('%Y%m%d')}.pdf"
     return send_file(
         pdf_buffer,
-        mimetype='application/pdf',
+        mimetype="application/pdf",
         as_attachment=True,
-        download_name=filename
+        download_name=filename,
     )
 
 
 def get_vitals_for_report(patient_id):
-    """Exposes in-memory vitals context for PDF generation.
-    Returns latest and history if the patient matches active telemetry.
-    """
-    # Check if the active telemetry belongs to this patient
-    if str(_latest.get("patient_id")) == str(patient_id):
+    latest = _latest_snapshot(patient_id)
+    history = _history_snapshot(patient_id)
+    if latest or history:
         return {
-            "latest": dict(_latest),
-            "history": list(_history),
-            "is_active": True
+            "latest": latest or {},
+            "history": history,
+            "is_active": bool(latest),
         }
     return {"is_active": False}

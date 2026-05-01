@@ -2,7 +2,7 @@
 .admin-reports-root {
     display: flex;
     flex-direction: column;
-    gap: 24px;
+    gap: var(--admin-section-gap, 24px);
     height: 100%;
     max-width: 1400px;
     margin: 0 auto;
@@ -14,8 +14,7 @@
 .admin-reports-header {
     display: flex;
     flex-direction: column;
-    gap: 24px;
-    margin-bottom: 24px;
+    gap: var(--admin-section-gap, 24px);
     border-bottom: 1px solid #F1F5F9;
     padding-bottom: 24px;
 }

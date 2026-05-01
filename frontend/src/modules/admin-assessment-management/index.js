@@ -1,11 +1,5 @@
 import { ClipboardList } from 'lucide-react';
-import ModuleComingSoon from '../../pages/shared/ModuleComingSoon';
-
-const AdminAssessmentManagementPage = () =>
-  ModuleComingSoon({
-    title: 'Assessment Management',
-    description: 'Assessment templates, lifecycle, and governance controls are scaffolded.',
-  });
+import AdminAssessmentManagementPage from './AdminAssessmentManagementPage';
 
 const adminAssessmentManagementModule = {
   key: 'adminAssessmentManagement',

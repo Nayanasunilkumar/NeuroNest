@@ -1,11 +1,11 @@
 .admin-dashboard-page {
   min-height: calc(100vh - 120px);
-  padding-bottom: 2rem;
+  padding-bottom: 0;
 }
 
 .admin-dashboard-shell {
   display: grid;
-  gap: 1.5rem;
+  gap: var(--admin-section-gap, 1.75rem);
 }
 
 .admin-dashboard-shell-loading,

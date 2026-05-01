@@ -364,7 +364,7 @@ const AdminLayout = () => {
         )}
       </header>
 
-      <main className="flex-1 overflow-y-auto scroll-smooth px-4 pb-6 pt-4 sm:px-6 lg:px-6">
+      <main className="admin-main-scroll flex-1 overflow-y-auto scroll-smooth px-4 pb-12 pt-4 sm:px-6 lg:px-6">
         <div className="admin-page-shell min-h-full">
           <Outlet />
         </div>

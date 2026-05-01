@@ -1,5 +1,5 @@
 import { Folder } from 'lucide-react';
-import ClinicalArchivesPage from '../../pages/doctor/ClinicalArchives';
+import ClinicalArchivesPage from './ClinicalArchivesPage';
 
 const clinicalArchivesModule = {
   key: 'clinicalArchives',

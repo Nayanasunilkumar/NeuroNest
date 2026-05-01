@@ -1,5 +1,5 @@
 import { CalendarCheck2 } from 'lucide-react';
-import MyAppointments from '../../pages/patient/MyAppointments';
+import MyAppointmentsPage from './MyAppointmentsPage';
 
 const myAppointmentsModule = {
   key: 'myAppointments',
@@ -9,7 +9,7 @@ const myAppointmentsModule = {
   rolesAllowed: ['patient'],
   enabledByDefault: true,
   componentsByRole: {
-    patient: MyAppointments,
+    patient: MyAppointmentsPage,
   },
   orderByRole: { patient: 40 },
 };

@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
 
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, current_app, jsonify, request
 from flask_jwt_extended import get_jwt, get_jwt_identity, jwt_required
 
 from database.models import (
@@ -36,10 +36,29 @@ from services.appointment_call_service import (
 
 appointments_bp = Blueprint("appointments", __name__)
 
+
+def _require_diagnostic_access():
+    if not current_app.config.get("ENABLE_DIAGNOSTIC_ROUTES", False):
+        return jsonify({"message": "Not found"}), 404
+
+    role = (get_jwt().get("role") or "").strip().lower()
+    if role not in ("admin", "super_admin"):
+        return jsonify({"message": "Admin access required"}), 403
+
+    return None
+
 @appointments_bp.route("/test-email", methods=["GET"])
+@jwt_required()
 def test_email_appointments():
+    access_error = _require_diagnostic_access()
+    if access_error:
+        return access_error
+
     from services.notification_service import NotificationService
-    recipient = "nayanasunilkumar8@gmail.com"
+    recipient = request.args.get("email")
+    if not recipient:
+        return {"status": "error", "message": "email query parameter is required"}, 400
+
     subject = "NeuroNest Diagnostic (Appt Route)"
     body = "If you are reading this, your Render SMTP configuration is working perfectly via Appointments route!"
     
@@ -169,7 +188,12 @@ def _book_slot_atomic(*, current_user_id: int, doctor_id: int, slot_id: int, rea
 
 
 @appointments_bp.route("/debug-doctors", methods=["GET"])
+@jwt_required()
 def debug_doctors():
+    access_error = _require_diagnostic_access()
+    if access_error:
+        return access_error
+
     from database.models import User, DoctorProfile, DoctorPrivacySetting
     data = db.session.query(User, DoctorPrivacySetting).join(DoctorPrivacySetting, User.id == DoctorPrivacySetting.doctor_user_id, isouter=True).filter(User.role == "doctor").all()
     res = []
@@ -183,7 +207,12 @@ def debug_doctors():
     return jsonify(res)
 
 @appointments_bp.route("/ping-v10-test", methods=["GET"])
+@jwt_required()
 def ping_v10_test():
+    access_error = _require_diagnostic_access()
+    if access_error:
+        return access_error
+
     return jsonify({"status": "V10 LIVE", "msg": "I AM RUNNING THE LATEST CODE"}), 200
 
 @appointments_bp.route("/doctors", methods=["GET"])
@@ -211,12 +240,8 @@ def get_all_doctors():
             # Default to visible (True) if no privacy setting record exists or is None.
             raw_visibility = getattr(privacy, 'show_profile_publicly', True)
             is_visible = True if raw_visibility is None else bool(raw_visibility)
-            
-            # DEBUG: Print to logs to see what's happening
-            print(f"[DEBUG_SCAN] Found Doctor: {user.full_name}, ID: {user.id}, Email: {user.email}, Visibility: {is_visible}")
-            
+
             if not is_visible:
-                print(f"[PRIVACY ENFORCED] Hiding doctor {user.id} ({user.full_name}) from patient search")
                 continue
             
             # Enforce Consultation Setting details (Fee)
@@ -236,14 +261,13 @@ def get_all_doctors():
                     "consultation_mode": (consultation.consultation_mode if consultation and consultation.consultation_mode 
                                          else (profile.consultation_mode or "Both")),
                     "consultation_fee": actual_fee,
-                    "debug_visibility": is_visible,
-                    "debug_raw_privacy": raw_visibility
                 }
             )
 
         return jsonify(result), 200
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    except Exception:
+        current_app.logger.exception("Failed to fetch visible doctor list")
+        return jsonify({"error": "Failed to fetch doctors"}), 500
 
 
 @appointments_bp.route("/doctors/<int:doctor_id>/profile", methods=["GET"])

@@ -1,16 +1,33 @@
 import os
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, current_app, jsonify, request
 from database.models import db, User, PatientProfile, DoctorProfile, SecurityActivity
 from utils.security import hash_password, verify_password
-from flask_jwt_extended import create_access_token
+from flask_jwt_extended import create_access_token, get_jwt, get_jwt_identity, jwt_required
 
 from extensions.socket import socketio
 from services.notification_service import NotificationService
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
 
+
+def _require_diagnostic_access():
+    if not current_app.config.get("ENABLE_DIAGNOSTIC_ROUTES", False):
+        return jsonify({"message": "Not found"}), 404
+
+    role = (get_jwt().get("role") or "").strip().lower()
+    if role not in ("admin", "super_admin"):
+        return jsonify({"message": "Admin access required"}), 403
+
+    return None
+
+
 @auth_bp.route("/test-email")
+@jwt_required()
 def test_email_v1():
+    access_error = _require_diagnostic_access()
+    if access_error:
+        return access_error
+
     version = "V_REQUESTS_2026"  # marker
     try:
         import requests as req_lib
@@ -38,23 +55,30 @@ def test_email_v1():
         if resp.status_code == 200:
             data = resp.json()
             return jsonify({"status": "SUCCESS", "id": data.get("id"), "version": version}), 200
-        else:
-            return jsonify({"status": "error", "http_code": resp.status_code, "detail": resp.text, "version": version}), 500
-    except Exception as e:
-        return jsonify({"status": "error", "version": version, "type": type(e).__name__, "msg": str(e)}), 500
+        current_app.logger.warning("Diagnostic resend test failed with status %s", resp.status_code)
+        return jsonify({"status": "error", "version": version}), 500
+    except Exception as error:
+        current_app.logger.exception("Diagnostic resend test failed")
+        return jsonify({"status": "error", "version": version, "type": type(error).__name__}), 500
 
 @auth_bp.route("/debug/test-email", methods=["GET"])
+@jwt_required()
 def test_email_diagnostics():
+    access_error = _require_diagnostic_access()
+    if access_error:
+        return access_error
+
     target = request.args.get("email")
     if not target:
         return jsonify({"error": "email param required"}), 400
-    
-    print(f"[DEBUG] Manual email test to {target}")
+
+    current_app.logger.info("Running manual diagnostic email test for admin user %s", get_jwt_identity())
     try:
         success = NotificationService.send_email(target, "NeuroNest Test Email", "This is a diagnostic test of the notification system.")
         return jsonify({"success": success}), 200
-    except Exception as e:
-        return jsonify({"success": False, "error": str(e)}), 500
+    except Exception:
+        current_app.logger.exception("Manual diagnostic email test failed for %s", target)
+        return jsonify({"success": False}), 500
 
 def parse_user_agent(ua_string):
     if not ua_string: return "Unknown Device"
@@ -91,34 +115,36 @@ def log_security_event(user_id, event_type, description, commit=True):
         db.session.add(activity)
         if commit:
             db.session.commit()
-    except Exception as e:
-        print(f"Error logging security event: {e}")
+    except Exception:
+        current_app.logger.exception("Error logging security event for user %s", user_id)
         db.session.rollback()
 
-
-# Cache bootstrap config to speed up failed/dev lookups
-ALLOW_BOOTSTRAP = os.getenv("ALLOW_DEV_DOCTOR_BOOTSTRAP", "false").lower() == "true"
-DEFAULT_DOCTOR_EMAIL = os.getenv("DEFAULT_DOCTOR_EMAIL", "nayanasunilkumar8@gmail.com").strip().lower()
-DEFAULT_DOCTOR_PASSWORD = os.getenv("DEFAULT_DOCTOR_PASSWORD", "123456")
 
 def _maybe_bootstrap_doctor_for_dev(email: str):
     """
     Dev-only fallback:
     If enabled, auto-creates the default doctor account when missing.
     """
-    if not ALLOW_BOOTSTRAP:
+    if not current_app.config.get("ALLOW_DEV_DOCTOR_BOOTSTRAP", False):
         return None
-        
+
+    default_doctor_email = (current_app.config.get("DEFAULT_DOCTOR_EMAIL") or "").strip().lower()
+    default_doctor_password = current_app.config.get("DEFAULT_DOCTOR_PASSWORD") or ""
+
+    if not default_doctor_email or not default_doctor_password:
+        current_app.logger.warning("Doctor bootstrap is enabled but default credentials are not fully configured")
+        return None
+
     email_clean = email.strip().lower()
-    if email_clean != DEFAULT_DOCTOR_EMAIL:
+    if email_clean != default_doctor_email:
         return None
 
     # Redundant query avoided: if we are here, 'User.query.filter_by(email=email).first()' 
     # already returned None in the main login flow for this specific email.
 
     doctor_user = User(
-        email=DEFAULT_DOCTOR_EMAIL,
-        password_hash=hash_password(DEFAULT_DOCTOR_PASSWORD),
+        email=default_doctor_email,
+        password_hash=hash_password(default_doctor_password),
         role="doctor",
         full_name="Dr. Nayana",
     )
@@ -262,6 +288,6 @@ def login():
                 "must_change_password": bool(getattr(user, "must_change_password", False))
             }
         }), 200
-    except Exception as e:
-        import traceback
-        return jsonify({"message": f"Login crash: {str(e)}", "trace": traceback.format_exc()}), 500
+    except Exception:
+        current_app.logger.exception("Login crash")
+        return jsonify({"message": "Login failed due to a server error"}), 500

@@ -1,6 +1,6 @@
 import { User } from 'lucide-react';
-import PatientProfile from '../../pages/patient/Profile';
-import DoctorProfile from '../../pages/doctor/Profile';
+import PatientProfilePage from './PatientProfilePage';
+import DoctorProfilePage from './DoctorProfilePage';
 
 const profileModule = {
   key: 'profile',
@@ -11,8 +11,8 @@ const profileModule = {
   showInSidebarByRole: ['patient', 'doctor'],
   enabledByDefault: true,
   componentsByRole: {
-    patient: PatientProfile,
-    doctor: DoctorProfile,
+    patient: PatientProfilePage,
+    doctor: DoctorProfilePage,
   },
   orderByRole: { patient: 20, doctor: 20 },
 };
