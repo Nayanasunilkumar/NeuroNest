@@ -1,11 +1,5 @@
 import { BarChart3 } from 'lucide-react';
-import ModuleComingSoon from '../../pages/shared/ModuleComingSoon';
-
-const PerformanceAnalyticsPage = () =>
-  ModuleComingSoon({
-    title: 'Performance Analytics',
-    description: 'Analytics module is prepared for phased enablement by role.',
-  });
+import PerformanceAnalyticsPage from './PerformanceAnalyticsPage';
 
 const performanceAnalyticsModule = {
   key: 'performanceAnalytics',

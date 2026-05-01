@@ -1,7 +1,7 @@
 import { Settings } from 'lucide-react';
-import PatientSettingsPage from '../../pages/patient/settings/PatientSettingsPage';
-import DoctorSettingsPage from '../../pages/doctor/settings/DoctorSettingsPage';
-import SettingsPage from '../../pages/admin/SettingsPage';
+import AdminSettingsModulePage from './AdminSettingsModulePage';
+import DoctorSettingsModulePage from './DoctorSettingsModulePage';
+import PatientSettingsModulePage from './PatientSettingsModulePage';
 
 const settingsModule = {
   key: 'settings',
@@ -12,9 +12,9 @@ const settingsModule = {
   group: 'Administration',
   enabledByDefault: true,
   componentsByRole: {
-    patient: PatientSettingsPage,
-    doctor:  DoctorSettingsPage,
-    admin:   SettingsPage,
+    patient: PatientSettingsModulePage,
+    doctor: DoctorSettingsModulePage,
+    admin: AdminSettingsModulePage,
   },
   orderByRole: { doctor: 50, patient: 90, admin: 90 },
 };

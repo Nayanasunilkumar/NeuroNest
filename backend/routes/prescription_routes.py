@@ -4,6 +4,7 @@ from database.models import db, User, Appointment
 from models.prescription_models import Prescription, PrescriptionItem
 from datetime import datetime, timedelta, date
 import re
+from typing import Optional
 
 prescriptions_bp = Blueprint("prescriptions", __name__)
 
@@ -29,7 +30,7 @@ def _serialize_prescription_with_effective_status(prescription: Prescription) ->
     return payload
 
 
-def _parse_duration_days(raw_duration: str | None, explicit_duration_days=None):
+def _parse_duration_days(raw_duration: Optional[str], explicit_duration_days=None):
     if explicit_duration_days in ("", None):
         explicit_duration_days = None
 

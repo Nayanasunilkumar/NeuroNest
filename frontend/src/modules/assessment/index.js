@@ -1,5 +1,5 @@
 import { ClipboardCheck } from 'lucide-react';
-import AssessmentPage from '../../pages/patient/Assessment';
+import AssessmentPage from './AssessmentPage';
 
 const assessmentModule = {
   key: 'assessment',

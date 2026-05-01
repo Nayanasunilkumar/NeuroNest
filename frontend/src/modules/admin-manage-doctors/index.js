@@ -1,5 +1,5 @@
 import { Stethoscope } from 'lucide-react';
-import ManageDoctors from '../../pages/admin/ManageDoctors';
+import ManageDoctorsPage from './ManageDoctorsPage';
 
 const adminManageDoctorsModule = {
   key: 'adminManageDoctors',
@@ -10,7 +10,7 @@ const adminManageDoctorsModule = {
   group: 'Clinical',
   enabledByDefault: true,
   componentsByRole: {
-    admin: ManageDoctors,
+    admin: ManageDoctorsPage,
   },
   orderByRole: { admin: 30 },
 };

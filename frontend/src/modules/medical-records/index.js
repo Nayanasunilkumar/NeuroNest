@@ -1,5 +1,5 @@
 import { Files } from 'lucide-react';
-import MedicalRecords from '../../pages/patient/MedicalRecords';
+import MedicalRecordsPage from './MedicalRecordsPage';
 
 const medicalRecordsModule = {
   key: 'medicalRecords',
@@ -9,8 +9,8 @@ const medicalRecordsModule = {
   rolesAllowed: ['patient', 'doctor'],
   enabledByDefault: true,
   componentsByRole: {
-    patient: MedicalRecords,
-    doctor: MedicalRecords,
+    patient: MedicalRecordsPage,
+    doctor: MedicalRecordsPage,
   },
   showInSidebarByRole: ['patient'],
   orderByRole: { patient: 50, doctor: 110 },

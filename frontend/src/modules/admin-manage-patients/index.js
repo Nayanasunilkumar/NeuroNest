@@ -1,5 +1,5 @@
 import { Users } from 'lucide-react';
-import ManagePatients from '../../pages/admin/ManagePatients';
+import ManagePatientsPage from './ManagePatientsPage';
 
 const adminManagePatientsModule = {
   key: 'adminManagePatients',
@@ -10,7 +10,7 @@ const adminManagePatientsModule = {
   group: 'Clinical',
   enabledByDefault: true,
   componentsByRole: {
-    admin: ManagePatients,
+    admin: ManagePatientsPage,
   },
   orderByRole: { admin: 20 },
 };

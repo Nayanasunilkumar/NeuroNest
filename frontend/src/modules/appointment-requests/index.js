@@ -1,5 +1,5 @@
 import { ClipboardCheck } from 'lucide-react';
-import AppointmentRequests from '../../pages/doctor/AppointmentRequests';
+import AppointmentRequestsPage from './AppointmentRequestsPage';
 
 const appointmentRequestsModule = {
   key: 'appointmentRequests',
@@ -10,7 +10,7 @@ const appointmentRequestsModule = {
   showInSidebarByRole: ['admin', 'doctor'],
   enabledByDefault: true,
   componentsByRole: {
-    doctor: AppointmentRequests,
+    doctor: AppointmentRequestsPage,
   },
   orderByRole: { doctor: 30, admin: 40 },
 };

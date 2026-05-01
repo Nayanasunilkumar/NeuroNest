@@ -1,5 +1,5 @@
 import { Brain } from 'lucide-react';
-import AssessmentPage from '../../pages/patient/Assessment';
+import AssessmentReportsPage from './AssessmentReportsPage';
 
 const assessmentReportsModule = {
   key: 'assessmentReports',
@@ -9,7 +9,7 @@ const assessmentReportsModule = {
   rolesAllowed: ['doctor'],
   enabledByDefault: true,
   componentsByRole: {
-    doctor: AssessmentPage,
+    doctor: AssessmentReportsPage,
   },
   showInSidebarByRole: [],
   orderByRole: { doctor: 70 },

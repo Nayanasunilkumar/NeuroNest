@@ -190,9 +190,7 @@ class NotificationService:
             f"Immediate review is required."
         )
 
-        # 1. Notify Patient (Forcing email for nezrinnoushad20@gmail.com)
-        force_email = (patient.email == 'nezrinnoushad20@gmail.com')
-        
+        # 1. Notify Patient
         NotificationService.send_in_app(
             user_id=patient_id,
             title=f"Critical {alert.vital_type} Alert",
@@ -201,12 +199,6 @@ class NotificationService:
             email_subject=subject,
             email_event_type="critical"
         )
-        
-        # If it's the target patient and they somehow have email alerts off, we send it anyway 
-        # as per strict requirement, OR we just trust send_in_app if we ensured prefs are true.
-        # To be 100% sure as per "Send an immediate email alert":
-        if force_email:
-             NotificationService.send_email(patient.email, subject, msg, event_type="critical")
 
         # 2. Notify Assigned Doctor
         appointment = Appointment.query.filter_by(patient_id=patient_id).order_by(Appointment.created_at.desc()).first()

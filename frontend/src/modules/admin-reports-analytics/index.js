@@ -1,5 +1,5 @@
 import { BarChart4 } from 'lucide-react';
-import AdminReports from '../../pages/admin/reports/AdminReports';
+import AdminReportsPage from './AdminReportsPage';
 
 const adminReportsAnalyticsModule = {
   key: 'adminReportsAnalytics',
@@ -10,7 +10,7 @@ const adminReportsAnalyticsModule = {
   group: 'Operations',
   enabledByDefault: true,
   componentsByRole: {
-    admin: AdminReports,
+    admin: AdminReportsPage,
   },
   orderByRole: { admin: 60 },
 };

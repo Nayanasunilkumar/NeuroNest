@@ -1,20 +1,26 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { fetchAlerts, acknowledgeAlert } from "../api/alertsApi";
-import { getSocket } from "../services/socket";
-import { isAuthenticated } from "../utils/auth";
+import { getSocket, initSocket } from "../services/socket";
+import { AUTH_CHANGED_EVENT, isAuthenticated } from "../utils/auth";
 
 export const AlertContext = createContext();
 
 export const AlertProvider = ({ children }) => {
   const [alerts, setAlerts] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [authRevision, setAuthRevision] = useState(0);
 
   const loadAlerts = useCallback(async () => {
-    if (!isAuthenticated()) return;
+    if (!isAuthenticated()) {
+      setAlerts([]);
+      setUnreadCount(0);
+      return;
+    }
+
     try {
       const data = await fetchAlerts(true);
       setAlerts(data);
-      setUnreadCount(data.length);
+      setUnreadCount(data.filter((alert) => !alert.is_acknowledged).length);
     } catch (error) {
       console.error("Failed to load alerts:", error);
     }
@@ -22,48 +28,65 @@ export const AlertProvider = ({ children }) => {
 
   useEffect(() => {
     loadAlerts();
-    
-    // Set up polling auth event or just load once on mount
+
     const handleStorageChange = (e) => {
-      if (e.key === "neuronest_token" && !!e.newValue) {
-        loadAlerts();
+      if (e.key === "neuronest_token" || e.key === "neuronest_user") {
+        setAuthRevision((value) => value + 1);
       }
     };
+
+    const handleAuthChange = () => {
+      setAuthRevision((value) => value + 1);
+    };
+
     window.addEventListener("storage", handleStorageChange);
-    return () => window.removeEventListener("storage", handleStorageChange);
+    window.addEventListener(AUTH_CHANGED_EVENT, handleAuthChange);
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener(AUTH_CHANGED_EVENT, handleAuthChange);
+    };
   }, [loadAlerts]);
 
   useEffect(() => {
-    if (!isAuthenticated()) return;
+    loadAlerts();
+  }, [authRevision, loadAlerts]);
+
+  useEffect(() => {
+    if (!isAuthenticated()) return undefined;
 
     const handleNewAlert = (newAlert) => {
-      setAlerts((prev) => {
-        if (prev.some(a => a.id === newAlert.id)) return prev;
-        const updated = [newAlert, ...prev];
-        setUnreadCount(updated.filter(a => !a.is_acknowledged).length);
+      setAlerts((prevAlerts) => {
+        if (prevAlerts.some((alert) => alert.id === newAlert.id)) return prevAlerts;
+
+        const updated = [newAlert, ...prevAlerts];
+        setUnreadCount(updated.filter((alert) => !alert.is_acknowledged).length);
         return updated;
       });
     };
 
-    const handleAck = (data) => {
-      setAlerts((prev) => {
-        const updated = prev.map(a => a.id === data.id ? { ...a, is_acknowledged: true, acknowledged_by: data.acknowledged_by } : a);
-        setUnreadCount(updated.filter(a => !a.is_acknowledged).length);
+    const handleAck = (payload) => {
+      setAlerts((prevAlerts) => {
+        const updated = prevAlerts.map((alert) =>
+          alert.id === payload.id
+            ? { ...alert, is_acknowledged: true, acknowledged_by: payload.acknowledged_by }
+            : alert,
+        );
+        setUnreadCount(updated.filter((alert) => !alert.is_acknowledged).length);
         return updated;
       });
     };
 
-    const socket = getSocket();
-    if (socket) {
-      socket.on("critical_alert", handleNewAlert);
-      socket.on("alert_acknowledged", handleAck);
+    const socket = getSocket() || initSocket();
+    if (!socket) return undefined;
 
-      return () => {
-        socket.off("critical_alert", handleNewAlert);
-        socket.off("alert_acknowledged", handleAck);
-      };
-    }
-  }, []);
+    socket.on("critical_alert", handleNewAlert);
+    socket.on("alert_acknowledged", handleAck);
+
+    return () => {
+      socket.off("critical_alert", handleNewAlert);
+      socket.off("alert_acknowledged", handleAck);
+    };
+  }, [authRevision]);
 
   const markAcknowledged = async (alertId) => {
     try {

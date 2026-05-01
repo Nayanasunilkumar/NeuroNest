@@ -1,5 +1,5 @@
 import { CalendarDays } from 'lucide-react';
-import ManageAppointments from '../../pages/admin/ManageAppointments';
+import AdminAppointmentManagementPage from './AdminAppointmentManagementPage';
 
 const adminAppointmentManagementModule = {
   key: 'adminAppointmentManagement',
@@ -10,7 +10,7 @@ const adminAppointmentManagementModule = {
   group: 'Clinical',
   enabledByDefault: true,
   componentsByRole: {
-    admin: ManageAppointments,
+    admin: AdminAppointmentManagementPage,
   },
   orderByRole: { admin: 40 },
 };

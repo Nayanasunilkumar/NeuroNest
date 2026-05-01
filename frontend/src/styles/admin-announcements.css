@@ -17,7 +17,6 @@
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    margin-bottom: 8px;
 }
 
 .header-titles h1 {
@@ -38,8 +37,7 @@
 .announcements-stats {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 20px;
-    margin-bottom: 24px;
+    gap: var(--admin-section-gap, 24px);
 }
 
 .stat-card {

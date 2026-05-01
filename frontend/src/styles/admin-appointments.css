@@ -3,6 +3,9 @@
    ========================================= */
 
 .appointments-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--admin-section-gap, 28px);
   padding: 2.5rem;
   background-color: var(--admin-bg);
   min-height: calc(100vh - 70px);
@@ -17,7 +20,10 @@
 
 /* Header & Summary Cards */
 .appt-header {
-  margin-bottom: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: var(--admin-section-gap, 28px);
+  margin-bottom: 0;
 }
 
 .appt-title-nexus h1 {
@@ -45,8 +51,8 @@
 .summary-cards-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1.25rem;
-  margin-top: 2rem;
+  gap: var(--admin-section-gap, 28px);
+  margin-top: 0;
 }
 
 .summary-card {
@@ -93,13 +99,22 @@
 
 /* Filters & Search - Hierarchical Layout */
 .appt-filters-container {
-  margin-bottom: 2rem;
   background: var(--admin-panel-bg);
   backdrop-filter: var(--admin-glass);
   padding: 1.25rem 1.5rem;
   border: 1px solid var(--admin-border);
   border-radius: 20px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+
+.appt-data-nexus {
+  display: flex;
+  flex-direction: column;
+  gap: var(--admin-section-gap, 28px);
+}
+
+.appt-breadcrumb-nexus {
+  margin-bottom: 0 !important;
 }
 
 .appt-hierarchy-bar {
@@ -439,7 +454,6 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: 2rem;
   padding: 1rem 0;
 }
 

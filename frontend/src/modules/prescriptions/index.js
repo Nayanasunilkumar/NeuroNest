@@ -1,5 +1,5 @@
 import { Pill } from 'lucide-react';
-import Prescriptions from '../../pages/patient/Prescriptions';
+import PrescriptionsPage from './PrescriptionsPage';
 
 const prescriptionsModule = {
   key: 'prescriptions',
@@ -9,7 +9,7 @@ const prescriptionsModule = {
   rolesAllowed: ['patient'],
   enabledByDefault: true,
   componentsByRole: {
-    patient: Prescriptions,
+    patient: PrescriptionsPage,
   },
   orderByRole: { patient: 60 },
 };

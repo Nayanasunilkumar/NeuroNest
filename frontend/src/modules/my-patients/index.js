@@ -1,5 +1,5 @@
 import { Users } from 'lucide-react';
-import MyPatients from '../../pages/doctor/MyPatients';
+import MyPatientsPage from './MyPatientsPage';
 
 const myPatientsModule = {
   key: 'myPatients',
@@ -9,7 +9,7 @@ const myPatientsModule = {
   rolesAllowed: ['doctor', 'admin'],
   enabledByDefault: true,
   componentsByRole: {
-    doctor: MyPatients,
+    doctor: MyPatientsPage,
   },
   orderByRole: { doctor: 30, admin: 60 },
 };

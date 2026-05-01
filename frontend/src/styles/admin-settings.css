@@ -62,7 +62,6 @@
     display: flex;
     overflow-x: auto;
     border-bottom: 2px solid var(--admin-border);
-    margin-bottom: 24px;
     gap: 8px;
     /* Hide scrollbar */
     -ms-overflow-style: none;  /* IE and Edge */
