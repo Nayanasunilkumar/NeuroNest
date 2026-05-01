@@ -24,11 +24,17 @@ def _env_int(name: str, default: int) -> int:
 
 
 def _resolve_secret_key() -> str:
-    secret_key = (os.getenv("SECRET_KEY") or "").strip()
+    secret_key = (
+        os.getenv("SECRET_KEY")
+        or os.getenv("FLASK_SECRET_KEY")
+        or os.getenv("JWT_SECRET_KEY")
+        or os.getenv("JWT_SECRET")
+        or ""
+    ).strip()
     if secret_key:
         return secret_key
     if _IS_PRODUCTION:
-        raise RuntimeError("SECRET_KEY must be set when FLASK_ENV=production")
+        raise RuntimeError("SECRET_KEY or JWT_SECRET_KEY must be set when FLASK_ENV=production")
     return _DEV_FALLBACK_SECRET
 
 
