@@ -1,6 +1,6 @@
 .admin-theme {
   --admin-section-gap: clamp(24px, 2vw, 32px);
-  --admin-page-bottom-padding: clamp(24px, 3vw, 32px);
+  --admin-page-bottom-padding: 16px;
   --admin-header-bg: color-mix(in srgb, var(--nn-surface) 88%, transparent);
   --admin-header-border: var(--nn-border);
   --admin-brand: var(--nn-primary);
