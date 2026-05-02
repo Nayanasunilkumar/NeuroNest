@@ -221,21 +221,23 @@ const ManageDoctors = () => {
                                 <button className="btn btn-light border-0 doctor-search-submit" onClick={triggerSearch} aria-label="Search doctors"><ChevronRight size={16} /></button>
                             </div>
                         </div>
-                        <div className="doctor-filter-cell">
-                            <select className="form-select bg-light border-0 doctor-filter-select" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} aria-label="Filter doctors by account status">
-                                <option value="">ALL STATUS</option>
-                                <option value="active">ACTIVE</option>
-                                <option value="suspended">SUSPENDED</option>
-                            </select>
-                        </div>
-                        <div className="doctor-filter-cell">
-                            <select className="form-select bg-light border-0 doctor-filter-select" value={sectorFilter} onChange={(e) => setSectorFilter(e.target.value)} aria-label="Filter doctors by region">
-                                <option value="">ALL REGIONS</option>
-                                <option value="North Sector">NORTH</option>
-                                <option value="South Sector">SOUTH</option>
-                                <option value="East Sector">EAST</option>
-                                <option value="West Sector">WEST</option>
-                            </select>
+                        <div className="doctor-filter-group">
+                            <div className="doctor-filter-cell">
+                                <select className="form-select bg-light border-0 doctor-filter-select" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} aria-label="Filter doctors by account status">
+                                    <option value="">ALL STATUS</option>
+                                    <option value="active">ACTIVE</option>
+                                    <option value="suspended">SUSPENDED</option>
+                                </select>
+                            </div>
+                            <div className="doctor-filter-cell">
+                                <select className="form-select bg-light border-0 doctor-filter-select" value={sectorFilter} onChange={(e) => setSectorFilter(e.target.value)} aria-label="Filter doctors by region">
+                                    <option value="">ALL REGIONS</option>
+                                    <option value="North Sector">NORTH</option>
+                                    <option value="South Sector">SOUTH</option>
+                                    <option value="East Sector">EAST</option>
+                                    <option value="West Sector">WEST</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
                 </div>
