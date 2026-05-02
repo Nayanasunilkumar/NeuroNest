@@ -13,9 +13,26 @@ import {
   Activity,
   AlertTriangle,
   CheckCircle2,
-  LoaderCircle
+  LoaderCircle,
+  Mail,
+  ShieldCheck,
+  HeartPulse,
+  Ruler,
+  Weight,
+  Droplets,
+  CalendarDays,
+  MapPinned,
+  FileText,
+  Gauge,
+  TrendingUp,
+  Flag,
+  ClipboardCheck,
+  ListChecks,
+  Video,
+  Building2
 } from 'lucide-react';
 import { fetchPatientDetail, updatePatientStatus } from '../../services/adminPatientAPI';
+import { formatDateIST } from '../../utils/time';
 
 const PatientDrawer = ({ patientId, isOpen, initialTab = 'profile', onClose, onRefresh }) => {
   const [activeTab, setActiveTab] = useState('profile');
@@ -127,6 +144,67 @@ const PatientDrawer = ({ patientId, isOpen, initialTab = 'profile', onClose, onR
     { id: 'clinical', label: 'Metric Analysis', icon: <Stethoscope size={16} /> }
   ];
 
+  const calculateAge = (dateOfBirth) => {
+    if (!dateOfBirth) return 'Unknown';
+    const birthDate = new Date(dateOfBirth);
+    if (Number.isNaN(birthDate.getTime())) return 'Unknown';
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthOffset = today.getMonth() - birthDate.getMonth();
+    if (monthOffset < 0 || (monthOffset === 0 && today.getDate() < birthDate.getDate())) age -= 1;
+    return age >= 0 ? `${age} years` : 'Unknown';
+  };
+
+  const calculateBmi = () => {
+    const height = Number(data?.profile_info.height_cm);
+    const weight = Number(data?.profile_info.weight_kg);
+    if (!height || !weight) return { value: 'Missing', label: 'Insufficient data' };
+    const bmi = weight / ((height / 100) ** 2);
+    let label = 'Standard range';
+    if (bmi < 18.5) label = 'Below range';
+    if (bmi >= 25) label = 'Above range';
+    if (bmi >= 30) label = 'High range';
+    return { value: bmi.toFixed(1), label };
+  };
+
+  const getRiskLevel = () => {
+    const openFlags = Number(data?.metrics?.flags_open || 0);
+    if (data?.user_info.account_status === 'suspended') return { label: 'Suspended', className: 'critical' };
+    if (openFlags > 2) return { label: 'High attention', className: 'critical' };
+    if (openFlags > 0) return { label: 'Watchlist', className: 'watch' };
+    return { label: 'Stable', className: 'stable' };
+  };
+
+  const formatDateTime = (dateStr) => formatDateIST(dateStr, {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  }) || 'Time unavailable';
+
+  const profile = data?.profile_info || {};
+  const metrics = data?.metrics || {};
+  const appointmentSummary = metrics.appointment_summary || {};
+  const recentAppointments = data?.recent_appointments || [];
+  const recentFlags = data?.recent_flags || [];
+  const statusHistory = data?.status_history || [];
+  const bmi = calculateBmi();
+  const riskLevel = getRiskLevel();
+  const profileCompletion = metrics.profile_completion ?? 0;
+  const verificationItems = [
+    { label: 'Email', complete: Boolean(data?.user_info.is_email_verified) },
+    { label: 'Phone', complete: Boolean(data?.user_info.is_phone_verified) },
+    { label: 'Identity', complete: Boolean(data?.user_info.is_verified || metrics.is_verified) },
+    { label: 'Profile', complete: profileCompletion >= 80 }
+  ];
+  const verificationScore = verificationItems.filter((item) => item.complete).length;
+
+  const getAppointmentDate = (appointment) => {
+    if (appointment.appointment_start_utc) return formatDateTime(appointment.appointment_start_utc);
+    return [appointment.appointment_date, appointment.appointment_time].filter(Boolean).join(' ') || 'Schedule unavailable';
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -186,18 +264,85 @@ const PatientDrawer = ({ patientId, isOpen, initialTab = 'profile', onClose, onR
             <div className="drawer-content-pane">
               {activeTab === 'profile' && (
                 <div className="tab-pane animate-in">
+                   <div className="profile-summary-strip">
+                      <div>
+                        <span>Patient Identity</span>
+                        <strong>{data?.user_info.full_name || profile.full_name || 'Unnamed Patient'}</strong>
+                      </div>
+                      <div>
+                        <span>Age</span>
+                        <strong>{calculateAge(profile.date_of_birth)}</strong>
+                      </div>
+                      <div>
+                        <span>Blood Group</span>
+                        <strong>{profile.blood_group || 'Not recorded'}</strong>
+                      </div>
+                      <div>
+                        <span>Risk State</span>
+                        <strong className={`risk-text ${riskLevel.className}`}>{riskLevel.label}</strong>
+                      </div>
+                   </div>
+
                    <div className="info-grid">
                       <div className="info-item">
-                         <div className="info-label"><MapPin size={12} /> Geographic Node</div>
-                         <div className="info-value">{data?.profile_info.city || 'UNDEFINED'}</div>
+                         <div className="info-label"><MapPinned size={12} /> Geographic Node</div>
+                         <div className="info-value">{[profile.city, profile.state, profile.country].filter(Boolean).join(', ') || 'UNDEFINED'}</div>
                       </div>
                       <div className="info-item">
                          <div className="info-label"><Phone size={12} /> Comm Link</div>
-                         <div className="info-value">{data?.profile_info.phone || 'DISCONNECTED'}</div>
+                         <div className="info-value">{profile.phone || 'DISCONNECTED'}</div>
                       </div>
                       <div className="info-item full">
-                         <div className="info-label"><User size={12} /> Institutional Email</div>
+                         <div className="info-label"><Mail size={12} /> Institutional Email</div>
                          <div className="info-value">{data?.user_info.email}</div>
+                      </div>
+                      <div className="info-item">
+                         <div className="info-label"><Ruler size={12} /> Height</div>
+                         <div className="info-value">{profile.height_cm ? `${profile.height_cm} cm` : 'Not recorded'}</div>
+                      </div>
+                      <div className="info-item">
+                         <div className="info-label"><Weight size={12} /> Weight</div>
+                         <div className="info-value">{profile.weight_kg ? `${profile.weight_kg} kg` : 'Not recorded'}</div>
+                      </div>
+                      <div className="info-item full">
+                         <div className="info-label"><MapPin size={12} /> Registered Address</div>
+                         <div className="info-value">{profile.address || 'No address on record'}</div>
+                      </div>
+                   </div>
+
+                   <div className="profile-function-grid">
+                      <div className="profile-function-panel">
+                        <div className="section-header compact">
+                          <ClipboardCheck size={14} />
+                          Verification Readiness
+                        </div>
+                        <div className="profile-progress-row">
+                          <span>{profileCompletion}% profile complete</span>
+                          <strong>{verificationScore}/4 checks</strong>
+                        </div>
+                        <div className="profile-progress-track">
+                          <span style={{ width: `${profileCompletion}%` }} />
+                        </div>
+                        <div className="verification-list">
+                          {verificationItems.map((item) => (
+                            <div key={item.label} className={item.complete ? 'complete' : 'pending'}>
+                              <CheckCircle2 size={13} />
+                              {item.label}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="profile-function-panel">
+                        <div className="section-header compact">
+                          <ListChecks size={14} />
+                          Recent Care Snapshot
+                        </div>
+                        <div className="snapshot-list">
+                          <div><span>Total appointments</span><strong>{metrics.appointments_total ?? 0}</strong></div>
+                          <div><span>Completed sessions</span><strong>{appointmentSummary.completed ?? 0}</strong></div>
+                          <div><span>Open flags</span><strong>{metrics.flags_open ?? 0}</strong></div>
+                          <div><span>Audit events</span><strong>{metrics.audit_events ?? 0}</strong></div>
+                        </div>
                       </div>
                    </div>
 
@@ -242,11 +387,11 @@ const PatientDrawer = ({ patientId, isOpen, initialTab = 'profile', onClose, onR
                       <h4 className="section-title">Medical Context Archive</h4>
                       <div className="context-item">
                          <strong>Known Hypersensitivities:</strong>
-                         <p>{data?.profile_info.allergies || 'No critical data recorded'}</p>
+                         <p>{profile.allergies || 'No critical data recorded'}</p>
                       </div>
                       <div className="context-item">
                          <strong>Chronic Pathology:</strong>
-                         <p>{data?.profile_info.chronic_conditions || 'Base state stable'}</p>
+                         <p>{profile.chronic_conditions || 'Base state stable'}</p>
                       </div>
                    </div>
                 </div>
@@ -254,11 +399,16 @@ const PatientDrawer = ({ patientId, isOpen, initialTab = 'profile', onClose, onR
 
               {activeTab === 'timeline' && (
                 <div className="tab-pane animate-in">
+                   <div className="tab-section-intro">
+                      <h3>Event History</h3>
+                      <p>Recent governance and status activity for this patient account.</p>
+                   </div>
                    <div className="audit-timeline">
-                      {data?.audit_summary.map((log, i) => (
-                        <div key={i} className="timeline-event">
+                      {data?.audit_summary.map((log, index) => (
+                        <div key={log.id || index} className="timeline-event">
                            <div className="event-dot" />
-                           <div className="event-time">{log.created_at}</div>
+                           <div className="event-time">{formatDateTime(log.created_at)}</div>
+                           <div className="event-type">{log.action_type || 'account_event'}</div>
                            <div className="event-desc">{log.description}</div>
                         </div>
                       ))}
@@ -267,6 +417,133 @@ const PatientDrawer = ({ patientId, isOpen, initialTab = 'profile', onClose, onR
                            No historical events found in local cluster.
                         </div>
                       )}
+                   </div>
+
+                   <div className="history-detail-grid">
+                      <div className="history-panel">
+                        <h4>Status Changes</h4>
+                        {statusHistory.length > 0 ? statusHistory.map((log) => (
+                          <div key={log.id} className="history-row">
+                            <strong>{log.previous_status || 'none'} to {log.new_status}</strong>
+                            <span>{formatDateTime(log.created_at)}</span>
+                            <p>{log.reason || 'No reason recorded'}</p>
+                          </div>
+                        )) : <div className="empty-state compact">No status changes recorded.</div>}
+                      </div>
+                      <div className="history-panel">
+                        <h4>Recent Flags</h4>
+                        {recentFlags.length > 0 ? recentFlags.map((flag) => (
+                          <div key={flag.id} className={`history-row severity-${flag.severity || 'medium'}`}>
+                            <strong>{flag.category || 'Flag'} · {flag.severity || 'medium'}</strong>
+                            <span>{formatDateTime(flag.created_at)}</span>
+                            <p>{flag.reason || 'No flag reason recorded'}</p>
+                          </div>
+                        )) : <div className="empty-state compact">No flags recorded.</div>}
+                      </div>
+                   </div>
+                </div>
+              )}
+
+              {activeTab === 'clinical' && (
+                <div className="tab-pane animate-in">
+                   <div className="tab-section-intro">
+                      <h3>Metric Analysis</h3>
+                      <p>Operational, verification, and baseline clinical indicators from the current record.</p>
+                   </div>
+
+                   <div className="metric-hero-grid">
+                      <div className={`metric-hero-card ${riskLevel.className}`}>
+                        <Gauge size={18} />
+                        <span>Governance Risk</span>
+                        <strong>{riskLevel.label}</strong>
+                      </div>
+                      <div className="metric-hero-card">
+                        <CalendarDays size={18} />
+                        <span>Appointments</span>
+                        <strong>{metrics.appointments_total ?? 0}</strong>
+                      </div>
+                      <div className="metric-hero-card">
+                        <Flag size={18} />
+                        <span>Open Flags</span>
+                        <strong>{metrics.flags_open ?? 0}</strong>
+                      </div>
+                   </div>
+
+                   <div className="metric-grid">
+                      <div className="metric-card">
+                        <HeartPulse size={18} />
+                        <span>BMI</span>
+                        <strong>{bmi.value}</strong>
+                        <small>{bmi.label}</small>
+                      </div>
+                      <div className="metric-card">
+                        <Droplets size={18} />
+                        <span>Blood Group</span>
+                        <strong>{profile.blood_group || 'Missing'}</strong>
+                        <small>Clinical baseline</small>
+                      </div>
+                      <div className="metric-card">
+                        <ShieldCheck size={18} />
+                        <span>Identity Verified</span>
+                        <strong>{metrics.is_verified ? 'Yes' : 'Pending'}</strong>
+                        <small>Institutional validation</small>
+                      </div>
+                      <div className="metric-card">
+                        <Mail size={18} />
+                        <span>Email Verified</span>
+                        <strong>{data?.user_info.is_email_verified ? 'Yes' : 'Pending'}</strong>
+                        <small>Communication readiness</small>
+                      </div>
+                      <div className="metric-card">
+                        <FileText size={18} />
+                        <span>Audit Events</span>
+                        <strong>{metrics.audit_events ?? 0}</strong>
+                        <small>Recorded governance entries</small>
+                      </div>
+                      <div className="metric-card">
+                        <TrendingUp size={18} />
+                        <span>Total Flags</span>
+                        <strong>{metrics.flags_total ?? 0}</strong>
+                        <small>Lifetime risk markers</small>
+                      </div>
+                   </div>
+
+                   <div className="analysis-split-grid">
+                      <div className="analysis-panel">
+                        <h4>Appointment Breakdown</h4>
+                        <div className="analysis-bars">
+                          {[
+                            ['Completed', appointmentSummary.completed ?? 0],
+                            ['Upcoming', appointmentSummary.upcoming ?? 0],
+                            ['Cancelled', appointmentSummary.cancelled ?? 0],
+                            ['Online', appointmentSummary.online ?? 0],
+                            ['In person', appointmentSummary.in_person ?? 0]
+                          ].map(([label, value]) => {
+                            const total = Math.max(metrics.appointments_total || 0, 1);
+                            return (
+                              <div key={label} className="analysis-bar-row">
+                                <div><span>{label}</span><strong>{value}</strong></div>
+                                <div className="analysis-bar-track">
+                                  <span style={{ width: `${Math.min((value / total) * 100, 100)}%` }} />
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                      <div className="analysis-panel">
+                        <h4>Recent Appointments</h4>
+                        {recentAppointments.length > 0 ? recentAppointments.map((appointment) => (
+                          <div key={appointment.id} className="appointment-mini-row">
+                            {appointment.consultation_type === 'online' ? <Video size={14} /> : <Building2 size={14} />}
+                            <div>
+                              <strong>{appointment.doctor_name || 'Doctor pending'}</strong>
+                              <span>{getAppointmentDate(appointment)}</span>
+                            </div>
+                            <em>{appointment.status || 'pending'}</em>
+                          </div>
+                        )) : <div className="empty-state compact">No appointments found.</div>}
+                      </div>
                    </div>
                 </div>
               )}

@@ -84,20 +84,91 @@ def get_patient_detail(patient_id):
     profile = user.patient_profile
     profile_dict = profile.to_dict() if profile else {}
     
-    # Audit summary
+    appointments = Appointment.query.filter_by(patient_id=patient_id).order_by(
+        Appointment.appointment_date.desc(),
+        Appointment.appointment_time.desc()
+    ).all()
+    recent_appointments = appointments[:6]
+    recent_flags = PatientFlag.query.filter_by(patient_id=patient_id).order_by(
+        PatientFlag.created_at.desc()
+    ).limit(6).all()
+    status_logs = PatientStatusLog.query.filter_by(patient_id=patient_id).order_by(
+        PatientStatusLog.created_at.desc()
+    ).limit(6).all()
     recent_logs = PatientAuditLog.query.filter_by(patient_id=patient_id).order_by(PatientAuditLog.created_at.desc()).limit(10).all()
+    completed_statuses = {"completed"}
+    pending_statuses = {"pending", "approved", "rescheduled"}
+    cancelled_statuses = {"cancelled", "cancelled_by_patient", "cancelled_by_doctor", "rejected", "no_show"}
+    appointment_summary = {
+        "completed": sum(1 for appt in appointments if (appt.status or "").lower() in completed_statuses),
+        "upcoming": sum(1 for appt in appointments if (appt.status or "").lower() in pending_statuses),
+        "cancelled": sum(1 for appt in appointments if (appt.status or "").lower() in cancelled_statuses),
+        "online": sum(1 for appt in appointments if (appt.consultation_type or "").lower() == "online"),
+        "in_person": sum(1 for appt in appointments if (appt.consultation_type or "").lower() != "online")
+    }
+    profile_fields = [
+        profile_dict.get("phone"),
+        profile_dict.get("date_of_birth"),
+        profile_dict.get("gender"),
+        profile_dict.get("blood_group"),
+        profile_dict.get("height_cm"),
+        profile_dict.get("weight_kg"),
+        profile_dict.get("address"),
+        profile_dict.get("city"),
+        profile_dict.get("allergies"),
+        profile_dict.get("chronic_conditions")
+    ]
+    completed_profile_fields = sum(1 for field in profile_fields if field not in [None, ""])
+    profile_completion = round((completed_profile_fields / len(profile_fields)) * 100) if profile_fields else 0
     
     return jsonify({
         "user_info": {
             "id": user.id,
+            "full_name": user.full_name,
             "email": user.email,
             "role": user.role,
             "account_status": user.account_status,
             "is_email_verified": user.is_email_verified,
-            "is_phone_verified": user.is_phone_verified
+            "is_phone_verified": user.is_phone_verified,
+            "is_verified": user.is_verified,
+            "created_at": user.created_at.isoformat() + "Z" if user.created_at else None,
+            "updated_at": user.updated_at.isoformat() + "Z" if user.updated_at else None
         },
         "profile_info": profile_dict,
-        "audit_summary": [log.to_dict() for log in recent_logs]
+        "metrics": {
+            "appointments_total": Appointment.query.filter_by(patient_id=patient_id).count(),
+            "flags_open": PatientFlag.query.filter_by(patient_id=patient_id, is_resolved=False).count(),
+            "flags_total": PatientFlag.query.filter_by(patient_id=patient_id).count(),
+            "audit_events": PatientAuditLog.query.filter_by(patient_id=patient_id).count(),
+            "is_verified": user.is_verified,
+            "profile_completion": profile_completion,
+            "appointment_summary": appointment_summary
+        },
+        "recent_appointments": [appt.to_dict() for appt in recent_appointments],
+        "recent_flags": [{
+            "id": flag.id,
+            "category": flag.category,
+            "reason": flag.reason,
+            "severity": flag.severity,
+            "is_resolved": flag.is_resolved,
+            "resolved_at": flag.resolved_at.isoformat() + "Z" if flag.resolved_at else None,
+            "resolution_note": flag.resolution_note,
+            "created_at": flag.created_at.isoformat() + "Z" if flag.created_at else None
+        } for flag in recent_flags],
+        "status_history": [{
+            "id": log.id,
+            "previous_status": log.previous_status,
+            "new_status": log.new_status,
+            "reason": log.reason,
+            "created_at": log.created_at.isoformat() + "Z" if log.created_at else None
+        } for log in status_logs],
+        "audit_summary": [{
+            "id": log.id,
+            "action_type": log.action_type,
+            "description": log.description,
+            "created_at": log.created_at.isoformat() + "Z" if log.created_at else None,
+            "ip_address": log.ip_address
+        } for log in recent_logs]
     }), 200
 
 # -----------------------------------------------------------------
