@@ -71,7 +71,7 @@ const PatientTable = ({ patients, onSelectPatient, onOpenTimeline, onStatusActio
               <td style={{ fontWeight: 800, color: 'var(--admin-text-main)' }}>{p.full_name}</td>
               <td style={{ color: 'var(--admin-text-muted)', fontSize: '0.8rem' }}>{p.email}</td>
               <td>
-                <span className={`status-pill status-${p.account_status}`}>
+                <span className={`status-pill status-${String(p.account_status || '').toLowerCase()}`}>
                   {p.account_status}
                 </span>
               </td>

@@ -200,6 +200,14 @@
   box-shadow: 0 2px 10px rgba(239, 68, 68, 0.3);
 }
 
+.manage-patients-page .status-pill.status-suspended,
+.patient-drawer .status-pill.status-suspended {
+  background: #ef4444;
+  color: #ffffff;
+  border-color: #dc2626;
+  box-shadow: 0 0 0 1px rgba(220, 38, 38, 0.18), 0 8px 18px rgba(239, 68, 68, 0.26);
+}
+
 .status-deleted {
   background: rgba(100, 116, 139, 0.15);
   color: var(--admin-text-muted);

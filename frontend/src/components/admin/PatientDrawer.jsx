@@ -223,7 +223,7 @@ const PatientDrawer = ({ patientId, isOpen, initialTab = 'profile', onClose, onR
               {loading ? 'SYNCHRONIZING...' : data?.user_info.full_name || data?.profile_info.full_name}
             </h2>
             <div className="header-meta">
-               <span className={`status-pill status-${data?.user_info.account_status}`}>
+               <span className={`status-pill status-${String(data?.user_info.account_status || '').toLowerCase()}`}>
                   {data?.user_info.account_status}
                 </span>
                 <span className="patient-id-tag">
