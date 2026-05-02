@@ -200,6 +200,10 @@
   width: 100%;
 }
 
+.admin-theme .admin-page-shell-dashboard {
+  min-height: auto;
+}
+
 .admin-theme .admin-dashboard-page,
 .admin-theme .appointments-page,
 .admin-theme .manage-patients-page,
@@ -233,11 +237,15 @@
 @media (max-width: 991.98px) {
   .admin-theme .admin-page-shell {
     --admin-section-gap: 24px;
-    --admin-page-bottom-padding: 32px;
+    --admin-page-bottom-padding: 16px;
     min-height: calc(100vh - 120px);
     border-radius: 20px;
     padding: 1rem;
     padding-bottom: var(--admin-page-bottom-padding);
+  }
+
+  .admin-theme .admin-page-shell-dashboard {
+    min-height: auto;
   }
 }
 
