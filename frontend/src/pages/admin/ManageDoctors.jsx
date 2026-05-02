@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
     Search, UserPlus, ShieldCheck, Mail, MapPin, 
     MoreVertical, RefreshCw, CheckCircle, AlertTriangle, 
-    User, ShieldAlert, X, Clock, Activity, Download, FileText, ChevronRight,
+    User, ShieldAlert, X, Clock, Activity, Download, FileText, ChevronRight, ChevronDown,
     Users, Verified, ShieldQuestion, UserCheck
 } from 'lucide-react';
 import { fetchDoctors, createDoctor, verifyDoctor, updateDoctorStatus, deleteDoctor } from '../../services/adminDoctorAPI';
@@ -228,6 +228,7 @@ const ManageDoctors = () => {
                                     <option value="active">ACTIVE</option>
                                     <option value="suspended">SUSPENDED</option>
                                 </select>
+                                <ChevronDown size={16} className="position-absolute text-secondary" style={{ right: '1rem', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
                             </div>
                             <div className="doctor-filter-cell">
                                 <select className="form-select bg-light border-0 doctor-filter-select" value={sectorFilter} onChange={(e) => setSectorFilter(e.target.value)} aria-label="Filter doctors by region">
@@ -237,6 +238,7 @@ const ManageDoctors = () => {
                                     <option value="East Sector">EAST</option>
                                     <option value="West Sector">WEST</option>
                                 </select>
+                                <ChevronDown size={16} className="position-absolute text-secondary" style={{ right: '1rem', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
                             </div>
                         </div>
                     </div>
