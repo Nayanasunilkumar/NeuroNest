@@ -24,6 +24,7 @@ const ManageDoctors = () => {
     const [selectedDoctors, setSelectedDoctors] = useState([]);
     const [openMenuId, setOpenMenuId] = useState(null);
     const [selectedDoctorId, setSelectedDoctorId] = useState(null);
+    const [selectedDoctorObj, setSelectedDoctorObj] = useState(null);
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
     useEffect(() => {
@@ -135,9 +136,10 @@ const ManageDoctors = () => {
         loadDoctors();
     };
 
-    const handleVerify = async (id) => {
-        if (window.confirm('Confirm clinical credential verification?')) {
-            await verifyDoctor(id);
+    const handleVerifyToggle = async (id, isVerified) => {
+        const actionText = isVerified ? 'revoke clinical credentials' : 'confirm clinical credential verification';
+        if (window.confirm(`Are you sure you want to ${actionText}?`)) {
+            await verifyDoctor(id, !isVerified);
             loadDoctors();
         }
     };
@@ -291,11 +293,11 @@ const ManageDoctors = () => {
                                             </td>
                                             <td className="text-center">
                                                 {doc.is_verified ? (
-                                                    <span className="badge rounded-pill bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-3 py-2">
+                                                    <span className="badge rounded-pill bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-3 py-2 cursor-pointer" onClick={() => handleVerifyToggle(doc.id, doc.is_verified)}>
                                                         <ShieldCheck size={12} className="me-1 mb-1" /> Verified
                                                     </span>
                                                 ) : (
-                                                    <span className="badge rounded-pill bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 px-3 py-2 cursor-pointer" onClick={() => handleVerify(doc.id)}>
+                                                    <span className="badge rounded-pill bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 px-3 py-2 cursor-pointer" onClick={() => handleVerifyToggle(doc.id, doc.is_verified)}>
                                                         <AlertTriangle size={12} className="me-1 mb-1" /> Pending
                                                     </span>
                                                 )}
@@ -312,13 +314,17 @@ const ManageDoctors = () => {
                                                 
                                                 {openMenuId === doc.id && (
                                                     <div className="dropdown-menu show shadow-lg border-light rounded-4 p-2 end-0 translate-middle-y mt-2" style={{ zIndex: 1000, right: '50px' }}>
-                                                        <button className="dropdown-item rounded-3 d-flex align-items-center gap-2 py-2" onClick={() => { setSelectedDoctorId(doc.id); setIsDrawerOpen(true); setOpenMenuId(null); }}>
+                                                        <button className="dropdown-item rounded-3 d-flex align-items-center gap-2 py-2" onClick={() => { setSelectedDoctorId(doc.id); setSelectedDoctorObj(doc); setIsDrawerOpen(true); setOpenMenuId(null); }}>
                                                             <User size={14} /> Profile
                                                         </button>
                                                         <button className="dropdown-item rounded-3 d-flex align-items-center gap-2 py-2" onClick={() => { window.open(`mailto:${doc.email}`, '_self'); setOpenMenuId(null); }}>
                                                             <Mail size={14} /> Contact
                                                         </button>
                                                         <div className="dropdown-divider mx-2"></div>
+                                                        <button className="dropdown-item rounded-3 d-flex align-items-center gap-2 py-2" onClick={() => { handleVerifyToggle(doc.id, doc.is_verified); setOpenMenuId(null); }}>
+                                                            {doc.is_verified ? <ShieldAlert size={14} className="text-warning" /> : <ShieldCheck size={14} className="text-success" />}
+                                                            {doc.is_verified ? 'Revoke Auth' : 'Verify Auth'}
+                                                        </button>
                                                         <button className="dropdown-item rounded-3 d-flex align-items-center gap-2 py-2" onClick={() => handleStatusToggle(doc.id, doc.account_status)}>
                                                             {doc.account_status === 'active' ? <AlertTriangle size={14} className="text-danger" /> : <CheckCircle size={14} className="text-success" />}
                                                             {doc.account_status === 'active' ? 'Suspend' : 'Activate'}
@@ -368,7 +374,7 @@ const ManageDoctors = () => {
             )}
 
             <AddDoctorModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onAdd={handleOnboard} />
-            <DoctorDrawer doctorId={selectedDoctorId} isOpen={isDrawerOpen} onClose={() => setIsDrawerOpen(false)} />
+            <DoctorDrawer doctorId={selectedDoctorId} basicInfo={selectedDoctorObj} isOpen={isDrawerOpen} onClose={() => setIsDrawerOpen(false)} />
 
             <style>{`
                 .fw-black { font-weight: 950; }
