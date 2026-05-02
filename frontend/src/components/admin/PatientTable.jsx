@@ -9,7 +9,8 @@ import {
   History,
   Clipboard,
   AlertTriangle,
-  CheckCircle2
+  CheckCircle2,
+  UserX
 } from 'lucide-react';
 
 import { formatDateIST } from '../../utils/time';
@@ -126,7 +127,7 @@ const PatientTable = ({ patients, onSelectPatient, onOpenTimeline, onStatusActio
                         Copy Email
                       </button>
                       <div className="patient-action-divider" />
-                      {p.account_status === 'active' ? (
+                      {String(p.account_status || '').toLowerCase() === 'active' ? (
                         <button type="button" className="danger" onClick={() => handleAction(() => onStatusAction(p, 'suspended'))}>
                           <AlertTriangle size={14} />
                           Suspend Account
@@ -135,6 +136,12 @@ const PatientTable = ({ patients, onSelectPatient, onOpenTimeline, onStatusActio
                         <button type="button" className="success" onClick={() => handleAction(() => onStatusAction(p, 'active'))}>
                           <CheckCircle2 size={14} />
                           Reactivate Account
+                        </button>
+                      )}
+                      {String(p.account_status || '').toLowerCase() !== 'deleted' && (
+                        <button type="button" className="danger" onClick={() => handleAction(() => onStatusAction(p, 'deleted'))}>
+                          <UserX size={14} />
+                          Deactivate Account
                         </button>
                       )}
                     </div>

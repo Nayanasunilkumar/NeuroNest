@@ -79,7 +79,8 @@ def get_doctors():
         if search_query:
             query = query.filter(
                 (User.full_name.ilike(f"%{search_query}%")) |
-                (User.email.ilike(f"%{search_query}%"))
+                (User.email.ilike(f"%{search_query}%")) |
+                (User.id.cast(db.String).ilike(f"%{search_query}%"))
             )
 
         if status_filter:

@@ -55,6 +55,31 @@ const ManagePatients = () => {
     setActionNotice('');
   };
 
+  const getStatusActionCopy = (nextStatus) => {
+    if (nextStatus === 'active') {
+      return {
+        title: 'Authorize Reactivation',
+        reason: 'Reason for Reactivation',
+        success: 'User reactivated successfully',
+        submitClass: 'status-success-btn'
+      };
+    }
+    if (nextStatus === 'deleted') {
+      return {
+        title: 'Deactivate Account',
+        reason: 'Reason for Deactivation',
+        success: 'User deactivated successfully',
+        submitClass: 'status-danger-btn'
+      };
+    }
+    return {
+      title: 'Initialize Suspension',
+      reason: 'Reason for Suspension',
+      success: 'User suspended successfully',
+      submitClass: 'status-danger-btn'
+    };
+  };
+
   const closeStatusDialog = () => {
     if (statusUpdating) return;
     setStatusDialog(null);
@@ -84,11 +109,7 @@ const ManagePatients = () => {
           ? { ...patient, account_status: statusDialog.nextStatus }
           : patient
       )));
-      setActionNotice(
-        statusDialog.nextStatus === 'active'
-          ? 'User reactivated successfully'
-          : 'User suspended successfully'
-      );
+      setActionNotice(getStatusActionCopy(statusDialog.nextStatus).success);
       setStatusDialog(null);
       setStatusReason('');
     } catch (err) {
@@ -182,13 +203,13 @@ const ManagePatients = () => {
         <div className="patient-status-dialog-overlay" onClick={closeStatusDialog}>
           <form className="patient-status-dialog" onSubmit={handleStatusSubmit} onClick={(event) => event.stopPropagation()}>
             <h3>
-              {statusDialog.nextStatus === 'active' ? 'Authorize Reactivation' : 'Initialize Suspension'}
+              {getStatusActionCopy(statusDialog.nextStatus).title}
             </h3>
             <p>
               {statusDialog.patient.full_name} #{statusDialog.patient.id}
             </p>
             <label htmlFor="patient-action-reason">
-              {statusDialog.nextStatus === 'active' ? 'Reason for Reactivation' : 'Reason for Suspension'}
+              {getStatusActionCopy(statusDialog.nextStatus).reason}
             </label>
             <textarea
               id="patient-action-reason"
@@ -208,7 +229,7 @@ const ManagePatients = () => {
               </button>
               <button
                 type="submit"
-                className={statusDialog.nextStatus === 'active' ? 'status-success-btn' : 'status-danger-btn'}
+                className={getStatusActionCopy(statusDialog.nextStatus).submitClass}
                 disabled={statusUpdating}
               >
                 {statusUpdating ? 'Processing...' : 'OK'}
