@@ -8,7 +8,7 @@
   gap: var(--admin-section-gap, 28px);
   padding: 2.5rem;
   background-color: var(--admin-bg);
-  min-height: 140px;
+  min-height: 200px;
   color: var(--admin-text-main);
   animation: fadeIn 0.5s ease-out;
 }
