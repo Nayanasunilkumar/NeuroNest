@@ -8,6 +8,7 @@ import {
 import { fetchDoctors, createDoctor, verifyDoctor, updateDoctorStatus, deleteDoctor } from '../../services/adminDoctorAPI';
 import AddDoctorModal from '../../components/admin/AddDoctorModal';
 import DoctorDrawer from '../../components/admin/DoctorDrawer';
+import '../../styles/admin-manage-doctors.css';
 
 const ManageDoctors = () => {
     const [doctors, setDoctors] = useState([]);
@@ -204,9 +205,9 @@ const ManageDoctors = () => {
                     </div>
                 )}
                 <div className="card-header bg-white border-0 p-4 pb-0">
-                    <div className="row g-3">
-                        <div className="col-12 col-md-6 col-lg-4">
-                            <div className="input-group">
+                    <div className="row g-3 align-items-center doctor-roster-toolbar">
+                        <div className="col-12 col-lg-6 col-xl-5">
+                            <div className="input-group doctor-search-group">
                                 <span className="input-group-text bg-light border-0"><Search size={16} /></span>
                                 <input 
                                     type="text" 
@@ -215,19 +216,20 @@ const ManageDoctors = () => {
                                     value={search}
                                     onChange={(e) => setSearch(e.target.value)}
                                     onKeyDown={(e) => e.key === 'Enter' && triggerSearch()}
+                                    aria-label="Search doctors by name or license"
                                 />
-                                <button className="btn btn-light border-0" onClick={triggerSearch}><ChevronRight size={16} /></button>
+                                <button className="btn btn-light border-0 doctor-search-submit" onClick={triggerSearch} aria-label="Search doctors"><ChevronRight size={16} /></button>
                             </div>
                         </div>
-                        <div className="col-6 col-md-3 col-lg-2">
-                            <select className="form-select bg-light border-0" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+                        <div className="col-12 col-sm-6 col-lg-3 col-xl-2">
+                            <select className="form-select bg-light border-0 doctor-filter-select" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} aria-label="Filter doctors by account status">
                                 <option value="">ALL STATUS</option>
                                 <option value="active">ACTIVE</option>
                                 <option value="suspended">SUSPENDED</option>
                             </select>
                         </div>
-                        <div className="col-6 col-md-3 col-lg-2">
-                            <select className="form-select bg-light border-0" value={sectorFilter} onChange={(e) => setSectorFilter(e.target.value)}>
+                        <div className="col-12 col-sm-6 col-lg-3 col-xl-2">
+                            <select className="form-select bg-light border-0 doctor-filter-select" value={sectorFilter} onChange={(e) => setSectorFilter(e.target.value)} aria-label="Filter doctors by region">
                                 <option value="">ALL REGIONS</option>
                                 <option value="North Sector">NORTH</option>
                                 <option value="South Sector">SOUTH</option>

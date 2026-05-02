@@ -1,0 +1,52 @@
+.doctor-roster-toolbar {
+  --doctor-control-height: 3rem;
+}
+
+.doctor-search-group,
+.doctor-filter-select {
+  min-height: var(--doctor-control-height);
+}
+
+.doctor-search-group {
+  flex-wrap: nowrap;
+}
+
+.doctor-search-group .form-control {
+  min-width: 0;
+  height: var(--doctor-control-height);
+  font-size: 0.95rem;
+}
+
+.doctor-search-group .input-group-text,
+.doctor-search-submit {
+  width: 3rem;
+  height: var(--doctor-control-height);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 3rem;
+}
+
+.doctor-filter-select {
+  width: 100%;
+  height: var(--doctor-control-height);
+  padding-left: 1rem;
+  padding-right: 2.5rem;
+  font-size: 0.92rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  text-overflow: ellipsis;
+}
+
+@media (min-width: 1200px) {
+  .doctor-roster-toolbar {
+    column-gap: 0.35rem;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .doctor-search-group .form-control,
+  .doctor-filter-select {
+    font-size: 0.9rem;
+  }
+}
