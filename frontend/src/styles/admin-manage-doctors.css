@@ -8,8 +8,9 @@
 }
 
 .doctor-search-cell {
-  flex: 1 1 320px;
+  flex: 0 1 560px;
   min-width: 280px;
+  max-width: 560px;
 }
 
 .doctor-filter-group {
