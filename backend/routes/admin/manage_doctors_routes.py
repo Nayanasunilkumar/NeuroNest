@@ -37,6 +37,9 @@ def _doctor_salutation_name(full_name: str) -> str:
     cleaned = re.sub(r"^\s*dr\.?\s*", "", cleaned, flags=re.IGNORECASE).strip()
     return cleaned or "Doctor"
 
+def _is_doctor_role(role: str) -> bool:
+    return (role or "").strip().lower() in ("doctor", "specialist")
+
 def admin_required(fn):
     @jwt_required()
     def wrapper(*args, **kwargs):
@@ -64,6 +67,7 @@ def get_doctors():
         search_query = request.args.get("search", "").strip()
         status_filter = request.args.get("status", "")
         sector_filter = request.args.get("sector", "")
+        verification_filter = request.args.get("verified", "").strip().lower()
         page = int(request.args.get("page", 1))
         limit = int(request.args.get("limit", 20))
 
@@ -76,18 +80,28 @@ def get_doctors():
 
         query = User.query.filter(doctor_role_filter)
 
+        if search_query or sector_filter:
+            query = query.outerjoin(DoctorProfile, DoctorProfile.user_id == User.id)
+
         if search_query:
             query = query.filter(
                 (User.full_name.ilike(f"%{search_query}%")) |
                 (User.email.ilike(f"%{search_query}%")) |
-                (User.id.cast(db.String).ilike(f"%{search_query}%"))
+                (User.id.cast(db.String).ilike(f"%{search_query}%")) |
+                (DoctorProfile.license_number.ilike(f"%{search_query}%")) |
+                (DoctorProfile.specialization.ilike(f"%{search_query}%"))
             )
 
         if status_filter:
             query = query.filter(User.account_status == status_filter.lower())
 
+        if verification_filter in ("verified", "true", "1"):
+            query = query.filter(User.is_verified == True)
+        elif verification_filter in ("pending", "false", "0"):
+            query = query.filter(User.is_verified == False)
+
         if sector_filter:
-            query = query.join(DoctorProfile).filter(DoctorProfile.sector == sector_filter)
+            query = query.filter(DoctorProfile.sector == sector_filter)
 
         # Calculate global stats (for the whole roster, not just current page)
         total_all = User.query.filter(doctor_role_filter).count()
@@ -229,14 +243,27 @@ def add_doctor():
 @admin_required
 def get_doctor_detail(doctor_id):
     user = User.query.get_or_404(doctor_id)
-    if user.role != "doctor":
+    if not _is_doctor_role(user.role):
         return jsonify({"error": "Unauthorized profile access"}), 403
 
     profile = db.session.query(
         DoctorProfile.specialization,
         DoctorProfile.license_number,
+        DoctorProfile.qualification,
+        DoctorProfile.experience_years,
+        DoctorProfile.department,
+        DoctorProfile.sector,
+        DoctorProfile.phone,
         DoctorProfile.bio,
+        DoctorProfile.hospital_name,
         DoctorProfile.consultation_fee,
+        DoctorProfile.consultation_mode,
+        DoctorProfile.report_count,
+        DoctorProfile.critical_review_count,
+        DoctorProfile.missed_appointments_count,
+        DoctorProfile.avg_rating,
+        DoctorProfile.risk_level,
+        DoctorProfile.doctor_status,
         DoctorProfile.created_at
     ).filter(DoctorProfile.user_id == doctor_id).first()
     
@@ -251,6 +278,17 @@ def get_doctor_detail(doctor_id):
             "timestamp": str(log.created_at)
         })
 
+    status_logs = DoctorStatusLog.query.filter_by(doctor_id=doctor_id).order_by(DoctorStatusLog.created_at.desc()).limit(5).all()
+    status_logs_data = []
+    for log in status_logs:
+        status_logs_data.append({
+            "id": log.id,
+            "previous_status": log.previous_status,
+            "new_status": log.new_status,
+            "reason": log.reason,
+            "timestamp": str(log.created_at)
+        })
+
     return jsonify({
         "id": user.id,
         "full_name": user.full_name,
@@ -259,10 +297,26 @@ def get_doctor_detail(doctor_id):
         "is_verified": user.is_verified,
         "specialization": getattr(profile, "specialization", None) or "N/A",
         "license_number": getattr(profile, "license_number", None) or "N/A",
+        "qualification": getattr(profile, "qualification", None) or "",
+        "experience_years": getattr(profile, "experience_years", None),
+        "department": getattr(profile, "department", None) or "",
+        "sector": getattr(profile, "sector", None) or "North Sector",
+        "phone": getattr(profile, "phone", None) or "",
         "bio": getattr(profile, "bio", None) or "",
+        "hospital_name": getattr(profile, "hospital_name", None) or "",
         "consultation_fee": getattr(profile, "consultation_fee", None) or 0,
+        "consultation_mode": getattr(profile, "consultation_mode", None) or "Online",
+        "telemetry": {
+            "report_count": getattr(profile, "report_count", None) or 0,
+            "critical_review_count": getattr(profile, "critical_review_count", None) or 0,
+            "missed_appointments_count": getattr(profile, "missed_appointments_count", None) or 0,
+            "avg_rating": getattr(profile, "avg_rating", None) or 0,
+            "risk_level": getattr(profile, "risk_level", None) or "low",
+            "doctor_status": getattr(profile, "doctor_status", None) or user.account_status
+        },
         "created_at": str(getattr(profile, "created_at", None) or user.created_at),
-        "audit_logs": logs_data
+        "audit_logs": logs_data,
+        "status_logs": status_logs_data
     }), 200
 
 # -----------------------------------------------------------------
@@ -272,7 +326,7 @@ def get_doctor_detail(doctor_id):
 @admin_required
 def verify_doctor(doctor_id):
     user = User.query.get_or_404(doctor_id)
-    if user.role != "doctor":
+    if not _is_doctor_role(user.role):
         return jsonify({"error": "User is not a doctor"}), 400
         
     # Toggle verification based on query param or just set it
@@ -306,6 +360,8 @@ def update_doctor_status(doctor_id):
     reason = data.get("reason", "No reason provided")
     
     user = User.query.get_or_404(doctor_id)
+    if not _is_doctor_role(user.role):
+        return jsonify({"error": "User is not a doctor"}), 400
     admin_id = get_jwt_identity()
     
     prev_status = user.account_status
@@ -337,7 +393,7 @@ def update_doctor_status(doctor_id):
 @admin_required
 def delete_doctor(doctor_id):
     user = User.query.get_or_404(doctor_id)
-    if user.role != "doctor":
+    if not _is_doctor_role(user.role):
         return jsonify({"error": "Unauthorized record deletion"}), 400
     
     # To facilitate terminal deletion, we must clear all dependent governance logs

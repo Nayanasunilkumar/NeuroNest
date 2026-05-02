@@ -1,24 +1,44 @@
-import React, { useState, useEffect } from 'react';
-import { 
-    X, ShieldCheck, Mail, MapPin, 
-    Calendar, User, CreditCard, Activity, Clock,
-    AlertTriangle, CheckCircle, ExternalLink, ShieldAlert, RefreshCw, Download,
-    Award, HeartPulse, Stethoscope, FileText
+import React, { useEffect, useMemo, useState } from 'react';
+import {
+    X, ShieldCheck, Mail, Activity, Clock, AlertTriangle, CheckCircle,
+    ShieldAlert, RefreshCw, Download, Award, Stethoscope, FileText,
+    Phone, MapPin, IndianRupee, Star, UserCheck, Ban,
+    ClipboardCheck, CalendarDays
 } from 'lucide-react';
-import { fetchDoctorDetail } from '../../services/adminDoctorAPI';
+import { fetchDoctorDetail, updateDoctorStatus, verifyDoctor } from '../../services/adminDoctorAPI';
 
-const DoctorDrawer = ({ doctorId, basicInfo, isOpen, onClose }) => {
+const formatDate = (value) => {
+    if (!value) return 'Not recorded';
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime()) ? 'Not recorded' : parsed.toLocaleDateString();
+};
+
+const escapeHtml = (value = '') => String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+
+const displayValue = (value, fallback = 'Not provided') => {
+    if (value === 0) return '0';
+    return value ? value : fallback;
+};
+
+const DoctorDrawer = ({ doctorId, basicInfo, isOpen, onClose, onChanged }) => {
     const [doctor, setDoctor] = useState(null);
     const [loading, setLoading] = useState(false);
+    const [actionLoading, setActionLoading] = useState('');
     const [error, setError] = useState(null);
+
+    const displayData = useMemo(() => ({ ...(basicInfo || {}), ...(doctor || {}) }), [basicInfo, doctor]);
+    const telemetry = displayData.telemetry || {};
+    const isActive = displayData?.account_status === 'active';
+    const initials = displayData?.full_name?.split(' ').map((part) => part[0]).join('').slice(0, 2).toUpperCase() || '??';
 
     useEffect(() => {
         if (isOpen && doctorId) {
             loadDoctorDetail();
-        } else if (!isOpen) {
-            // Optional: clear state when closed
-            // setDoctor(null);
-            // setError(null);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isOpen, doctorId]);
@@ -31,254 +51,381 @@ const DoctorDrawer = ({ doctorId, basicInfo, isOpen, onClose }) => {
             setDoctor(data);
         } catch (err) {
             console.error('Failed to load specialist intelligence', err);
-            setError('Unable to synchronize complete clinical profile. The record may be restricted or unavailable.');
+            setError('Unable to load the complete clinical profile. Showing the roster snapshot for now.');
         } finally {
             setLoading(false);
         }
     };
 
+    const runAction = async (actionName, action) => {
+        try {
+            setActionLoading(actionName);
+            await action();
+            await loadDoctorDetail();
+            onChanged?.();
+        } catch (err) {
+            console.error(`Doctor action failed: ${actionName}`, err);
+            alert(err?.response?.data?.error || err?.response?.data?.message || 'Action failed. Please try again.');
+        } finally {
+            setActionLoading('');
+        }
+    };
+
+    const handleVerifyToggle = () => {
+        if (!displayData?.id) return;
+        const nextStatus = !displayData.is_verified;
+        const message = nextStatus
+            ? 'Confirm clinical credential verification for this specialist?'
+            : 'Revoke credential verification for this specialist?';
+        if (!window.confirm(message)) return;
+        runAction('verify', () => verifyDoctor(displayData.id, nextStatus));
+    };
+
+    const handleStatusToggle = () => {
+        if (!displayData?.id) return;
+        const nextStatus = isActive ? 'suspended' : 'active';
+        const reason = prompt(`Reason for changing status to ${nextStatus}:`);
+        if (!reason) return;
+        runAction('status', () => updateDoctorStatus(displayData.id, { status: nextStatus, reason }));
+    };
+
     const handleExport = () => {
-        const targetDoc = doctor || basicInfo;
-        if (!targetDoc) return;
-        
-        const printWindow = window.open('', '_blank');
+        if (!displayData?.id) return;
+
+        const auditRows = doctor?.audit_logs?.length
+            ? doctor.audit_logs.map((log) => `<li><strong>${escapeHtml(log.action || 'Audit').replace(/_/g, ' ')}</strong>: ${escapeHtml(log.description || 'No detail recorded')}</li>`).join('')
+            : '<li>No governance actions recorded.</li>';
+
         const certificateHTML = `
             <!DOCTYPE html>
             <html>
             <head>
-                <title>Clinical Compliance Certificate - ${targetDoc.full_name}</title>
+                <title>Clinical Compliance Certificate - ${escapeHtml(displayData.full_name || 'Specialist')}</title>
                 <style>
-                    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 40px; color: #1e293b; line-height: 1.6; }
-                    .cert-container { border: 10px solid #f8fafc; padding: 40px; max-width: 800px; margin: auto; position: relative; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
-                    .header { text-align: center; border-bottom: 2px solid #0d6efd; padding-bottom: 20px; margin-bottom: 30px; }
-                    .header h1 { margin: 0; color: #0d6efd; text-transform: uppercase; letter-spacing: 2px; }
-                    .identity-section { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px; }
-                    .data-point { border-bottom: 1px solid #f1f5f9; padding: 10px 0; }
+                    body { font-family: Arial, sans-serif; padding: 40px; color: #172033; line-height: 1.55; }
+                    .cert { border: 8px solid #e6eef8; padding: 36px; max-width: 820px; margin: auto; }
+                    .header { border-bottom: 2px solid #0f766e; padding-bottom: 18px; margin-bottom: 28px; }
+                    h1 { margin: 0; color: #0f766e; font-size: 24px; letter-spacing: 1px; text-transform: uppercase; }
+                    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 28px; }
+                    .point { border: 1px solid #dbe5f1; border-radius: 10px; padding: 14px; }
                     .label { color: #64748b; font-size: 10px; font-weight: 800; text-transform: uppercase; }
-                    .value { font-size: 14px; font-weight: bold; }
-                    .audit-section h2 { font-size: 16px; border-left: 4px solid #0d6efd; padding-left: 10px; margin-bottom: 15px; }
-                    .footer { margin-top: 60px; text-align: center; font-size: 10px; color: #94a3b8; }
-                    @media print { .no-print { display: none; } }
+                    .value { font-size: 14px; font-weight: 700; margin-top: 4px; }
+                    h2 { font-size: 15px; margin: 0 0 10px; color: #172033; }
+                    li { margin-bottom: 8px; font-size: 13px; }
+                    .footer { margin-top: 42px; font-size: 11px; color: #64748b; text-align: center; }
+                    @media print { .no-print { display: none; } body { padding: 0; } }
                 </style>
             </head>
             <body>
-                <div class="cert-container">
+                <div class="cert">
                     <div class="header">
-                        <h1>NEURONEST CLINICAL GOVERNANCE</h1>
-                        <p>OFFICIAL COMPLIANCE CERTIFICATE</p>
+                        <h1>NeuroNest Clinical Governance</h1>
+                        <div>Official Compliance Certificate</div>
                     </div>
-                    
-                    <div class="identity-section">
-                        <div class="data-point"><div class="label">Full Clinical Name</div><div class="value">${targetDoc.full_name || 'N/A'}</div></div>
-                        <div class="data-point"><div class="label">Medical License Number</div><div class="value">${targetDoc.license_number || 'N/A'}</div></div>
-                        <div class="data-point"><div class="label">Specialization</div><div class="value">${targetDoc.specialization || 'N/A'}</div></div>
-                        <div class="data-point"><div class="label">Credential Status</div><div class="value">${targetDoc.is_verified ? 'AUTHORIZED & VERIFIED' : 'PENDING REVIEW'}</div></div>
+                    <div class="grid">
+                        <div class="point"><div class="label">Full Clinical Name</div><div class="value">${escapeHtml(displayData.full_name || 'N/A')}</div></div>
+                        <div class="point"><div class="label">Medical License</div><div class="value">${escapeHtml(displayData.license_number || 'N/A')}</div></div>
+                        <div class="point"><div class="label">Specialization</div><div class="value">${escapeHtml(displayData.specialization || 'N/A')}</div></div>
+                        <div class="point"><div class="label">Credential Status</div><div class="value">${displayData.is_verified ? 'Verified' : 'Pending Review'}</div></div>
+                        <div class="point"><div class="label">Account Status</div><div class="value">${escapeHtml(displayData.account_status || 'Unknown')}</div></div>
+                        <div class="point"><div class="label">Risk Level</div><div class="value">${escapeHtml(telemetry.risk_level || 'low')}</div></div>
                     </div>
-
-                    <div class="audit-section">
-                        <h2>GOVERNANCE AUDIT SUMMARY</h2>
-                        ${doctor?.audit_logs?.length > 0 ? doctor.audit_logs.map(log => `<div style="font-size:12px; margin-bottom:5px;">• ${log.description}</div>`).join('') : '<p>No governance actions recorded.</p>'}
-                    </div>
-
-                    <div class="footer">
-                        <p>Electronically generated on: ${new Date().toLocaleString()}</p>
-                    </div>
+                    <h2>Governance Audit Summary</h2>
+                    <ul>${auditRows}</ul>
+                    <div class="footer">Generated on ${escapeHtml(new Date().toLocaleString())}</div>
                 </div>
-                <div style="text-align: center; margin-top: 20px;" class="no-print">
-                    <button onclick="window.print()" style="padding: 10px 20px; background: #0d6efd; color: white; border: none; border-radius: 5px; cursor: pointer;">Print to PDF</button>
+                <div class="no-print" style="text-align:center;margin-top:20px;">
+                    <button onclick="window.print()" style="padding:10px 18px;background:#0f766e;color:white;border:0;border-radius:8px;cursor:pointer;">Print to PDF</button>
                 </div>
             </body>
             </html>
         `;
+
+        const printWindow = window.open('', '_blank');
+        if (!printWindow) {
+            alert('Please allow pop-ups to export the certificate.');
+            return;
+        }
         printWindow.document.write(certificateHTML);
         printWindow.document.close();
     };
 
     if (!isOpen) return null;
 
-    const displayData = doctor || basicInfo || {};
+    const profileStats = [
+        { label: 'License', value: displayValue(displayData.license_number), icon: <ClipboardCheck size={16} />, tone: 'primary' },
+        { label: 'Region', value: displayValue(displayData.sector, 'Unassigned'), icon: <MapPin size={16} />, tone: 'success' },
+        { label: 'Fee', value: displayData.consultation_fee ? `₹${displayData.consultation_fee}` : 'Not set', icon: <IndianRupee size={16} />, tone: 'warning' },
+        { label: 'Mode', value: displayValue(displayData.consultation_mode, 'Online'), icon: <Activity size={16} />, tone: 'info' }
+    ];
+
+    const telemetryCards = [
+        { label: 'Rating', value: telemetry.avg_rating ? Number(telemetry.avg_rating).toFixed(1) : 'N/A', icon: <Star size={16} /> },
+        { label: 'Reports', value: telemetry.report_count || 0, icon: <ShieldAlert size={16} /> },
+        { label: 'Critical', value: telemetry.critical_review_count || 0, icon: <AlertTriangle size={16} /> },
+        { label: 'Missed', value: telemetry.missed_appointments_count || 0, icon: <CalendarDays size={16} /> }
+    ];
 
     return (
-        <div 
-            className={`fixed-top w-100 h-100 bg-dark bg-opacity-50 blur-bg ${isOpen ? 'd-block' : 'd-none'}`} 
-            style={{ zIndex: 3000, backdropFilter: 'blur(5px)', transition: 'all 0.3s ease' }}
+        <div
+            className="fixed-top w-100 h-100 bg-dark bg-opacity-50 doctor-drawer-backdrop"
+            style={{ zIndex: 3000 }}
             onClick={onClose}
         >
-            <div 
-                className={`position-fixed top-0 end-0 h-100 bg-white shadow-lg d-flex flex-column ${isOpen ? 'translate-middle-x' : ''}`} 
-                style={{ width: 'min(100%, 500px)', transition: 'transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)', transform: isOpen ? 'translateX(0)' : 'translateX(100%)' }}
-                onClick={e => e.stopPropagation()}
+            <aside
+                className="position-fixed top-0 end-0 h-100 bg-white shadow-lg d-flex flex-column doctor-drawer-panel"
+                onClick={(event) => event.stopPropagation()}
+                aria-label="Specialist identity drawer"
             >
-                {/* Premium Header */}
-                <div className="p-4 border-bottom position-relative overflow-hidden" style={{ background: 'linear-gradient(to right, #f8fafc, #ffffff)' }}>
-                    <div className="position-absolute opacity-10 top-0 end-0 mt-n4 me-n4">
-                        <Award size={180} className="text-primary" />
-                    </div>
-                    
-                    <div className="d-flex justify-content-between align-items-start mb-4 position-relative z-index-1">
-                        <div className="d-flex align-items-center gap-3">
-                            <div className="shadow-sm rounded-circle d-flex align-items-center justify-content-center fw-black h3 mb-0" 
-                                style={{ width: '64px', height: '64px', background: 'linear-gradient(135deg, #0d6efd, #3b82f6)', color: 'white' }}>
-                                {displayData?.full_name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || '??'}
-                            </div>
-                            <div>
-                                <h3 className="h4 fw-black mb-1 text-dark">{displayData?.full_name || 'Specialist Identity'}</h3>
+                <div className="doctor-drawer-header">
+                    <Award size={170} className="doctor-drawer-watermark" />
+                    <div className="d-flex justify-content-between align-items-start gap-3 position-relative">
+                        <div className="d-flex align-items-center gap-3 min-w-0">
+                            <div className="doctor-drawer-avatar">{initials}</div>
+                            <div className="min-w-0">
+                                <h3 className="h4 fw-black mb-1 text-dark text-truncate">{displayData?.full_name || 'Specialist Identity'}</h3>
                                 <div className="d-flex align-items-center gap-2 text-secondary">
                                     <Stethoscope size={14} />
-                                    <span className="fw-bold small">{displayData?.specialization || 'Clinical Provider'}</span>
+                                    <span className="fw-bold small text-truncate">{displayData?.specialization || 'Clinical Provider'}</span>
                                 </div>
                                 <div className="small text-secondary fw-bold mt-1 opacity-75">ID: #{displayData?.id || doctorId || '---'}</div>
                             </div>
                         </div>
-                        <button className="btn btn-light rounded-circle p-2 shadow-sm border" onClick={onClose}>
+                        <button className="btn btn-light rounded-circle p-2 shadow-sm border flex-shrink-0" onClick={onClose} aria-label="Close specialist drawer">
                             <X size={20} />
                         </button>
                     </div>
-                    
-                    <div className="d-flex gap-2 position-relative z-index-1">
-                        <span className={`badge rounded-pill px-3 py-2 border d-flex align-items-center gap-2 ${displayData?.is_verified ? 'bg-success bg-opacity-10 text-success border-success' : 'bg-warning bg-opacity-10 text-warning border-warning'}`} style={{ backdropFilter: 'blur(4px)' }}>
+
+                    <div className="d-flex flex-wrap gap-2 mt-4 position-relative">
+                        <span className={`badge rounded-pill px-3 py-2 border d-flex align-items-center gap-2 ${displayData?.is_verified ? 'bg-success bg-opacity-10 text-success border-success' : 'bg-warning bg-opacity-10 text-warning border-warning'}`}>
                             {displayData?.is_verified ? <ShieldCheck size={14} /> : <AlertTriangle size={14} />}
                             {displayData?.is_verified ? 'VERIFIED' : 'PENDING'}
                         </span>
-                        <span className={`badge rounded-pill px-3 py-2 border d-flex align-items-center gap-2 ${displayData?.account_status === 'active' ? 'bg-info bg-opacity-10 text-info border-info' : 'bg-danger bg-opacity-10 text-danger border-danger'}`} style={{ backdropFilter: 'blur(4px)' }}>
+                        <span className={`badge rounded-pill px-3 py-2 border d-flex align-items-center gap-2 ${isActive ? 'bg-info bg-opacity-10 text-info border-info' : 'bg-danger bg-opacity-10 text-danger border-danger'}`}>
                             <Activity size={14} />
                             {displayData?.account_status?.toUpperCase() || 'UNKNOWN'}
                         </span>
+                        <button className="btn btn-sm btn-light border rounded-pill ms-auto fw-bold d-flex align-items-center gap-2" onClick={loadDoctorDetail} disabled={loading}>
+                            <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
+                            Refresh
+                        </button>
                     </div>
                 </div>
 
-                {/* Body */}
-                <div className="flex-grow-1 overflow-auto p-4 py-3 custom-scrollbar" style={{ backgroundColor: '#fcfcfd' }}>
-                    {loading && !doctor ? (
-                        <div className="d-flex flex-column align-items-center justify-content-center h-100 opacity-75">
-                            <RefreshCw size={40} className="animate-spin mb-3 text-primary" />
-                            <p className="fw-black small text-uppercase letter-spacing-1 text-primary">Synchronizing Intelligence...</p>
+                <div className="flex-grow-1 overflow-auto p-4 custom-scrollbar doctor-drawer-body">
+                    {error && (
+                        <div className="alert alert-warning border-0 rounded-4 small fw-semibold d-flex align-items-start gap-2">
+                            <AlertTriangle size={18} className="flex-shrink-0 mt-1" />
+                            <div>{error}</div>
                         </div>
-                    ) : error ? (
-                        <div className="d-flex flex-column align-items-center justify-content-center h-100 text-center px-4">
-                            <div className="bg-danger bg-opacity-10 p-3 rounded-circle mb-3">
-                                <AlertTriangle size={40} className="text-danger" />
-                            </div>
-                            <h4 className="fw-black text-dark mb-2">Access Restricted</h4>
-                            <p className="text-secondary small fw-medium">{error}</p>
-                            <button className="btn btn-outline-primary btn-sm rounded-pill mt-3 px-4 fw-bold" onClick={loadDoctorDetail}>
-                                Retry Synchronization
-                            </button>
-                        </div>
-                    ) : (
-                        <div className="d-flex flex-column gap-4 pb-4">
-                            <section>
-                                <div className="d-flex align-items-center gap-2 mb-3 text-secondary">
-                                    <FileText size={16} className="opacity-75 text-primary" />
-                                    <span className="small fw-black text-uppercase letter-spacing-1 text-dark">Clinical Profile</span>
-                                </div>
-                                <div className="card border-0 shadow-sm rounded-4 overflow-hidden">
-                                    <div className="card-body p-0">
-                                        <div className="row g-0">
-                                            {[
-                                                { label: 'Licensed Identifier', value: displayData?.license_number, mono: true, border: 'border-end border-bottom' },
-                                                { label: 'Institutional Email', value: displayData?.email, border: 'border-bottom' },
-                                                { label: 'Regional Sector', value: displayData?.sector || 'Global Network', border: 'border-end' },
-                                                { label: 'Session Fee', value: displayData?.consultation_fee ? `₹${displayData.consultation_fee}` : 'N/A', border: '' }
-                                            ].map((item, i) => (
-                                                <div key={i} className={`col-6 p-3 ${item.border}`} style={{ backgroundColor: '#ffffff' }}>
-                                                    <div className="small fw-bold text-secondary mb-1" style={{ fontSize: '0.65rem', textTransform: 'uppercase' }}>{item.label}</div>
-                                                    <div className={`fw-bold text-dark ${item.mono ? 'font-monospace text-primary' : ''}`} style={{ fontSize: '0.85rem', wordBreak: 'break-word' }}>
-                                                        {item.value || 'N/A'}
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                {doctor && doctor.bio && (
-                                    <div className="mt-4 p-4 rounded-4 shadow-sm border border-light" style={{ backgroundColor: '#ffffff', borderLeft: '4px solid #0d6efd !important' }}>
-                                        <div className="small fw-bold text-secondary mb-2 text-uppercase letter-spacing-1" style={{ fontSize: '0.65rem' }}>Specialist Biography</div>
-                                        <p className="small text-dark mb-0 lh-lg fw-medium">{doctor.bio}</p>
-                                    </div>
-                                )}
-                            </section>
+                    )}
 
-                            {doctor && (
-                                <section className="mt-2">
-                                    <div className="d-flex align-items-center gap-2 mb-3 text-secondary">
-                                        <Clock size={16} className="opacity-75 text-primary" />
-                                        <span className="small fw-black text-uppercase letter-spacing-1 text-dark">Governance Audit Log</span>
-                                    </div>
-                                    <div className="card border-0 shadow-sm rounded-4 p-4 bg-white">
-                                        <div className="d-flex flex-column gap-4">
-                                            {doctor.audit_logs?.length > 0 ? doctor.audit_logs.map((log, idx) => (
-                                                <div key={log.id} className="d-flex gap-3 position-relative">
-                                                    {idx !== doctor.audit_logs.length - 1 && (
-                                                        <div className="position-absolute bg-light" style={{ width: '2px', height: '100%', left: '4px', top: '20px', zIndex: 0 }}></div>
-                                                    )}
-                                                    <div className="bg-white border border-primary border-2 rounded-circle mt-1 d-flex justify-content-center align-items-center" style={{ width: '10px', height: '10px', zIndex: 1 }}></div>
-                                                    <div className="pb-1 w-100">
-                                                        <div className="d-flex justify-content-between align-items-start mb-1">
-                                                            <div className="small fw-black text-uppercase text-primary" style={{ fontSize: '0.65rem', letterSpacing: '0.5px' }}>
-                                                                {log.action.replace(/_/g, ' ')}
-                                                            </div>
-                                                            <div className="text-muted" style={{ fontSize: '0.6rem', fontWeight: 'bold' }}>
-                                                                {new Date(log.timestamp).toLocaleDateString()}
-                                                            </div>
-                                                        </div>
-                                                        <div className="small text-dark fw-medium lh-sm">{log.description}</div>
-                                                    </div>
-                                                </div>
-                                            )) : (
-                                                <div className="text-center py-3 text-secondary small fw-bold">
-                                                    No recent governance actions recorded.
-                                                </div>
-                                            )}
+                    <section className="doctor-section">
+                        <div className="doctor-section-title">
+                            <FileText size={16} />
+                            Clinical Snapshot
+                        </div>
+                        <div className="doctor-info-grid">
+                            {profileStats.map((item) => (
+                                <div key={item.label} className="doctor-info-card">
+                                    <div className={`doctor-info-icon text-${item.tone} bg-${item.tone} bg-opacity-10`}>{item.icon}</div>
+                                    <div className="small text-secondary fw-bold text-uppercase">{item.label}</div>
+                                    <div className="fw-black text-dark doctor-info-value">{item.value}</div>
+                                </div>
+                            ))}
+                        </div>
+                    </section>
+
+                    <section className="doctor-section">
+                        <div className="doctor-section-title">
+                            <UserCheck size={16} />
+                            Identity & Contact
+                        </div>
+                        <div className="doctor-detail-list">
+                            <div><span>Email</span><strong>{displayValue(displayData.email)}</strong></div>
+                            <div><span>Phone</span><strong>{displayValue(displayData.phone)}</strong></div>
+                            <div><span>Qualification</span><strong>{displayValue(displayData.qualification)}</strong></div>
+                            <div><span>Department</span><strong>{displayValue(displayData.department)}</strong></div>
+                            <div><span>Hospital</span><strong>{displayValue(displayData.hospital_name)}</strong></div>
+                            <div><span>Experience</span><strong>{displayData.experience_years ? `${displayData.experience_years} years` : 'Not provided'}</strong></div>
+                        </div>
+                    </section>
+
+                    <section className="doctor-section">
+                        <div className="doctor-section-title">
+                            <Activity size={16} />
+                            Governance Signals
+                        </div>
+                        <div className="doctor-telemetry-grid">
+                            {telemetryCards.map((item) => (
+                                <div key={item.label} className="doctor-telemetry-card">
+                                    <div className="text-secondary">{item.icon}</div>
+                                    <strong>{item.value}</strong>
+                                    <span>{item.label}</span>
+                                </div>
+                            ))}
+                        </div>
+                        <div className={`doctor-risk-strip doctor-risk-${telemetry.risk_level || 'low'}`}>
+                            <span>Risk Level</span>
+                            <strong>{(telemetry.risk_level || 'low').toUpperCase()}</strong>
+                        </div>
+                    </section>
+
+                    <section className="doctor-section">
+                        <div className="doctor-section-title">
+                            <Stethoscope size={16} />
+                            Specialist Biography
+                        </div>
+                        <div className="doctor-bio-box">
+                            {displayData.bio || 'No biography has been added yet. This profile can still be reviewed using the credential and governance records above.'}
+                        </div>
+                    </section>
+
+                    <section className="doctor-section">
+                        <div className="doctor-section-title">
+                            <Clock size={16} />
+                            Governance Audit Log
+                        </div>
+                        <div className="doctor-timeline">
+                            {doctor?.audit_logs?.length > 0 ? doctor.audit_logs.map((log, idx) => (
+                                <div key={log.id || idx} className="doctor-timeline-item">
+                                    <span className="doctor-timeline-dot" />
+                                    <div>
+                                        <div className="d-flex justify-content-between gap-3">
+                                            <strong>{(log.action || 'audit').replace(/_/g, ' ')}</strong>
+                                            <time>{formatDate(log.timestamp)}</time>
                                         </div>
+                                        <p>{log.description || 'No detail recorded.'}</p>
                                     </div>
-                                </section>
+                                </div>
+                            )) : (
+                                <div className="doctor-empty-state">No recent governance actions recorded.</div>
                             )}
                         </div>
+                    </section>
+
+                    {doctor?.status_logs?.length > 0 && (
+                        <section className="doctor-section mb-0">
+                            <div className="doctor-section-title">
+                                <Ban size={16} />
+                                Status History
+                            </div>
+                            <div className="doctor-status-history">
+                                {doctor.status_logs.map((log) => (
+                                    <div key={log.id}>
+                                        <strong>{log.previous_status || 'unknown'} {'->'} {log.new_status}</strong>
+                                        <span>{log.reason || 'No reason recorded'} - {formatDate(log.timestamp)}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </section>
                     )}
                 </div>
 
-                {/* Premium Footer */}
-                <div className="p-4 border-top bg-white shadow-lg z-index-1">
-                    <div className="d-flex flex-column gap-3">
-                        <button 
-                            className="btn btn-primary w-100 fw-black py-3 rounded-pill shadow d-flex align-items-center justify-content-center gap-2 border-0"
-                            style={{ background: 'linear-gradient(135deg, #0d6efd, #3b82f6)', transition: 'all 0.2s ease', transform: 'translateY(0)' }}
-                            onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
-                            onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+                <div className="p-4 border-top bg-white shadow-lg">
+                    <div className="d-grid gap-2">
+                        <div className="d-flex gap-2">
+                            <button
+                                className={`btn flex-fill fw-black rounded-pill py-2 d-flex align-items-center justify-content-center gap-2 ${displayData?.is_verified ? 'btn-outline-warning' : 'btn-success'}`}
+                                onClick={handleVerifyToggle}
+                                disabled={!!actionLoading || !displayData?.id}
+                            >
+                                {actionLoading === 'verify' ? <RefreshCw size={16} className="animate-spin" /> : <ShieldCheck size={16} />}
+                                {displayData?.is_verified ? 'Revoke' : 'Verify'}
+                            </button>
+                            <button
+                                className={`btn flex-fill fw-black rounded-pill py-2 d-flex align-items-center justify-content-center gap-2 ${isActive ? 'btn-outline-danger' : 'btn-outline-success'}`}
+                                onClick={handleStatusToggle}
+                                disabled={!!actionLoading || !displayData?.id}
+                            >
+                                {actionLoading === 'status' ? <RefreshCw size={16} className="animate-spin" /> : isActive ? <Ban size={16} /> : <CheckCircle size={16} />}
+                                {isActive ? 'Suspend' : 'Activate'}
+                            </button>
+                        </div>
+                        <button
+                            className="btn btn-primary w-100 fw-black py-3 rounded-pill shadow d-flex align-items-center justify-content-center gap-2 border-0 doctor-export-btn"
                             onClick={handleExport}
-                            disabled={!displayData}
+                            disabled={!displayData?.id}
                         >
-                            <Download size={18} /> Export Compliance Certificate
+                            <Download size={18} /> Export Compliance Cert
                         </button>
                         <div className="d-flex gap-2">
-                            <button 
-                                className="btn btn-light border flex-grow-1 rounded-pill fw-bold small py-2 d-flex align-items-center justify-content-center gap-2 text-dark hover-shadow"
+                            <button
+                                className="btn btn-light border flex-grow-1 rounded-pill fw-bold small py-2 d-flex align-items-center justify-content-center gap-2 text-dark"
                                 onClick={() => window.open(`mailto:${displayData?.email}?subject=NeuroNest Portal - Administrative Notice`, '_self')}
                                 disabled={!displayData?.email}
                             >
                                 <Mail size={16} className="text-primary" /> Contact
                             </button>
+                            {displayData?.phone && (
+                                <button
+                                    className="btn btn-light border flex-grow-1 rounded-pill fw-bold small py-2 d-flex align-items-center justify-content-center gap-2 text-dark"
+                                    onClick={() => window.open(`tel:${displayData.phone}`, '_self')}
+                                >
+                                    <Phone size={16} className="text-success" /> Call
+                                </button>
+                            )}
                             <button className="btn btn-light border flex-grow-1 rounded-pill fw-bold small py-2 text-secondary" onClick={onClose}>
-                                Dismiss
+                                Close
                             </button>
                         </div>
                     </div>
                 </div>
-            </div>
-            
+            </aside>
+
             <style>{`
+                .doctor-drawer-backdrop { backdrop-filter: blur(5px); }
+                .doctor-drawer-panel { width: min(100%, 560px); transform: translateX(0); }
+                .doctor-drawer-header { position: relative; overflow: hidden; padding: 1.5rem; border-bottom: 1px solid #dbe5f1; background: linear-gradient(135deg, #eff6ff 0%, #f8fbff 56%, #eefdf8 100%); }
+                .doctor-drawer-watermark { position: absolute; right: -28px; top: -36px; color: rgba(13, 110, 253, 0.08); }
+                .doctor-drawer-avatar { width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; background: linear-gradient(135deg, #0f766e, #2563eb); font-size: 1.25rem; font-weight: 950; box-shadow: 0 10px 24px rgba(15, 118, 110, 0.22); flex: 0 0 64px; }
+                .doctor-drawer-body { background: #f8fafc; }
+                .doctor-section { margin-bottom: 1.25rem; }
+                .doctor-section-title { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem; color: #172033; font-size: 0.72rem; font-weight: 950; letter-spacing: 0.06em; text-transform: uppercase; }
+                .doctor-info-grid, .doctor-telemetry-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem; }
+                .doctor-info-card, .doctor-telemetry-card, .doctor-bio-box, .doctor-detail-list, .doctor-timeline, .doctor-status-history { background: white; border: 1px solid #e2e8f0; border-radius: 14px; box-shadow: 0 10px 22px rgba(15, 23, 42, 0.04); }
+                .doctor-info-card { padding: 0.9rem; min-width: 0; }
+                .doctor-info-icon { width: 2rem; height: 2rem; border-radius: 10px; display: flex; align-items: center; justify-content: center; margin-bottom: 0.7rem; }
+                .doctor-info-value { font-size: 0.92rem; word-break: break-word; }
+                .doctor-detail-list { padding: 0.35rem 1rem; }
+                .doctor-detail-list div { display: flex; justify-content: space-between; gap: 1rem; padding: 0.75rem 0; border-bottom: 1px solid #edf2f7; }
+                .doctor-detail-list div:last-child { border-bottom: 0; }
+                .doctor-detail-list span, .doctor-status-history span { color: #64748b; font-size: 0.78rem; font-weight: 700; }
+                .doctor-detail-list strong { color: #172033; font-size: 0.86rem; text-align: right; word-break: break-word; }
+                .doctor-telemetry-card { padding: 0.85rem; display: grid; grid-template-columns: auto 1fr; align-items: center; column-gap: 0.55rem; }
+                .doctor-telemetry-card strong { color: #172033; font-size: 1rem; }
+                .doctor-telemetry-card span { grid-column: 1 / -1; color: #64748b; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; margin-top: 0.35rem; }
+                .doctor-risk-strip { display: flex; justify-content: space-between; align-items: center; margin-top: 0.75rem; padding: 0.85rem 1rem; border-radius: 14px; font-size: 0.78rem; font-weight: 900; }
+                .doctor-risk-strip span { color: #475569; text-transform: uppercase; letter-spacing: 0.05em; }
+                .doctor-risk-low { background: #ecfdf5; color: #047857; }
+                .doctor-risk-medium { background: #fffbeb; color: #b45309; }
+                .doctor-risk-high, .doctor-risk-critical { background: #fef2f2; color: #b91c1c; }
+                .doctor-bio-box { padding: 1rem; color: #334155; font-size: 0.9rem; line-height: 1.65; }
+                .doctor-timeline { padding: 1rem; }
+                .doctor-timeline-item { display: grid; grid-template-columns: 12px 1fr; gap: 0.75rem; position: relative; padding-bottom: 1rem; }
+                .doctor-timeline-item:not(:last-child)::before { content: ""; position: absolute; left: 5px; top: 16px; bottom: 0; width: 2px; background: #e2e8f0; }
+                .doctor-timeline-dot { width: 10px; height: 10px; border-radius: 50%; margin-top: 5px; background: #0f766e; box-shadow: 0 0 0 4px #ccfbf1; z-index: 1; }
+                .doctor-timeline strong { color: #0f766e; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em; }
+                .doctor-timeline time { color: #94a3b8; font-size: 0.68rem; font-weight: 800; white-space: nowrap; }
+                .doctor-timeline p { margin: 0.25rem 0 0; color: #334155; font-size: 0.84rem; line-height: 1.45; }
+                .doctor-empty-state { text-align: center; color: #64748b; font-size: 0.84rem; font-weight: 800; padding: 0.75rem; }
+                .doctor-status-history { padding: 0.25rem 1rem; }
+                .doctor-status-history div { padding: 0.75rem 0; border-bottom: 1px solid #edf2f7; display: flex; flex-direction: column; gap: 0.2rem; }
+                .doctor-status-history div:last-child { border-bottom: 0; }
+                .doctor-status-history strong { color: #172033; font-size: 0.82rem; text-transform: uppercase; }
+                .doctor-export-btn { background: linear-gradient(135deg, #0f766e, #0d9488) !important; }
                 .fw-black { font-weight: 950; }
-                .letter-spacing-1 { letter-spacing: 1px; }
-                .animate-spin { animation: spin 1.5s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
+                .animate-spin { animation: spin 1s linear infinite; }
                 @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
                 .custom-scrollbar::-webkit-scrollbar { width: 6px; }
                 .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
                 .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-                .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-                .hover-shadow:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-                .z-index-1 { z-index: 1; }
+                .min-w-0 { min-width: 0; }
+                @media (max-width: 520px) {
+                    .doctor-info-grid, .doctor-telemetry-grid { grid-template-columns: 1fr; }
+                    .doctor-detail-list div { flex-direction: column; gap: 0.25rem; }
+                    .doctor-detail-list strong { text-align: left; }
+                }
             `}</style>
         </div>
     );
