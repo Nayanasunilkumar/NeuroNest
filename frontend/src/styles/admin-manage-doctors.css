@@ -1,5 +1,19 @@
 .doctor-roster-toolbar {
   --doctor-control-height: 3rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+}
+
+.doctor-search-cell {
+  flex: 1 1 520px;
+  min-width: 360px;
+  max-width: 640px;
+}
+
+.doctor-filter-cell {
+  flex: 0 0 260px;
 }
 
 .doctor-search-group,
@@ -9,7 +23,6 @@
 
 .doctor-search-group {
   flex-wrap: nowrap;
-  min-width: 360px;
 }
 
 .doctor-search-group .form-control {
@@ -30,7 +43,6 @@
 
 .doctor-filter-select {
   width: 100%;
-  min-width: 220px;
   height: var(--doctor-control-height);
   padding-left: 1rem;
   padding-right: 2.5rem;
@@ -40,16 +52,12 @@
   text-overflow: ellipsis;
 }
 
-@media (min-width: 1200px) {
-  .doctor-roster-toolbar {
-    column-gap: 0.75rem;
-  }
-}
-
 @media (max-width: 991.98px) {
-  .doctor-search-group,
-  .doctor-filter-select {
+  .doctor-search-cell,
+  .doctor-filter-cell {
+    flex: 1 1 100%;
     min-width: 0;
+    max-width: none;
   }
 }
 

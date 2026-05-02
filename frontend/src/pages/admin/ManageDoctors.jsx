@@ -205,8 +205,8 @@ const ManageDoctors = () => {
                     </div>
                 )}
                 <div className="card-header bg-white border-0 p-4 pb-0">
-                    <div className="row g-3 align-items-center doctor-roster-toolbar">
-                        <div className="col-12 col-lg-6">
+                    <div className="doctor-roster-toolbar">
+                        <div className="doctor-search-cell">
                             <div className="input-group doctor-search-group">
                                 <span className="input-group-text bg-light border-0"><Search size={16} /></span>
                                 <input 
@@ -221,14 +221,14 @@ const ManageDoctors = () => {
                                 <button className="btn btn-light border-0 doctor-search-submit" onClick={triggerSearch} aria-label="Search doctors"><ChevronRight size={16} /></button>
                             </div>
                         </div>
-                        <div className="col-12 col-sm-6 col-lg-3">
+                        <div className="doctor-filter-cell">
                             <select className="form-select bg-light border-0 doctor-filter-select" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} aria-label="Filter doctors by account status">
                                 <option value="">ALL STATUS</option>
                                 <option value="active">ACTIVE</option>
                                 <option value="suspended">SUSPENDED</option>
                             </select>
                         </div>
-                        <div className="col-12 col-sm-6 col-lg-3">
+                        <div className="doctor-filter-cell">
                             <select className="form-select bg-light border-0 doctor-filter-select" value={sectorFilter} onChange={(e) => setSectorFilter(e.target.value)} aria-label="Filter doctors by region">
                                 <option value="">ALL REGIONS</option>
                                 <option value="North Sector">NORTH</option>
