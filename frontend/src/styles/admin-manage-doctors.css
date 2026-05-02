@@ -1,46 +1,69 @@
 .doctor-roster-toolbar {
-  --doctor-control-height: 3rem;
+  --doctor-control-height: 2.75rem;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  row-gap: 1.25rem;
+  column-gap: 1.5rem;
+  align-items: center;
+  width: 100%;
+  padding-bottom: 1.25rem;
+}
+
+.toolbar-top-left {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.toolbar-top-right {
+  grid-column: 2;
+  grid-row: 1;
+  justify-self: end;
+}
+
+.toolbar-bottom-left {
+  grid-column: 1;
+  grid-row: 2;
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
   gap: 1rem;
-  width: 100%;
-  padding-bottom: 6px;
+  flex-wrap: wrap;
+}
+
+.toolbar-bottom-right {
+  grid-column: 2;
+  grid-row: 2;
+  justify-self: end;
 }
 
 .doctor-search-cell {
-  flex: 0 1 560px;
-  min-width: 280px;
-  max-width: 560px;
-}
-
-.doctor-filter-group {
-  display: flex;
-  flex: 0 0 auto;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 1rem;
-  margin-left: auto;
+  width: 100%;
+  max-width: 480px;
 }
 
 .doctor-filter-cell {
-  flex: 0 0 220px;
+  flex: 0 0 180px;
   position: relative;
 }
 
 .doctor-search-group,
 .doctor-filter-select {
   min-height: var(--doctor-control-height);
+  background-color: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
 }
 
 .doctor-search-group {
   flex-wrap: nowrap;
+  border-radius: 0.5rem;
+  overflow: hidden;
 }
 
 .doctor-search-group .form-control {
   min-width: 0;
   height: var(--doctor-control-height);
-  font-size: 0.95rem;
+  font-size: 0.9rem;
+  border: none !important;
+  box-shadow: none !important;
 }
 
 .doctor-search-group .input-group-text,
@@ -51,6 +74,8 @@
   align-items: center;
   justify-content: center;
   flex: 0 0 3rem;
+  background-color: transparent !important;
+  border: none !important;
 }
 
 .doctor-filter-select {
@@ -58,29 +83,92 @@
   height: var(--doctor-control-height);
   padding-left: 1rem;
   padding-right: 2.5rem;
-  font-size: 0.92rem;
+  font-size: 0.85rem;
   font-weight: 700;
-  letter-spacing: 0.01em;
+  letter-spacing: 0.02em;
   text-overflow: ellipsis;
   appearance: none;
   background-image: none;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+  color: #334155;
+}
+
+.doctor-filter-select:focus {
+  border-color: #0d6efd !important;
+  box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25) !important;
+  outline: none;
+}
+
+.doctor-stat-card {
+  cursor: pointer;
+  transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+}
+
+.doctor-stat-card:hover,
+.doctor-stat-card:focus-visible {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 34px rgba(15, 23, 42, 0.1) !important;
+  outline: none;
+}
+
+.doctor-stat-card-active {
+  border: 1px solid rgba(13, 110, 253, 0.32) !important;
+  box-shadow: 0 14px 30px rgba(13, 110, 253, 0.12) !important;
+}
+
+.doctor-toolbar-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-top: 1rem;
+}
+
+.doctor-profile-trigger {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  text-align: left;
+}
+
+.doctor-profile-trigger:hover .fw-black {
+  color: var(--admin-accent, #0d6efd) !important;
+}
+
+.doctor-table-row {
+  --bs-table-hover-bg: rgba(13, 110, 253, 0.04);
 }
 
 @media (max-width: 991.98px) {
-  .doctor-search-cell {
-    flex-basis: 100%;
-    min-width: 0;
+  .doctor-roster-toolbar {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto auto;
+    row-gap: 1rem;
   }
 
-  .doctor-filter-group {
-    flex: 1 1 100%;
-    justify-content: flex-start;
-    margin-left: 0;
+  .toolbar-top-left { grid-column: 1; grid-row: 1; }
+  .toolbar-top-right { grid-column: 1; grid-row: 2; justify-self: start; }
+  .toolbar-bottom-left { grid-column: 1; grid-row: 3; }
+  .toolbar-bottom-right { grid-column: 1; grid-row: 4; justify-self: start; }
+
+  .doctor-search-cell {
+    max-width: 100%;
+  }
+
+  .toolbar-bottom-left {
+    flex-direction: column;
+    align-items: stretch;
   }
 
   .doctor-filter-cell {
-    flex: 1 1 220px;
-    min-width: 0;
+    flex: 1 1 auto;
+    width: 100%;
   }
 }
 

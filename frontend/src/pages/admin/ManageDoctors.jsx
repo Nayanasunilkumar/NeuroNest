@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { 
-    Search, UserPlus, ShieldCheck, Mail, MapPin, 
+import React, { useState, useEffect, useMemo } from 'react';
+import {
+    Search, UserPlus, ShieldCheck, Mail,
     MoreVertical, RefreshCw, CheckCircle, AlertTriangle, 
-    User, ShieldAlert, X, Clock, Activity, Download, FileText, ChevronRight, ChevronDown,
-    Users, Verified, ShieldQuestion, UserCheck
+    User, ShieldAlert, X, Download, ChevronRight, ChevronDown,
+    Users, Verified, ShieldQuestion, UserCheck, RotateCcw
 } from 'lucide-react';
 import { fetchDoctors, createDoctor, verifyDoctor, updateDoctorStatus, deleteDoctor } from '../../services/adminDoctorAPI';
 import AddDoctorModal from '../../components/admin/AddDoctorModal';
@@ -18,7 +18,9 @@ const ManageDoctors = () => {
     const [search, setSearch] = useState('');
     const [statusFilter, setStatusFilter] = useState('');
     const [sectorFilter, setSectorFilter] = useState('');
+    const [verificationFilter, setVerificationFilter] = useState('');
     const [page, setPage] = useState(1);
+    const [totalRecords, setTotalRecords] = useState(0);
     const [totalPages, setTotalPages] = useState(1);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedDoctors, setSelectedDoctors] = useState([]);
@@ -26,11 +28,23 @@ const ManageDoctors = () => {
     const [selectedDoctorId, setSelectedDoctorId] = useState(null);
     const [selectedDoctorObj, setSelectedDoctorObj] = useState(null);
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+    const hasActiveFilters = Boolean(search || statusFilter || sectorFilter || verificationFilter);
+    const selectedDoctorRecords = useMemo(
+        () => doctors.filter((doc) => selectedDoctors.includes(doc.id)),
+        [doctors, selectedDoctors]
+    );
+
+    const statCards = [
+        { label: "Total Providers", value: stats.total, color: "primary", icon: <Users size={20} />, filter: "all" },
+        { label: "Verified Specialists", value: stats.verified, color: "success", icon: <Verified size={20} />, filter: "verified" },
+        { label: "Pending Review", value: stats.pending, color: "warning", icon: <ShieldQuestion size={20} />, filter: "pending" },
+        { label: "Active Roster", value: stats.active, color: "info", icon: <UserCheck size={20} />, filter: "active" },
+    ];
 
     useEffect(() => {
         loadDoctors();
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [page, statusFilter, sectorFilter]);
+    }, [page, statusFilter, sectorFilter, verificationFilter]);
 
     useEffect(() => {
         const handleClickOutside = (e) => {
@@ -42,12 +56,21 @@ const ManageDoctors = () => {
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, [openMenuId]);
 
-    const loadDoctors = async () => {
+    const loadDoctors = async (overrides = {}) => {
         setLoading(true);
         setLoadError('');
+        const params = {
+            page,
+            status: statusFilter,
+            search,
+            sector: sectorFilter,
+            verified: verificationFilter,
+            ...overrides
+        };
         try {
-            const data = await fetchDoctors({ page, status: statusFilter, search, sector: sectorFilter });
+            const data = await fetchDoctors(params);
             setDoctors(data.doctors);
+            setTotalRecords(data.total || 0);
             setTotalPages(data.pages);
             if (data.stats) setStats(data.stats);
             setSelectedDoctors([]); 
@@ -86,7 +109,7 @@ const ManageDoctors = () => {
             try {
                 setLoading(true);
                 await Promise.all(selectedDoctors.map(id => verifyDoctor(id)));
-                loadDoctors();
+                await loadDoctors();
                 setSelectedDoctors([]);
             } finally {
                 setLoading(false);
@@ -100,7 +123,7 @@ const ManageDoctors = () => {
             try {
                 setLoading(true);
                 await Promise.all(selectedDoctors.map(id => updateDoctorStatus(id, { status: 'active', reason: 'Mass activation' })));
-                loadDoctors();
+                await loadDoctors();
                 setSelectedDoctors([]);
             } finally {
                 setLoading(false);
@@ -114,7 +137,7 @@ const ManageDoctors = () => {
         try {
             setLoading(true);
             await Promise.all(selectedDoctors.map(id => updateDoctorStatus(id, { status: 'suspended', reason })));
-            loadDoctors();
+            await loadDoctors();
             setSelectedDoctors([]);
         } finally {
             setLoading(false);
@@ -122,8 +145,121 @@ const ManageDoctors = () => {
     };
 
     const triggerSearch = () => {
-        setPage(1);
-        loadDoctors();
+        if (page === 1) {
+            loadDoctors({ page: 1, search });
+        } else {
+            setPage(1);
+        }
+    };
+
+    const openDoctorProfile = (doc) => {
+        setSelectedDoctorId(doc.id);
+        setSelectedDoctorObj(doc);
+        setIsDrawerOpen(true);
+        setOpenMenuId(null);
+    };
+
+    const clearFilters = () => {
+        setSearch('');
+        setStatusFilter('');
+        setSectorFilter('');
+        setVerificationFilter('');
+        if (page === 1) {
+            loadDoctors({ page: 1, search: '', status: '', sector: '', verified: '' });
+        } else {
+            setPage(1);
+        }
+    };
+
+    const handleStatFilter = (filter) => {
+        setSearch('');
+        setSectorFilter('');
+        setStatusFilter(filter === 'active' ? 'active' : '');
+        setVerificationFilter(filter === 'verified' ? 'verified' : filter === 'pending' ? 'pending' : '');
+        if (page === 1) {
+            loadDoctors({
+                page: 1,
+                search: '',
+                sector: '',
+                status: filter === 'active' ? 'active' : '',
+                verified: filter === 'verified' ? 'verified' : filter === 'pending' ? 'pending' : ''
+            });
+        } else {
+            setPage(1);
+        }
+    };
+
+    const exportDoctorsCsv = async () => {
+        try {
+            setLoading(true);
+            const data = await fetchDoctors({
+                page: 1,
+                limit: 1000,
+                status: statusFilter,
+                search,
+                sector: sectorFilter,
+                verified: verificationFilter
+            });
+            const records = data.doctors || [];
+            if (records.length === 0) {
+                alert('No specialists match the current filters.');
+                return;
+            }
+
+            const csvEscape = (value) => `"${String(value ?? '').replace(/"/g, '""')}"`;
+            const header = ['ID', 'Name', 'Email', 'Specialization', 'License', 'Region', 'Verification', 'Account Status'];
+            const rows = records.map((doc) => [
+                doc.id,
+                doc.full_name,
+                doc.email,
+                doc.specialization,
+                doc.license_number,
+                doc.sector,
+                doc.is_verified ? 'Verified' : 'Pending',
+                doc.account_status
+            ]);
+            const csv = [header, ...rows].map((row) => row.map(csvEscape).join(',')).join('\n');
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `neuronest-specialists-${new Date().toISOString().slice(0, 10)}.csv`;
+            link.click();
+            URL.revokeObjectURL(link.href);
+        } catch (err) {
+            console.error('Failed to export doctors', err);
+            alert('Unable to export the roster right now.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const exportSelectedCsv = () => {
+        if (selectedDoctorRecords.length === 0) return;
+        const csvEscape = (value) => `"${String(value ?? '').replace(/"/g, '""')}"`;
+        const header = ['ID', 'Name', 'Email', 'Specialization', 'License', 'Region', 'Verification', 'Account Status'];
+        const rows = selectedDoctorRecords.map((doc) => [
+            doc.id,
+            doc.full_name,
+            doc.email,
+            doc.specialization,
+            doc.license_number,
+            doc.sector,
+            doc.is_verified ? 'Verified' : 'Pending',
+            doc.account_status
+        ]);
+        const csv = [header, ...rows].map((row) => row.map(csvEscape).join(',')).join('\n');
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `neuronest-selected-specialists-${new Date().toISOString().slice(0, 10)}.csv`;
+        link.click();
+        URL.revokeObjectURL(link.href);
+    };
+
+    const contactSelected = () => {
+        const emails = selectedDoctorRecords.map((doc) => doc.email).filter(Boolean);
+        if (emails.length === 0) return;
+        window.open(`mailto:?bcc=${encodeURIComponent(emails.join(','))}&subject=NeuroNest Portal - Administrative Notice`, '_self');
     };
 
     const handleOnboard = async (formData) => {
@@ -140,14 +276,14 @@ const ManageDoctors = () => {
         const actionText = isVerified ? 'revoke clinical credentials' : 'confirm clinical credential verification';
         if (window.confirm(`Are you sure you want to ${actionText}?`)) {
             await verifyDoctor(id, !isVerified);
-            loadDoctors();
+            await loadDoctors();
         }
     };
 
     const handleTerminate = async (id) => {
         if (window.confirm('DANGER: Permanently delete this provider record?')) {
             await deleteDoctor(id);
-            loadDoctors();
+            await loadDoctors();
         }
     };
 
@@ -156,7 +292,7 @@ const ManageDoctors = () => {
         const reason = prompt(`Reason for changing status to ${newStatus}:`);
         if (!reason) return;
         await updateDoctorStatus(id, { status: newStatus, reason });
-        loadDoctors();
+        await loadDoctors();
     };
 
     return (
@@ -180,14 +316,20 @@ const ManageDoctors = () => {
             </header>
 
             <div className="row g-4 mb-5">
-                {[
-                    { label: "Total Providers", value: stats.total, color: "primary", icon: <Users size={20} /> },
-                    { label: "Verified Specialists", value: stats.verified, color: "success", icon: <Verified size={20} /> },
-                    { label: "Pending Review", value: stats.pending, color: "warning", icon: <ShieldQuestion size={20} /> },
-                    { label: "Active Roster", value: stats.active, color: "info", icon: <UserCheck size={20} /> },
-                ].map((stat, i) => (
+                {statCards.map((stat, i) => {
+                    const isActiveStat =
+                        (stat.filter === 'all' && !statusFilter && !verificationFilter && !sectorFilter && !search) ||
+                        (stat.filter === 'active' && statusFilter === 'active') ||
+                        (stat.filter === 'verified' && verificationFilter === 'verified') ||
+                        (stat.filter === 'pending' && verificationFilter === 'pending');
+                    return (
                     <div key={i} className="col-6 col-lg-3">
-                        <div className="card border-0 shadow-sm rounded-4 h-100 overflow-hidden position-relative">
+                        <button
+                            type="button"
+                            className={`card border-0 shadow-sm rounded-4 h-100 overflow-hidden position-relative doctor-stat-card text-start w-100 ${isActiveStat ? 'doctor-stat-card-active' : ''}`}
+                            onClick={() => handleStatFilter(stat.filter)}
+                            aria-pressed={isActiveStat}
+                        >
                             <div className="card-body p-4">
                                 <div className={`bg-${stat.color} bg-opacity-10 text-${stat.color} p-2 rounded-3 d-inline-flex mb-3`}>
                                     {stat.icon}
@@ -195,9 +337,10 @@ const ManageDoctors = () => {
                                 <div className="small fw-bold text-uppercase text-secondary mb-1" style={{ fontSize: '0.65rem', letterSpacing: '1px' }}>{stat.label}</div>
                                 <div className={`h2 fw-black text-dark mb-0`}>{stat.value}</div>
                             </div>
-                        </div>
+                        </button>
                     </div>
-                ))}
+                    );
+                })}
             </div>
 
             <div className="card border-0 shadow-sm rounded-4 overflow-hidden mb-5">
@@ -206,42 +349,75 @@ const ManageDoctors = () => {
                         {loadError}
                     </div>
                 )}
-                <div className="card-header bg-white border-0 p-4 pb-0">
+                <div className="card-header border-0 p-4 pb-4 border-bottom" style={{ backgroundColor: '#f4f6f8' }}>
                     <div className="doctor-roster-toolbar">
-                        <div className="doctor-search-cell">
-                            <div className="input-group doctor-search-group">
-                                <span className="input-group-text bg-light border-0"><Search size={16} /></span>
-                                <input 
-                                    type="text" 
-                                    className="form-control bg-light border-0" 
-                                    placeholder="Search by name, license..."
-                                    value={search}
-                                    onChange={(e) => setSearch(e.target.value)}
-                                    onKeyDown={(e) => e.key === 'Enter' && triggerSearch()}
-                                    aria-label="Search doctors by name or license"
-                                />
-                                <button className="btn btn-light border-0 doctor-search-submit" onClick={triggerSearch} aria-label="Search doctors"><ChevronRight size={16} /></button>
+                        <div className="toolbar-top-left">
+                            <div className="doctor-search-cell">
+                                <div className="input-group doctor-search-group shadow-sm">
+                                    <span className="input-group-text"><Search size={16} className="text-secondary" /></span>
+                                    <input 
+                                        type="text" 
+                                        className="form-control" 
+                                        placeholder="Search by name, license..."
+                                        value={search}
+                                        onChange={(e) => setSearch(e.target.value)}
+                                        onKeyDown={(e) => e.key === 'Enter' && triggerSearch()}
+                                        aria-label="Search doctors by name or license"
+                                    />
+                                    <button className="btn doctor-search-submit" onClick={triggerSearch} aria-label="Search doctors"><ChevronRight size={16} className="text-secondary" /></button>
+                                </div>
                             </div>
                         </div>
-                        <div className="doctor-filter-group">
-                            <div className="doctor-filter-cell">
-                                <select className="form-select bg-light border-0 doctor-filter-select" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} aria-label="Filter doctors by account status">
+
+                        <div className="toolbar-top-right">
+                            <button className="btn bg-white border shadow-sm rounded-pill btn-sm fw-bold d-flex align-items-center gap-2 px-3 py-2" onClick={clearFilters} disabled={!hasActiveFilters && page === 1}>
+                                <RotateCcw size={14} className="text-secondary" /> Reset
+                            </button>
+                        </div>
+
+                        <div className="toolbar-bottom-left">
+                            <div className="doctor-filter-cell shadow-sm rounded-3">
+                                <select
+                                    className="form-select doctor-filter-select"
+                                    value={verificationFilter}
+                                    onChange={(e) => { setVerificationFilter(e.target.value); setPage(1); }}
+                                    aria-label="Filter doctors by verification"
+                                >
+                                    <option value="">ALL CREDENTIALS</option>
+                                    <option value="verified">VERIFIED</option>
+                                    <option value="pending">PENDING</option>
+                                </select>
+                                <ChevronDown size={14} className="position-absolute text-secondary" style={{ right: '1rem', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
+                            </div>
+                            <div className="doctor-filter-cell shadow-sm rounded-3">
+                                <select className="form-select doctor-filter-select" value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }} aria-label="Filter doctors by account status">
                                     <option value="">ALL STATUS</option>
                                     <option value="active">ACTIVE</option>
                                     <option value="suspended">SUSPENDED</option>
                                 </select>
-                                <ChevronDown size={16} className="position-absolute text-secondary" style={{ right: '1rem', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
+                                <ChevronDown size={14} className="position-absolute text-secondary" style={{ right: '1rem', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
                             </div>
-                            <div className="doctor-filter-cell">
-                                <select className="form-select bg-light border-0 doctor-filter-select" value={sectorFilter} onChange={(e) => setSectorFilter(e.target.value)} aria-label="Filter doctors by region">
+                            <div className="doctor-filter-cell shadow-sm rounded-3">
+                                <select className="form-select doctor-filter-select" value={sectorFilter} onChange={(e) => { setSectorFilter(e.target.value); setPage(1); }} aria-label="Filter doctors by region">
                                     <option value="">ALL REGIONS</option>
                                     <option value="North Sector">NORTH</option>
                                     <option value="South Sector">SOUTH</option>
                                     <option value="East Sector">EAST</option>
                                     <option value="West Sector">WEST</option>
                                 </select>
-                                <ChevronDown size={16} className="position-absolute text-secondary" style={{ right: '1rem', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
+                                <ChevronDown size={14} className="position-absolute text-secondary" style={{ right: '1rem', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
                             </div>
+                            
+                            <div className="small fw-black text-secondary text-uppercase ms-lg-3 mt-3 mt-lg-0" style={{ fontSize: '0.65rem', letterSpacing: '0.5px' }}>
+                                SHOWING {doctors.length} OF {totalRecords} SPECIALISTS
+                                {hasActiveFilters && <span className="ms-1 text-primary">(Filtered)</span>}
+                            </div>
+                        </div>
+
+                        <div className="toolbar-bottom-right">
+                            <button className="btn bg-white border shadow-sm rounded-pill btn-sm fw-bold d-flex align-items-center gap-2 px-3 py-2 text-dark" onClick={exportDoctorsCsv} disabled={loading || doctors.length === 0}>
+                                <Download size={14} className="text-secondary" /> Export CSV
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -270,14 +446,14 @@ const ManageDoctors = () => {
                                     <tr><td colSpan="6" className="text-center py-5 opacity-50 fw-bold">NO RECORDS FOUND</td></tr>
                                 ) : (
                                     doctors.map((doc) => (
-                                        <tr key={doc.id} className={selectedDoctors.includes(doc.id) ? 'table-primary bg-opacity-10' : ''}>
+                                        <tr key={doc.id} className={`${selectedDoctors.includes(doc.id) ? 'table-primary bg-opacity-10' : ''} doctor-table-row`}>
                                             <td className="px-4">
                                                 <div className="form-check">
                                                     <input className="form-check-input" type="checkbox" checked={selectedDoctors.includes(doc.id)} onChange={() => toggleSelectDoctor(doc.id)} />
                                                 </div>
                                             </td>
                                             <td>
-                                                <div className="d-flex align-items-center gap-3">
+                                                <button type="button" className="doctor-profile-trigger" onClick={() => openDoctorProfile(doc)}>
                                                     <div className="bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center fw-black" style={{ width: '40px', height: '40px' }}>
                                                         {doc.full_name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || '??'}
                                                     </div>
@@ -285,7 +461,7 @@ const ManageDoctors = () => {
                                                         <div className="fw-black text-dark small mb-0">{doc.full_name}</div>
                                                         <div className="text-secondary" style={{ fontSize: '0.75rem' }}>{doc.email}</div>
                                                     </div>
-                                                </div>
+                                                </button>
                                             </td>
                                             <td>
                                                 <div className="fw-bold small text-dark">{doc.specialization || 'General'}</div>
@@ -308,13 +484,13 @@ const ManageDoctors = () => {
                                                 </span>
                                             </td>
                                             <td className="text-end px-4 actions-cell position-relative">
-                                                <button className="btn btn-light btn-sm rounded-circle p-2 border-0" onClick={() => setOpenMenuId(openMenuId === doc.id ? null : doc.id)}>
+                                                <button className="btn btn-light btn-sm rounded-circle p-2 border-0" onClick={() => setOpenMenuId(openMenuId === doc.id ? null : doc.id)} aria-label={`Open actions for ${doc.full_name}`}>
                                                     <MoreVertical size={18} />
                                                 </button>
                                                 
                                                 {openMenuId === doc.id && (
                                                     <div className="dropdown-menu show shadow-lg border-light rounded-4 p-2 end-0 translate-middle-y mt-2" style={{ zIndex: 1000, right: '50px' }}>
-                                                        <button className="dropdown-item rounded-3 d-flex align-items-center gap-2 py-2" onClick={() => { setSelectedDoctorId(doc.id); setSelectedDoctorObj(doc); setIsDrawerOpen(true); setOpenMenuId(null); }}>
+                                                        <button className="dropdown-item rounded-3 d-flex align-items-center gap-2 py-2" onClick={() => openDoctorProfile(doc)}>
                                                             <User size={14} /> Profile
                                                         </button>
                                                         <button className="dropdown-item rounded-3 d-flex align-items-center gap-2 py-2" onClick={() => { window.open(`mailto:${doc.email}`, '_self'); setOpenMenuId(null); }}>
@@ -325,11 +501,11 @@ const ManageDoctors = () => {
                                                             {doc.is_verified ? <ShieldAlert size={14} className="text-warning" /> : <ShieldCheck size={14} className="text-success" />}
                                                             {doc.is_verified ? 'Revoke Auth' : 'Verify Auth'}
                                                         </button>
-                                                        <button className="dropdown-item rounded-3 d-flex align-items-center gap-2 py-2" onClick={() => handleStatusToggle(doc.id, doc.account_status)}>
+                                                        <button className="dropdown-item rounded-3 d-flex align-items-center gap-2 py-2" onClick={() => { handleStatusToggle(doc.id, doc.account_status); setOpenMenuId(null); }}>
                                                             {doc.account_status === 'active' ? <AlertTriangle size={14} className="text-danger" /> : <CheckCircle size={14} className="text-success" />}
                                                             {doc.account_status === 'active' ? 'Suspend' : 'Activate'}
                                                         </button>
-                                                        <button className="dropdown-item rounded-3 d-flex align-items-center gap-2 py-2 text-danger" onClick={() => handleTerminate(doc.id)}>
+                                                        <button className="dropdown-item rounded-3 d-flex align-items-center gap-2 py-2 text-danger" onClick={() => { handleTerminate(doc.id); setOpenMenuId(null); }}>
                                                             <X size={14} /> Terminate
                                                         </button>
                                                     </div>
@@ -367,6 +543,8 @@ const ManageDoctors = () => {
                             <button className="btn btn-sm btn-outline-light rounded-pill px-3 fw-bold border-0" onClick={handleBulkVerify}><ShieldCheck size={14} className="me-2" /> Verify</button>
                             <button className="btn btn-sm btn-outline-light rounded-pill px-3 fw-bold border-0" onClick={handleBulkActivate}><CheckCircle size={14} className="me-2" /> Activate</button>
                             <button className="btn btn-sm btn-outline-danger-soft rounded-pill px-3 fw-bold border-0" onClick={handleBulkSuspend}><AlertTriangle size={14} className="me-2" /> Suspend</button>
+                            <button className="btn btn-sm btn-outline-light rounded-pill px-3 fw-bold border-0" onClick={contactSelected}><Mail size={14} className="me-2" /> Email</button>
+                            <button className="btn btn-sm btn-outline-light rounded-pill px-3 fw-bold border-0" onClick={exportSelectedCsv}><Download size={14} className="me-2" /> Export</button>
                             <button className="btn btn-sm btn-link text-light text-decoration-none fw-black small px-3" onClick={() => setSelectedDoctors([])}>Cancel</button>
                         </div>
                     </div>
@@ -374,7 +552,13 @@ const ManageDoctors = () => {
             )}
 
             <AddDoctorModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onAdd={handleOnboard} />
-            <DoctorDrawer doctorId={selectedDoctorId} basicInfo={selectedDoctorObj} isOpen={isDrawerOpen} onClose={() => setIsDrawerOpen(false)} />
+            <DoctorDrawer
+                doctorId={selectedDoctorId}
+                basicInfo={selectedDoctorObj}
+                isOpen={isDrawerOpen}
+                onClose={() => setIsDrawerOpen(false)}
+                onChanged={loadDoctors}
+            />
 
             <style>{`
                 .fw-black { font-weight: 950; }
