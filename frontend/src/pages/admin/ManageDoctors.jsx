@@ -299,7 +299,7 @@ const ManageDoctors = () => {
                                                 )}
                                             </td>
                                             <td className="text-center">
-                                                <span className={`badge rounded-pill px-3 py-2 ${doc.account_status === 'active' ? 'bg-info bg-opacity-10 text-info border-info' : 'bg-danger bg-opacity-10 text-danger border-danger'} border border-opacity-25`}>
+                                                <span className={`badge rounded-pill px-3 py-2 ${doc.account_status === 'active' ? 'bg-info bg-opacity-10 text-info border-info' : doc.account_status === 'suspended' ? 'bg-warning bg-opacity-10 text-warning border-warning' : 'bg-danger bg-opacity-10 text-danger border-danger'} border border-opacity-25`}>
                                                     {doc.account_status.toUpperCase()}
                                                 </span>
                                             </td>
