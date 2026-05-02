@@ -311,6 +311,12 @@ def update_doctor_status(doctor_id):
     prev_status = user.account_status
     user.account_status = new_status
     
+    # Sync is_deleted canonical flag
+    if new_status == "deleted":
+        user.is_deleted = True
+    else:
+        user.is_deleted = False
+    
     # Log status change
     log = DoctorStatusLog(
         doctor_id=doctor_id,

@@ -210,9 +210,11 @@
 }
 
 .status-deleted {
-  background: rgba(100, 116, 139, 0.15);
-  color: var(--admin-text-muted);
-  border-color: rgba(100, 116, 139, 0.3);
+  background: #475569;
+  color: white;
+  border-color: #334155;
+  font-weight: 900;
+  box-shadow: 0 2px 10px rgba(71, 85, 105, 0.3);
 }
 
 /* Verif Pilles - Multi-Axis Signal */
