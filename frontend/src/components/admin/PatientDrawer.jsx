@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import { fetchPatientDetail, updatePatientStatus } from '../../services/adminPatientAPI';
 
-const PatientDrawer = ({ patientId, isOpen, onClose, onRefresh }) => {
+const PatientDrawer = ({ patientId, isOpen, initialTab = 'profile', onClose, onRefresh }) => {
   const [activeTab, setActiveTab] = useState('profile');
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -49,6 +49,7 @@ const PatientDrawer = ({ patientId, isOpen, onClose, onRefresh }) => {
 
   useEffect(() => {
     if (isOpen && patientId) {
+      setActiveTab(initialTab);
       loadDetail();
     } else {
       setData(null);
@@ -58,7 +59,7 @@ const PatientDrawer = ({ patientId, isOpen, onClose, onRefresh }) => {
     setStatusError('');
     setStatusNotice('');
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, patientId]);
+  }, [isOpen, patientId, initialTab]);
 
   const loadDetail = async () => {
     try {

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import PatientTable from '../../components/admin/PatientTable';
 import PatientFilters from '../../components/admin/PatientFilters';
 import PatientDrawer from '../../components/admin/PatientDrawer';
-import { fetchPatients } from '../../services/adminPatientAPI';
+import { fetchPatients, updatePatientStatus } from '../../services/adminPatientAPI';
 import '../../styles/admin-manage-patients.css';
 
 const ManagePatients = () => {
@@ -12,6 +12,12 @@ const ManagePatients = () => {
   const [status, setStatus] = useState('');
   const [selectedPatientId, setSelectedPatientId] = useState(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [drawerInitialTab, setDrawerInitialTab] = useState('profile');
+  const [statusDialog, setStatusDialog] = useState(null);
+  const [statusReason, setStatusReason] = useState('');
+  const [statusError, setStatusError] = useState('');
+  const [statusUpdating, setStatusUpdating] = useState(false);
+  const [actionNotice, setActionNotice] = useState('');
 
   useEffect(() => {
     loadPatients();
@@ -31,8 +37,74 @@ const ManagePatients = () => {
   };
 
   const handleSelectPatient = (patient) => {
+    setDrawerInitialTab('profile');
     setSelectedPatientId(patient.id);
     setIsDrawerOpen(true);
+  };
+
+  const handleOpenTimeline = (patient) => {
+    setDrawerInitialTab('timeline');
+    setSelectedPatientId(patient.id);
+    setIsDrawerOpen(true);
+  };
+
+  const handleStatusAction = (patient, nextStatus) => {
+    setStatusDialog({ patient, nextStatus });
+    setStatusReason('');
+    setStatusError('');
+    setActionNotice('');
+  };
+
+  const closeStatusDialog = () => {
+    if (statusUpdating) return;
+    setStatusDialog(null);
+    setStatusReason('');
+    setStatusError('');
+  };
+
+  const handleStatusSubmit = async (event) => {
+    event.preventDefault();
+    if (!statusDialog || statusUpdating) return;
+
+    const reason = statusReason.trim();
+    if (!reason) {
+      setStatusError('Reason is required.');
+      return;
+    }
+
+    try {
+      setStatusUpdating(true);
+      setStatusError('');
+      await updatePatientStatus(statusDialog.patient.id, {
+        status: statusDialog.nextStatus,
+        reason
+      });
+      setPatients((current) => current.map((patient) => (
+        patient.id === statusDialog.patient.id
+          ? { ...patient, account_status: statusDialog.nextStatus }
+          : patient
+      )));
+      setActionNotice(
+        statusDialog.nextStatus === 'active'
+          ? 'User reactivated successfully'
+          : 'User suspended successfully'
+      );
+      setStatusDialog(null);
+      setStatusReason('');
+    } catch (err) {
+      setStatusError(err?.response?.data?.error || 'Failed to update user status.');
+    } finally {
+      setStatusUpdating(false);
+    }
+  };
+
+  const handleCopyEmail = async (email) => {
+    try {
+      await navigator.clipboard.writeText(email);
+      setActionNotice('Email copied to clipboard');
+    } catch {
+      setActionNotice('Copy failed. Select the email manually.');
+    }
   };
 
   return (
@@ -77,6 +149,12 @@ const ManagePatients = () => {
         setStatus={setStatus} 
       />
 
+      {actionNotice && (
+        <div className="patient-action-notice" role="status">
+          {actionNotice}
+        </div>
+      )}
+
       {loading ? (
         <div style={{ padding: '8rem', textAlign: 'center', fontFamily: 'JetBrains Mono, monospace', color: 'var(--admin-accent)', letterSpacing: '0.2em' }}>
            <div className="animate-pulse">INITIALIZING CLINICAL NEXUS...</div>
@@ -85,16 +163,60 @@ const ManagePatients = () => {
       ) : (
         <PatientTable 
           patients={patients} 
-          onSelectPatient={handleSelectPatient} 
+          onSelectPatient={handleSelectPatient}
+          onOpenTimeline={handleOpenTimeline}
+          onStatusAction={handleStatusAction}
+          onCopyEmail={handleCopyEmail}
         />
       )}
 
       <PatientDrawer 
         patientId={selectedPatientId} 
         isOpen={isDrawerOpen} 
+        initialTab={drawerInitialTab}
         onClose={() => setIsDrawerOpen(false)}
         onRefresh={loadPatients}
       />
+
+      {statusDialog && (
+        <div className="patient-status-dialog-overlay" onClick={closeStatusDialog}>
+          <form className="patient-status-dialog" onSubmit={handleStatusSubmit} onClick={(event) => event.stopPropagation()}>
+            <h3>
+              {statusDialog.nextStatus === 'active' ? 'Authorize Reactivation' : 'Initialize Suspension'}
+            </h3>
+            <p>
+              {statusDialog.patient.full_name} #{statusDialog.patient.id}
+            </p>
+            <label htmlFor="patient-action-reason">
+              {statusDialog.nextStatus === 'active' ? 'Reason for Reactivation' : 'Reason for Suspension'}
+            </label>
+            <textarea
+              id="patient-action-reason"
+              value={statusReason}
+              onChange={(event) => {
+                setStatusReason(event.target.value);
+                if (statusError) setStatusError('');
+              }}
+              disabled={statusUpdating}
+              rows={4}
+              autoFocus
+            />
+            {statusError && <div className="patient-status-error" role="alert">{statusError}</div>}
+            <div className="patient-status-actions">
+              <button type="button" className="status-cancel-btn" onClick={closeStatusDialog} disabled={statusUpdating}>
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className={statusDialog.nextStatus === 'active' ? 'status-success-btn' : 'status-danger-btn'}
+                disabled={statusUpdating}
+              >
+                {statusUpdating ? 'Processing...' : 'OK'}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
     </div>
   );
 };
