@@ -316,6 +316,7 @@
 }
 
 .patient-drawer {
+  position: relative;
   width: 650px;
   max-height: 90vh;
   background-color: var(--admin-card-bg);
@@ -538,6 +539,11 @@
   border: 1px solid transparent;
 }
 
+.gov-btn-danger:disabled, .gov-btn-success:disabled, .gov-btn-secondary:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
 .gov-btn-danger {
   background: rgba(239, 68, 68, 0.1);
   color: #ef4444;
@@ -569,6 +575,120 @@
 .gov-btn-secondary:hover {
   border-color: var(--admin-accent);
   color: var(--admin-accent);
+}
+
+.governance-notice {
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  border-radius: 10px;
+  background: rgba(16, 185, 129, 0.08);
+  color: #10b981;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.governance-dialog-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  background: rgba(8, 10, 15, 0.62);
+  backdrop-filter: blur(8px);
+}
+
+.governance-dialog {
+  width: min(440px, 100%);
+  padding: 1.5rem;
+  border: 1px solid var(--admin-border);
+  border-radius: 16px;
+  background: var(--admin-card-bg);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.4);
+}
+
+.governance-dialog-header {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  margin-bottom: 1.25rem;
+}
+
+.governance-dialog-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.governance-dialog-icon.active {
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+}
+
+.governance-dialog-icon.suspended {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+
+.governance-dialog h3 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 900;
+  color: var(--admin-text-main);
+}
+
+.governance-dialog label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: var(--admin-text-muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.governance-dialog textarea {
+  width: 100%;
+  min-height: 110px;
+  resize: vertical;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--admin-border);
+  border-radius: 12px;
+  background: var(--admin-bg);
+  color: var(--admin-text-main);
+  font: inherit;
+  outline: none;
+}
+
+.governance-dialog textarea:focus {
+  border-color: var(--admin-accent);
+  box-shadow: 0 0 0 3px var(--admin-accent-soft);
+}
+
+.governance-error {
+  margin-top: 0.75rem;
+  color: #ef4444;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.governance-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+}
+
+.spin-icon {
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
 /* Medical Context */

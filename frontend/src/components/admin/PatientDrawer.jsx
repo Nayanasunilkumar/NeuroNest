@@ -12,7 +12,8 @@ import {
   LogOut, 
   Activity,
   AlertTriangle,
-  CheckCircle2
+  CheckCircle2,
+  LoaderCircle
 } from 'lucide-react';
 import { fetchPatientDetail, updatePatientStatus } from '../../services/adminPatientAPI';
 
@@ -22,6 +23,29 @@ const PatientDrawer = ({ patientId, isOpen, onClose, onRefresh }) => {
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
   const [wide, setWide] = useState(false);
+  const [statusDialog, setStatusDialog] = useState(null);
+  const [statusReason, setStatusReason] = useState('');
+  const [statusError, setStatusError] = useState('');
+  const [statusNotice, setStatusNotice] = useState('');
+
+  const statusActions = {
+    active: {
+      title: 'Authorize Reactivation',
+      reasonLabel: 'Reason for Reactivation',
+      submitLabel: 'OK',
+      success: 'User reactivated successfully',
+      icon: <CheckCircle2 size={16} />,
+      buttonClass: 'gov-btn-success'
+    },
+    suspended: {
+      title: 'Initialize Suspension',
+      reasonLabel: 'Reason for Suspension',
+      submitLabel: 'OK',
+      success: 'User suspended successfully',
+      icon: <AlertTriangle size={16} />,
+      buttonClass: 'gov-btn-danger'
+    }
+  };
 
   useEffect(() => {
     if (isOpen && patientId) {
@@ -29,6 +53,10 @@ const PatientDrawer = ({ patientId, isOpen, onClose, onRefresh }) => {
     } else {
       setData(null);
     }
+    setStatusDialog(null);
+    setStatusReason('');
+    setStatusError('');
+    setStatusNotice('');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, patientId]);
 
@@ -44,17 +72,49 @@ const PatientDrawer = ({ patientId, isOpen, onClose, onRefresh }) => {
     }
   };
 
-  const handleStatusChange = async (newStatus) => {
-    const reason = prompt(`Establish reason for ${newStatus.toUpperCase()} protocol:`);
-    if (!reason) return;
+  const openStatusDialog = (newStatus) => {
+    setStatusDialog(newStatus);
+    setStatusReason('');
+    setStatusError('');
+    setStatusNotice('');
+  };
+
+  const closeStatusDialog = () => {
+    if (updating) return;
+    setStatusDialog(null);
+    setStatusReason('');
+    setStatusError('');
+  };
+
+  const handleStatusSubmit = async (event) => {
+    event.preventDefault();
+    if (!statusDialog || updating) return;
+
+    const reason = statusReason.trim();
+    if (!reason) {
+      setStatusError('Reason is required.');
+      return;
+    }
+
+    const action = statusActions[statusDialog];
 
     try {
       setUpdating(true);
-      await updatePatientStatus(patientId, { status: newStatus, reason });
-      await loadDetail();
-      onRefresh(); 
-    } catch {
-      alert("CRITICAL ERROR: Failed to update node status.");
+      setStatusError('');
+      await updatePatientStatus(patientId, { status: statusDialog, reason });
+      setData((current) => current ? {
+        ...current,
+        user_info: {
+          ...current.user_info,
+          account_status: statusDialog
+        }
+      } : current);
+      setStatusNotice(action.success);
+      setStatusDialog(null);
+      setStatusReason('');
+      onRefresh();
+    } catch (err) {
+      setStatusError(err?.response?.data?.error || 'Failed to update user status.');
     } finally {
       setUpdating(false);
     }
@@ -150,7 +210,7 @@ const PatientDrawer = ({ patientId, isOpen, onClose, onRefresh }) => {
                            <button 
                              className="gov-btn-danger"
                              disabled={updating}
-                             onClick={() => handleStatusChange('suspended')}
+                             onClick={() => openStatusDialog('suspended')}
                            >
                              <AlertTriangle size={14} />
                              Initialize Suspension
@@ -159,7 +219,7 @@ const PatientDrawer = ({ patientId, isOpen, onClose, onRefresh }) => {
                            <button 
                              className="gov-btn-success"
                              disabled={updating}
-                             onClick={() => handleStatusChange('active')}
+                             onClick={() => openStatusDialog('active')}
                            >
                              <CheckCircle2 size={14} />
                              Authorize Reactivation
@@ -170,6 +230,11 @@ const PatientDrawer = ({ patientId, isOpen, onClose, onRefresh }) => {
                             Force Session Terminate
                          </button>
                       </div>
+                      {statusNotice && (
+                        <div className="governance-notice" role="status">
+                          {statusNotice}
+                        </div>
+                      )}
                    </div>
 
                    <div className="medical-context-panel">
@@ -207,6 +272,41 @@ const PatientDrawer = ({ patientId, isOpen, onClose, onRefresh }) => {
             </div>
           )}
         </div>
+
+        {statusDialog && (
+          <div className="governance-dialog-backdrop" onClick={closeStatusDialog}>
+            <form className="governance-dialog" onSubmit={handleStatusSubmit} onClick={(e) => e.stopPropagation()}>
+              <div className="governance-dialog-header">
+                <span className={`governance-dialog-icon ${statusDialog}`}>
+                  {statusActions[statusDialog].icon}
+                </span>
+                <h3>{statusActions[statusDialog].title}</h3>
+              </div>
+              <label htmlFor="governance-reason">{statusActions[statusDialog].reasonLabel}</label>
+              <textarea
+                id="governance-reason"
+                value={statusReason}
+                onChange={(e) => {
+                  setStatusReason(e.target.value);
+                  if (statusError) setStatusError('');
+                }}
+                disabled={updating}
+                rows={4}
+                autoFocus
+              />
+              {statusError && <div className="governance-error" role="alert">{statusError}</div>}
+              <div className="governance-dialog-actions">
+                <button type="button" className="gov-btn-secondary" onClick={closeStatusDialog} disabled={updating}>
+                  Cancel
+                </button>
+                <button type="submit" className={statusActions[statusDialog].buttonClass} disabled={updating}>
+                  {updating ? <LoaderCircle size={14} className="spin-icon" /> : statusActions[statusDialog].icon}
+                  {updating ? 'Processing...' : statusActions[statusDialog].submitLabel}
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
       </div>
     </div>
   );
