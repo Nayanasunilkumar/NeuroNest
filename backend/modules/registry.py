@@ -1,6 +1,7 @@
 from modules.admin import register as register_admin
-from modules.patient import register as register_patient
 from modules.doctor import register as register_doctor
+from modules.feedback import register as register_feedback
+from modules.patient import register as register_patient
 from modules.shared import register as register_shared
 
 
@@ -9,6 +10,7 @@ FEATURE_MODULES = [
     register_admin,
     register_patient,
     register_doctor,
+    register_feedback,
 ]
 
 
