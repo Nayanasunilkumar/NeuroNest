@@ -3,8 +3,8 @@ import ReactDOM from "react-dom/client";
 import App from "./App";
 import "./index.css";
 import "bootstrap/dist/css/bootstrap.min.css";
-import "./styles/responsive.css";
-import { applyTheme, getTheme } from "./utils/theme";
+import "./shared/styles/responsive.css";
+import { applyTheme, getTheme } from "./shared/utils/theme";
 
 applyTheme(getTheme()); // 👈 prevents flicker
 

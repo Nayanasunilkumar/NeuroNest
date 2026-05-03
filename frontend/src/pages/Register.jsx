@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { registerUser } from "../shared/services/api/auth";
 import { useSystemConfig } from "../shared/context/SystemConfigContext";
-import "../styles/auth.css";
+import "../shared/styles/auth.css";
 
 const EyeIcon = ({ open }) =>
   open ? (
