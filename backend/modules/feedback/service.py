@@ -100,14 +100,7 @@ class FeedbackService:
         from database.models import User
         print(f"🕵️ [FEEDBACK-SEARCH] Applying filters: {filters}")
         
-        # Use aliases for all joins to prevent ambiguity
-        P = db.aliased(User, name="p")
-        D = db.aliased(User, name="d")
-        
-        # Start with relationship joins for stability
-        query = db.session.query(Review)\
-                  .outerjoin(P, Review.patient_id == P.id)\
-                  .outerjoin(D, Review.doctor_id == D.id)
+        query = Review.query
         
         if filters:
             if filters.get('rating'):
@@ -125,8 +118,8 @@ class FeedbackService:
                 search_term = f"%{filters['search']}%"
                 query = query.filter(
                     db.or_(
-                        P.full_name.ilike(search_term),
-                        D.full_name.ilike(search_term),
+                        Review.patient.has(User.full_name.ilike(search_term)),
+                        Review.doctor.has(User.full_name.ilike(search_term)),
                         Review.review_text.ilike(search_term)
                     )
                 )
