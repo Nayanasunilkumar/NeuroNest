@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import axios from '../../../api/axios';
 import { 
   Users, UserCheck, Activity, CalendarDays, CheckCircle2, 
-  XSquare, Clock, Star, Download, Filter, ChevronDown 
+  XSquare, Clock, Star, Download, Filter, ChevronDown, FileText, Shield
 } from 'lucide-react';
 import AppointmentCharts from './components/AppointmentCharts';
 import DoctorPerformanceTable from './components/DoctorPerformanceTable';
@@ -103,6 +103,40 @@ const AdminReports = () => {
                     if (actions) actions.style.display = 'flex';
                 });
             });
+        } else if (format === 'csv') {
+            // Generate CSV for governance audit
+            axios.get(`/api/admin/reports/governance-audit?days=${days}`).then(res => {
+                const data = res.data;
+                if (!data || data.length === 0) {
+                    alert("No governance audit data found for the selected period.");
+                    return;
+                }
+                
+                const headers = ["ID", "Action", "Admin", "Note", "Review ID", "Timestamp"];
+                const rows = data.map(log => [
+                    log.id,
+                    log.action,
+                    log.admin,
+                    `"${(log.note || "").replace(/"/g, '""')}"`,
+                    log.review_id,
+                    log.timestamp
+                ]);
+                
+                let csvContent = "data:text/csv;charset=utf-8," 
+                    + headers.join(",") + "\n"
+                    + rows.map(e => e.join(",")).join("\n");
+                
+                const encodedUri = encodeURI(csvContent);
+                const link = document.createElement("a");
+                link.setAttribute("href", encodedUri);
+                link.setAttribute("download", `governance_audit_${days}d_${formatDateIST(now).replace(/\//g, '-')}.csv`);
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+            }).catch(err => {
+                console.error("CSV Export failed", err);
+                alert("Failed to generate governance audit CSV.");
+            });
         }
         setShowExportMenu(false);
     };
@@ -173,6 +207,19 @@ const AdminReports = () => {
                                         </div>
                                         <div className="card-content">
                                             <span className="card-title">PDF Document</span>
+                                        </div>
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        onClick={() => handleExport('csv')}
+                                        className="selection-card group outline-none"
+                                    >
+                                        <div className="card-icon" style={{ background: 'rgba(16, 185, 129, 0.1)', color: '#10b981' }}>
+                                            <Shield size={20} />
+                                        </div>
+                                        <div className="card-content">
+                                            <span className="card-title">Governance Audit (CSV)</span>
                                         </div>
                                     </button>
                                 </div>

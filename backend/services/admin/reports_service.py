@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 from sqlalchemy import func, case, cast, String
-from database.models import db, User, Appointment, Review, ReviewEscalation, PatientFlag, SecurityActivity, DoctorStatusLog, PatientStatusLog, NotificationPreference
+from database.models import db, User, Appointment, Review, ReviewEscalation, PatientFlag, SecurityActivity, DoctorStatusLog, PatientStatusLog, NotificationPreference, ReviewModerationLog
 
 class AdminReportsService:
     @staticmethod
@@ -201,3 +201,31 @@ class AdminReportsService:
                 "failed_authentications": int(security_agg.failed_attempts or 0)
             }
         }
+
+    @staticmethod
+    def get_governance_audit(days=30):
+        target_date = datetime.now() - timedelta(days=days)
+        
+        logs = db.session.query(
+            ReviewModerationLog.id,
+            ReviewModerationLog.action,
+            ReviewModerationLog.note,
+            ReviewModerationLog.created_at,
+            User.full_name.label('admin_name'),
+            ReviewModerationLog.review_id
+        ).join(
+            User, User.id == ReviewModerationLog.performed_by
+        ).filter(
+            ReviewModerationLog.created_at >= target_date
+        ).order_by(
+            ReviewModerationLog.created_at.desc()
+        ).all()
+        
+        return [{
+            "id": log.id,
+            "action": log.action,
+            "admin": log.admin_name,
+            "note": log.note,
+            "review_id": log.review_id,
+            "timestamp": log.created_at.isoformat()
+        } for log in logs]

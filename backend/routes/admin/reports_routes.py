@@ -56,3 +56,16 @@ def get_governance():
         return jsonify(report), 200
     except Exception as e:
         return jsonify({"message": str(e)}), 500
+
+@admin_reports_bp.route("/governance-audit", methods=["GET"])
+@jwt_required()
+def get_governance_audit():
+    if not _is_admin():
+        return jsonify({"message": "Admin access required"}), 403
+
+    try:
+        days = int(request.args.get("days", 30))
+        audit = AdminReportsService.get_governance_audit(days)
+        return jsonify(audit), 200
+    except Exception as e:
+        return jsonify({"message": str(e)}), 500
