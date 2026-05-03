@@ -194,8 +194,8 @@ const ReviewDetailModal = ({ review, onClose, onModerate }) => {
             to { opacity: 1; transform: translateY(0); }
         }
 
-        .audit-success-nexus h2 { color: white; margin: 0; font-weight: 800; }
-        .audit-success-nexus p { color: rgba(255, 255, 255, 0.5); margin: 0; }
+        .audit-success-nexus h2 { color: #0f172a; margin: 0; font-weight: 800; }
+        .audit-success-nexus p { color: #64748b; margin: 0; }
 
         .appt-modal-portal {
           position: fixed;
@@ -213,7 +213,7 @@ const ReviewDetailModal = ({ review, onClose, onModerate }) => {
           position: absolute;
           width: 100%;
           height: 100%;
-          background: rgba(15, 23, 42, 0.85);
+          background: rgba(15, 23, 42, 0.6);
           backdrop-filter: blur(8px);
           cursor: pointer;
         }
@@ -232,11 +232,11 @@ const ReviewDetailModal = ({ review, onClose, onModerate }) => {
         }
 
         .oversight-card {
-           background: #1e293b;
-           border: 1px solid rgba(255, 255, 255, 0.1);
+           background: #ffffff;
+           border: 1px solid #e2e8f0;
            border-radius: 28px;
            overflow: hidden;
-           box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+           box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
            display: flex;
            flex-direction: column;
            max-height: 90vh;
@@ -244,8 +244,8 @@ const ReviewDetailModal = ({ review, onClose, onModerate }) => {
 
         .modal-header-nexus {
           padding: 1.5rem 2rem;
-          background: rgba(255, 255, 255, 0.03);
-          border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+          background: #f8fafc;
+          border-bottom: 1px solid #e2e8f0;
           display: flex;
           justify-content: space-between;
           align-items: center;
@@ -256,7 +256,7 @@ const ReviewDetailModal = ({ review, onClose, onModerate }) => {
           font-weight: 900;
           text-transform: uppercase;
           letter-spacing: 0.1em;
-          color: #10b981;
+          color: #059669;
           display: flex;
           align-items: center;
           gap: 6px;
@@ -267,14 +267,14 @@ const ReviewDetailModal = ({ review, onClose, onModerate }) => {
           font-size: 1.5rem;
           font-weight: 900;
           letter-spacing: -0.04em;
-          color: white;
+          color: #0f172a;
           margin: 0;
         }
 
         .sidebar-close-btn {
-          background: rgba(255, 255, 255, 0.05);
+          background: #f1f5f9;
           border: none;
-          color: white;
+          color: #64748b;
           width: 36px;
           height: 36px;
           border-radius: 12px;
@@ -285,13 +285,13 @@ const ReviewDetailModal = ({ review, onClose, onModerate }) => {
           transition: all 0.2s;
         }
 
-        .sidebar-close-btn:hover { background: #ef4444; }
+        .sidebar-close-btn:hover { background: #fee2e2; color: #ef4444; }
 
         .modal-body-scroll {
           padding: 2rem;
           overflow-y: auto;
           scrollbar-width: thin;
-          scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+          scrollbar-color: #e2e8f0 transparent;
         }
 
         .identity-matrix {
@@ -304,24 +304,24 @@ const ReviewDetailModal = ({ review, onClose, onModerate }) => {
         .identity-card {
           padding: 1rem;
           border-radius: 16px;
-          background: rgba(15, 23, 42, 0.4);
-          border: 1px solid rgba(255, 255, 255, 0.05);
+          background: #f8fafc;
+          border: 1px solid #e2e8f0;
         }
 
         .card-header {
           font-size: 0.6rem;
           font-weight: 800;
           text-transform: uppercase;
-          color: rgba(255, 255, 255, 0.4);
+          color: #64748b;
           margin-bottom: 0.75rem;
           display: flex;
           align-items: center;
           gap: 0.5rem;
         }
 
-        .identity-title { font-size: 1.1rem; font-weight: 800; margin: 0; color: white; }
-        .identity-sub { font-size: 0.75rem; color: rgba(255, 255, 255, 0.5); margin: 0.25rem 0 0.75rem; }
-        .meta-tag { font-size: 0.65rem; font-weight: 900; background: rgba(255, 255, 255, 0.05); padding: 2px 8px; border-radius: 4px; width: fit-content; }
+        .identity-title { font-size: 1.1rem; font-weight: 800; margin: 0; color: #0f172a; }
+        .identity-sub { font-size: 0.75rem; color: #64748b; margin: 0.25rem 0 0.75rem; }
+        .meta-tag { font-size: 0.65rem; font-weight: 900; background: #e2e8f0; color: #475569; padding: 2px 8px; border-radius: 4px; width: fit-content; }
 
         .block-header {
            display: block;
@@ -334,14 +334,17 @@ const ReviewDetailModal = ({ review, onClose, onModerate }) => {
         }
 
         .clinical-narrative-box {
-           background: rgba(0, 0, 0, 0.2);
+           background: #f8fafc;
            border-radius: 16px;
            padding: 1.25rem;
            font-size: 0.95rem;
            line-height: 1.6;
-           color: rgba(255, 255, 255, 0.8);
+           color: #334155;
            margin-bottom: 2rem;
            border-left: 4px solid #6366f1;
+           border-top: 1px solid #e2e8f0;
+           border-right: 1px solid #e2e8f0;
+           border-bottom: 1px solid #e2e8f0;
         }
 
         .score-sentiment-nexus {
@@ -349,35 +352,36 @@ const ReviewDetailModal = ({ review, onClose, onModerate }) => {
            align-items: center;
            justify-content: center;
            gap: 3rem;
-           background: rgba(255, 255, 255, 0.02);
+           background: #f8fafc;
            padding: 1.5rem;
            border-radius: 16px;
            margin-bottom: 2.5rem;
+           border: 1px solid #e2e8f0;
         }
 
         .metric-box { text-align: center; }
-        .metric-label { display: block; font-size: 0.6rem; font-weight: 900; opacity: 0.4; margin-bottom: 0.75rem; text-transform: uppercase; }
-        .metric-divider { height: 40px; width: 1px; background: rgba(255, 255, 255, 0.1); }
+        .metric-label { display: block; font-size: 0.6rem; font-weight: 900; color: #94a3b8; margin-bottom: 0.75rem; text-transform: uppercase; }
+        .metric-divider { height: 40px; width: 1px; background: #e2e8f0; }
 
         .justification-portal textarea {
           width: 100%;
           min-height: 100px;
-          background: rgba(0, 0, 0, 0.3);
-          border: 1px solid rgba(255, 255, 255, 0.1);
+          background: #ffffff;
+          border: 1px solid #cbd5e1;
           border-radius: 16px;
           padding: 1rem;
-          color: white;
+          color: #0f172a;
           font-size: 0.9rem;
           outline: none;
           transition: all 0.3s;
         }
 
-        .justification-portal textarea:focus { border-color: #6366f1; background: rgba(0, 0, 0, 0.4); }
+        .justification-portal textarea:focus { border-color: #6366f1; box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1); }
 
         .governance-footer {
           padding: 1.5rem 2rem 2rem;
-          background: rgba(0, 0, 0, 0.2);
-          border-top: 1px solid rgba(255, 255, 255, 0.05);
+          background: #f8fafc;
+          border-top: 1px solid #e2e8f0;
         }
 
         .override-header {
@@ -404,24 +408,25 @@ const ReviewDetailModal = ({ review, onClose, onModerate }) => {
           gap: 0.5rem;
           padding: 1rem 0.5rem;
           border-radius: 12px;
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          background: rgba(255, 255, 255, 0.03);
-          color: white;
+          border: 1px solid #e2e8f0;
+          background: #ffffff;
+          color: #475569;
           cursor: pointer;
           transition: all 0.2s;
         }
 
         .btn-governance span { font-size: 0.65rem; font-weight: 800; }
-        .btn-governance:hover { transform: translateY(-2px); background: rgba(255, 255, 255, 0.08); }
+        .btn-governance:hover { transform: translateY(-2px); border-color: #cbd5e1; background: #f8fafc; }
         .btn-governance:disabled { opacity: 0.3; cursor: not-allowed; }
 
-        .btn-governance.approve:hover { color: #10b981; border-color: #10b981; }
-        .btn-governance.flag:hover { color: #f59e0b; border-color: #f59e0b; }
-        .btn-governance.hide:hover { color: #ef4444; border-color: #ef4444; }
-        .btn-governance.suspend { background: #ef4444; border-color: #ef4444; }
-        .btn-governance.suspend:hover { background: #dc2626; box-shadow: 0 0 20px rgba(239, 68, 68, 0.3); }
+        .btn-governance.approve:hover { color: #10b981; border-color: #10b981; background: #f0fdf4; }
+        .btn-governance.flag:hover { color: #f59e0b; border-color: #f59e0b; background: #fffbeb; }
+        .btn-governance.hide:hover { color: #ef4444; border-color: #ef4444; background: #fef2f2; }
+        .btn-governance.suspend { background: #ef4444; border-color: #ef4444; color: white; }
+        .btn-governance.suspend span { color: white; }
+        .btn-governance.suspend:hover { background: #dc2626; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2); }
 
-        .audit-pulse { font-size: 0.7rem; color: #10b981; margin-left: auto; font-weight: 700; animation: auditPulse 2s infinite; }
+        .audit-pulse { font-size: 0.7rem; color: #059669; margin-left: auto; font-weight: 700; animation: auditPulse 2s infinite; }
         @keyframes auditPulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
       `}</style>
     </div>,
