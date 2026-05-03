@@ -1,6 +1,6 @@
 from apscheduler.schedulers.background import BackgroundScheduler
 
-from services.scheduler_service import check_upcoming_consultations
+from modules.doctor.services.scheduler_service import check_upcoming_consultations
 
 
 def start_scheduler(app):

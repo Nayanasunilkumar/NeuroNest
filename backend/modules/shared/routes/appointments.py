@@ -19,14 +19,14 @@ from utils.slot_engine import (
     rolling_window_bounds,
     release_expired_holds,
 )
-from services.slot_lifecycle_service import (
+from modules.doctor.services.slot_lifecycle_service import (
     apply_cancellation_policy,
     mark_slot_available,
     mark_slot_booked,
     mark_slot_held,
 )
-from services.notification_service import NotificationService
-from services.appointment_call_service import (
+from modules.shared.services.notification_service import NotificationService
+from modules.shared.services.appointment_call_service import (
     ensure_join_windows,
     evaluate_call_state,
     get_or_create_direct_conversation,
@@ -54,7 +54,7 @@ def test_email_appointments():
     if access_error:
         return access_error
 
-    from services.notification_service import NotificationService
+    from modules.shared.services.notification_service import NotificationService
     recipient = request.args.get("email")
     if not recipient:
         return {"status": "error", "message": "email query parameter is required"}, 400

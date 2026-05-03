@@ -18,7 +18,7 @@ from database.models import (
     DoctorSlotOverride,
     db,
 )
-from services.slot_lifecycle_service import (
+from modules.doctor.services.slot_lifecycle_service import (
     log_slot_event,
     release_expired_holds as release_expired_holds_service,
 )

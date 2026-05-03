@@ -3,7 +3,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from database.models import db, User, Appointment, DoctorProfile, ClinicalStructure
 from datetime import datetime
 from sqlalchemy import or_
-from services.slot_lifecycle_service import apply_cancellation_policy, mark_slot_booked
+from modules.doctor.services.slot_lifecycle_service import apply_cancellation_policy, mark_slot_booked
 
 admin_appointments_bp = Blueprint("admin_appointments", __name__)
 

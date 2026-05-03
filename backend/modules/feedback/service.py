@@ -26,7 +26,7 @@ class FeedbackService:
 
     @staticmethod
     def _send_doctor_warning_email(doctor_email, doctor_name, action_label, note):
-        from services.notification_service import NotificationService
+        from modules.shared.services.notification_service import NotificationService
         subject = f"NeuroNest Warning Notice - Review {action_label}"
         body = (
             f"Dear Dr. {doctor_name},\n\n"
@@ -43,7 +43,7 @@ class FeedbackService:
 
     @staticmethod
     def _send_doctor_suspension_email(doctor_email, doctor_name, note):
-        from services.notification_service import NotificationService
+        from modules.shared.services.notification_service import NotificationService
         subject = "NeuroNest Account Suspension Notice"
         body = (
             f"Dear Dr. {doctor_name},\n\n"

@@ -9,7 +9,7 @@ from flask_jwt_extended import get_jwt, get_jwt_identity, jwt_required
 
 from database.models import Alert, Appointment, User, db
 from extensions.socket import socketio
-from services.notification_service import NotificationService
+from modules.shared.services.notification_service import NotificationService
 from utils.pdf_generator import generate_assessment_report
 
 vitals_bp = Blueprint("vitals", __name__)

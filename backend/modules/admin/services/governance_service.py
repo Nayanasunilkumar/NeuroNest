@@ -64,7 +64,7 @@ class GovernanceService:
                 profile.doctor_status = "under_review"
                 
                 # 📢 Notify Administrators
-                from services.notification_service import NotificationService
+                from modules.shared.services.notification_service import NotificationService
                 admins = User.query.filter(User.role.in_(['admin', 'super_admin'])).all()
                 for admin in admins:
                     NotificationService.send_in_app(

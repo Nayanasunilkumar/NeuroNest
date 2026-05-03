@@ -6,9 +6,9 @@ from database.models import db, User, Appointment, PatientProfile
 from models.chat_models import Conversation, Participant, Message, to_utc_iso
 from sqlalchemy import and_, or_, desc
 from flask_jwt_extended import get_jwt
-from services.notification_service import NotificationService
-from services.appointment_call_service import get_or_create_direct_conversation
-from services.doctor_patient_service import (
+from modules.shared.services.notification_service import NotificationService
+from modules.shared.services.appointment_call_service import get_or_create_direct_conversation
+from modules.doctor.services.doctor_patient_service import (
     get_related_doctor_ids_for_patient,
     get_related_patient_ids_for_doctor,
 )

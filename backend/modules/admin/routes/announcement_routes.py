@@ -8,7 +8,7 @@ from database.models import User, db
 from models.announcement import Announcement
 from models.announcement_read import AnnouncementRead
 from models.announcement_target import AnnouncementTarget
-from services.notification_service import NotificationService
+from modules.shared.services.notification_service import NotificationService
 
 admin_announcements_bp = Blueprint("admin_announcements", __name__)
 

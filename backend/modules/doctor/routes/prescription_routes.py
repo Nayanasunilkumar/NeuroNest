@@ -124,7 +124,7 @@ def create_prescription():
         db.session.commit()
 
         # Notify Patient
-        from services.notification_service import NotificationService
+        from modules.shared.services.notification_service import NotificationService
         NotificationService.notify_prescription_event(new_prescription.id)
 
         return jsonify({

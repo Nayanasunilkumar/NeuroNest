@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 
 from database.models import Appointment, db
 from models.chat_models import Conversation, Message, Participant
-from services.notification_service import NotificationService
+from modules.shared.services.notification_service import NotificationService
 
 
 VALID_CALL_STATUSES = {"scheduled", "waiting", "ongoing", "completed", "missed"}

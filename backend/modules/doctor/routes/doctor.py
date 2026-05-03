@@ -25,21 +25,21 @@ from utils.slot_engine import (
     rolling_window_bounds,
     release_expired_holds,
 )
-from services.slot_lifecycle_service import (
+from modules.doctor.services.slot_lifecycle_service import (
     apply_cancellation_policy,
     log_slot_event,
     mark_slot_available,
     mark_slot_blocked,
     mark_slot_booked,
 )
-from services.notification_service import NotificationService
-from services.appointment_call_service import (
+from modules.shared.services.notification_service import NotificationService
+from modules.shared.services.appointment_call_service import (
     ensure_join_windows,
     evaluate_call_state,
     send_system_chat_message,
     sync_call_status,
 )
-from services.doctor_patient_service import (
+from modules.doctor.services.doctor_patient_service import (
     DOCTOR_PATIENT_TERMINAL_STATUSES,
     doctor_has_patient_relationship,
     get_related_patient_ids_for_doctor,

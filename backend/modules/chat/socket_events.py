@@ -3,7 +3,7 @@ from flask_socketio import emit, join_room, disconnect
 from extensions.socket import socketio
 from flask_jwt_extended import decode_token
 from models.chat_models import db, Message, Participant
-from services.notification_service import NotificationService
+from modules.shared.services.notification_service import NotificationService
 from database.models import User
 import functools
 # ...

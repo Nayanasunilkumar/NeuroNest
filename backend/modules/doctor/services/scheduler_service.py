@@ -1,8 +1,8 @@
 from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 from database.models import Appointment, DoctorNotificationSetting, db
-from services.notification_service import NotificationService
-from services.appointment_call_service import ensure_join_windows, send_system_chat_message, sync_call_status
+from modules.shared.services.notification_service import NotificationService
+from modules.shared.services.appointment_call_service import ensure_join_windows, send_system_chat_message, sync_call_status
 
 def check_upcoming_consultations(app):
     """

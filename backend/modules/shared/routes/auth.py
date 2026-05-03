@@ -5,7 +5,7 @@ from utils.security import hash_password, verify_password
 from flask_jwt_extended import create_access_token, get_jwt, get_jwt_identity, jwt_required
 
 from extensions.socket import socketio
-from services.notification_service import NotificationService
+from modules.shared.services.notification_service import NotificationService
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
 

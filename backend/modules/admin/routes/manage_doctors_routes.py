@@ -27,7 +27,7 @@ import os
 import re
 from utils.security import hash_password
 from sqlalchemy import or_
-from services.notification_service import NotificationService
+from modules.shared.services.notification_service import NotificationService
 
 admin_doctors_bp = Blueprint("admin_doctors", __name__)
 
