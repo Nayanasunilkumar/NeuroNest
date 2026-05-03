@@ -6,22 +6,10 @@ export const useFeedback = () => {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [filters, setFilters] = useState(() => {
-    try {
-      const saved = localStorage.getItem('admin_feedback_filters');
-      if (!saved) return {};
-      const parsed = JSON.parse(saved);
-      // Never restore is_flagged from localStorage — it caused reviews to be hidden
-      const { is_flagged, ...safe } = parsed;
-      return safe;
-    } catch {
-      return {};
-    }
-  });
+  // Always start with empty filters — never restore from localStorage
+  // Stale saved filters (e.g. days=7, is_flagged=false) were hiding most reviews
+  const [filters, setFilters] = useState({});
 
-  useEffect(() => {
-    localStorage.setItem('admin_feedback_filters', JSON.stringify(filters));
-  }, [filters]);
 
   const fetchFeedback = useCallback(async () => {
     setLoading(true);

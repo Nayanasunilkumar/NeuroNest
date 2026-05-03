@@ -54,10 +54,10 @@ const ReviewFilters = ({ filters, onFilterChange }) => {
             value={filters.days || 'all'}
             onChange={(e) => onFilterChange({ days: e.target.value === 'all' ? '' : e.target.value })}
           >
+            <option value="all">Full History</option>
             <option value="1">Today's Feedback</option>
             <option value="7">Past 7 Days</option>
             <option value="30">Monthly Audit</option>
-            <option value="all">Full History</option>
           </select>
         </div>
       </div>
