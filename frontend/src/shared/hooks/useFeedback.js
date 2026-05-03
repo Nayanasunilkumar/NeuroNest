@@ -7,8 +7,16 @@ export const useFeedback = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [filters, setFilters] = useState(() => {
-    const saved = localStorage.getItem('admin_feedback_filters');
-    return saved ? JSON.parse(saved) : {};
+    try {
+      const saved = localStorage.getItem('admin_feedback_filters');
+      if (!saved) return {};
+      const parsed = JSON.parse(saved);
+      // Never restore is_flagged from localStorage — it caused reviews to be hidden
+      const { is_flagged, ...safe } = parsed;
+      return safe;
+    } catch {
+      return {};
+    }
   });
 
   useEffect(() => {

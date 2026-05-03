@@ -97,18 +97,34 @@ class FeedbackService:
 
     @staticmethod
     def get_all_reviews(filters=None):
+        """Admin-facing: returns ALL reviews (including flagged/escalated/hidden).
+        Filters are applied only when explicitly provided."""
         from database.models import User
         query = Review.query
-        
+
         if filters:
-            if filters.get('rating'):
-                query = query.filter(Review.rating == int(filters['rating']))
-            if filters.get('doctor_id'):
-                query = query.filter(Review.doctor_id == int(filters['doctor_id']))
-            if filters.get('is_flagged') is not None:
-                is_flagged_bool = str(filters['is_flagged']).lower() == 'true'
-                if is_flagged_bool:
-                    # If looking for flagged, include both boolean flag AND Escalated/Flagged statuses
+            # Rating: only filter when a valid integer is explicitly provided
+            rating_val = filters.get('rating')
+            if rating_val is not None:
+                try:
+                    query = query.filter(Review.rating == int(rating_val))
+                except (ValueError, TypeError):
+                    pass
+
+            # Doctor: only filter when provided
+            doctor_val = filters.get('doctor_id')
+            if doctor_val is not None:
+                try:
+                    query = query.filter(Review.doctor_id == int(doctor_val))
+                except (ValueError, TypeError):
+                    pass
+
+            # is_flagged: ONLY apply when explicitly True or False (boolean)
+            # Never apply this filter from a string 'false' — that hides escalated reviews
+            is_flagged_val = filters.get('is_flagged')
+            if isinstance(is_flagged_val, bool):
+                if is_flagged_val:
+                    # Show flagged + escalated reviews
                     query = query.filter(
                         db.or_(
                             Review.is_flagged == True,
@@ -116,17 +132,20 @@ class FeedbackService:
                         )
                     )
                 else:
-                    # If looking for normal, exclude flagged/escalated
+                    # Show only clean/approved reviews
                     query = query.filter(
                         db.and_(
                             Review.is_flagged == False,
                             Review.status.notin_(['Escalated', 'Flagged'])
                         )
                     )
+            # If is_flagged is None/missing: no filter — show ALL reviews
+
+            # Sentiment filter
             if filters.get('sentiment'):
                 query = query.filter(Review.sentiment == filters['sentiment'])
-            
-            # 🔍 SEARCH FILTER: Patient, Doctor, or Content
+
+            # Search: Patient name, Doctor name, or review text
             if filters.get('search'):
                 search_term = f"%{filters['search']}%"
                 query = query.filter(
@@ -136,8 +155,8 @@ class FeedbackService:
                         Review.review_text.ilike(search_term)
                     )
                 )
-            
-            # 📅 TEMPORAL FILTER: Past X days
+
+            # Temporal filter: past X days
             if filters.get('days'):
                 try:
                     days_int = int(filters['days'])
@@ -145,7 +164,7 @@ class FeedbackService:
                     query = query.filter(Review.created_at >= cutoff)
                 except (ValueError, TypeError):
                     pass
-        
+
         return query.order_by(Review.created_at.desc()).all()
 
     @staticmethod
