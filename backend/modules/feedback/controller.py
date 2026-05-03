@@ -51,7 +51,9 @@ class FeedbackController:
             'rating': request.args.get('rating', type=int),
             'doctor_id': request.args.get('doctor_id', type=int),
             'is_flagged': request.args.get('is_flagged', type=lambda x: x.lower() == 'true'),
-            'sentiment': request.args.get('sentiment')
+            'sentiment': request.args.get('sentiment'),
+            'search': request.args.get('search'),
+            'days': request.args.get('days')
         }
         # Clean up None values
         filters = {k: v for k, v in filters.items() if v is not None}

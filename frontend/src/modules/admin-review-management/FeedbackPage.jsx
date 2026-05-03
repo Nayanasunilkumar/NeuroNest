@@ -12,7 +12,7 @@ import ReviewDetailModal from './components/ReviewDetailModal';
 const FeedbackPage = () => {
   const navigate = useNavigate();
   const { 
-    reviews, stats, loading, error, 
+    reviews, stats, loading, error, filters,
     updateFilters, moderateReview, refresh 
   } = useFeedback();
   
@@ -91,7 +91,7 @@ const FeedbackPage = () => {
       </div>
 
       {/* Control Matrix */}
-      <ReviewFilters filters={{}} onFilterChange={updateFilters} />
+      <ReviewFilters filters={filters} onFilterChange={updateFilters} />
 
       {/* Review Data Grid */}
       {loading && !reviews.length ? (
