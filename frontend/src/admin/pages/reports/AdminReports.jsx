@@ -265,13 +265,18 @@ const AdminReports = () => {
         const actions  = document.getElementById('reports-header-actions');
         if (actions) actions.style.display = 'none';
         const { default: html2pdf } = await import('html2pdf.js');
+        const container = document.querySelector('.admin-reports-root');
+        if (container) container.classList.add('is-pdf-exporting');
+        
         await html2pdf().set({
-          margin: 10,
+          margin: 0,
           filename: `enterprise_report_${days}d_${dateSlug}.pdf`,
           image: { type: 'jpeg', quality: 0.98 },
           html2canvas: { scale: 2, useCORS: true },
-          jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' },
+          jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
         }).from(element).save();
+
+        if (container) container.classList.remove('is-pdf-exporting');
         if (actions) actions.style.display = 'flex';
 
       } else if (format === 'csv') {

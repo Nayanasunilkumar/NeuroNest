@@ -576,3 +576,39 @@
   letter-spacing: .05em;
   margin-top: .5rem;
 }
+
+/* ── PDF Export / Print Optimizations ── */
+@media print {
+  .admin-reports-root {
+    padding: 0;
+    background: #fff;
+  }
+  .ar-kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .ar-bento-grid {
+    grid-template-columns: 1fr;
+  }
+  .ar-col-2 {
+    grid-column: span 1;
+  }
+  .ar-export-wrap, .header-actions {
+    display: none !important;
+  }
+}
+
+/* Force layout for html2pdf when capturing */
+.is-pdf-exporting .ar-kpi-grid {
+  grid-template-columns: repeat(2, 1fr) !important;
+}
+.is-pdf-exporting .ar-bento-grid {
+  grid-template-columns: 1fr !important;
+}
+.is-pdf-exporting .ar-col-2 {
+  grid-column: span 1 !important;
+}
+.is-pdf-exporting .admin-reports-root {
+  width: 210mm; /* A4 Width */
+  padding: 10mm;
+  background: #fff;
+}
