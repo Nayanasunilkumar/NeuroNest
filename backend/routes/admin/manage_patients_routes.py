@@ -3,6 +3,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from database.models import db, User, PatientProfile, Appointment
 from database.models import PatientStatusLog, PatientFlag, PatientAuditLog
 from datetime import datetime
+from sqlalchemy import or_
 
 admin_patients_bp = Blueprint("admin_patients", __name__)
 
@@ -40,6 +41,8 @@ def get_patients():
         
     if status_filter:
         query = query.filter(User.account_status == status_filter.lower())
+    else:
+        query = query.filter(or_(User.is_deleted == False, User.is_deleted.is_(None)))
         
     # Order by newest first
     query = query.order_by(User.id.desc())
