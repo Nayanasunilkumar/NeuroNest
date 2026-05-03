@@ -11,21 +11,23 @@ import Login from "../pages/Login";
 import NotFound from "../pages/NotFound";
 import Register from "../pages/Register";
 import VideoConsultation from "../pages/shared/VideoConsultation";
+import { adminRoutes } from "../admin/adminRoutes";
+import { patientRoutes } from "../patient/patientRoutes";
+import { doctorRoutes } from "../doctor/doctorRoutes";
 import ModuleRouteGuard from "../routes/ModuleRouteGuard";
 import ProtectedRoute from "../routes/ProtectedRoute";
 import {
   getModuleChildRouteForRole,
   getModuleComponentForRole,
-  moduleRegistry,
+  roleModuleRegistry,
 } from "../modules/moduleRegistry";
 
 
 const renderRoleRoutes = (role) => {
-  const modules = moduleRegistry.filter((moduleConfig) =>
-    moduleConfig.rolesAllowed.includes(role),
-  );
+  const modules = roleModuleRegistry[role] || [];
 
   return modules
+    .filter((moduleConfig) => moduleConfig.rolesAllowed.includes(role))
     .map((moduleConfig) => {
       const ModuleComponent = getModuleComponentForRole(moduleConfig, role);
       if (!ModuleComponent) return null;
@@ -68,6 +70,9 @@ export default function AppRouter() {
           }
         >
           <Route index element={<Navigate to="dashboard" replace />} />
+          {patientRoutes.map((route) => (
+            <Route key={route.path} path={route.path} element={<route.element />} />
+          ))}
           {renderRoleRoutes("patient")}
         </Route>
 
@@ -80,7 +85,9 @@ export default function AppRouter() {
           }
         >
           <Route index element={<Navigate to="dashboard" replace />} />
-          <Route path="patient-hub" element={<PatientHub />} />
+          {doctorRoutes.map((route) => (
+            <Route key={route.path} path={route.path} element={<route.element />} />
+          ))}
           {renderRoleRoutes("doctor")}
         </Route>
 
@@ -93,6 +100,9 @@ export default function AppRouter() {
           }
         >
           <Route index element={<Navigate to="dashboard" replace />} />
+          {adminRoutes.map((route) => (
+            <Route key={route.path} path={route.path} element={<route.element />} />
+          ))}
           {renderRoleRoutes("admin")}
         </Route>
 

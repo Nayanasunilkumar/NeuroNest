@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { ShieldCheck, RefreshCcw, AlertTriangle } from 'lucide-react';
-import { useFeedback } from '../../hooks/useFeedback';
+import { useFeedback } from '../../shared/hooks/useFeedback';
 import { useNavigate } from 'react-router-dom';
 import { API_BASE_URL } from '../../config/env';
 import { feedbackService } from '../../services/feedbackService';

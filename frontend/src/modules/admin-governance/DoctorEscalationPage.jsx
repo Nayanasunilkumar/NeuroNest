@@ -5,7 +5,7 @@ import {
     Video, MessageCircle, FileText, Ban, AlertCircle,
     CheckCircle, XCircle, Info, Send, Phone, UserMinus, ShieldCheck
 } from 'lucide-react';
-import { governanceApi } from '../../api/governance';
+import { governanceApi } from '../../shared/services/governance';
 import './Escalation.css';
 
 const DoctorEscalationPage = () => {

@@ -3,9 +3,9 @@ import { Outlet, useLocation } from "react-router-dom";
 import DoctorNavbar from "./DoctorNavbar";
 import { useTheme } from "../../context/ThemeContext";
 
-import Sidebar from "../../components/Sidebar";
-import DynamicIslandNav from "../../components/DynamicIslandNav";
-import "../../styles/doctor-dark-overrides.css";
+import Sidebar from "../../shared/components/Sidebar";
+import DynamicIslandNav from "../../shared/components/DynamicIslandNav";
+import "../../shared/styles/doctor-dark-overrides.css";
 
 const DoctorLayout = () => {
   const { isDark: darkMode, toggleTheme } = useTheme();

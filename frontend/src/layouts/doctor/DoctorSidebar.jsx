@@ -1,8 +1,8 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { LogOut, AlignLeft, X } from 'lucide-react';
-import { logout } from '../../utils/auth';
-import { useModuleConfig } from '../../hooks/useModuleConfig';
+import { logout } from '../../shared/utils/auth';
+import { useModuleConfig } from '../../shared/hooks/useModuleConfig';
 import { getModulePathForRole, getModulesForRole } from '../../modules/moduleRegistry';
 
 const DoctorSidebar = ({ collapsed, setCollapsed, mobileOpen, setMobileOpen, darkMode }) => {

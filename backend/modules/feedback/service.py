@@ -200,7 +200,7 @@ class FeedbackService:
         db.session.commit()
         
         # 🔗 Governance Hook: Detection of risk clusters and auto-escalation
-        from services.governance_service import GovernanceService
+        from modules.admin.services.governance_service import GovernanceService
         GovernanceService.process_review_event(review.id)
         
         return review, None
@@ -299,7 +299,7 @@ class FeedbackService:
             return False, {"error_code": "VALIDATION_ERROR", "message": "Note is required for this action"}
 
         from database.models import ReviewEscalation, ReviewModerationLog, ReviewTag
-        from services.governance_service import GovernanceService
+        from modules.admin.services.governance_service import GovernanceService
         reviews_cols = FeedbackService._get_table_columns("reviews")
         review_logs_cols = FeedbackService._get_table_columns("review_moderation_logs")
         

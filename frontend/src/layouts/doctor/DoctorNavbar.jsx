@@ -2,13 +2,13 @@ import React, { useState, useEffect, useRef } from 'react';
 import { BellRing, Moon, Sun, ChevronDown, Calendar, MessageSquare, CalendarCheck, Star, Activity, LogOut } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { getDoctorProfile } from '../../services/doctorProfileService';
-import { getAppointmentRequests } from '../../api/doctor';
-import { getConversations } from '../../api/chat';
+import { getAppointmentRequests } from '../../shared/services/doctor';
+import { getConversations } from '../../shared/services/chat';
 import { doctorFeedbackService } from '../../services/doctorFeedbackService';
-import { getUser } from '../../utils/auth';
-import { getMyNotifications, markNotificationRead, markAllNotificationsRead, deleteNotification } from '../../api/profileApi';
-import DynamicIslandNav from '../../components/DynamicIslandNav';
-import NotificationPanel from '../../components/notifications/NotificationPanel';
+import { getUser } from '../../shared/utils/auth';
+import { getMyNotifications, markNotificationRead, markAllNotificationsRead, deleteNotification } from '../../shared/services/profileApi';
+import DynamicIslandNav from '../../shared/components/DynamicIslandNav';
+import NotificationPanel from '../../shared/components/notifications/NotificationPanel';
 import { Bell, Info, AlertTriangle } from 'lucide-react';
 import { useAlerts } from '../../context/AlertContext';
 import { useSystemConfig } from '../../context/SystemConfigContext';
@@ -258,7 +258,7 @@ const DoctorNavbar = ({ darkMode, toggleTheme }) => {
         <button 
           className="btn btn-danger-soft rounded-circle p-2 border-0 shadow-sm flex-shrink-0 transition-all"
           onClick={() => {
-            import('../../utils/auth').then(m => m.logout());
+            import('../../shared/utils/auth').then(m => m.logout());
           }}
           title="Logout"
           style={{ width: '36px', height: '36px' }}

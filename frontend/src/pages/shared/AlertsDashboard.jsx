@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAlerts } from '../../context/AlertContext';
-import { fetchAlerts } from '../../api/alertsApi';
+import { fetchAlerts } from '../../shared/services/alertsApi';
 import { getSocket } from '../../services/socket';
 import {
   Activity,
@@ -14,7 +14,7 @@ import {
   Wifi,
   WifiOff,
 } from 'lucide-react';
-import { formatTimeIST, formatDateTimeIST, getISTDayKey } from '../../utils/time';
+import { formatTimeIST, formatDateTimeIST, getISTDayKey } from '../../shared/utils/time';
 
 const SEVERITY_COLORS = {
   critical: { border: '#dc2626', bg: '#fee2e2', text: '#991b1b', chip: 'bg-danger' },

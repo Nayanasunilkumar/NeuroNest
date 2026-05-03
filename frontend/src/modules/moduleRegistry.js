@@ -1,73 +1,28 @@
-import dashboardModule from './dashboard';
-import profileModule from './profile';
-import bookAppointmentModule from './book-appointment';
-import myAppointmentsModule from './my-appointments';
-import medicalRecordsModule from './medical-records';
-import prescriptionsModule from './prescriptions';
-import assessmentModule from './assessment';
-import feedbackReviewsModule from './feedback-reviews';
-import adminManagePatientsModule from './admin-manage-patients';
-import adminManageDoctorsModule from './admin-manage-doctors';
-import adminAppointmentManagementModule from './admin-appointment-management';
-import adminAssessmentManagementModule from './admin-assessment-management';
-import adminReportsAnalyticsModule from './admin-reports-analytics';
-import adminReviewManagementModule from './admin-review-management';
-import adminGovernanceModule from './admin-governance';
-import adminNotificationsModule from './admin-notifications';
-import adminAnnouncementsModule from './admin-announcements';
-import appointmentRequestsModule from './appointment-requests';
-import todayScheduleModule from './today-schedule';
-import myPatientsModule from './my-patients';
-import patientRecordsModule from './patient-records';
-import writePrescriptionModule from './write-prescription';
-import assessmentReportsModule from './assessment-reports/index.jsx';
-import performanceAnalyticsModule from './performance-analytics';
-import alertsModule from './alerts';
-import patientChatModule from './patient-chat';
-import patientDoctorProfileModule from './patient-doctor-profile';
-import patientTimelineModule from './patient-timeline';
-import clinicalArchivesModule from './clinical-archives';
-import settingsModule from './settings';
+import adminRoutes from "../admin/adminRoutes";
+import doctorRoutes from "../doctor/doctorRoutes";
+import patientRoutes from "../patient/patientRoutes";
+import { ROLE_BASE_PATH } from "../shared/constants/roles";
 
-export const ROLE_BASE_PATH = {
-  patient: '/patient',
-  doctor: '/doctor',
-  admin: '/admin',
-  super_admin: '/super-admin',
+const uniqueModules = (modules) => {
+  const seen = new Set();
+  return modules.filter((moduleConfig) => {
+    if (seen.has(moduleConfig.key)) return false;
+    seen.add(moduleConfig.key);
+    return true;
+  });
 };
 
-export const moduleRegistry = [
-  dashboardModule,
-  profileModule,
-  bookAppointmentModule,
-  myAppointmentsModule,
-  medicalRecordsModule,
-  prescriptionsModule,
-  assessmentModule,
-  feedbackReviewsModule,
-  adminManagePatientsModule,
-  adminManageDoctorsModule,
-  adminAppointmentManagementModule,
-  adminAssessmentManagementModule,
-  adminReportsAnalyticsModule,
-  adminReviewManagementModule,
-  adminGovernanceModule,
-  adminNotificationsModule,
-  adminAnnouncementsModule,
-  appointmentRequestsModule,
-  todayScheduleModule,
-  myPatientsModule,
-  patientRecordsModule,
-  writePrescriptionModule,
-  assessmentReportsModule,
-  performanceAnalyticsModule,
-  alertsModule,
-  patientChatModule,
-  patientDoctorProfileModule,
-  patientTimelineModule,
-  clinicalArchivesModule,
-  settingsModule,
-];
+export const roleModuleRegistry = {
+  admin: adminRoutes,
+  doctor: doctorRoutes,
+  patient: patientRoutes,
+};
+
+export const moduleRegistry = uniqueModules([
+  ...patientRoutes,
+  ...doctorRoutes,
+  ...adminRoutes,
+]);
 
 const byOrderForRole = (role) => (a, b) => {
   const aOrder = a.orderByRole?.[role] ?? 999;

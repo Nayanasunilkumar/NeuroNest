@@ -1,14 +1,14 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Video, Mic, MicOff, VideoOff, PhoneOff } from 'lucide-react';
-import { getUser } from '../../utils/auth';
+import { getUser } from '../../shared/utils/auth';
 import { io } from 'socket.io-client';
-import { sendMessage } from '../../api/chat';
-import { getIceConfig } from '../../api/rtc';
+import { sendMessage } from '../../shared/services/chat';
+import { getIceConfig } from '../../shared/services/rtc';
 import { useCall } from '../../context/CallContext';
 import { API_BASE_URL } from '../../config/env';
-import { leaveAppointmentCall } from '../../api/appointments';
-import { leaveDoctorAppointmentCall } from '../../api/doctor';
+import { leaveAppointmentCall } from '../../shared/services/appointments';
+import { leaveDoctorAppointmentCall } from '../../shared/services/doctor';
 
 export default function VideoConsultation() {
     const { roomId } = useParams();

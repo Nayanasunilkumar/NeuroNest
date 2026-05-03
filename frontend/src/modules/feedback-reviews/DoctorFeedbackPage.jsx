@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { RefreshCcw, AlertTriangle, ShieldCheck } from 'lucide-react';
-import { useDoctorFeedback } from '../../hooks/useDoctorFeedback';
-import { getUser } from '../../utils/auth';
+import { useDoctorFeedback } from '../../shared/hooks/useDoctorFeedback';
+import { getUser } from '../../shared/utils/auth';
 import FeedbackOverviewCards from './components/FeedbackOverviewCards';
 import RatingDistributionChart from './components/RatingDistributionChart';
 import PerformanceTrendChart from './components/PerformanceTrendChart';

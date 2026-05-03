@@ -1,6 +1,6 @@
 import React from 'react';
 import { ClipboardList, RefreshCcw, AlertTriangle } from 'lucide-react';
-import { usePatientFeedback } from '../../hooks/usePatientFeedback';
+import { usePatientFeedback } from '../../shared/hooks/usePatientFeedback';
 import FeedbackForm from './components/FeedbackForm';
 import ReviewHistoryList from './components/ReviewHistoryList';
 import ComplaintStatusCard from './components/ComplaintStatusCard';
