@@ -46,9 +46,15 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    const form = e.currentTarget;
+    const formEmail = (form.elements.email?.value || email).trim();
+    const formPassword = form.elements.password?.value || password;
+    setEmail(formEmail);
+    setPassword(formPassword);
+
     try {
       setLoading(true);
-      const { data } = await loginUser({ email, password });
+      const { data } = await loginUser({ email: formEmail, password: formPassword });
       saveAuth(data.token, data.user);
       const role = data.user.role;
       if (role === "patient") navigate("/patient/dashboard");
@@ -66,8 +72,8 @@ const Login = () => {
       }
       else if (role === "admin") navigate("/admin/dashboard");
       else if (role === "super_admin") navigate("/admin/dashboard");
-    } catch {
-      setError("Invalid email or password.");
+    } catch (err) {
+      setError(err?.response?.data?.message || "Unable to sign in. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -175,6 +181,7 @@ const Login = () => {
                 </label>
                 <input
                   id="login-email"
+                  name="email"
                   type="email"
                   className="form-control form-control-lg border shadow-sm"
                   value={email}
@@ -228,6 +235,7 @@ const Login = () => {
                 <div className="position-relative">
                   <input
                     id="login-pw"
+                    name="password"
                     type={showPw ? "text" : "password"}
                     className="form-control form-control-lg border shadow-sm"
                     value={password}
