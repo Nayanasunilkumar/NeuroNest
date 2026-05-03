@@ -94,8 +94,6 @@ def get_doctors():
 
         if status_filter:
             query = query.filter(User.account_status == status_filter.lower())
-        else:
-            query = query.filter(or_(User.is_deleted == False, User.is_deleted.is_(None)))
 
         if verification_filter in ("verified", "true", "1"):
             query = query.filter(User.is_verified == True)
@@ -106,9 +104,9 @@ def get_doctors():
             query = query.filter(DoctorProfile.sector == sector_filter)
 
         # Calculate global stats (for the whole roster, not just current page)
-        total_all = User.query.filter(doctor_role_filter, or_(User.is_deleted == False, User.is_deleted.is_(None))).count()
-        verified_count = User.query.filter(doctor_role_filter, User.is_verified == True, or_(User.is_deleted == False, User.is_deleted.is_(None))).count()
-        pending_count = User.query.filter(doctor_role_filter, or_(User.is_verified == False, User.is_verified.is_(None)), or_(User.is_deleted == False, User.is_deleted.is_(None))).count()
+        total_all = User.query.filter(doctor_role_filter).count()
+        verified_count = User.query.filter(doctor_role_filter, User.is_verified == True).count()
+        pending_count = User.query.filter(doctor_role_filter, or_(User.is_verified == False, User.is_verified.is_(None))).count()
         active_count = User.query.filter(doctor_role_filter, User.account_status == "active").count()
 
         paginated = query.paginate(page=page, per_page=limit)

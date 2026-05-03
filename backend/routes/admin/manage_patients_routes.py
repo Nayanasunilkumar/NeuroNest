@@ -41,8 +41,6 @@ def get_patients():
         
     if status_filter:
         query = query.filter(User.account_status == status_filter.lower())
-    else:
-        query = query.filter(or_(User.is_deleted == False, User.is_deleted.is_(None)))
         
     # Order by newest first
     query = query.order_by(User.id.desc())
