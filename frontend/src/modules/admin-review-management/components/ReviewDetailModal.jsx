@@ -27,7 +27,7 @@ const ReviewDetailModal = ({ review, onClose, onModerate }) => {
         });
 
         setIsSubmitting(false);
-        if (result.success) {
+        if (result.success || result.data?.ok) {
             const baseMessage = `Audit Finalized: Review status updated to ${action.toUpperCase()}.`;
             setConfirmAction({ type: 'success', message: baseMessage });
             setTimeout(() => {

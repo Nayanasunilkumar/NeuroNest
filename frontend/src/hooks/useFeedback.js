@@ -44,7 +44,8 @@ export const useFeedback = () => {
     try {
       const result = await feedbackService.moderateReview(reviewId, moderationData);
       await fetchFeedback(); // Refresh data
-      return { success: true, data: result };
+      // Normalize: Backend returns { ok: true }, frontend expects { success: true }
+      return { success: result.ok || result.success || false, data: result };
     } catch (err) {
       return { success: false, error: err.message };
     }
