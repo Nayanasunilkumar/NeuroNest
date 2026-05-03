@@ -1,16 +1,16 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 
-import SessionManager from "../components/SessionManager";
-import AlertPopup from "../components/shared/AlertPopup";
+import SessionManager from "../shared/components/SessionManager";
+import AlertPopup from "../shared/components/AlertPopup";
 import AdminLayout from "../layouts/AdminLayout";
 import PatientLayout from "../layouts/PatientLayout";
 import DoctorLayout from "../layouts/doctor/DoctorLayout";
-import PatientHub from "../pages/doctor/PatientHub";
+import PatientHub from "../doctor/pages/PatientHub";
 import Forbidden from "../pages/Forbidden";
 import Login from "../pages/Login";
 import NotFound from "../pages/NotFound";
 import Register from "../pages/Register";
-import VideoConsultation from "../pages/shared/VideoConsultation";
+import VideoConsultation from "../shared/pages/VideoConsultation";
 import { adminRoutes } from "../admin/adminRoutes";
 import { patientRoutes } from "../patient/patientRoutes";
 import { doctorRoutes } from "../doctor/doctorRoutes";

@@ -1,17 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { BellRing, Moon, Sun, ChevronDown, Calendar, MessageSquare, CalendarCheck, Star, Activity, LogOut } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { getDoctorProfile } from '../../services/doctorProfileService';
-import { getAppointmentRequests } from '../../shared/services/doctor';
-import { getConversations } from '../../shared/services/chat';
-import { doctorFeedbackService } from '../../services/doctorFeedbackService';
+import { getDoctorProfile } from '../../doctor/services/doctorProfileService';
+import { getAppointmentRequests } from '../../shared/services/api/doctor';
+import { getConversations } from '../../shared/services/api/chat';
+import { doctorFeedbackService } from '../../shared/services/api/doctorFeedbackService';
 import { getUser } from '../../shared/utils/auth';
-import { getMyNotifications, markNotificationRead, markAllNotificationsRead, deleteNotification } from '../../shared/services/profileApi';
+import { getMyNotifications, markNotificationRead, markAllNotificationsRead, deleteNotification } from '../../shared/services/api/profileApi';
 import DynamicIslandNav from '../../shared/components/DynamicIslandNav';
 import NotificationPanel from '../../shared/components/notifications/NotificationPanel';
 import { Bell, Info, AlertTriangle } from 'lucide-react';
-import { useAlerts } from '../../context/AlertContext';
-import { useSystemConfig } from '../../context/SystemConfigContext';
+import { useAlerts } from '../../shared/context/AlertContext';
+import { useSystemConfig } from '../../shared/context/SystemConfigContext';
 
 const DoctorNavbar = ({ darkMode, toggleTheme }) => {
   const navigate = useNavigate();

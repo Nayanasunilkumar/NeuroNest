@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Clock, ShieldCheck, Timer, Globe2, Save, AlertCircle } from 'lucide-react';
-import { updateDoctorScheduleConfig } from '../../../../shared/services/doctor';
+import { updateDoctorScheduleConfig } from '../../../../shared/services/api/doctor';
 
 const ScheduleSettings = ({ data, onSaveSuccess }) => {
     const [formData, setFormData] = useState({

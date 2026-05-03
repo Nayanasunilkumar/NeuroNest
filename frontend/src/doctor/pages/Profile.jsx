@@ -8,7 +8,7 @@ import AvailabilityModal from '../../shared/components/doctor/AvailabilityModal'
 import ScheduleOverrideModal from '../../shared/components/doctor/ScheduleOverrideModal';
 import { fetchSpecialties } from '../../services/adminDoctorAPI';
 import { toAssetUrl } from '../../shared/utils/media';
-import { useTheme } from '../../context/ThemeContext';
+import { useTheme } from '../../shared/context/ThemeContext';
 import { formatDateIST } from '../../shared/utils/time';
 import '../../shared/styles/profile-dark.css';
 

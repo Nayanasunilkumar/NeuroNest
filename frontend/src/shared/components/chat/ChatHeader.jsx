@@ -2,8 +2,8 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Calendar, Phone, Video, Info, Clock, AlertCircle } from 'lucide-react';
 import { formatDateIST, formatClockTimeIST, parseISTDateTime } from '../../shared/utils/time';
 import { useNavigate } from 'react-router-dom';
-import { joinAppointmentCall } from '../../shared/services/appointments'; // Fallback to doctor API if role = doctor?
-import api from '../../shared/services/axios'; // Generic axios for joining
+import { joinAppointmentCall } from '../../shared/services/api/appointments'; // Fallback to doctor API if role = doctor?
+import api from '../../shared/services/api/axios'; // Generic axios for joining
 
 const ChatHeader = ({ otherUser, context, isDoctor, onToggleSidebar, showSidebar, onVideoCall }) => {
     const navigate = useNavigate();

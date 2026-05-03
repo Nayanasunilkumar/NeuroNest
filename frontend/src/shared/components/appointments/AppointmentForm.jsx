@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { User, Calendar, Clock, FileText, Activity } from "lucide-react";
-import { getDoctors, getAvailableSlots } from "../../shared/services/appointments";
+import { getDoctors, getAvailableSlots } from "../../shared/services/api/appointments";
 import "../../shared/styles/appointments.css";
 
 const AppointmentForm = ({ onSubmit, loading }) => {

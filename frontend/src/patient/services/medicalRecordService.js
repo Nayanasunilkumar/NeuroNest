@@ -1,4 +1,4 @@
-import api from "../api/axios";
+import api from "../../shared/services/api/axios";
 import axios from "axios";
 import { API_BASE_URL } from "../config/env";
 

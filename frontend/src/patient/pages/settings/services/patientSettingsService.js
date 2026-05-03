@@ -1,4 +1,4 @@
-import api from '../../../../shared/services/axios';
+import api from '../../../../shared/services/api/axios';
 
 const BASE = '/api/patient/settings';
 

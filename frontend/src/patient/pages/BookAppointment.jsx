@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AppointmentForm from "../../shared/components/appointments/AppointmentForm";
-import { bookAppointment, bookAppointmentBySlot } from "../../shared/services/appointments";
+import { bookAppointment, bookAppointmentBySlot } from "../../shared/services/api/appointments";
 import "../../shared/styles/appointments.css";
 import "../../shared/styles/profile.css";
 

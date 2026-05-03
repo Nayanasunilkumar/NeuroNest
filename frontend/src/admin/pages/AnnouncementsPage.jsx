@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Archive, CheckCircle, Clock, Eye, Megaphone, Plus, Search, UserX, X } from 'lucide-react';
-import { adminAnnouncementApi } from '../../shared/services/announcementApi';
+import { adminAnnouncementApi } from '../../shared/services/api/announcementApi';
 import AnnouncementTable from '../../shared/components/announcements/AnnouncementTable';
 import CreateAnnouncementModal from '../../shared/components/announcements/CreateAnnouncementModal';
 import '../../shared/styles/admin-announcements.css';

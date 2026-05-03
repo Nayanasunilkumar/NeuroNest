@@ -5,7 +5,7 @@ import {
     createScheduleOverride,
     deleteScheduleOverride,
     getScheduleOverrides,
-} from '../../shared/services/doctor';
+} from '../../shared/services/api/doctor';
 import { useTheme } from '../../context/ThemeContext';
 
 const formatOverrideDate = (value = '') => {

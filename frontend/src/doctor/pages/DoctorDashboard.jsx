@@ -12,8 +12,8 @@ import {
 import BulletinBoard from '../../shared/components/announcements/BulletinBoard';
 import { useNavigate } from 'react-router-dom';
 import { getDoctorProfile } from '../../services/doctorProfileService';
-import { getDoctorStats, getPatients, getSchedule, joinDoctorAppointmentCall } from '../../shared/services/doctor';
-import { getConversations } from '../../shared/services/chat';
+import { getDoctorStats, getPatients, getSchedule, joinDoctorAppointmentCall } from '../../shared/services/api/doctor';
+import { getConversations } from '../../shared/services/api/chat';
 import { getUser } from '../../shared/utils/auth';
 import { formatClockTimeIST, formatDateFromISTDate, formatTimeIST, getISTDayKey, parseISTDateTime, formatDateIST } from '../../shared/utils/time';
 import '../../shared/styles/dashboard.css';

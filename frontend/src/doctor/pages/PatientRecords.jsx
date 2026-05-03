@@ -4,7 +4,7 @@ import {
     getPatientDossier, 
     saveClinicalRemark,
     getPatients
-} from "../../shared/services/doctor";
+} from "../../shared/services/api/doctor";
 import { 
     Calendar, User, Clock, Mail, Phone, Info, 
     ChevronRight, ChevronLeft, Bookmark, ShieldAlert, Edit3, Folder, StickyNote,

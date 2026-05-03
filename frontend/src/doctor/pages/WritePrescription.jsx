@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import prescriptionService from '../../services/prescriptionService';
-import { getPatients } from '../../shared/services/doctor';
+import { getPatients } from '../../shared/services/api/doctor';
 import MedicineRow from '../../shared/components/prescription/MedicineRow';
 import PrescriptionList from '../../shared/components/prescription/PrescriptionList';
 import Avatar from '../../shared/components/shared/Avatar';

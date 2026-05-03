@@ -28,9 +28,9 @@ import {
 import BulletinBoard from "../../shared/components/announcements/BulletinBoard";
 import { Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { Link, useNavigate } from "react-router-dom";
-import api from "../../shared/services/axios";
-import { getAppointmentCallState, getAppointments, joinAppointmentCall } from "../../shared/services/appointments";
-import { getClinicalSummary, getMyNotifications, markNotificationRead } from "../../shared/services/profileApi";
+import api from "../../shared/services/api/axios";
+import { getAppointmentCallState, getAppointments, joinAppointmentCall } from "../../shared/services/api/appointments";
+import { getClinicalSummary, getMyNotifications, markNotificationRead } from "../../shared/services/api/profileApi";
 import { API_BASE_URL } from "../../config/env";
 import { formatClockTimeIST, formatDateFromISTDate, formatTimeIST, parseISTDateTime, getISTDayKey, getISTHour, formatDateIST } from "../../shared/utils/time";
 

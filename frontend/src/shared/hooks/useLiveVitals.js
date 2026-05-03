@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { getLatestVitals, getVitalsHistory } from "../api/vitals";
+import { getLatestVitals, getVitalsHistory } from "../services/api/vitals";
 
 export function useLiveVitals({ patientId, enabled = true } = {}) {
   const [latest, setLatest] = useState(null);

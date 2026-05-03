@@ -3,14 +3,14 @@ import { useNavigate } from "react-router-dom";
 import { 
     getSchedule, completeAppointment, cancelAppointment, markNoShow, joinDoctorAppointmentCall,
     getClinicalPins, createClinicalPin, updateClinicalPin
-} from "../../shared/services/doctor";
+} from "../../shared/services/api/doctor";
 import { 
     Clock, Calendar, ChevronRight, FileText,
     ChevronLeft, Check, X, Filter, Bookmark, Plus, 
     Zap, Headphones, CloudSun, UserCheck, Timer
 } from "lucide-react";
 import { toAssetUrl } from "../../shared/utils/media";
-import { useTheme } from "../../context/ThemeContext";
+import { useTheme } from "../../shared/context/ThemeContext";
 import "../../shared/styles/today-schedule.css";
 
 const TodaySchedule = () => {

@@ -3,7 +3,7 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import { 
     getPatientDossier, 
     getClinicalRemarks
-} from "../../shared/services/doctor";
+} from "../../shared/services/api/doctor";
 import { 
     Calendar, ChevronLeft, StickyNote, FileText, Clock
 } from "lucide-react";

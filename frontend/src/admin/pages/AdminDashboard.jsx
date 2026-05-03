@@ -11,7 +11,7 @@ import {
   UserPlus,
   Calendar,
 } from 'lucide-react';
-import { adminDashboardApi } from '../../shared/services/adminDashboardApi';
+import { adminDashboardApi } from '../../shared/services/api/adminDashboardApi';
 import './AdminDashboard.css';
 
 const STAT_META = {

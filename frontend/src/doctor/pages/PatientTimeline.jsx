@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { 
     getPatientDossier, getPatients, getPatientRecords, getClinicalRemarks, getAppointmentHistory
-} from "../../shared/services/doctor";
+} from "../../shared/services/api/doctor";
 import { 
     Calendar, User, Clock, ShieldAlert, ChevronLeft, AlertCircle, 
     Activity, Heart, Pill, FlaskConical, AlertTriangle, Layers,

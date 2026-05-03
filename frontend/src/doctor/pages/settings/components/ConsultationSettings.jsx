@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { IndianRupee, Video, MapPin, Search, AlertTriangle, Save } from 'lucide-react';
-import { updateDoctorConsultationSettings } from '../../../../shared/services/doctor';
+import { updateDoctorConsultationSettings } from '../../../../shared/services/api/doctor';
 
 const ConsultationSettings = ({ data, onSaveSuccess }) => {
     const [formData, setFormData] = useState({

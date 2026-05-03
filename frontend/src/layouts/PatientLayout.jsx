@@ -1,14 +1,14 @@
 import React from "react";
 import { Outlet, useLocation, Link } from "react-router-dom";
-import DynamicIslandNav from "../components/DynamicIslandNav";
-import { logout } from "../utils/auth";
-import { useTheme } from "../context/ThemeContext";
-import { useSystemConfig } from "../context/SystemConfigContext";
+import DynamicIslandNav from "../shared/components/DynamicIslandNav";
+import { logout } from "../shared/utils/auth";
+import { useTheme } from "../shared/context/ThemeContext";
+import { useSystemConfig } from "../shared/context/SystemConfigContext";
 import { Sun, Moon, LogOut, Bell } from "lucide-react";
-import { getAlerts, acknowledgeAlert } from "../api/alerts";
-import { getMyNotifications, markNotificationRead, markAllNotificationsRead, deleteNotification } from "../api/profileApi";
-import { initSocket } from "../services/socket";
-import NotificationPanel from "../components/notifications/NotificationPanel";
+import { getAlerts, acknowledgeAlert } from "../shared/services/api/alerts";
+import { getMyNotifications, markNotificationRead, markAllNotificationsRead, deleteNotification } from "../shared/services/api/profileApi";
+import { initSocket } from "../shared/services/api/socket";
+import NotificationPanel from "../shared/components/notifications/NotificationPanel";
 import { useNavigate } from "react-router-dom";
 
 const PatientLayout = () => {

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
     Bell, Save, Globe, AlertCircle
 } from 'lucide-react';
-import { adminSettingsApi } from '../../shared/services/settingsApi';
+import { adminSettingsApi } from '../../shared/services/api/settingsApi';
 import '../../shared/styles/admin-settings.css';
 
 const TABS = [

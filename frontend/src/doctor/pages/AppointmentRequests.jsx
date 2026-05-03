@@ -6,12 +6,12 @@ import {
   getAppointmentHistory,
   rescheduleAppointment,
   getScheduleSlots
-} from "../../shared/services/doctor";
+} from "../../shared/services/api/doctor";
 import {
   X, RefreshCw, ChevronRight, Search,
   Calendar, CheckCircle2, ShieldAlert, Zap, Clock
 } from "lucide-react";
-import { useTheme } from "../../context/ThemeContext";
+import { useTheme } from "../../shared/context/ThemeContext";
 import { formatClockTimeIST, formatDateFromISTDate, getISTDayKey, parseISTDateTime } from "../../shared/utils/time";
 import "../../shared/styles/appointment-requests.css";
 

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { User, Mail, Lock, KeyRound, Eye, EyeOff, Save, CheckCircle, AlertCircle, ShieldCheck } from 'lucide-react';
-import { updateDoctorAccount, changeDoctorPassword } from '../../../../shared/services/doctor';
+import { updateDoctorAccount, changeDoctorPassword } from '../../../../shared/services/api/doctor';
 import { updateStoredUser } from '../../../../shared/utils/auth';
 
 const AccountSettings = ({ data, onSaveSuccess, forcePasswordChange = false }) => {

@@ -1,10 +1,10 @@
 import { BrowserRouter } from "react-router-dom";
 
-import { AlertProvider } from "../context/AlertContext";
-import { CallProvider } from "../context/CallContext";
-import { ModuleConfigProvider } from "../context/ModuleConfigContext";
-import { SystemConfigProvider } from "../context/SystemConfigContext";
-import { ThemeProvider } from "../context/ThemeContext";
+import { AlertProvider } from "../shared/context/AlertContext";
+import { CallProvider } from "../shared/context/CallContext";
+import { ModuleConfigProvider } from "../shared/context/ModuleConfigContext";
+import { SystemConfigProvider } from "../shared/context/SystemConfigContext";
+import { ThemeProvider } from "../shared/context/ThemeContext";
 
 
 export default function AppProviders({ children }) {

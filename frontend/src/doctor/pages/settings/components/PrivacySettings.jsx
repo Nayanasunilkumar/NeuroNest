@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Shield, Eye, Lock, Globe, Save, MessageSquare, Star } from 'lucide-react';
-import { updateDoctorPrivacySettings } from '../../../../shared/services/doctor';
+import { updateDoctorPrivacySettings } from '../../../../shared/services/api/doctor';
 
 const PrivacySettings = ({ data, onSaveSuccess }) => {
     const [formData, setFormData] = useState({

@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import IncomingCallCard from "../components/video/IncomingCallCard";
 import VideoCallCard from "../components/video/VideoCallCard";
 import VideoCallModal from "../components/video/VideoCallModal";
-import { acceptCall, declineCall, endCall, startCall } from "../api/callsApi";
+import { acceptCall, declineCall, endCall, startCall } from "../services/api/callsApi";
 import { initSocket } from "../services/socket";
 import { getUser, isAuthenticated } from "../utils/auth";
 

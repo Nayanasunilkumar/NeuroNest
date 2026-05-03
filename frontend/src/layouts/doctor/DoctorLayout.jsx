@@ -1,7 +1,7 @@
 import React from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import DoctorNavbar from "./DoctorNavbar";
-import { useTheme } from "../../context/ThemeContext";
+import { useTheme } from "../../shared/context/ThemeContext";
 
 import Sidebar from "../../shared/components/Sidebar";
 import DynamicIslandNav from "../../shared/components/DynamicIslandNav";

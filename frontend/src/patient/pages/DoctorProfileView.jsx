@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { getDoctorPublicProfile } from "../../shared/services/appointments";
+import { getDoctorPublicProfile } from "../../shared/services/api/appointments";
 import { toAssetUrl } from "../../shared/utils/media";
 
 const DoctorProfileView = () => {

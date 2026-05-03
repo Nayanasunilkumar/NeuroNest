@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Users, Search, Filter, Loader2, ArrowUpDown, UserPlus, SlidersHorizontal, UserX, MessageSquare, ExternalLink, Clock } from 'lucide-react';
-import { getPatients } from '../../shared/services/doctor';
-import { getConversations } from '../../shared/services/chat';
+import { getPatients } from '../../shared/services/api/doctor';
+import { getConversations } from '../../shared/services/api/chat';
 import { toAssetUrl } from '../../shared/utils/media';
 import "../../shared/styles/my-patients.css";
-import { useTheme } from "../../context/ThemeContext";
+import { useTheme } from "../../shared/context/ThemeContext";
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { FileJson, FileText, ChevronDown } from 'lucide-react';

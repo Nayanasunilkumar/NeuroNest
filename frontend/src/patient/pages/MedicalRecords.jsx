@@ -2,10 +2,10 @@ import React, { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { Plus, AlertCircle, X, Sun, Sunrise, Sunset, Moon, Minus, ChevronUp, ChevronDown, ChevronLeft, Flame, Activity, Pill, FileText, Search, Filter, Video, Phone, Mail, MapPin, Briefcase, Calendar, User, Edit3 } from "lucide-react";
 import { toAssetUrl } from "../../shared/utils/media";
-import { getPatientDossier } from "../../shared/services/doctor";
+import { getPatientDossier } from "../../shared/services/api/doctor";
 import { getUser } from "../../shared/utils/auth";
 import { getDoctorProfile } from "../../services/doctorProfileService";
-import { getClinicalSummary } from "../../shared/services/profileApi";
+import { getClinicalSummary } from "../../shared/services/api/profileApi";
 import { formatDateIST, calculateAgeIST as calculateAgeHelper } from "../../shared/utils/time";
 
 // Components

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useAlerts } from "../../context/AlertContext";
+import { useAlerts } from "../context/AlertContext";
 import { useNavigate } from "react-router-dom";
 import { BellRing, X, ToggleRight, ToggleLeft } from "lucide-react";
 import { getUser } from "../../shared/utils/auth";

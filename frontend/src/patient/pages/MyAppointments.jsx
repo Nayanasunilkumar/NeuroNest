@@ -9,7 +9,7 @@ import {
   confirmReschedule,
   getAppointmentCallState,
   joinAppointmentCall,
-} from "../../shared/services/appointments";
+} from "../../shared/services/api/appointments";
 import { formatClockTimeIST, formatDateFromISTDate, formatTimeIST, parseISTDateTime } from "../../shared/utils/time";
 import "../../shared/styles/appointments.css"; 
 import { CheckCircle, X, Calendar, Clock, RefreshCw, ChevronLeft, ChevronRight, AlertCircle } from "lucide-react";

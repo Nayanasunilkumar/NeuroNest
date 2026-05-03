@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
-import { logout, getUser } from '../utils/auth';
-import { useTheme } from '../context/ThemeContext';
-import { useSystemConfig } from '../context/SystemConfigContext';
-import '../styles/admin-theme.css';
+import { logout, getUser } from '../shared/utils/auth';
+import { useTheme } from '../shared/context/ThemeContext';
+import { useSystemConfig } from '../shared/context/SystemConfigContext';
+import '../shared/styles/admin-theme.css';
 import {
   BarChart3,
   Bell,

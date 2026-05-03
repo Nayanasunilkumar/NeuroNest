@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAlerts } from '../../context/AlertContext';
-import { fetchAlerts } from '../../shared/services/alertsApi';
+import { fetchAlerts } from '../../shared/services/api/alertsApi';
 import { getSocket } from '../../services/socket';
 import {
   Activity,

@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { initSocket, getSocket } from '../../services/socket';
-import { getConversations, getMessages, markAsRead, getChatContext, startConversation, sendMessage, deleteMessage } from '../../shared/services/chat';
+import { getConversations, getMessages, markAsRead, getChatContext, startConversation, sendMessage, deleteMessage } from '../../shared/services/api/chat';
 import ConversationList from '../../shared/components/chat/ConversationList';
 import ChatWindow from '../../shared/components/chat/ChatWindow';
 import ChatHeader from '../../shared/components/chat/ChatHeader';
@@ -9,7 +9,7 @@ import PatientInfoPanel from '../../shared/components/chat/PatientInfoPanel';
 import { ChevronLeft } from 'lucide-react';
 import { getUser } from '../../shared/utils/auth';
 import { toEpochMs } from '../../shared/utils/time';
-import { useCall } from '../../context/CallContext';
+import { useCall } from '../../shared/context/CallContext';
 
 const DOCTOR_TEMPLATES = [
     { label: "Follow-up", text: "Please book a follow-up appointment through your dashboard for further evaluation." },

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Mail, BellRing, Clock, Save, Activity } from 'lucide-react';
-import { updateDoctorNotificationSettings } from '../../../../shared/services/doctor';
+import { updateDoctorNotificationSettings } from '../../../../shared/services/api/doctor';
 
 const NotificationSettings = ({ data, onSaveSuccess }) => {
     const [formData, setFormData] = useState({

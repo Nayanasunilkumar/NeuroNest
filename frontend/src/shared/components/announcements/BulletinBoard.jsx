@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Bell, ChevronRight, Pin, ExternalLink, Calendar, User, Info, Megaphone } from 'lucide-react';
-import { userAnnouncementApi } from '../../shared/services/announcementApi';
+import { userAnnouncementApi } from '../../shared/services/api/announcementApi';
 import './BulletinBoard.css';
 
 const BulletinBoard = ({ limit = 3 }) => {

@@ -4,7 +4,7 @@ import {
     ShieldAlert, Search, Filter, ArrowRight, AlertTriangle, 
     CheckCircle, MessageSquare, Clock, User
 } from 'lucide-react';
-import { governanceApi } from '../../shared/services/governance';
+import { governanceApi } from '../../shared/services/api/governance';
 import './Escalation.css';
 
 const EscalationQueue = () => {

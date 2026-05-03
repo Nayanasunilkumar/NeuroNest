@@ -5,9 +5,9 @@ import {
     ChevronLeft, Mail, Phone, User, Plus, Folder,
     Settings, MoreHorizontal, Bell, ChevronRight
 } from 'lucide-react';
-import { getPatientDossier, getPatients } from '../../shared/services/doctor';
+import { getPatientDossier, getPatients } from '../../shared/services/api/doctor';
 import { toAssetUrl } from '../../shared/utils/media';
-import { useTheme } from "../../context/ThemeContext";
+import { useTheme } from "../../shared/context/ThemeContext";
 
 const PatientHub = () => {
     const [searchParams] = useSearchParams();

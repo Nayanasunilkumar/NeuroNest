@@ -22,7 +22,7 @@ import {
   ArrowDown,
   Download,
 } from "lucide-react";
-import { getLatestVitals, getVitalsHistory, downloadAssessmentReport } from "../../shared/services/vitals";
+import { getLatestVitals, getVitalsHistory, downloadAssessmentReport } from "../../shared/services/api/vitals";
 
 function parseTimestamp(ts) {
   if (!ts) return null;

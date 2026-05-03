@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { User, Calendar, Bell, Shield, Wallet, Loader2 } from "lucide-react";
-import { getAllDoctorSettings } from "../../../shared/services/doctor";
+import { getAllDoctorSettings } from "../../../shared/services/api/doctor";
 import AccountSettings from "./components/AccountSettings";
 import ScheduleSettings from "./components/ScheduleSettings";
 import ConsultationSettings from "./components/ConsultationSettings";
