@@ -48,17 +48,41 @@ class FeedbackController:
     def list_reviews():
         # Handle optional filters from query params
         print(f"📥 [API-REQUEST] /api/feedback/list ARGS: {request.args}")
+
+        # Parse rating — only apply if a non-empty integer is provided
+        raw_rating = request.args.get('rating', '')
+        parsed_rating = None
+        if raw_rating.strip():
+            try:
+                parsed_rating = int(raw_rating)
+            except (ValueError, TypeError):
+                pass
+
+        # Parse is_flagged — only apply if explicitly 'true' or 'false', not empty string
+        raw_flagged = request.args.get('is_flagged', '')
+        parsed_flagged = None
+        if raw_flagged.strip().lower() == 'true':
+            parsed_flagged = True
+        elif raw_flagged.strip().lower() == 'false':
+            parsed_flagged = False
+        # If empty/missing, leave as None — no filter applied
+
+        # Parse days — only apply if non-empty
+        raw_days = request.args.get('days', '')
+        parsed_days = raw_days.strip() if raw_days.strip() else None
+
         filters = {
-            'rating': request.args.get('rating', type=int),
+            'rating': parsed_rating,
             'doctor_id': request.args.get('doctor_id', type=int),
-            'is_flagged': request.args.get('is_flagged', type=lambda x: x.lower() == 'true'),
-            'sentiment': request.args.get('sentiment'),
-            'search': request.args.get('search'),
-            'days': request.args.get('days')
+            'is_flagged': parsed_flagged,
+            'sentiment': request.args.get('sentiment') or None,
+            'search': request.args.get('search') or None,
+            'days': parsed_days,
         }
-        # Clean up None values
+        # Strip all None/empty values so the service receives only active filters
         filters = {k: v for k, v in filters.items() if v is not None}
-        
+        print(f"🔍 [API-REQUEST] active filters: {filters}")
+
         reviews = FeedbackService.get_all_reviews(filters)
         return jsonify([r.to_dict() for r in reviews]), 200
 

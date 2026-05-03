@@ -13,7 +13,11 @@ export const feedbackService = {
   },
 
   getReviews: async (filters = {}) => {
-    const params = new URLSearchParams(filters).toString();
+    // Strip empty/null values so backend receives only active filters
+    const activeFilters = Object.fromEntries(
+      Object.entries(filters).filter(([, v]) => v !== '' && v !== null && v !== undefined)
+    );
+    const params = new URLSearchParams(activeFilters).toString();
     const response = await api.get(`${API_PATH}/list?${params}`);
     // Handle both old array format and new object format for resilience during deploy
     return Array.isArray(response.data) ? response.data : (response.data?.data || []);
