@@ -1,8 +1,5 @@
-from .routes import chat_bp
-
-
 def register(app):
-    app.register_blueprint(chat_bp, url_prefix="/api/chat")
+    return None
 
 
 def register_socket_handlers():
