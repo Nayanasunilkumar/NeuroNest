@@ -10,6 +10,10 @@ export const useFeedback = () => {
   // Stale saved filters (e.g. days=7, is_flagged=false) were hiding most reviews
   const [filters, setFilters] = useState({});
 
+  // One-time: wipe any stale localStorage filter cache on mount
+  useEffect(() => {
+    localStorage.removeItem('admin_feedback_filters');
+  }, []);
 
   const fetchFeedback = useCallback(async () => {
     setLoading(true);
