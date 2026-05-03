@@ -49,13 +49,16 @@ const AddDoctorModal = ({ isOpen, onClose, onAdd }) => {
   };
 
   return (
-    <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', zIndex: 1050 }}>
-      <div className="modal-dialog modal-dialog-centered modal-lg mx-auto" style={{ maxWidth: '850px', width: '96vw' }}>
-        <div className="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+    <div
+      className="modal fade show d-flex align-items-center justify-content-center"
+      style={{ backgroundColor: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', zIndex: 1050 }}
+    >
+      <div className="modal-dialog modal-dialog-centered modal-lg m-0" style={{ maxWidth: '1000px', width: '92vw' }}>
+        <div className="modal-content border-0 shadow-lg rounded-4 overflow-hidden" style={{ maxWidth: 'none', width: '100%', padding: 0 }}>
           <div className="modal-header bg-primary text-white p-3 border-0 position-relative" style={{ background: 'linear-gradient(135deg, #0d6efd, #6610f2)' }}>
             <div className="d-flex align-items-center gap-3">
-                <div className="bg-white bg-opacity-20 p-2 rounded-3">
-                    <UserPlus size={24} />
+                <div className="bg-white text-primary p-2 rounded-3 d-flex align-items-center justify-content-center">
+                    <UserPlus size={24} strokeWidth={2.5} />
                 </div>
                 <div>
                     <h5 className="modal-title fw-black mb-0">Onboard Clinical Specialist</h5>

@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Calendar, Clock, Clipboard, ShieldAlert, CheckCircle, Octagon, User, Activity, ArrowRight } from 'lucide-react';
+import { useTheme } from '../../../context/ThemeContext';
 
 const AppointmentDetailDrawer = ({ appointment, isOpen, onClose, onUpdateStatus }) => {
+    const { isDark } = useTheme();
     const [notes, setNotes] = useState('');
     const [loading, setLoading] = useState(false);
 
@@ -72,7 +74,7 @@ const AppointmentDetailDrawer = ({ appointment, isOpen, onClose, onUpdateStatus 
     };
 
     return createPortal(
-        <div className="appt-modal-portal">
+        <div className={`admin-theme ${isDark ? 'admin-theme-dark' : 'admin-theme-light'} appt-modal-portal`}>
             <div className="appt-modal-overlay" onClick={onClose} />
             <div className="appt-modal-container">
                 <div className="appt-modal-nexus enterprise-theme">
@@ -87,7 +89,7 @@ const AppointmentDetailDrawer = ({ appointment, isOpen, onClose, onUpdateStatus 
                             <div className={`status-pill ${statusConfig.class}`}>
                                 {statusConfig.label}
                             </div>
-                            <button className="close-trigger" onClick={onClose}>
+                            <button className="close-trigger" type="button" onClick={onClose} aria-label="Close appointment detail">
                                 <X size={20} />
                             </button>
                         </div>
@@ -179,6 +181,7 @@ const AppointmentDetailDrawer = ({ appointment, isOpen, onClose, onUpdateStatus 
                                 value={notes}
                                 onChange={(e) => setNotes(e.target.value)}
                                 className={`audit-textarea ${notes.trim().length >= 10 ? 'audit-pass' : 'audit-fail'}`}
+                                maxLength={250}
                             />
                             <div className="audit-meta">
                                 <span className="char-count">{notes.length} / 250 characters recorded</span>

@@ -145,6 +145,20 @@
   --bs-table-hover-bg: rgba(13, 110, 253, 0.04);
 }
 
+.doctor-action-menu {
+  top: calc(100% - 0.5rem);
+  right: 3rem;
+  min-width: 13rem;
+  transform: none;
+  z-index: 1050;
+}
+
+.doctor-action-menu-up {
+  top: auto;
+  bottom: calc(100% - 0.5rem);
+  transform: none;
+}
+
 @media (max-width: 991.98px) {
   .doctor-roster-toolbar {
     grid-template-columns: 1fr;

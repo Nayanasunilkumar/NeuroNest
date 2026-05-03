@@ -445,7 +445,10 @@ const ManageDoctors = () => {
                                 ) : doctors.length === 0 ? (
                                     <tr><td colSpan="6" className="text-center py-5 opacity-50 fw-bold">NO RECORDS FOUND</td></tr>
                                 ) : (
-                                    doctors.map((doc) => (
+                                    doctors.map((doc, index) => {
+                                      const shouldOpenMenuUp = index >= doctors.length - 2;
+
+                                      return (
                                         <tr key={doc.id} className={`${selectedDoctors.includes(doc.id) ? 'table-primary bg-opacity-10' : ''} doctor-table-row`}>
                                             <td className="px-4">
                                                 <div className="form-check">
@@ -489,7 +492,7 @@ const ManageDoctors = () => {
                                                 </button>
                                                 
                                                 {openMenuId === doc.id && (
-                                                    <div className="dropdown-menu show shadow-lg border-light rounded-4 p-2 end-0 translate-middle-y mt-2" style={{ zIndex: 1000, right: '50px' }}>
+                                                    <div className={`dropdown-menu show shadow-lg border-light rounded-4 p-2 doctor-action-menu ${shouldOpenMenuUp ? 'doctor-action-menu-up' : ''}`}>
                                                         <button className="dropdown-item rounded-3 d-flex align-items-center gap-2 py-2" onClick={() => openDoctorProfile(doc)}>
                                                             <User size={14} /> Profile
                                                         </button>
@@ -512,7 +515,8 @@ const ManageDoctors = () => {
                                                 )}
                                             </td>
                                         </tr>
-                                    ))
+                                      );
+                                    })
                                 )}
                             </tbody>
                         </table>
