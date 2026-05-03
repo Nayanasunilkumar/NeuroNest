@@ -7,7 +7,9 @@ import {
   ArrowRight,
   AlertTriangle,
   Stethoscope,
+  Megaphone,
 } from 'lucide-react';
+import BulletinBoard from '../../components/announcements/BulletinBoard';
 import { useNavigate } from 'react-router-dom';
 import { getDoctorProfile } from '../../services/doctorProfileService';
 import { getDoctorStats, getPatients, getSchedule, joinDoctorAppointmentCall } from '../../api/doctor';
@@ -518,6 +520,18 @@ const DoctorDashboard = () => {
                 ))
               )}
             </div>
+          </div>
+        </div>
+
+        <div className="col-12">
+          <div className="nn-panel">
+            <div className="nn-panel-head">
+              <div>
+                <p className="nn-panel-kicker">Institutional Bulletin</p>
+                <h3>Administrative Announcements</h3>
+              </div>
+            </div>
+            <BulletinBoard limit={3} />
           </div>
         </div>
 

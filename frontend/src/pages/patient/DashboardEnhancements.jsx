@@ -23,7 +23,9 @@ import {
   TriangleAlert,
   Video,
   X,
+  Megaphone,
 } from "lucide-react";
+import BulletinBoard from "../../components/announcements/BulletinBoard";
 import { Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../../api/axios";
@@ -744,6 +746,13 @@ export default function DashboardEnhancements() {
 
         <div className="col-12 col-xl-5">
           <section className="nn-panel nn-alerts-panel">
+            <div className="nn-panel-head">
+              <div><span className="nn-panel-kicker">Bulletin</span><h2>Institutional Updates</h2></div>
+            </div>
+            <div className="mb-4">
+              <BulletinBoard limit={2} />
+            </div>
+
             <div className="nn-panel-head">
               <div><span className="nn-panel-kicker">Notifications</span><h2>Reminders & Alerts</h2></div>
               <span className="nn-alert-count">{activeAlerts.length} Active Alerts</span>
