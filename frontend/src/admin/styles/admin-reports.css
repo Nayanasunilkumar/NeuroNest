@@ -7,6 +7,12 @@
 @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap');
 
 /* ── Root & tokens ── */
+:root {
+  --nn-glass:       rgba(255, 255, 255, 0.7);
+  --nn-glass-hover: rgba(255, 255, 255, 0.85);
+  --nn-blur:        blur(12px);
+}
+
 .admin-reports-root {
   --ar-bg:          #f8fafc;
   --ar-surface:     #ffffff;
@@ -49,12 +55,14 @@
 
 .header-titles h1 {
   font-family: 'Inter', sans-serif;
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: var(--ar-text);
+  font-size: 1.875rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, var(--ar-text) 0%, var(--ar-violet) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
   margin: 0 0 .25rem;
-  letter-spacing: -0.02em;
-  line-height: 1.3;
+  letter-spacing: -0.04em;
+  line-height: 1.2;
 }
 
 .ar-amp {
@@ -210,29 +218,38 @@
 .ar-kpi {
   display: flex;
   align-items: center;
-  gap: .875rem;
-  padding: .875rem 1rem;
-  background: var(--ar-surface);
+  gap: 1rem;
+  padding: 1.25rem;
+  background: var(--nn-glass);
+  backdrop-filter: var(--nn-blur);
+  -webkit-backdrop-filter: var(--nn-blur);
   border: 1px solid var(--ar-border);
-  border-radius: 12px;
+  border-radius: 16px;
   position: relative;
   overflow: hidden;
-  transition: border-color .2s, transform .2s;
+  transition: all .3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.03);
 }
 
-.ar-kpi::before {
+.ar-kpi::after {
   content: '';
   position: absolute;
-  inset: 0 auto 0 0;
-  width: 3px;
-  border-radius: 0 2px 2px 0;
+  top: 0;
+  right: 0;
+  width: 60px;
+  height: 60px;
   background: currentColor;
-  opacity: .7;
+  opacity: 0.05;
+  filter: blur(20px);
+  border-radius: 50%;
+  transform: translate(20%, -20%);
 }
 
 .ar-kpi:hover {
-  border-color: var(--ar-border-hover);
-  transform: translateY(-1px);
+  border-color: var(--ar-violet);
+  transform: translateY(-4px) scale(1.02);
+  background: var(--nn-glass-hover);
+  box-shadow: 0 12px 24px rgba(99, 102, 241, 0.1);
 }
 
 /* colour themes */
@@ -456,4 +473,106 @@
   font-size: .8125rem;
   color: var(--ar-muted);
   font-family: 'IBM Plex Mono', monospace;
+}
+/* ── Live Pulse ── */
+.ar-live-pulse {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  font-size: .6875rem;
+  font-weight: 700;
+  color: var(--ar-emerald);
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  background: rgba(16, 185, 129, 0.08);
+  padding: .25rem .75rem;
+  border-radius: 999px;
+  margin-bottom: 1rem;
+}
+
+.ar-pulse-dot {
+  width: 6px;
+  height: 6px;
+  background: currentColor;
+  border-radius: 50%;
+  position: relative;
+}
+
+.ar-pulse-dot::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: inherit;
+  border-radius: inherit;
+  animation: pulse-ring 2s cubic-bezier(0.455, 0.03, 0.515, 0.955) infinite;
+}
+
+@keyframes pulse-ring {
+  0% { transform: scale(1); opacity: 0.8; }
+  100% { transform: scale(3.5); opacity: 0; }
+}
+
+/* ── Custom Scrollbar ── */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--ar-bg);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--ar-border);
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--ar-muted);
+}
+
+/* ── Tables ── */
+.premium-admin-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: .875rem;
+}
+
+.premium-admin-table th {
+  background: var(--ar-surface-2);
+  color: var(--ar-muted);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  font-size: .6875rem;
+  padding: 1rem 1.25rem;
+  text-align: left;
+  border-bottom: 2px solid var(--ar-border);
+}
+
+.premium-admin-table td {
+  padding: 1.25rem;
+  border-bottom: 1px solid var(--ar-border);
+  color: var(--ar-text);
+  font-weight: 500;
+}
+
+.premium-admin-table tr:hover td {
+  background: var(--ar-bg);
+}
+
+.premium-admin-table tr:last-child td {
+  border-bottom: none;
+}
+
+.text-right { text-align: right; }
+
+.ar-last-updated {
+  display: flex;
+  align-items: center;
+  gap: .375rem;
+  font-size: .6875rem;
+  font-weight: 700;
+  color: var(--ar-muted);
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  margin-top: .5rem;
 }

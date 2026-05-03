@@ -341,6 +341,10 @@ const AdminReports = () => {
           <div className="header-titles">
             <h1>Enterprise Analytics <span className="ar-amp">&amp;</span> Governance</h1>
             <p>Live system metrics, performance monitoring, and compliance oversight.</p>
+            <div className="ar-last-updated">
+              <Clock size={12} strokeWidth={2.5} />
+              Last synchronized: {formatDateTimeIST(new Date())}
+            </div>
           </div>
 
           {/* Export dropdown */}
@@ -410,6 +414,11 @@ const AdminReports = () => {
         </div>
       ) : (
         <div id="admin-reports-content">
+          {/* Live Monitoring Pulse */}
+          <div className="ar-live-pulse">
+            <span className="ar-pulse-dot" />
+            Live System Monitoring Active
+          </div>
 
           {/* ── KPI grid ── */}
           <div className="ar-kpi-grid">
