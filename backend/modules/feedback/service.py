@@ -97,7 +97,14 @@ class FeedbackService:
 
     @staticmethod
     def get_all_reviews(filters=None):
-        query = Review.query.join(Review.patient, aliased=True).join(Review.doctor, aliased=True)
+        from database.models import User
+        P = db.aliased(User)
+        D = db.aliased(User)
+        
+        # Start with base query and stable joins for searching/filtering
+        query = Review.query\
+            .join(P, Review.patient_id == P.id)\
+            .join(D, Review.doctor_id == D.id)
         
         if filters:
             if filters.get('rating'):
@@ -112,21 +119,13 @@ class FeedbackService:
             # 🔍 SEARCH FILTER: Patient, Doctor, or Content
             if filters.get('search'):
                 search_term = f"%{filters['search']}%"
-                from database.models import User
-                # Create aliases for clarity during join-filtering
-                PatientAlias = db.aliased(User)
-                DoctorAlias = db.aliased(User)
-                
-                query = Review.query\
-                    .join(PatientAlias, Review.patient_id == PatientAlias.id)\
-                    .join(DoctorAlias, Review.doctor_id == DoctorAlias.id)\
-                    .filter(
-                        db.or_(
-                            PatientAlias.full_name.ilike(search_term),
-                            DoctorAlias.full_name.ilike(search_term),
-                            Review.review_text.ilike(search_term)
-                        )
+                query = query.filter(
+                    db.or_(
+                        P.full_name.ilike(search_term),
+                        D.full_name.ilike(search_term),
+                        Review.review_text.ilike(search_term)
                     )
+                )
             
             # 📅 TEMPORAL FILTER: Past X days
             if filters.get('days'):
