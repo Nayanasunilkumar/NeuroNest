@@ -8,22 +8,22 @@
 
 /* ── Root & tokens ── */
 .admin-reports-root {
-  --ar-bg:          #0b1120;
-  --ar-surface:     #111827;
-  --ar-surface-2:   #1a2235;
-  --ar-border:      rgba(148, 163, 184, 0.10);
-  --ar-border-hover:rgba(148, 163, 184, 0.22);
-  --ar-text:        #e2e8f0;
+  --ar-bg:          #f8fafc;
+  --ar-surface:     #ffffff;
+  --ar-surface-2:   #f1f5f9;
+  --ar-border:      #e2e8f0;
+  --ar-border-hover:#cbd5e1;
+  --ar-text:        #0f172a;
   --ar-muted:       #64748b;
-  --ar-cyan:        #06b6d4;
-  --ar-emerald:     #10b981;
-  --ar-violet:      #6366f1;
-  --ar-amber:       #f59e0b;
-  --ar-rose:        #f43f5e;
-  --ar-fuchsia:     #d946ef;
-  --ar-yellow:      #eab308;
-  --ar-blue:        #3b82f6;
-  --ar-teal:        #14b8a6;
+  --ar-cyan:        #0891b2;
+  --ar-emerald:     #059669;
+  --ar-violet:      #4f46e5;
+  --ar-amber:       #d97706;
+  --ar-rose:        #e11d48;
+  --ar-fuchsia:     #c026d3;
+  --ar-yellow:      #ca8a04;
+  --ar-blue:        #2563eb;
+  --ar-teal:        #0d9488;
 
   font-family: 'Inter', system-ui, sans-serif;
   background: var(--ar-bg);
@@ -155,7 +155,7 @@
   border-radius: 10px;
   padding: .5rem;
   z-index: 100;
-  box-shadow: 0 16px 48px rgba(0,0,0,.5);
+  box-shadow: 0 20px 50px rgba(0,0,0,.12);
 }
 
 .ar-export-header {
@@ -257,7 +257,7 @@
 }
 
 .ar-kpi-icon svg {
-  color: #0b1120;
+  color: #ffffff;
 }
 
 .ar-kpi-body {
@@ -360,13 +360,13 @@
 
 /* ── Recharts tooltip ── */
 .ar-tooltip {
-  background: #1e293b;
-  border: 1px solid rgba(148,163,184,.18);
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
   border-radius: 8px;
   padding: .625rem .875rem;
   font-family: 'IBM Plex Mono', monospace;
   font-size: .75rem;
-  box-shadow: 0 8px 24px rgba(0,0,0,.4);
+  box-shadow: 0 10px 30px rgba(0,0,0,.08);
   min-width: 140px;
 }
 
@@ -387,7 +387,7 @@
 
 .ar-tooltip-val {
   font-weight: 500;
-  color: #e2e8f0;
+  color: #0f172a;
 }
 
 /* ── Skeleton loader ── */
