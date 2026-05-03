@@ -22,18 +22,18 @@ const ManageAppointments = () => {
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     
-    // Hierarchical Filters
+    // Hierarchical Filters (Persistent across refresh)
     const [sectors, setSectors] = useState([]);
-    const [selectedSector, setSelectedSector] = useState('');
+    const [selectedSector, setSelectedSector] = useState(localStorage.getItem('admin_appt_sector') || '');
     
     const [departments, setDepartments] = useState([]);
-    const [selectedDept, setSelectedDept] = useState('');
+    const [selectedDept, setSelectedDept] = useState(localStorage.getItem('admin_appt_dept') || '');
     
     const [doctors, setDoctors] = useState([]);
-    const [selectedDoctor, setSelectedDoctor] = useState('');
+    const [selectedDoctor, setSelectedDoctor] = useState(localStorage.getItem('admin_appt_doctor') || '');
     
-    const [statusFilter, setStatusFilter] = useState('all');
-    const [search, setSearch] = useState('');
+    const [statusFilter, setStatusFilter] = useState(localStorage.getItem('admin_appt_status') || 'all');
+    const [search, setSearch] = useState(localStorage.getItem('admin_appt_search') || '');
 
     // Detail Drawer
     const [selectedAppointment, setSelectedAppointment] = useState(null);
@@ -54,16 +54,22 @@ const ManageAppointments = () => {
     useEffect(() => {
         if (!selectedSector) {
             setDepartments([]);
-            setSelectedDept('');
+            // Only clear if not already empty (prevents double reset)
+            if (selectedDept) setSelectedDept('');
             return;
         }
         const loadDepts = async () => {
             try {
                 const d = await fetchDepartments(selectedSector);
                 setDepartments(d);
-                setSelectedDept('');
-                setDoctors([]);
-                setSelectedDoctor('');
+                
+                // CRITICAL: If the currently selectedDept is NOT in the new department list, then clear it.
+                // But if it is (e.g. from localStorage), keep it.
+                if (selectedDept && !d.includes(selectedDept)) {
+                    setSelectedDept('');
+                    setDoctors([]);
+                    setSelectedDoctor('');
+                }
             } catch (err) { console.error("Specialty Axis Failure:", err); }
         };
         loadDepts();
@@ -71,16 +77,20 @@ const ManageAppointments = () => {
 
     // Effect: Dept Change -> Load Doctors
     useEffect(() => {
-        if (!selectedDept) {
+        if (!selectedDept || !selectedSector) {
             setDoctors([]);
-            setSelectedDoctor('');
+            if (selectedDoctor) setSelectedDoctor('');
             return;
         }
         const loadDocs = async () => {
             try {
                 const docList = await fetchDoctorsBySpecialty(selectedSector, selectedDept);
                 setDoctors(docList);
-                setSelectedDoctor('');
+                
+                // CRITICAL: Keep selectedDoctor if it exists in the new list
+                if (selectedDoctor && !docList.find(d => String(d.id) === String(selectedDoctor))) {
+                    setSelectedDoctor('');
+                }
             } catch (err) { console.error("Specialist Axis Failure:", err); }
         };
         loadDocs();
@@ -88,6 +98,15 @@ const ManageAppointments = () => {
 
     useEffect(() => {
         setPage(1);
+    }, [selectedSector, selectedDept, selectedDoctor, statusFilter, search]);
+
+    // Sync Filters to localStorage
+    useEffect(() => {
+        localStorage.setItem('admin_appt_sector', selectedSector);
+        localStorage.setItem('admin_appt_dept', selectedDept);
+        localStorage.setItem('admin_appt_doctor', selectedDoctor);
+        localStorage.setItem('admin_appt_status', statusFilter);
+        localStorage.setItem('admin_appt_search', search);
     }, [selectedSector, selectedDept, selectedDoctor, statusFilter, search]);
 
     // Effect: Load Main Data (Appointments + Stats)

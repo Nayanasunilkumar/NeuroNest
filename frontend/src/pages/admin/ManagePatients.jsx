@@ -8,8 +8,8 @@ import '../../styles/admin-manage-patients.css';
 const ManagePatients = () => {
   const [patients, setPatients] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
-  const [status, setStatus] = useState('');
+  const [search, setSearch] = useState(localStorage.getItem('admin_pat_search') || '');
+  const [status, setStatus] = useState(localStorage.getItem('admin_pat_status') || '');
   const [selectedPatientId, setSelectedPatientId] = useState(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [drawerInitialTab, setDrawerInitialTab] = useState('profile');
@@ -18,6 +18,11 @@ const ManagePatients = () => {
   const [statusError, setStatusError] = useState('');
   const [statusUpdating, setStatusUpdating] = useState(false);
   const [actionNotice, setActionNotice] = useState('');
+
+  useEffect(() => {
+    localStorage.setItem('admin_pat_search', search);
+    localStorage.setItem('admin_pat_status', status);
+  }, [search, status]);
 
   useEffect(() => {
     loadPatients();

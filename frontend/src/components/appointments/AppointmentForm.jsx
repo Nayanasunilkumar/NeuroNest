@@ -7,16 +7,17 @@ import "../../styles/appointments.css";
 const AppointmentForm = ({ onSubmit, loading }) => {
   const navigate = useNavigate();
   const today = new Date().toISOString().split('T')[0];
+  const savedData = JSON.parse(localStorage.getItem('patient_booking_form') || '{}');
   const [formData, setFormData] = useState({
-    doctor_id: "",
-    doctor_name: "",
-    date: today,
-    time: "",
-    slot_id: "",
-    reason: "",
-    notes: "",
-    priority_level: "routine",
-    consultation_type: "in_person",
+    doctor_id: savedData.doctor_id || "",
+    doctor_name: savedData.doctor_name || "",
+    date: savedData.date || today,
+    time: savedData.time || "",
+    slot_id: savedData.slot_id || "",
+    reason: savedData.reason || "",
+    notes: savedData.notes || "",
+    priority_level: savedData.priority_level || "routine",
+    consultation_type: savedData.consultation_type || "in_person",
   });
 
   const [doctorsList, setDoctorsList] = useState([]);
@@ -100,18 +101,26 @@ const AppointmentForm = ({ onSubmit, loading }) => {
   };
 
   useEffect(() => {
-    const fetchDoctors = async () => {
+    const fetchDoctorsAndSlots = async () => {
       try {
         const data = await getDoctors();
         setDoctorsList(data);
-        if (Array.isArray(data) && data.length === 1) {
-          const onlyDoctor = data[0];
+        
+        // Use either persisted data or auto-select if only one doctor
+        let activeDocId = formData.doctor_id;
+        let activeDate = formData.date;
+
+        if (!activeDocId && Array.isArray(data) && data.length === 1) {
+          activeDocId = String(data[0].id);
           setFormData((prev) => ({
             ...prev,
-            doctor_id: String(onlyDoctor.id),
-            doctor_name: onlyDoctor.full_name || "",
+            doctor_id: activeDocId,
+            doctor_name: data[0].full_name || "",
           }));
-          fetchAvailableSlots(String(onlyDoctor.id), today, true);
+        }
+
+        if (activeDocId && activeDate) {
+          fetchAvailableSlots(activeDocId, activeDate, true);
         }
       } catch (err) {
         console.error("Failed to fetch doctors:", err);
@@ -119,7 +128,7 @@ const AppointmentForm = ({ onSubmit, loading }) => {
         setLoadingDoctors(false);
       }
     };
-    fetchDoctors();
+    fetchDoctorsAndSlots();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -177,8 +186,13 @@ const AppointmentForm = ({ onSubmit, loading }) => {
     setShowConfirm(true);
   };
 
+  useEffect(() => {
+    localStorage.setItem('patient_booking_form', JSON.stringify(formData));
+  }, [formData]);
+
   const handleFinalSubmit = () => {
     onSubmit(formData);
+    localStorage.removeItem('patient_booking_form');
     setShowConfirm(false);
   };
 

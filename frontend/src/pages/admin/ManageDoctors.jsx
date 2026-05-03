@@ -15,10 +15,10 @@ const ManageDoctors = () => {
     const [stats, setStats] = useState({ total: 0, verified: 0, pending: 0, active: 0 });
     const [loading, setLoading] = useState(true);
     const [loadError, setLoadError] = useState('');
-    const [search, setSearch] = useState('');
-    const [statusFilter, setStatusFilter] = useState('');
-    const [sectorFilter, setSectorFilter] = useState('');
-    const [verificationFilter, setVerificationFilter] = useState('');
+    const [search, setSearch] = useState(localStorage.getItem('admin_doc_search') || '');
+    const [statusFilter, setStatusFilter] = useState(localStorage.getItem('admin_doc_status') || '');
+    const [sectorFilter, setSectorFilter] = useState(localStorage.getItem('admin_doc_sector') || '');
+    const [verificationFilter, setVerificationFilter] = useState(localStorage.getItem('admin_doc_verification') || '');
     const [page, setPage] = useState(1);
     const [totalRecords, setTotalRecords] = useState(0);
     const [totalPages, setTotalPages] = useState(1);
@@ -45,6 +45,14 @@ const ManageDoctors = () => {
         loadDoctors();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [page, statusFilter, sectorFilter, verificationFilter]);
+
+    // Sync Filters to localStorage
+    useEffect(() => {
+        localStorage.setItem('admin_doc_search', search);
+        localStorage.setItem('admin_doc_status', statusFilter);
+        localStorage.setItem('admin_doc_sector', sectorFilter);
+        localStorage.setItem('admin_doc_verification', verificationFilter);
+    }, [search, statusFilter, sectorFilter, verificationFilter]);
 
     useEffect(() => {
         const handleClickOutside = (e) => {
@@ -164,6 +172,11 @@ const ManageDoctors = () => {
         setStatusFilter('');
         setSectorFilter('');
         setVerificationFilter('');
+        localStorage.removeItem('admin_doc_search');
+        localStorage.removeItem('admin_doc_status');
+        localStorage.removeItem('admin_doc_sector');
+        localStorage.removeItem('admin_doc_verification');
+        
         if (page === 1) {
             loadDoctors({ page: 1, search: '', status: '', sector: '', verified: '' });
         } else {

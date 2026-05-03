@@ -82,6 +82,11 @@ const AppointmentFilters = ({
                                 setSelectedDoctor('');
                                 setSearch('');
                                 setStatus('all');
+                                localStorage.removeItem('admin_appt_sector');
+                                localStorage.removeItem('admin_appt_dept');
+                                localStorage.removeItem('admin_appt_doctor');
+                                localStorage.removeItem('admin_appt_status');
+                                localStorage.removeItem('admin_appt_search');
                             }}
                         >
                             <Trash2 size={12} /> Clear All

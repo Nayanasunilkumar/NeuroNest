@@ -6,7 +6,14 @@ export const useFeedback = () => {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [filters, setFilters] = useState({});
+  const [filters, setFilters] = useState(() => {
+    const saved = localStorage.getItem('admin_feedback_filters');
+    return saved ? JSON.parse(saved) : {};
+  });
+
+  useEffect(() => {
+    localStorage.setItem('admin_feedback_filters', JSON.stringify(filters));
+  }, [filters]);
 
   const fetchFeedback = useCallback(async () => {
     setLoading(true);
