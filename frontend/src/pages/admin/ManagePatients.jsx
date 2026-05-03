@@ -154,12 +154,6 @@ const ManagePatients = () => {
                     {patients.filter(p => p.account_status === 'active').length}
                 </div>
              </div>
-             <div className="stat-item">
-                <div className="stat-label">High Risk</div>
-                <div className="stat-value" style={{color: 'var(--admin-warning)'}}>
-                    {patients.filter(p => p.flags_count > 2).length}
-                </div>
-             </div>
         </div>
       </header>
 
