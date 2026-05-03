@@ -1,12 +1,12 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { getDoctorProfile, updateDoctorProfile, uploadProfileImage, addExperience, deleteExperience } from '../../services/doctorProfileService';
+import { getDoctorProfile, updateDoctorProfile, uploadProfileImage, addExperience, deleteExperience } from '../../doctor/services/doctorProfileService';
 import { 
   Camera, Briefcase, FileText, Phone, Award, Shield, DollarSign, Hospital, Globe, Clock, Calendar, Settings, ArrowRight, User, Trash2, Plus
 } from 'lucide-react';
-import ExpertiseTags from '../../shared/components/doctor/ExpertiseTags';
-import AvailabilityModal from '../../shared/components/doctor/AvailabilityModal';
-import ScheduleOverrideModal from '../../shared/components/doctor/ScheduleOverrideModal';
-import { fetchSpecialties } from '../../services/adminDoctorAPI';
+import ExpertiseTags from '../../doctor/components/ExpertiseTags';
+import AvailabilityModal from '../../doctor/components/AvailabilityModal';
+import ScheduleOverrideModal from '../../doctor/components/ScheduleOverrideModal';
+import { fetchSpecialties } from '../../admin/services/adminDoctorAPI';
 import { toAssetUrl } from '../../shared/utils/media';
 import { useTheme } from '../../shared/context/ThemeContext';
 import { formatDateIST } from '../../shared/utils/time';

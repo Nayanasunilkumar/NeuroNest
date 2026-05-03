@@ -3,7 +3,7 @@ import { formatDateIST, calculateAgeIST } from "../../shared/utils/time";
 import api from "../../shared/services/api/axios";
 import axios from "axios";
 import { toAssetUrl } from "../../shared/utils/media";
-import "../../shared/styles/patient-records.css"; // Reuse premium clinical styles
+import "../../patient/styles/patient-records.css"; // Reuse premium clinical styles
 import "../../shared/styles/ProfileStyles.css";
 import { getClinicalSummary } from "../../shared/services/api/profileApi";
 import {

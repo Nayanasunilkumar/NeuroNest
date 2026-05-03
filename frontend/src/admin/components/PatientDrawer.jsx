@@ -31,7 +31,7 @@ import {
   Video,
   Building2
 } from 'lucide-react';
-import { fetchPatientDetail, updatePatientStatus } from '../../services/adminPatientAPI';
+import { fetchPatientDetail, updatePatientStatus } from '../services/adminPatientAPI';
 import { formatDateIST } from '../../shared/utils/time';
 
 const PatientDrawer = ({ patientId, isOpen, initialTab = 'profile', onClose, onRefresh }) => {

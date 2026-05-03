@@ -1,5 +1,5 @@
-import api from '../api/axios';
-import { API_BASE_URL } from '../config/env';
+import api from './api/axios';
+import { API_BASE_URL } from '../../config/env';
 
 const API_PATH = '/api/feedback';
 let markerCache = null;

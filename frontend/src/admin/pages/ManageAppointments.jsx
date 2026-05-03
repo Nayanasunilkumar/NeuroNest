@@ -1,17 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { Info } from 'lucide-react';
-import AppointmentSummaryCards from '../../shared/components/admin/appointments/AppointmentSummaryCards';
-import AppointmentFilters from '../../shared/components/admin/appointments/AppointmentFilters';
-import AppointmentTable from '../../shared/components/admin/appointments/AppointmentTable';
-import AppointmentDetailDrawer from '../../shared/components/admin/appointments/AppointmentDetailDrawer';
+import AppointmentSummaryCards from '../../admin/components/appointments/AppointmentSummaryCards';
+import AppointmentFilters from '../../admin/components/appointments/AppointmentFilters';
+import AppointmentTable from '../../admin/components/appointments/AppointmentTable';
+import AppointmentDetailDrawer from '../../admin/components/appointments/AppointmentDetailDrawer';
 import { 
     fetchAdminAppointments, 
     updateAppointmentStatus,
     fetchSectors,
     fetchDepartments,
     fetchDoctorsBySpecialty
-} from '../../services/adminAppointmentAPI';
-import '../../shared/styles/admin-appointments.css';
+} from '../../admin/services/adminAppointmentAPI';
+import '../../admin/styles/admin-appointments.css';
 
 const ManageAppointments = () => {
     const [appointments, setAppointments] = useState([]);

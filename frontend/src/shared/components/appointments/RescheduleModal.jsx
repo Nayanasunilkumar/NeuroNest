@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { getAvailableSlots } from "../../shared/services/api/appointments";
-import "../../shared/styles/appointments.css";
+import { getAvailableSlots } from "../../services/api/appointments";
+import "../../styles/appointments.css";
 
 const RescheduleModal = ({ isOpen, onClose, onSave, currentAppointment }) => {
   const [date, setDate] = useState("");

@@ -1,8 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
-import { useAlerts } from '../../context/AlertContext';
-import { fetchAlerts } from '../../shared/services/api/alertsApi';
-import { getSocket } from '../../services/socket';
+import { useAlerts } from '../context/AlertContext';
+import { fetchAlerts } from '../services/api/alertsApi';
+import { getSocket } from '../services/socket';
 import {
   Activity,
   AlertTriangle,
@@ -14,7 +14,7 @@ import {
   Wifi,
   WifiOff,
 } from 'lucide-react';
-import { formatTimeIST, formatDateTimeIST, getISTDayKey } from '../../shared/utils/time';
+import { formatTimeIST, formatDateTimeIST, getISTDayKey } from '../utils/time';
 
 const SEVERITY_COLORS = {
   critical: { border: '#dc2626', bg: '#fee2e2', text: '#991b1b', chip: 'bg-danger' },

@@ -1738,7 +1738,7 @@ body.dark .p-number.active {
 @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 .feedback-pill-btn {
   display: inline-flex; align-items: center; gap: 0.3rem;
-  padding: 0.35rem 0.7rem; borderRadius: 8px; border: none;
+  padding: 0.35rem 0.7rem; border-radius: 8px; border: none;
   background: linear-gradient(135deg, #f59e0b, #f97316);
   color: white; font-size: 0.72rem; font-weight: 800;
   cursor: pointer; white-space: nowrap;

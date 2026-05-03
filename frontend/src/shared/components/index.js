@@ -1,2 +1,2 @@
-export { default as AlertPopup } from "../../shared/components/shared/AlertPopup";
-export { default as Avatar } from "../../shared/components/shared/Avatar";
+export { default as AlertPopup } from "./AlertPopup";
+export { default as Avatar } from "./Avatar";

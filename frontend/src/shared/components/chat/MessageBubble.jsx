@@ -1,8 +1,8 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Check, CheckCheck, Download, Paperclip, Video, PhoneOff, Clock, Trash2 } from 'lucide-react';
-import { resolveApiUrl } from '../../config/env';
-import { formatTimeIST } from '../../shared/utils/time';
+import { resolveApiUrl } from '../../../config/env';
+import { formatTimeIST } from '../../utils/time';
 
 const URL_PATTERN = /(https?:\/\/[^\s]+|\/api\/chat\/uploads\/[^\s]+|\/uploads\/[^\s]+)/i;
 

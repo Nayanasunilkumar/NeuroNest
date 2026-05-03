@@ -5,10 +5,10 @@ import {
     User, ShieldAlert, X, Download, ChevronRight, ChevronDown,
     Users, Verified, ShieldQuestion, UserCheck, RotateCcw
 } from 'lucide-react';
-import { fetchDoctors, createDoctor, verifyDoctor, updateDoctorStatus, deleteDoctor } from '../../services/adminDoctorAPI';
-import AddDoctorModal from '../../shared/components/admin/AddDoctorModal';
-import DoctorDrawer from '../../shared/components/admin/DoctorDrawer';
-import '../../shared/styles/admin-manage-doctors.css';
+import { fetchDoctors, createDoctor, verifyDoctor, updateDoctorStatus, deleteDoctor } from '../../admin/services/adminDoctorAPI';
+import AddDoctorModal from '../../admin/components/AddDoctorModal';
+import DoctorDrawer from '../../admin/components/DoctorDrawer';
+import '../../admin/styles/admin-manage-doctors.css';
 
 const ManageDoctors = () => {
     const [doctors, setDoctors] = useState([]);

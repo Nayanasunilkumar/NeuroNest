@@ -3,7 +3,7 @@ import { Archive, CheckCircle, Clock, Eye, Megaphone, Plus, Search, UserX, X } f
 import { adminAnnouncementApi } from '../../shared/services/api/announcementApi';
 import AnnouncementTable from '../../shared/components/announcements/AnnouncementTable';
 import CreateAnnouncementModal from '../../shared/components/announcements/CreateAnnouncementModal';
-import '../../shared/styles/admin-announcements.css';
+import '../../admin/styles/admin-announcements.css';
 
 const DEFAULT_STATS = {
   total_posts: 0,

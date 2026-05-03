@@ -3,7 +3,7 @@ import { ShieldCheck, RefreshCcw, AlertTriangle } from 'lucide-react';
 import { useFeedback } from '../../shared/hooks/useFeedback';
 import { useNavigate } from 'react-router-dom';
 import { API_BASE_URL } from '../../config/env';
-import { feedbackService } from '../../services/feedbackService';
+import { feedbackService } from '../../shared/services/feedbackService';
 import QualityStatsCards from './components/QualityStatsCards';
 import ReviewFilters from './components/ReviewFilters';
 import ReviewTable from './components/ReviewTable';

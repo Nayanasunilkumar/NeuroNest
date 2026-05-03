@@ -1,1 +1,1 @@
-export { default } from "../../pages/doctor/settings/DoctorSettingsPage";
+export { default } from "../../doctor/pages/settings/DoctorSettingsPage";

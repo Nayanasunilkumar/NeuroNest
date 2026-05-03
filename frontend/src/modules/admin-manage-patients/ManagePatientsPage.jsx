@@ -1,1 +1,1 @@
-export { default } from "../../pages/admin/ManagePatients";
+export { default } from "../../admin/pages/ManagePatients";

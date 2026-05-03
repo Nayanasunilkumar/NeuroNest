@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { initSocket, getSocket } from '../../services/socket';
+import { initSocket, getSocket } from '../../shared/services/socket';
 import { getConversations, getMessages, markAsRead, getChatContext, startConversation, sendMessage, deleteMessage } from '../../shared/services/api/chat';
 import ConversationList from '../../shared/components/chat/ConversationList';
 import ChatWindow from '../../shared/components/chat/ChatWindow';

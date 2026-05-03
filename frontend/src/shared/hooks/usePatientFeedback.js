@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { patientFeedbackService } from '../services/patientFeedbackService';
+import { patientFeedbackService } from '../../patient/services/patientFeedbackService';
 import { getUser } from '../utils/auth';
 
 const getPatientId = () => {

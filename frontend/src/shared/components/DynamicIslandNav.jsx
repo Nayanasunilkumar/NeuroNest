@@ -1,7 +1,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { NavLink, useLocation } from "react-router-dom";
 import { useModuleConfig } from "../hooks/useModuleConfig";
-import { getModulePathForRole, getModulesForRole } from "../modules/moduleRegistry";
+import { getModulePathForRole, getModulesForRole } from "../../modules/moduleRegistry";
 import { useTheme } from "../context/ThemeContext";
 import { ChevronRight, ChevronLeft, MoreHorizontal } from "lucide-react";
 

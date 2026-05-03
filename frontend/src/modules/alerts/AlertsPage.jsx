@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Bell, AlertTriangle, CheckCircle2, Clock, Activity } from "lucide-react";
 import { getAlerts, acknowledgeAlert } from "../../shared/services/api/alerts";
-import { initSocket, getSocket } from "../../services/socket";
+import { initSocket, getSocket } from "../../shared/services/socket";
 import { getUser } from "../../shared/utils/auth";
 import { getLatestVitals } from "../../shared/services/api/vitals";
 

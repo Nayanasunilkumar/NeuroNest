@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 import BulletinBoard from '../../shared/components/announcements/BulletinBoard';
 import { useNavigate } from 'react-router-dom';
-import { getDoctorProfile } from '../../services/doctorProfileService';
+import { getDoctorProfile } from '../../doctor/services/doctorProfileService';
 import { getDoctorStats, getPatients, getSchedule, joinDoctorAppointmentCall } from '../../shared/services/api/doctor';
 import { getConversations } from '../../shared/services/api/chat';
 import { getUser } from '../../shared/utils/auth';

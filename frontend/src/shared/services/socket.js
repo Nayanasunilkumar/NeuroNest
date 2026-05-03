@@ -1,5 +1,5 @@
 import { io } from "socket.io-client";
-import { API_BASE_URL } from "../config/env";
+import { API_BASE_URL } from "../../config/env";
 
 // In production, use your actual backend URL.
 // Ensure CORS is set correctly on backend.

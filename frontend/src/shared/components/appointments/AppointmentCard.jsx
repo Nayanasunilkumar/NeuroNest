@@ -1,5 +1,5 @@
 import StatusBadge from "./StatusBadge";
-import "../../shared/styles/appointments.css";
+import "../../styles/appointments.css";
 
 const AppointmentCard = ({ appointment, onCancel, onReschedule }) => {
   const {

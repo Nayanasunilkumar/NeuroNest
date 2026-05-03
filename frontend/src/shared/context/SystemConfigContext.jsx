@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import axios from "axios";
-import { API_BASE_URL } from "../config/env";
+import { API_BASE_URL } from "../../config/env";
 
 const DEFAULT_CONFIG = {
   platformName: "NeuroNest",

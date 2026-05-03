@@ -1,4 +1,4 @@
-import "../../shared/styles/appointments.css"; // Ensure styles are linked
+import "../../styles/appointments.css"; // Ensure styles are linked
 
 const StatusBadge = ({ status }) => {
   const normalizedStatus = String(status || "").toLowerCase().trim();

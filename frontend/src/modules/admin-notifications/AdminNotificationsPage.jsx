@@ -1,4 +1,4 @@
-import ModuleComingSoon from "../../pages/shared/ModuleComingSoon";
+import ModuleComingSoon from "../../shared/pages/ModuleComingSoon";
 
 
 export default function AdminNotificationsPage() {

@@ -5,7 +5,7 @@ import { useTheme } from "../../shared/context/ThemeContext";
 
 import Sidebar from "../../shared/components/Sidebar";
 import DynamicIslandNav from "../../shared/components/DynamicIslandNav";
-import "../../shared/styles/doctor-dark-overrides.css";
+import "../../doctor/styles/doctor-dark-overrides.css";
 
 const DoctorLayout = () => {
   const { isDark: darkMode, toggleTheme } = useTheme();

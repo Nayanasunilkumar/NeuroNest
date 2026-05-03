@@ -12,7 +12,7 @@ import {
 import AppointmentCharts from './components/AppointmentCharts';
 import DoctorPerformanceTable from './components/DoctorPerformanceTable';
 import GovernancePanel from './components/GovernancePanel';
-import '../../../shared/styles/admin-reports.css';
+import '../../../admin/styles/admin-reports.css';
 import { formatDateTimeIST, formatDateIST } from '../../../shared/utils/time';
 
 // ─── Custom Hook ────────────────────────────────────────────────────────────

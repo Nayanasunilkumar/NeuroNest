@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
-import prescriptionService from "../../services/prescriptionService";
-import PrescriptionModal from "../../shared/components/patient/prescriptions/PrescriptionModal";
-import "../../shared/styles/patient-prescriptions.css"; // New CSS
+import prescriptionService from "../../patient/services/prescriptionService";
+import PrescriptionModal from "../../patient/components/prescriptions/PrescriptionModal";
+import "../../patient/styles/patient-prescriptions.css"; // New CSS
 import { Eye, FileText, AlertCircle, Calendar, User, CheckCircle, Clock, Pill } from "lucide-react";
 
 const Prescriptions = () => {

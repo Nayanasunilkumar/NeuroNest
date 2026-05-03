@@ -1,7 +1,7 @@
 import React from 'react';
 import { NavLink } from "react-router-dom";
 import { useModuleConfig } from "../hooks/useModuleConfig";
-import { getModulePathForRole, getModulesForRole } from "../modules/moduleRegistry";
+import { getModulePathForRole, getModulesForRole } from "../../modules/moduleRegistry";
 import { logout } from "../utils/auth";
 import { useTheme } from "../context/ThemeContext";
 import { X, LogOut, ChevronRight } from "lucide-react";

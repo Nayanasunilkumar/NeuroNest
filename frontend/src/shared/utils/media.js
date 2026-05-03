@@ -1,4 +1,4 @@
-import { resolveApiUrl } from "../config/env";
+import { resolveApiUrl } from "../../config/env";
 
 export const toAssetUrl = (path) => {
   if (!path) return null;

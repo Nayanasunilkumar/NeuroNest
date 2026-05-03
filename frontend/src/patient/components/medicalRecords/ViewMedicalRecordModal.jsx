@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import ReactDOM from 'react-dom';
 import { X, Loader2, Download, Calendar, User, FileText, Tag } from 'lucide-react';
-import medicalRecordService from '../../../services/medicalRecordService';
+import medicalRecordService from '../../services/medicalRecordService';
 
 const ViewMedicalRecordModal = ({ isOpen, onClose, record, patientId = null }) => {
     const [loading, setLoading] = useState(true);

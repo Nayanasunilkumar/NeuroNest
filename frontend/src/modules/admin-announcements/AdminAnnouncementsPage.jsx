@@ -1,1 +1,1 @@
-export { default } from "../../pages/admin/AnnouncementsPage";
+export { default } from "../../admin/pages/AnnouncementsPage";

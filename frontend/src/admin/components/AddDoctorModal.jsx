@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, UserPlus, Info, CheckCircle, Shield } from 'lucide-react';
-import { fetchSpecialties } from '../../services/adminDoctorAPI';
+import { fetchSpecialties } from '../services/adminDoctorAPI';
 
 const AddDoctorModal = ({ isOpen, onClose, onAdd }) => {
   const [formData, setFormData] = useState({

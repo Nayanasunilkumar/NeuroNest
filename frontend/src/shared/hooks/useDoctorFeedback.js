@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { doctorFeedbackService } from '../services/doctorFeedbackService';
+import { doctorFeedbackService } from '../../doctor/services/doctorFeedbackService';
 
 export const useDoctorFeedback = (doctorId) => {
   const [summary, setSummary]           = useState(null);

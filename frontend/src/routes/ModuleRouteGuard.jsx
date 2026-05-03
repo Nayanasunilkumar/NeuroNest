@@ -1,5 +1,5 @@
 import { Navigate } from 'react-router-dom';
-import { useModuleConfig } from '../hooks/useModuleConfig';
+import { useModuleConfig } from '../shared/hooks/useModuleConfig';
 import { isModuleEnabled } from '../modules/moduleRegistry';
 
 const ModuleRouteGuard = ({ moduleConfig, role, children }) => {

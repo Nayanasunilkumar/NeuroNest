@@ -6,7 +6,7 @@ import {
     deleteScheduleOverride,
     getScheduleOverrides,
 } from '../../shared/services/api/doctor';
-import { useTheme } from '../../context/ThemeContext';
+import { useTheme } from '../../shared/context/ThemeContext';
 
 const formatOverrideDate = (value = '') => {
     if (!value) return 'Unknown date';

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useAlerts } from "../context/AlertContext";
 import { useNavigate } from "react-router-dom";
 import { BellRing, X, ToggleRight, ToggleLeft } from "lucide-react";
-import { getUser } from "../../shared/utils/auth";
+import { getUser } from "../utils/auth";
 
 const DISMISSED_KEY = "neuronest_alert_popup_dismissed";
 const ENABLED_KEY = "neuronest_alert_popup_enabled";

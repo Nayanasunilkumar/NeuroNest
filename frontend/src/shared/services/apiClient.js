@@ -1,1 +1,1 @@
-export { default } from "../../shared/services/api/axios";
+export { default } from "./api/axios";

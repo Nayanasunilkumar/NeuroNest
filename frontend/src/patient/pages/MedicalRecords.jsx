@@ -4,23 +4,23 @@ import { Plus, AlertCircle, X, Sun, Sunrise, Sunset, Moon, Minus, ChevronUp, Che
 import { toAssetUrl } from "../../shared/utils/media";
 import { getPatientDossier } from "../../shared/services/api/doctor";
 import { getUser } from "../../shared/utils/auth";
-import { getDoctorProfile } from "../../services/doctorProfileService";
+import { getDoctorProfile } from "../../doctor/services/doctorProfileService";
 import { getClinicalSummary } from "../../shared/services/api/profileApi";
 import { formatDateIST, calculateAgeIST as calculateAgeHelper } from "../../shared/utils/time";
 
 // Components
-import MedicalRecordTable from "../../shared/components/patient/medicalRecords/MedicalRecordTable";
-import UploadMedicalRecordModal from "../../shared/components/patient/medicalRecords/UploadMedicalRecordModal";
-import DeleteConfirmationModal from "../../shared/components/patient/medicalRecords/DeleteConfirmationModal";
-import ViewMedicalRecordModal from "../../shared/components/patient/medicalRecords/ViewMedicalRecordModal";
-import RecordFilters from "../../shared/components/patient/medicalRecords/RecordFilters";
+import MedicalRecordTable from "../../patient/components/medicalRecords/MedicalRecordTable";
+import UploadMedicalRecordModal from "../../patient/components/medicalRecords/UploadMedicalRecordModal";
+import DeleteConfirmationModal from "../../patient/components/medicalRecords/DeleteConfirmationModal";
+import ViewMedicalRecordModal from "../../patient/components/medicalRecords/ViewMedicalRecordModal";
+import RecordFilters from "../../patient/components/medicalRecords/RecordFilters";
 
 // Services
-import medicalRecordService from "../../services/medicalRecordService";
+import medicalRecordService from "../../patient/services/medicalRecordService";
 
 // Styles
 import "../../shared/styles/medical-records.css";
-import "../../shared/styles/patient-records.css";
+import "../../patient/styles/patient-records.css";
 
 const ALLERGY_REACTIONS = [
   "Rash",

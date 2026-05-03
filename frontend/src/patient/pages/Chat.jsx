@@ -1,13 +1,13 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { initSocket, getSocket } from '../../services/socket';
-import chatAPI from '../../services/chatAPI';
+import { initSocket, getSocket } from '../../shared/services/socket';
+import chatAPI from '../../shared/services/chatAPI';
 import ConversationList from '../../shared/components/chat/ConversationList';
 import ChatWindow from '../../shared/components/chat/ChatWindow';
 import ChatHeader from '../../shared/components/chat/ChatHeader';
 import { getUser } from '../../shared/utils/auth';
 import { formatDateTimeIST, toEpochMs } from '../../shared/utils/time';
-import { useCall } from '../../context/CallContext';
+import { useCall } from '../../shared/context/CallContext';
 
 const Chat = () => {
     const navigate = useNavigate();

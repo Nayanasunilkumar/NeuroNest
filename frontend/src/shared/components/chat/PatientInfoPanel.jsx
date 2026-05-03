@@ -1,6 +1,6 @@
 import React from 'react';
 import { Calendar, Clock, History, AlertCircle, Info, Activity } from 'lucide-react';
-import Avatar from '../shared/Avatar';
+import Avatar from '../Avatar';
 
 const CURRENT_YEAR = new Date().getUTCFullYear();
 

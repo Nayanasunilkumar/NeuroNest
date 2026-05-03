@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { X, Printer, Activity, QrCode, ShieldCheck, Mail, Phone, MapPin } from 'lucide-react';
-import '../../../shared/styles/patient-prescriptions.css';
+import '../../../patient/styles/patient-prescriptions.css';
 
 const PrescriptionModal = ({ isOpen, onClose, prescription }) => {
     if (!isOpen || !prescription) return null;

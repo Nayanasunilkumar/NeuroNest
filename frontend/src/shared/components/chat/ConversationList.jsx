@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Search } from 'lucide-react';
-import Avatar from '../shared/Avatar';
-import { formatTimeIST, parseServerDate } from '../../shared/utils/time';
+import Avatar from '../Avatar';
+import { formatTimeIST, parseServerDate } from '../../utils/time';
 
 const ConversationList = ({ conversations, selectedId, onSelect, currentUserId }) => {
     const [searchTerm, setSearchTerm] = useState('');

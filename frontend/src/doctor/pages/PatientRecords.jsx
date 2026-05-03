@@ -13,13 +13,13 @@ import {
     MapPin, Briefcase, Plus, MoreHorizontal, Moon
 } from "lucide-react";
 import { toAssetUrl } from "../../shared/utils/media";
-import MedicalRecordTable from "../../shared/components/patient/medicalRecords/MedicalRecordTable";
-import UploadMedicalRecordModal from "../../shared/components/patient/medicalRecords/UploadMedicalRecordModal";
-import DeleteConfirmationModal from "../../shared/components/patient/medicalRecords/DeleteConfirmationModal";
-import ViewMedicalRecordModal from "../../shared/components/patient/medicalRecords/ViewMedicalRecordModal";
-import RecordFilters from "../../shared/components/patient/medicalRecords/RecordFilters";
-import medicalRecordService from "../../services/medicalRecordService";
-import "../../shared/styles/patient-records.css";
+import MedicalRecordTable from "../../patient/components/medicalRecords/MedicalRecordTable";
+import UploadMedicalRecordModal from "../../patient/components/medicalRecords/UploadMedicalRecordModal";
+import DeleteConfirmationModal from "../../patient/components/medicalRecords/DeleteConfirmationModal";
+import ViewMedicalRecordModal from "../../patient/components/medicalRecords/ViewMedicalRecordModal";
+import RecordFilters from "../../patient/components/medicalRecords/RecordFilters";
+import medicalRecordService from "../../patient/services/medicalRecordService";
+import "../../patient/styles/patient-records.css";
 import "../../shared/styles/medical-records.css";
 
 

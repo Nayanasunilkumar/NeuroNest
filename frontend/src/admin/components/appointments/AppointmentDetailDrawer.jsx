@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Calendar, Clock, Clipboard, ShieldAlert, CheckCircle, Octagon, User, Activity, ArrowRight } from 'lucide-react';
-import { useTheme } from '../../../context/ThemeContext';
+import { useTheme } from '../../../shared/context/ThemeContext';
 
 const AppointmentDetailDrawer = ({ appointment, isOpen, onClose, onUpdateStatus }) => {
     const { isDark } = useTheme();

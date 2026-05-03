@@ -1,4 +1,4 @@
-import api from '../api/axios';
+import api from './api/axios';
 
 export const fetchModuleConfig = async () => {
   const response = await api.get('/api/modules/config');

@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import PatientTable from '../../shared/components/admin/PatientTable';
-import PatientFilters from '../../shared/components/admin/PatientFilters';
-import PatientDrawer from '../../shared/components/admin/PatientDrawer';
-import { fetchPatients, updatePatientStatus } from '../../services/adminPatientAPI';
-import '../../shared/styles/admin-manage-patients.css';
+import PatientTable from '../../admin/components/PatientTable';
+import PatientFilters from '../../admin/components/PatientFilters';
+import PatientDrawer from '../../admin/components/PatientDrawer';
+import { fetchPatients, updatePatientStatus } from '../../admin/services/adminPatientAPI';
+import '../../admin/styles/admin-manage-patients.css';
 
 const ManagePatients = () => {
   const [patients, setPatients] = useState([]);

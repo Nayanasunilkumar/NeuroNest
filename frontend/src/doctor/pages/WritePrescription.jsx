@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import prescriptionService from '../../services/prescriptionService';
+import prescriptionService from '../../patient/services/prescriptionService';
 import { getPatients } from '../../shared/services/api/doctor';
 import MedicineRow from '../../shared/components/prescription/MedicineRow';
 import PrescriptionList from '../../shared/components/prescription/PrescriptionList';
-import Avatar from '../../shared/components/shared/Avatar';
+import Avatar from '../../shared/components/Avatar';
 import { Plus, Save, FileText, Calendar, AlertCircle, User, Clock, ShieldAlert, Activity, ChevronDown, ChevronLeft, CheckCircle, X } from 'lucide-react';
 
 const WritePrescription = ({ isEmbedded = false }) => {

@@ -5,7 +5,7 @@ import {
     Phone, MapPin, IndianRupee, Star, UserCheck, Ban,
     ClipboardCheck, CalendarDays
 } from 'lucide-react';
-import { fetchDoctorDetail, updateDoctorStatus, verifyDoctor } from '../../services/adminDoctorAPI';
+import { fetchDoctorDetail, updateDoctorStatus, verifyDoctor } from '../services/adminDoctorAPI';
 
 const formatDate = (value) => {
     if (!value) return 'Not recorded';

@@ -1,1 +1,1 @@
-export { default } from "../../pages/patient/DashboardHome";
+export { default } from "../../patient/pages/DashboardHome";

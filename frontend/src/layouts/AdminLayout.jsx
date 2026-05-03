@@ -3,7 +3,7 @@ import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import { logout, getUser } from '../shared/utils/auth';
 import { useTheme } from '../shared/context/ThemeContext';
 import { useSystemConfig } from '../shared/context/SystemConfigContext';
-import '../shared/styles/admin-theme.css';
+import '../admin/styles/admin-theme.css';
 import {
   BarChart3,
   Bell,

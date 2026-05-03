@@ -3,7 +3,7 @@ import {
     Bell, Save, Globe, AlertCircle
 } from 'lucide-react';
 import { adminSettingsApi } from '../../shared/services/api/settingsApi';
-import '../../shared/styles/admin-settings.css';
+import '../../admin/styles/admin-settings.css';
 
 const TABS = [
     { id: 'general', label: 'General', icon: Globe },

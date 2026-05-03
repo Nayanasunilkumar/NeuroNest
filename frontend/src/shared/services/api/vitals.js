@@ -1,4 +1,4 @@
-import { API_BASE_URL } from "../config/env";
+import { API_BASE_URL } from "../../../config/env";
 
 const authHeader = () => ({
   Authorization: `Bearer ${localStorage.getItem("neuronest_token")}`,

@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import ReactDOM from 'react-dom';
 import { X, Plus, Trash2, Calendar, Clock, AlertCircle } from 'lucide-react';
-import { addAvailabilitySlot, deleteAvailabilitySlot } from '../../services/doctorProfileService';
-import { useTheme } from '../../context/ThemeContext';
+import { addAvailabilitySlot, deleteAvailabilitySlot } from '../services/doctorProfileService';
+import { useTheme } from '../../shared/context/ThemeContext';
 
 const toMinutes = (value = '') => {
     if (!value) return null;

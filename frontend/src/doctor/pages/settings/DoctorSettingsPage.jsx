@@ -7,7 +7,7 @@ import ScheduleSettings from "./components/ScheduleSettings";
 import ConsultationSettings from "./components/ConsultationSettings";
 import NotificationSettings from "./components/NotificationSettings";
 import PrivacySettings from "./components/PrivacySettings";
-import "../../../shared/styles/doctor-settings.css";
+import "../../../doctor/styles/doctor-settings.css";
 
 const TABS = [
   { id: "account", label: "Account Settings", icon: User },

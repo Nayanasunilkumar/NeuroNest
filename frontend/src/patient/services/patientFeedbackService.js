@@ -1,4 +1,4 @@
-import api from '../api/axios';
+import api from '../../shared/services/api/axios';
 
 const BASE = '/api/feedback';
 

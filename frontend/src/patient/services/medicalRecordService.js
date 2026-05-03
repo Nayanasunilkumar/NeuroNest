@@ -1,6 +1,6 @@
 import api from "../../shared/services/api/axios";
 import axios from "axios";
-import { API_BASE_URL } from "../config/env";
+import { API_BASE_URL } from "../../config/env";
 
 // Upload Record
 const uploadRecord = async (formData, patientId = null) => {

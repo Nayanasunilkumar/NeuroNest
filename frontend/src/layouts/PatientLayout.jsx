@@ -7,7 +7,7 @@ import { useSystemConfig } from "../shared/context/SystemConfigContext";
 import { Sun, Moon, LogOut, Bell } from "lucide-react";
 import { getAlerts, acknowledgeAlert } from "../shared/services/api/alerts";
 import { getMyNotifications, markNotificationRead, markAllNotificationsRead, deleteNotification } from "../shared/services/api/profileApi";
-import { initSocket } from "../shared/services/api/socket";
+import { initSocket } from "../shared/services/socket";
 import NotificationPanel from "../shared/components/notifications/NotificationPanel";
 import { useNavigate } from "react-router-dom";
 

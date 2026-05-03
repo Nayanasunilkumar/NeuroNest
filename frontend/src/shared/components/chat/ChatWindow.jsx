@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Send, Zap, Paperclip } from 'lucide-react';
 import MessageBubble from './MessageBubble';
 import chatAPI from '../../services/chatAPI';
-import { getISTDayKey, getRelativeDayLabelIST } from '../../shared/utils/time';
+import { getISTDayKey, getRelativeDayLabelIST } from '../../utils/time';
 
 const ChatWindow = ({ messages, currentUserId, onSendMessage, onDeleteMessage, loadingMessages, messagesLoadError, isDoctor, templates = [], otherUser }) => {
     const [newMessage, setNewMessage] = useState('');

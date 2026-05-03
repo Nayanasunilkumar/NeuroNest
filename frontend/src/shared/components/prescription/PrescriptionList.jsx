@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import prescriptionService from '../../services/prescriptionService';
+import prescriptionService from '../../../patient/services/prescriptionService';
 import { Activity, Users } from 'lucide-react';
 
 const PrescriptionList = ({ patientId, refreshTrigger }) => {

@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { getDoctorProfile } from '../../doctor/services/doctorProfileService';
 import { getAppointmentRequests } from '../../shared/services/api/doctor';
 import { getConversations } from '../../shared/services/api/chat';
-import { doctorFeedbackService } from '../../shared/services/api/doctorFeedbackService';
+import { doctorFeedbackService } from '../../doctor/services/doctorFeedbackService';
 import { getUser } from '../../shared/utils/auth';
 import { getMyNotifications, markNotificationRead, markAllNotificationsRead, deleteNotification } from '../../shared/services/api/profileApi';
 import DynamicIslandNav from '../../shared/components/DynamicIslandNav';
