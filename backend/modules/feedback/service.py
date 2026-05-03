@@ -100,16 +100,14 @@ class FeedbackService:
         from database.models import User
         print(f"🕵️ [FEEDBACK-SEARCH] Applying filters: {filters}")
         
-        # Start with a base query
-        query = db.session.query(Review)
-        
         # Use aliases for all joins to prevent ambiguity
         P = db.aliased(User, name="p")
         D = db.aliased(User, name="d")
         
-        # Always join for name access in results/filtering
-        query = query.join(P, Review.patient_id == P.id)\
-                     .join(D, Review.doctor_id == D.id)
+        # Start with relationship joins for stability
+        query = db.session.query(Review)\
+                  .outerjoin(P, Review.patient_id == P.id)\
+                  .outerjoin(D, Review.doctor_id == D.id)
         
         if filters:
             if filters.get('rating'):
@@ -141,7 +139,8 @@ class FeedbackService:
                     query = query.filter(Review.created_at >= cutoff)
                 except (ValueError, TypeError):
                     pass
-                
+        
+        print(f"🕵️ [FEEDBACK-SQL] {str(query)}")
         results = query.order_by(Review.created_at.desc()).all()
         print(f"🕵️ [FEEDBACK-SEARCH] Found {len(results)} reviews")
         return results

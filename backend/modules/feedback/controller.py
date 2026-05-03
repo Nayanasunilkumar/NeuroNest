@@ -47,6 +47,7 @@ class FeedbackController:
     @staticmethod
     def list_reviews():
         # Handle optional filters from query params
+        print(f"📥 [API-REQUEST] /api/feedback/list ARGS: {request.args}")
         filters = {
             'rating': request.args.get('rating', type=int),
             'doctor_id': request.args.get('doctor_id', type=int),
