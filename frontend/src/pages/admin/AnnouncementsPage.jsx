@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Archive, CheckCircle, Clock, Eye, Megaphone, Plus, Search, UserX } from 'lucide-react';
+import { Archive, CheckCircle, Clock, Eye, Megaphone, Plus, Search, UserX, X } from 'lucide-react';
 import { adminAnnouncementApi } from '../../api/announcementApi';
 import AnnouncementTable from '../../components/announcements/AnnouncementTable';
 import CreateAnnouncementModal from '../../components/announcements/CreateAnnouncementModal';
@@ -196,6 +196,15 @@ const AnnouncementsPage = () => {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
+            {searchQuery && (
+              <button 
+                className="clear-search-btn" 
+                onClick={() => setSearchQuery('')}
+                aria-label="Clear search"
+              >
+                <X size={14} />
+              </button>
+            )}
           </div>
           <div className="d-flex gap-2 flex-wrap">
             <select className="form-select bg-light border-0" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>

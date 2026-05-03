@@ -115,6 +115,31 @@
     box-shadow: 0 0 0 3px var(--admin-accent-soft);
 }
 
+.clear-search-btn {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: var(--admin-border);
+    border: none;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--admin-text-muted);
+    cursor: pointer;
+    transition: all 0.2s;
+    padding: 0;
+}
+
+.clear-search-btn:hover {
+    background: var(--admin-border-strong);
+    color: var(--admin-text-main);
+    transform: translateY(-50%) scale(1.1);
+}
+
 /* Priority Badges */
 .badge {
     padding: 4px 10px;
