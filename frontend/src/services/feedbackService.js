@@ -15,7 +15,8 @@ export const feedbackService = {
   getReviews: async (filters = {}) => {
     const params = new URLSearchParams(filters).toString();
     const response = await api.get(`${API_PATH}/list?${params}`);
-    return response.data;
+    // Handle both old array format and new object format for resilience during deploy
+    return Array.isArray(response.data) ? response.data : (response.data?.data || []);
   },
 
   getReviewStats: async () => {
