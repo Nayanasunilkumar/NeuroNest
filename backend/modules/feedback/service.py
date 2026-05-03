@@ -98,41 +98,49 @@ class FeedbackService:
     @staticmethod
     def get_all_reviews(filters=None):
         from database.models import User
-        P = db.aliased(User)
-        D = db.aliased(User)
+        print(f"🕵️ [FEEDBACK-SEARCH] Applying filters: {filters}")
         
-        # Start with base query and stable joins for searching/filtering
-        query = Review.query\
-            .join(P, Review.patient_id == P.id)\
-            .join(D, Review.doctor_id == D.id)
+        query = Review.query
         
         if filters:
             if filters.get('rating'):
-                query = query.filter(Review.rating == filters['rating'])
+                query = query.filter(Review.rating == int(filters['rating']))
             if filters.get('doctor_id'):
-                query = query.filter(Review.doctor_id == filters['doctor_id'])
+                query = query.filter(Review.doctor_id == int(filters['doctor_id']))
             if filters.get('is_flagged') is not None:
-                query = query.filter(Review.is_flagged == filters['is_flagged'])
+                is_flagged = str(filters['is_flagged']).lower() == 'true'
+                query = query.filter(Review.is_flagged == is_flagged)
             if filters.get('sentiment'):
                 query = query.filter(Review.sentiment == filters['sentiment'])
             
             # 🔍 SEARCH FILTER: Patient, Doctor, or Content
             if filters.get('search'):
                 search_term = f"%{filters['search']}%"
-                query = query.filter(
-                    db.or_(
-                        P.full_name.ilike(search_term),
-                        D.full_name.ilike(search_term),
-                        Review.review_text.ilike(search_term)
-                    )
-                )
+                # Join users twice for patient and doctor names
+                P = db.aliased(User)
+                D = db.aliased(User)
+                query = query.join(P, Review.patient_id == P.id)\
+                             .join(D, Review.doctor_id == D.id)\
+                             .filter(
+                                db.or_(
+                                    P.full_name.ilike(search_term),
+                                    D.full_name.ilike(search_term),
+                                    Review.review_text.ilike(search_term)
+                                )
+                             )
             
             # 📅 TEMPORAL FILTER: Past X days
             if filters.get('days'):
-                cutoff = datetime.utcnow() - timedelta(days=int(filters['days']))
-                query = query.filter(Review.created_at >= cutoff)
+                try:
+                    days_int = int(filters['days'])
+                    cutoff = datetime.utcnow() - timedelta(days=days_int)
+                    query = query.filter(Review.created_at >= cutoff)
+                except (ValueError, TypeError):
+                    pass
                 
-        return query.order_by(Review.created_at.desc()).all()
+        results = query.order_by(Review.created_at.desc()).all()
+        print(f"🕵️ [FEEDBACK-SEARCH] Found {len(results)} reviews")
+        return results
 
     @staticmethod
     def get_review_by_id(review_id):
