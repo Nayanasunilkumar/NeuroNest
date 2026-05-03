@@ -49,8 +49,8 @@ const AddDoctorModal = ({ isOpen, onClose, onAdd }) => {
   };
 
   return (
-    <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', zIndex: 1050 }}>
-      <div className="modal-dialog modal-dialog-centered" style={{ maxWidth: '920px', width: '92vw' }}>
+    <div className="modal fade show d-flex align-items-center justify-content-center" style={{ backgroundColor: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', zIndex: 1050 }}>
+      <div className="modal-dialog m-0" style={{ maxWidth: '920px', width: '92vw' }}>
         <div className="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
           <div className="modal-header bg-primary text-white p-3 border-0 position-relative" style={{ background: 'linear-gradient(135deg, #0d6efd, #6610f2)' }}>
             <div className="d-flex align-items-center gap-3">
