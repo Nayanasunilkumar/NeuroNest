@@ -106,8 +106,23 @@ class FeedbackService:
             if filters.get('doctor_id'):
                 query = query.filter(Review.doctor_id == int(filters['doctor_id']))
             if filters.get('is_flagged') is not None:
-                is_flagged = str(filters['is_flagged']).lower() == 'true'
-                query = query.filter(Review.is_flagged == is_flagged)
+                is_flagged_bool = str(filters['is_flagged']).lower() == 'true'
+                if is_flagged_bool:
+                    # If looking for flagged, include both boolean flag AND Escalated/Flagged statuses
+                    query = query.filter(
+                        db.or_(
+                            Review.is_flagged == True,
+                            Review.status.in_(['Escalated', 'Flagged'])
+                        )
+                    )
+                else:
+                    # If looking for normal, exclude flagged/escalated
+                    query = query.filter(
+                        db.and_(
+                            Review.is_flagged == False,
+                            Review.status.notin_(['Escalated', 'Flagged'])
+                        )
+                    )
             if filters.get('sentiment'):
                 query = query.filter(Review.sentiment == filters['sentiment'])
             
