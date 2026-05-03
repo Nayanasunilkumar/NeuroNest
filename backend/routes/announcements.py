@@ -70,7 +70,10 @@ def get_user_announcements():
 @announcements_bp.route('/<int:announcement_id>/read', methods=['POST'])
 @jwt_required()
 def mark_as_read(announcement_id):
-    current_user_id = get_jwt_identity()
+    try:
+        current_user_id = int(get_jwt_identity())
+    except (TypeError, ValueError):
+        return jsonify({"msg": "Invalid auth identity"}), 401
     
     read_entry = AnnouncementRead.query.filter_by(
         announcement_id=announcement_id,
@@ -95,7 +98,10 @@ def mark_as_read(announcement_id):
 @announcements_bp.route('/<int:announcement_id>/acknowledge', methods=['POST'])
 @jwt_required()
 def acknowledge_announcement(announcement_id):
-    current_user_id = get_jwt_identity()
+    try:
+        current_user_id = int(get_jwt_identity())
+    except (TypeError, ValueError):
+        return jsonify({"msg": "Invalid auth identity"}), 401
     
     read_entry = AnnouncementRead.query.filter_by(
         announcement_id=announcement_id,

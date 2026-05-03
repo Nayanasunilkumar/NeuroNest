@@ -37,8 +37,10 @@ const BulletinBoard = ({ limit = 3 }) => {
         try {
             await userAnnouncementApi.acknowledge(id);
             setAnnouncements(prev => prev.map(a => a.id === id ? { ...a, is_read: true, acknowledged: true } : a));
+            setSelectedAnnouncement(null); // Close modal on success
         } catch (err) {
             console.error("Failed to acknowledge", err);
+            alert("Acknowledgement failed. Please try again.");
         }
     };
 
