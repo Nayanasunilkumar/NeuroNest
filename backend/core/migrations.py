@@ -1,5 +1,42 @@
+import os
+
+
+def ensure_default_admin():
+    from database.models import User, db
+    from utils.security import hash_password
+
+    admin_email = (os.getenv("DEFAULT_ADMIN_EMAIL") or "admin@neuronest.com").strip().lower()
+    admin_password = os.getenv("DEFAULT_ADMIN_PASSWORD") or "Admin@123"
+    admin_name = os.getenv("DEFAULT_ADMIN_NAME") or "Nayana Admin"
+
+    if not admin_email or not admin_password:
+        return
+
+    admin = User.query.filter_by(email=admin_email).first()
+    if not admin:
+        admin = User(
+            email=admin_email,
+            password_hash=hash_password(admin_password),
+            role="admin",
+            full_name=admin_name,
+            account_status="active",
+            is_deleted=False,
+        )
+        db.session.add(admin)
+    else:
+        admin.password_hash = hash_password(admin_password)
+        admin.role = "admin"
+        admin.full_name = admin.full_name or admin_name
+        admin.account_status = "active"
+        admin.is_deleted = False
+
+    db.session.commit()
+
+
 def run_startup_migrations():
     from database.models import db
+
+    ensure_default_admin()
 
     if db.engine.dialect.name == "sqlite":
         print("[MIGRATION] SQLite detected; skipping ALTER-based compatibility migrations")
