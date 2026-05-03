@@ -15,7 +15,7 @@ export const feedbackService = {
   getReviews: async (filters = {}) => {
     const params = new URLSearchParams(filters).toString();
     const response = await api.get(`${API_PATH}/list?${params}`);
-    return response.data?.data || response.data;
+    return response.data;
   },
 
   getReviewStats: async () => {

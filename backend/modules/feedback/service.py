@@ -98,8 +98,6 @@ class FeedbackService:
     @staticmethod
     def get_all_reviews(filters=None):
         from database.models import User
-        print(f"🕵️ [FEEDBACK-SEARCH] Applying filters: {filters}")
-        
         query = Review.query
         
         if filters:
@@ -133,10 +131,7 @@ class FeedbackService:
                 except (ValueError, TypeError):
                     pass
         
-        print(f"🕵️ [FEEDBACK-SQL] {str(query)}")
-        results = query.order_by(Review.created_at.desc()).all()
-        print(f"🕵️ [FEEDBACK-SEARCH] Found {len(results)} reviews")
-        return results
+        return query.order_by(Review.created_at.desc()).all()
 
     @staticmethod
     def get_review_by_id(review_id):
