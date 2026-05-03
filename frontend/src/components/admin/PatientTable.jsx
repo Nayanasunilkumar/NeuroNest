@@ -52,9 +52,7 @@ const PatientTable = ({ patients, onSelectPatient, onOpenTimeline, onStatusActio
             <th>Patient Name</th>
             <th style={{ width: '200px' }}>Clinical Email</th>
             <th>Status</th>
-            <th>Verif</th>
             <th>Appts</th>
-            <th>Flags</th>
             <th>Joined</th>
             <th style={{ textAlign: 'center' }}>Actions</th>
           </tr>
@@ -76,23 +74,7 @@ const PatientTable = ({ patients, onSelectPatient, onOpenTimeline, onStatusActio
                   {p.account_status}
                 </span>
               </td>
-              <td>
-                <div className="verif-matrix" style={{ display: 'flex', gap: '10px' }}>
-                  <span className={`verif-pill ${p.is_email_verified ? 'verified' : 'pending'}`} title={p.is_email_verified ? "Email Communication Secure" : "Email Uplink Pending"}>
-                    <Mail size={12} strokeWidth={3} />
-                  </span>
-                  <span className={`verif-pill ${p.is_verified ? 'verified' : 'pending'}`} title={p.is_verified ? "Institutional Identity Verified" : "Identity Verification Required"}>
-                    <ShieldCheck size={12} strokeWidth={3} />
-                  </span>
-                </div>
-              </td>
               <td style={{ fontWeight: 800, fontFamily: 'JetBrains Mono, monospace' }}>{p.appointments_total}</td>
-              <td>
-                <div className={`flag-nexus ${getFlagClass(p.flags_count)}`}>
-                  <Flag size={10} fill="currentColor" />
-                  <span className="flag-count">{p.flags_count}</span>
-                </div>
-              </td>
               <td style={{ whiteSpace: 'nowrap', fontSize: '0.75rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px', opacity: 0.8 }}>
                   <Calendar size={12} />
