@@ -100,7 +100,16 @@ class FeedbackService:
         from database.models import User
         print(f"🕵️ [FEEDBACK-SEARCH] Applying filters: {filters}")
         
-        query = Review.query
+        # Start with a base query
+        query = db.session.query(Review)
+        
+        # Use aliases for all joins to prevent ambiguity
+        P = db.aliased(User, name="p")
+        D = db.aliased(User, name="d")
+        
+        # Always join for name access in results/filtering
+        query = query.join(P, Review.patient_id == P.id)\
+                     .join(D, Review.doctor_id == D.id)
         
         if filters:
             if filters.get('rating'):
@@ -116,18 +125,13 @@ class FeedbackService:
             # 🔍 SEARCH FILTER: Patient, Doctor, or Content
             if filters.get('search'):
                 search_term = f"%{filters['search']}%"
-                # Join users twice for patient and doctor names
-                P = db.aliased(User)
-                D = db.aliased(User)
-                query = query.join(P, Review.patient_id == P.id)\
-                             .join(D, Review.doctor_id == D.id)\
-                             .filter(
-                                db.or_(
-                                    P.full_name.ilike(search_term),
-                                    D.full_name.ilike(search_term),
-                                    Review.review_text.ilike(search_term)
-                                )
-                             )
+                query = query.filter(
+                    db.or_(
+                        P.full_name.ilike(search_term),
+                        D.full_name.ilike(search_term),
+                        Review.review_text.ilike(search_term)
+                    )
+                )
             
             # 📅 TEMPORAL FILTER: Past X days
             if filters.get('days'):
