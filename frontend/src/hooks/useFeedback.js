@@ -37,6 +37,7 @@ export const useFeedback = () => {
   }, [fetchFeedback]);
 
   const updateFilters = (newFilters) => {
+    console.log('🔄 [FEEDBACK-HOOK] Updating Filters:', newFilters);
     setFilters(prev => ({ ...prev, ...newFilters }));
   };
 
