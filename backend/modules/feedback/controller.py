@@ -60,7 +60,10 @@ class FeedbackController:
         filters = {k: v for k, v in filters.items() if v is not None}
         
         reviews = FeedbackService.get_all_reviews(filters)
-        return jsonify([r.to_dict() for r in reviews]), 200
+        return jsonify({
+            'data': [r.to_dict() for r in reviews],
+            'debug_filters': filters
+        }), 200
 
     @staticmethod
     def get_review(review_id):
