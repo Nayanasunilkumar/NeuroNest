@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
     ShieldAlert, Search, Filter, ArrowRight, AlertTriangle, 
-    CheckCircle, MessageSquare, Clock, User
+    CheckCircle, MessageSquare, Clock, User, ArrowLeft
 } from 'lucide-react';
 import { governanceApi } from '../../shared/services/api/governance';
 import './Escalation.css';
@@ -31,14 +31,27 @@ const EscalationQueue = () => {
 
     return (
         <div className="escalation-container">
-            <header className="governance-header">
-                <div>
-                     <h1>Escalation Queue</h1>
-                     <p className="governance-meta">Manage and resolve high-risk clinical events.</p>
+            {/* Navigation Axis */}
+            <div className="nav-axis">
+                <button className="btn-back-prominent" onClick={() => navigate(-1)}>
+                    <ArrowLeft size={18} />
+                    <span>Back to Dashboard</span>
+                </button>
+            </div>
+
+            <header className="governance-header-v2">
+                <div className="header-title-group">
+                     <div className="title-ring-icon">
+                        <ShieldAlert size={20} />
+                     </div>
+                     <div>
+                        <h1>Escalation Queue</h1>
+                        <p className="governance-subtitle">Manage and resolve high-risk clinical events with precision.</p>
+                     </div>
                 </div>
                 <div className="header-actions">
                     <select 
-                        className="filter-select"
+                        className="filter-select-premium"
                         value={filter}
                         onChange={(e) => setFilter(e.target.value)}
                     >
@@ -99,14 +112,60 @@ const EscalationQueue = () => {
             </div>
 
             <style>{`
-                .filter-select {
+                .governance-header-v2 {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-bottom: 2.5rem;
+                }
+
+                .header-title-group {
+                    display: flex;
+                    align-items: center;
+                    gap: 1.5rem;
+                }
+
+                .title-ring-icon {
+                    width: 50px;
+                    height: 50px;
+                    background: rgba(239, 68, 68, 0.1);
+                    border: 1px solid rgba(239, 68, 68, 0.2);
+                    border-radius: 16px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    color: #ef4444;
+                }
+
+                .governance-header-v2 h1 {
+                    font-size: 2.25rem;
+                    font-weight: 900;
+                    margin: 0;
+                    letter-spacing: -0.02em;
+                }
+
+                .governance-subtitle {
+                    font-size: 0.9rem;
+                    color: var(--admin-text-muted);
+                    margin: 4px 0 0 0;
+                    font-weight: 600;
+                }
+
+                .filter-select-premium {
                     background: var(--admin-surface);
-                    color: white;
+                    color: var(--admin-text);
                     border: 1px solid var(--admin-border);
-                    border-radius: 8px;
-                    padding: 0.5rem 1rem;
-                    font-weight: 700;
+                    border-radius: 12px;
+                    padding: 0.6rem 1.2rem;
+                    font-weight: 800;
+                    font-size: 0.85rem;
                     outline: none;
+                    cursor: pointer;
+                    transition: all 0.2s ease;
+                }
+
+                .filter-select-premium:hover {
+                    border-color: var(--admin-accent);
                 }
 
                 .queue-matrix {
