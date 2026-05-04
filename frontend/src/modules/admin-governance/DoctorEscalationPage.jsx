@@ -62,35 +62,54 @@ const DoctorEscalationPage = () => {
 
     return (
         <div className="escalation-container">
+            {/* Navigation Axis */}
+            <div className="nav-axis">
+                <button className="btn-back-prominent" onClick={() => navigate(-1)}>
+                    <ArrowLeft size={18} />
+                    <span>Back to Governance</span>
+                </button>
+            </div>
+
             {/* Header: Identity Axis */}
-            <div className="governance-header">
-                <div className="doctor-identity">
-                    {telemetry.risk_level !== 'low' && (
-                        <div className="risk-badge" data-risk={telemetry.risk_level}>
-                            <ShieldAlert size={10} style={{ marginRight: 4 }} />
-                            {telemetry.risk_level.toUpperCase()} RISK
+            <div className="governance-header-premium">
+                <div className="profile-identity-group">
+                    <div className="dr-avatar-large">
+                        {data.doctor_details?.profile_image ? (
+                            <img src={data.doctor_details.profile_image} alt={data.doctor_details.full_name} />
+                        ) : (
+                            <div className="avatar-placeholder">{data.doctor_details?.full_name?.charAt(0) || 'D'}</div>
+                        )}
+                        <div className={`status-indicator-ring ${telemetry.doctor_status}`} />
+                    </div>
+                    <div className="identity-details">
+                        <div className="badge-row">
+                            {telemetry.risk_level !== 'low' && (
+                                <div className="risk-badge-v2" data-risk={telemetry.risk_level}>
+                                    <ShieldAlert size={12} />
+                                    {telemetry.risk_level.toUpperCase()} RISK
+                                </div>
+                            )}
+                            <span className={`status-pill-v2 ${telemetry.doctor_status}`}>{telemetry.doctor_status.replace('_', ' ')}</span>
                         </div>
-                    )}
-                    <h1>{data.doctor_details?.full_name || 'Medical Practitioner'}</h1>
-                    <p className="governance-meta">
-                        <span className="dr-context">{data.doctor_details?.specialization} • {data.doctor_details?.department}</span>
-                        <span style={{ margin: '0 12px', opacity: 0.3 }}>|</span> 
-                        Oversight ID: <span style={{ fontWeight: 700, color: 'var(--admin-text)' }}>#{doctor_id}</span> 
-                        <span style={{ margin: '0 12px', opacity: 0.3 }}>|</span> 
-                        Status: <span className={`status-pill ${telemetry.doctor_status}`}>{telemetry.doctor_status.replace('_', ' ')}</span>
-                    </p>
-                    {data.doctor_details?.license_number && (
-                        <p style={{ fontSize: '0.7rem', color: 'var(--admin-text-muted)', marginTop: 4 }}>
-                            License: {data.doctor_details.license_number} | Exp: {data.doctor_details.experience_years} Years
+                        <h1>{data.doctor_details?.full_name || 'Medical Practitioner'}</h1>
+                        <p className="governance-meta-premium">
+                            <span className="dr-context-label">{data.doctor_details?.specialization}</span>
+                            <span className="separator">•</span>
+                            <span className="dr-dept-label">{data.doctor_details?.department}</span>
+                            <span className="separator">|</span>
+                            <span className="dr-id-label">ID: #{doctor_id}</span>
                         </p>
-                    )}
+                    </div>
                 </div>
-                <div className="header-actions" style={{ display: 'flex', gap: '12px' }}>
-                    <button className="btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: 8 }} onClick={() => navigate(-1)}>
-                        <Calendar size={16} /> History
+                
+                <div className="header-telemetry-quickview">
+                    <button className="btn-refresh-pulse" onClick={fetchData} disabled={loading}>
+                        <RefreshCcw size={16} className={loading ? 'spin' : ''} />
+                        Telemetry
                     </button>
-                    <button className="btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--admin-success)', border: 'none', color: 'white', padding: '0.6rem 1.2rem', borderRadius: '10px', fontWeight: 600, cursor: 'pointer' }} onClick={fetchData}>
-                        <CheckCircle size={16} /> Refresh Telemetry
+                    <button className="btn-back-glass" onClick={() => navigate(-1)}>
+                        <ArrowLeft size={16} />
+                        Back
                     </button>
                 </div>
             </div>

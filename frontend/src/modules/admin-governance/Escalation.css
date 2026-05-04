@@ -136,7 +136,183 @@
 .status-pill.under_review { background: rgba(245, 158, 11, 0.1); color: #d97706; }
 .status-pill.suspended    { background: rgba(239, 68, 68, 0.1);  color: #ef4444; }
 
-/* ── Grid ────────────────────────────────────────────────────────────────────── */
+/* ── Navigation Axis ── */
+.nav-axis {
+  margin-bottom: 2rem;
+  display: flex;
+  align-items: center;
+}
+
+.btn-back-prominent {
+  background: transparent;
+  border: none;
+  color: var(--admin-text-muted);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0.5rem 0;
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-back-prominent:hover {
+  color: var(--admin-accent);
+  transform: translateX(-4px);
+}
+
+/* ── Premium Header ── */
+.governance-header-premium {
+  background: var(--admin-surface);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--admin-border);
+  padding: 2rem;
+  border-radius: 32px;
+  margin-bottom: 2.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 20px 40px var(--admin-shadow);
+  position: relative;
+  overflow: hidden;
+}
+
+.governance-header-premium::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -10%;
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, var(--admin-accent-soft) 0%, transparent 70%);
+  opacity: 0.1;
+  pointer-events: none;
+}
+
+.profile-identity-group {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+}
+
+.dr-avatar-large {
+  position: relative;
+  width: 100px;
+  height: 100px;
+}
+
+.dr-avatar-large img, .avatar-placeholder {
+  width: 100%;
+  height: 100%;
+  border-radius: 32px;
+  object-fit: cover;
+  border: 4px solid var(--admin-surface-2);
+}
+
+.avatar-placeholder {
+  background: var(--admin-accent);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.5rem;
+  font-weight: 900;
+}
+
+.status-indicator-ring {
+  position: absolute;
+  bottom: -4px;
+  right: -4px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 4px solid var(--admin-surface);
+  background: #10b981;
+}
+
+.status-indicator-ring.suspended { background: #ef4444; }
+.status-indicator-ring.restricted { background: #f59e0b; }
+
+.identity-details h1 {
+  font-size: 2.75rem;
+  font-weight: 950;
+  letter-spacing: -0.03em;
+  margin: 0.25rem 0;
+  background: linear-gradient(135deg, var(--admin-text) 0%, var(--admin-text-muted) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.badge-row {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 0.5rem;
+}
+
+.risk-badge-v2 {
+  background: var(--admin-danger);
+  color: white;
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 0.6rem;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.status-pill-v2 {
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 0.65rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  background: var(--admin-surface-2);
+  color: var(--admin-text-muted);
+}
+
+.status-pill-v2.active { background: rgba(16, 185, 129, 0.1); color: #10b981; }
+
+.governance-meta-premium {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--admin-text-muted);
+}
+
+.dr-context-label { color: var(--admin-accent); text-transform: uppercase; letter-spacing: 0.05em; }
+.separator { opacity: 0.3; }
+
+/* ── Header Actions ── */
+.header-telemetry-quickview {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.btn-refresh-pulse, .btn-back-glass {
+  background: var(--admin-surface-2);
+  border: 1px solid var(--admin-border);
+  color: var(--admin-text);
+  padding: 10px 20px;
+  border-radius: 14px;
+  font-size: 0.8rem;
+  font-weight: 800;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-refresh-pulse:hover { background: var(--admin-accent); color: white; border-color: transparent; }
+.btn-back-glass:hover { background: var(--admin-text); color: var(--admin-surface); border-color: transparent; }
+
+/* ── Legacy Mappings (Cleanup) ── */
+.governance-header { display: none; }
 /* ── Bento Grid ────────────────────────────────────────────────────────────── */
 .governance-bento-grid {
   display: grid;
