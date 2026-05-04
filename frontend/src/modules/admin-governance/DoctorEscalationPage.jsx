@@ -65,10 +65,12 @@ const DoctorEscalationPage = () => {
             {/* Header: Identity Axis */}
             <div className="governance-header">
                 <div className="doctor-identity">
-                    <div className="risk-badge" data-risk={telemetry.risk_level}>
-                        <ShieldAlert size={10} style={{ marginRight: 4 }} />
-                        {telemetry.risk_level.toUpperCase()} RISK
-                    </div>
+                    {telemetry.risk_level !== 'low' && (
+                        <div className="risk-badge" data-risk={telemetry.risk_level}>
+                            <ShieldAlert size={10} style={{ marginRight: 4 }} />
+                            {telemetry.risk_level.toUpperCase()} RISK
+                        </div>
+                    )}
                     <h1>{data.doctor_details?.full_name || 'Medical Practitioner'}</h1>
                     <p className="governance-meta">
                         <span className="dr-context">{data.doctor_details?.specialization} • {data.doctor_details?.department}</span>

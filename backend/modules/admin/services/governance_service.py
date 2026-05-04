@@ -135,6 +135,12 @@ class GovernanceService:
             escalation.resolved_at = datetime.utcnow()
             profile.doctor_status = "active"
             profile.user.account_status = "active"
+            
+            # Clear clinical risk metrics upon resolution (Clean Slate)
+            profile.risk_level = "low"
+            profile.report_count = 0
+            profile.critical_review_count = 0
+            profile.missed_appointments_count = 0
         elif action_type == "dismiss":
             escalation.status = "dismissed"
             escalation.resolved_at = datetime.utcnow()
