@@ -310,11 +310,11 @@ export async function generateEnterpriseReport({ overview, appointments, doctors
   doc.text('Rating Scale Interpretation', 14, y); y += 5;
 
   const ratingBands = [
-    { label: '[*****]  Excellent   5.0',         from: 4.5 },
-    { label: '[****]   Good        4.0 - 4.4',   from: 4.0 },
-    { label: '[***]    Average     3.0 - 3.9',   from: 3.0 },
-    { label: '[**]     Poor        2.0 - 2.9',   from: 2.0 },
-    { label: '[*]      Critical    Below 2.0',   from: 0   },
+    { label: '5 Star   Excellent     5.0',       from: 4.5 },
+    { label: '4 Star   Good          4.0 - 4.4', from: 4.0 },
+    { label: '3 Star   Average       3.0 - 3.9', from: 3.0 },
+    { label: '2 Star   Poor          2.0 - 2.9', from: 2.0 },
+    { label: '1 Star   Critical      Below 2.0', from: 0   },
   ];
 
   autoTable(doc, {
