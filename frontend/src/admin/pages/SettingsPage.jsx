@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { 
-    Bell, Save, Globe, AlertCircle, RefreshCcw, CheckCircle, Mail
+    Bell, Save, Globe, AlertCircle, RefreshCcw, CheckCircle
 } from 'lucide-react';
 import { adminSettingsApi } from '../../shared/services/api/settingsApi';
 import '../../admin/styles/admin-settings.css';
@@ -27,9 +27,7 @@ const SettingsPage = () => {
     const [settings, setSettings] = useState({});
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
-    const [testing, setTesting] = useState(false);
     const [saveStatus, setSaveStatus] = useState(null); // 'success' | 'error' | null
-    const [testStatus, setTestStatus] = useState(null);
     const [error, setError] = useState(null);
     const [originalSettings, setOriginalSettings] = useState({});
     const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
@@ -142,28 +140,6 @@ const SettingsPage = () => {
         }
     };
 
-    const handleTestEmail = async () => {
-        if (hasUnsavedChanges) {
-            alert("Please save your changes before verifying the configuration.");
-            return;
-        }
-        setTesting(true);
-        setTestStatus(null);
-        try {
-            const res = await adminSettingsApi.sendTestEmail();
-            setTestStatus('success');
-            setTimeout(() => setTestStatus(null), 4000);
-        } catch (err) {
-            console.error("Test email failed:", err);
-            const msg = err.response?.data?.error || "Test email failed. Check console for details.";
-            alert(msg);
-            setTestStatus('error');
-            setTimeout(() => setTestStatus(null), 4000);
-        } finally {
-            setTesting(false);
-        }
-    };
-
     const renderInput = (key, config) => {
         if (config.type === 'boolean') {
             return (
@@ -211,28 +187,8 @@ const SettingsPage = () => {
                     <p>Manage entire system governance and features.</p>
                 </div>
                 <div className="header-actions-group">
-                    {activeTab === 'general' && (
-                        <button 
-                            className={`btn-verify-config ${testStatus === 'success' ? 'success' : ''} ${testStatus === 'error' ? 'error' : ''}`}
-                            onClick={handleTestEmail}
-                            disabled={testing || saving || hasUnsavedChanges}
-                            title={hasUnsavedChanges ? "Save changes to verify" : "Send diagnostic email"}
-                        >
-                            {testing ? (
-                                <RefreshCcw size={16} className="spin" />
-                            ) : testStatus === 'success' ? (
-                                <CheckCircle size={16} />
-                            ) : testStatus === 'error' ? (
-                                <AlertCircle size={16} />
-                            ) : (
-                                <Mail size={16} />
-                            )}
-                            {testing ? 'Verifying...' : testStatus === 'success' ? 'Sent!' : testStatus === 'error' ? 'Failed' : 'Verify Configuration'}
-                        </button>
-                    )}
-                    
                     {hasUnsavedChanges && (
-                        <button className="btn-secondary-ghost" onClick={handleReset} disabled={saving || testing}>
+                        <button className="btn-secondary-ghost" onClick={handleReset} disabled={saving}>
                             Discard Changes
                         </button>
                     )}
