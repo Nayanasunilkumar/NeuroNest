@@ -47,14 +47,28 @@
 
 /* ── Layout ──────────────────────────────────────────────────────────────────── */
 .escalation-container {
-  padding: 2rem;
+  padding: 3rem 2rem;
   max-width: 1400px;
   margin: 0 auto;
   min-height: 100vh;
   color: var(--admin-text);
-  font-family: 'Inter', system-ui, sans-serif;
+  font-family: 'Outfit', 'Inter', system-ui, sans-serif;
   background: var(--admin-bg);
   transition: background 0.3s, color 0.3s;
+  position: relative;
+  overflow: hidden;
+}
+
+.escalation-container::before {
+  content: '';
+  position: absolute;
+  top: -10%;
+  right: -10%;
+  width: 40%;
+  height: 40%;
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.08) 0%, transparent 70%);
+  z-index: 0;
+  pointer-events: none;
 }
 
 /* ── Header ──────────────────────────────────────────────────────────────────── */
@@ -67,10 +81,10 @@
 }
 
 .doctor-identity h1 {
-  font-size: 2.5rem;
-  font-weight: 900;
-  letter-spacing: -0.05em;
-  margin: 0.5rem 0;
+  font-size: 3rem;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  margin: 0.25rem 0;
   background: linear-gradient(135deg, var(--admin-h1-from) 0%, var(--admin-h1-to) 100%);
   -webkit-background-clip: text;
   background-clip: text;
@@ -127,11 +141,18 @@
 .governance-card {
   background: var(--admin-surface);
   border: 1px solid var(--admin-border);
-  border-radius: 20px;
-  padding: 1.5rem;
+  border-radius: 24px;
+  padding: 2rem;
   margin-bottom: 2rem;
-  box-shadow: 0 4px 24px var(--admin-shadow);
-  transition: background 0.3s, border-color 0.3s, box-shadow 0.3s;
+  box-shadow: 0 8px 32px var(--admin-shadow);
+  transition: transform 0.3s ease, background 0.3s, box-shadow 0.3s;
+  backdrop-filter: blur(8px);
+  position: relative;
+  z-index: 1;
+}
+
+.governance-card:hover {
+  box-shadow: 0 12px 48px var(--admin-shadow);
 }
 
 .governance-card h3 {
@@ -147,10 +168,17 @@
 .metric-row {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  margin-bottom: 1.25rem;
-  padding-bottom: 1.25rem;
+  gap: 1.25rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1.5rem;
   border-bottom: 1px solid var(--admin-metric-border);
+  position: relative;
+}
+
+.metric-row:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
 }
 
 .metric-row span {
@@ -160,9 +188,10 @@
 }
 
 .metric-row strong {
-  font-size: 1.2rem;
+  font-size: 1.5rem;
   font-weight: 800;
   color: var(--admin-text);
+  font-variant-numeric: tabular-nums;
 }
 
 /* ── Risk matrix ─────────────────────────────────────────────────────────────── */
@@ -203,14 +232,14 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
-  padding: 0.85rem;
-  border-radius: 12px;
+  gap: 0.75rem;
+  padding: 1rem;
+  border-radius: 14px;
   border: 1px solid transparent;
   font-weight: 700;
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .btn-action.warn     { background: rgba(245, 158, 11, 0.1);  color: #d97706; border-color: rgba(245, 158, 11, 0.25); }
@@ -232,25 +261,32 @@
 .event-item::before {
   content: '';
   position: absolute;
-  left: 19px;
-  top: 30px;
+  left: 21px;
+  top: 44px;
   bottom: 0;
   width: 2px;
-  background: var(--admin-timeline-line);
+  background: linear-gradient(to bottom, var(--admin-timeline-line) 0%, transparent 100%);
 }
 
 .event-item:last-child::before { display: none; }
 
 .event-icon {
-  width: 38px;
-  height: 38px;
-  border-radius: 12px;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--admin-icon-bg);
+  background: var(--admin-surface-2);
   border: 1px solid var(--admin-border);
   z-index: 1;
+  box-shadow: 0 4px 12px var(--admin-shadow);
+  transition: all 0.3s ease;
+}
+
+.event-item:hover .event-icon {
+  transform: scale(1.1) rotate(-5deg);
+  border-color: var(--admin-accent);
 }
 
 .event-meta {
@@ -273,12 +309,14 @@
 .event-reason { font-size: 1rem; font-weight: 700; margin-bottom: 1rem; color: var(--admin-text); }
 
 .audit-log {
-  background: var(--admin-audit-bg);
-  border-radius: 12px;
-  padding: 1rem;
-  margin-top: 0.75rem;
-  font-size: 0.8rem;
-  border-left: 3px solid var(--admin-accent);
+  background: var(--admin-surface-2);
+  border-radius: 16px;
+  padding: 1.25rem;
+  margin-top: 1rem;
+  font-size: 0.85rem;
+  border: 1px solid var(--admin-border);
+  border-left: 4px solid var(--admin-accent);
+  box-shadow: 0 2px 8px var(--admin-shadow);
 }
 
 .audit-note { color: var(--admin-text-muted); font-style: italic; margin-top: 0.5rem; }
