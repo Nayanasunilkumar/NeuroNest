@@ -226,7 +226,7 @@ const AdminLayout = () => {
       className={`admin-theme ${darkMode ? 'admin-theme-dark' : 'admin-theme-light'} min-h-screen flex flex-col overflow-hidden transition-colors duration-300 ${darkMode ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900'}`}
     >
       <header
-        className={`sticky top-0 z-[1050] border-b transition-all duration-300 ${
+        className={`sticky top-0 z-[20000] border-b transition-all duration-300 ${
           darkMode ? 'bg-slate-950/88 border-slate-800' : 'bg-white/88 border-slate-200'
         }`}
       >

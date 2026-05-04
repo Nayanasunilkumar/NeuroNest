@@ -450,7 +450,7 @@
     border: 1px solid var(--nn-border);
     border-radius: 20px;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-    z-index: 5000;
+    z-index: 20001;
     overflow: hidden;
     backdrop-filter: blur(20px) saturate(180%);
 }
