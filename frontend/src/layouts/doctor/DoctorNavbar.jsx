@@ -32,7 +32,11 @@ const DoctorNavbar = ({ darkMode, toggleTheme }) => {
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target) &&
+        !event.target.closest('.notification-panel-wrapper')
+      ) {
         setShowDropdown(false);
       }
     };
@@ -234,6 +238,8 @@ const DoctorNavbar = ({ darkMode, toggleTheme }) => {
               onMarkRead={handleMarkRead}
               onDelete={handleDelete}
               onClose={() => setShowDropdown(false)}
+              portal
+              anchorRef={dropdownRef}
               onNavigate={(link) => {
                 setShowDropdown(false);
                 navigate(link);

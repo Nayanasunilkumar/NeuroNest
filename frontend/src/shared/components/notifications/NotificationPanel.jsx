@@ -1,6 +1,6 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { 
-  Bell, 
   Calendar, 
   MessageSquare, 
   Video, 
@@ -8,8 +8,6 @@ import {
   Info, 
   CheckCircle2, 
   Trash2, 
-  X,
-  Stethoscope,
   Heart
 } from 'lucide-react';
 
@@ -33,10 +31,36 @@ const NotificationPanel = ({
   onMarkAllRead, 
   onMarkRead, 
   onDelete, 
-  onClose,
   darkMode = false,
-  onNavigate
+  onNavigate,
+  portal = false,
+  anchorRef
 }) => {
+  const [portalPosition, setPortalPosition] = useState({ top: 92, right: 16 });
+
+  useEffect(() => {
+    if (!portal) return;
+
+    const updatePosition = () => {
+      const anchor = anchorRef?.current;
+      if (!anchor) return;
+
+      const rect = anchor.getBoundingClientRect();
+      setPortalPosition({
+        top: Math.max(12, rect.bottom + 12),
+        right: Math.max(12, window.innerWidth - rect.right)
+      });
+    };
+
+    updatePosition();
+    window.addEventListener('resize', updatePosition);
+    window.addEventListener('scroll', updatePosition, true);
+
+    return () => {
+      window.removeEventListener('resize', updatePosition);
+      window.removeEventListener('scroll', updatePosition, true);
+    };
+  }, [anchorRef, portal]);
   
   // Grouping logic
   const groupedNotifications = useMemo(() => {
@@ -157,17 +181,17 @@ const NotificationPanel = ({
     );
   };
 
-  return (
+  const panel = (
     <div className={`notification-panel-wrapper shadow-2xl rounded-4 overflow-hidden border ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100'}`} style={{ 
-      width: '380px', 
+      width: portal ? 'min(380px, calc(100vw - 24px))' : '380px',
       maxHeight: '520px',
       display: 'flex',
       flexDirection: 'column',
-      zIndex: 1100,
-      position: 'absolute',
-      top: '100%',
-      right: 0,
-      marginTop: '12px'
+      zIndex: portal ? 100000 : 1100,
+      position: portal ? 'fixed' : 'absolute',
+      top: portal ? `${portalPosition.top}px` : '100%',
+      right: portal ? `${portalPosition.right}px` : 0,
+      marginTop: portal ? 0 : '12px'
     }}>
       {/* Header */}
       <div className={`p-3 d-flex align-items-center justify-content-between border-bottom ${darkMode ? 'border-slate-800' : 'border-slate-100'}`}>
@@ -241,6 +265,8 @@ const NotificationPanel = ({
       `}</style>
     </div>
   );
+
+  return portal ? createPortal(panel, document.body) : panel;
 };
 
 export default NotificationPanel;

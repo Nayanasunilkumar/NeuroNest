@@ -93,6 +93,7 @@ const PatientLayout = () => {
     React.useEffect(() => {
         const handleClickOutside = (event) => {
             if (notificationRef.current && !notificationRef.current.contains(event.target)) {
+                if (event.target.closest('.notification-panel-wrapper')) return;
                 setShowNotifications(false);
             }
         };
@@ -197,6 +198,8 @@ const PatientLayout = () => {
                                     onMarkRead={handleAcknowledge}
                                     onDelete={handleDelete}
                                     onClose={() => setShowNotifications(false)}
+                                    portal
+                                    anchorRef={notificationRef}
                                     onNavigate={(link) => {
                                         setShowNotifications(false);
                                         navigate(link);
