@@ -92,6 +92,13 @@
 }
 
 /* ── Risk badges ─────────────────────────────────────────────────────────────── */
+.dr-context {
+  font-weight: 700;
+  color: var(--admin-accent);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
 .risk-badge {
   display: inline-block;
   padding: 0.25rem 0.75rem;

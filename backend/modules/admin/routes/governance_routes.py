@@ -115,7 +115,17 @@ def get_doctor_governance(doctor_id):
     # Get history of escalations
     history = DoctorEscalation.query.filter_by(doctor_id=doctor_id).order_by(DoctorEscalation.created_at.desc()).all()
     
+    profile_data = profile.to_dict()
     return jsonify({
-        "telemetry": profile.to_dict().get('telemetry'),
+        "doctor_details": {
+            "full_name": profile_data.get('full_name'),
+            "specialization": profile_data.get('specialization'),
+            "department": profile_data.get('department'),
+            "license_number": profile_data.get('license_number'),
+            "phone": profile_data.get('phone'),
+            "profile_image": profile_data.get('profile_image'),
+            "experience_years": profile_data.get('experience_years')
+        },
+        "telemetry": profile_data.get('telemetry'),
         "history": [h.to_dict() for h in history]
     }), 200

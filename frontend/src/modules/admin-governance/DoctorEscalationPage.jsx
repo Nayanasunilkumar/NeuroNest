@@ -75,12 +75,19 @@ const DoctorEscalationPage = () => {
                         <ShieldAlert size={10} style={{ marginRight: 4 }} />
                         {telemetry.risk_level.toUpperCase()} RISK
                     </div>
-                    <h1>{data.full_name || 'Medical Practitioner'}</h1>
+                    <h1>{data.doctor_details?.full_name || 'Medical Practitioner'}</h1>
                     <p className="governance-meta">
+                        <span className="dr-context">{data.doctor_details?.specialization} • {data.doctor_details?.department}</span>
+                        <span style={{ margin: '0 12px', opacity: 0.3 }}>|</span> 
                         Oversight ID: <span style={{ fontWeight: 700, color: 'var(--admin-text)' }}>#{doctor_id}</span> 
                         <span style={{ margin: '0 12px', opacity: 0.3 }}>|</span> 
                         Status: <span className={`status-pill ${telemetry.doctor_status}`}>{telemetry.doctor_status.replace('_', ' ')}</span>
                     </p>
+                    {data.doctor_details?.license_number && (
+                        <p style={{ fontSize: '0.7rem', color: 'var(--admin-text-muted)', marginTop: 4 }}>
+                            License: {data.doctor_details.license_number} | Exp: {data.doctor_details.experience_years} Years
+                        </p>
+                    )}
                 </div>
                 <div className="header-actions" style={{ display: 'flex', gap: '12px' }}>
                     <button className="btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: 8 }} onClick={() => navigate(-1)}>
