@@ -443,9 +443,9 @@
    PREMIUM NOTIFICATION PANEL
    ------------------------------------------------------------------ */
 .admin-navbar-popover {
-    position: absolute;
-    top: calc(100% + 12px);
-    right: 0;
+    position: fixed;
+    top: 80px;
+    right: 2.5rem;
     background: var(--nn-surface);
     border: 1px solid var(--nn-border);
     border-radius: 20px;
