@@ -96,7 +96,18 @@ def update_settings_batch():
 @super_admin_required
 def send_test_email():
     from modules.shared.services.notification_service import NotificationService
+    import os
     
+    # Pre-check for API keys to give immediate feedback
+    brevo_key = os.getenv("BREVO_API_KEY")
+    resend_key = os.getenv("RESEND_API_KEY")
+    smtp_host = os.getenv("SMTP_HOST")
+    
+    if not any([brevo_key, resend_key, smtp_host]):
+        return jsonify({
+            "error": "No mail carrier configured. Please set BREVO_API_KEY or RESEND_API_KEY in the environment."
+        }), 500
+
     # Get the currently configured support email
     support_setting = SystemSetting.query.filter_by(setting_key="support_email").first()
     target_email = support_setting.setting_value if support_setting else "neuronest4@gmail.com"
@@ -113,6 +124,10 @@ def send_test_email():
         )
         if success:
             return jsonify({"message": f"Test email successfully dispatched to {target_email}"}), 200
-        return jsonify({"error": "Mail carrier rejected the request. Check API logs."}), 500
+        
+        # Fallback error if NotificationService returns False without exception
+        return jsonify({
+            "error": "Mail carrier (Brevo/Resend) rejected the request. This usually means the API key is invalid or the sender email is not authorized."
+        }), 500
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": f"Internal Mailer Error: {str(e)}"}), 500

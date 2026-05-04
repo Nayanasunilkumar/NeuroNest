@@ -155,6 +155,8 @@ const SettingsPage = () => {
             setTimeout(() => setTestStatus(null), 4000);
         } catch (err) {
             console.error("Test email failed:", err);
+            const msg = err.response?.data?.error || "Test email failed. Check console for details.";
+            alert(msg);
             setTestStatus('error');
             setTimeout(() => setTestStatus(null), 4000);
         } finally {
