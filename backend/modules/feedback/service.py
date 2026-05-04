@@ -512,11 +512,13 @@ class FeedbackService:
         week_ago = datetime.utcnow() - timedelta(days=7)
         recent_neg = Review.query.filter(Review.rating <= 2, Review.created_at >= week_ago).count()
         
-        # Most reported doctor
+        # Most reported doctor (only including those with active risk profiles)
         most_reported = db.session.query(
             Review.doctor_id, User.full_name, func.count(Review.id)
         ).join(User, Review.doctor_id == User.id)\
+         .join(DoctorProfile, Review.doctor_id == DoctorProfile.user_id)\
          .filter(Review.is_flagged == True)\
+         .filter(DoctorProfile.risk_level != 'low')\
          .group_by(Review.doctor_id, User.full_name)\
          .order_by(func.count(Review.id).desc()).first()
          
