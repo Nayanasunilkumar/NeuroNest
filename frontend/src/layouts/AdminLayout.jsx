@@ -369,7 +369,7 @@ const AdminLayout = () => {
             )}
 
             {notificationsOpen && createPortal(
-              <div className="admin-navbar-popover admin-navbar-notificationspanel" style={{ position: 'fixed', top: '75px', right: '40px' }}>
+              <div className="admin-navbar-popover admin-navbar-notificationspanel" style={{ position: 'fixed', top: '75px', right: '40px', zIndex: 999999 }}>
                 <div className="admin-navbar-popoverhead">
                   <div>
                     <strong>Notifications</strong>
