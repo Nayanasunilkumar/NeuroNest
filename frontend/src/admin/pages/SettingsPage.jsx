@@ -27,7 +27,10 @@ const SettingsPage = () => {
     const [settings, setSettings] = useState({});
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [saveStatus, setSaveStatus] = useState(null); // 'success' | 'error' | null
     const [error, setError] = useState(null);
+    const [originalSettings, setOriginalSettings] = useState({});
+    const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
     useEffect(() => {
         fetchSettings();
@@ -64,6 +67,8 @@ const SettingsPage = () => {
                 return acc;
             }, {});
             setSettings(formatted);
+            setOriginalSettings(formatted);
+            setHasUnsavedChanges(false);
         } catch (err) {
             console.error("Error fetching settings:", err);
             // Check for CORS or Network error
@@ -84,35 +89,52 @@ const SettingsPage = () => {
     };
 
     const handleChange = (key, value) => {
-        setSettings(prev => ({
-            ...prev,
-            [key]: { ...prev[key], value }
-        }));
+        setSettings(prev => {
+            const next = {
+                ...prev,
+                [key]: { ...prev[key], value }
+            };
+            
+            // Check for changes relative to original
+            const changed = Object.keys(next).some(k => next[k].value !== originalSettings[k]?.value);
+            setHasUnsavedChanges(changed);
+            return next;
+        });
+        setSaveStatus(null);
+    };
+
+    const handleReset = () => {
+        setSettings(originalSettings);
+        setHasUnsavedChanges(false);
+        setSaveStatus(null);
     };
 
     const handleSave = async () => {
         setSaving(true);
+        setSaveStatus(null);
         try {
-            // Prepare payload
             const payload = Object.keys(settings).reduce((acc, key) => {
                 acc[key] = settings[key].value;
                 return acc;
             }, {});
             
             await adminSettingsApi.updateSettings(payload);
-            // Keep dedicated system-config endpoint in sync (best-effort).
             try {
                 await adminSettingsApi.updateSystemConfig(payload);
-            } catch {
-                // Ignore if backend does not expose /api/system-config in older deployments.
-            }
+            } catch {}
+            
             window.dispatchEvent(new CustomEvent("system-config-updated-payload", { detail: payload }));
             window.dispatchEvent(new Event("system-config-updated"));
-            // Show a success message
-            alert("Settings saved successfully.");
+            
+            setOriginalSettings(settings);
+            setHasUnsavedChanges(false);
+            setSaveStatus('success');
+            
+            // Auto-clear success message after 3s
+            setTimeout(() => setSaveStatus(null), 3000);
         } catch (error) {
             console.error("Error saving settings:", error);
-            alert("Failed to save settings. Please try again.");
+            setSaveStatus('error');
         } finally {
             setSaving(false);
         }
@@ -164,14 +186,29 @@ const SettingsPage = () => {
                     <h1>Platform Settings</h1>
                     <p>Manage entire system governance and features.</p>
                 </div>
-                <button 
-                    className="btn-primary flex items-center gap-2" 
-                    onClick={handleSave}
-                    disabled={saving || loading || !!error}
-                >
-                    <Save size={18} />
-                    {saving ? 'Saving...' : 'Save Changes'}
-                </button>
+                <div className="header-actions-group">
+                    {hasUnsavedChanges && (
+                        <button className="btn-secondary-ghost" onClick={handleReset} disabled={saving}>
+                            Discard Changes
+                        </button>
+                    )}
+                    <button 
+                        className={`btn-save-premium ${saveStatus === 'success' ? 'saved' : ''}`} 
+                        onClick={handleSave}
+                        disabled={saving || loading || !!error || !hasUnsavedChanges}
+                    >
+                        {saving ? (
+                            <span className="flex items-center gap-2"><RefreshCcw size={16} className="spin" /> Syncing...</span>
+                        ) : saveStatus === 'success' ? (
+                            <span className="flex items-center gap-2"><CheckCircle size={16} /> Saved</span>
+                        ) : (
+                            <span className="flex items-center gap-2"><Save size={18} /> Save Changes</span>
+                        )}
+                    </button>
+                    {saveStatus === 'error' && (
+                        <div className="save-error-hint">Save failed. Retry?</div>
+                    )}
+                </div>
             </div>
 
             {/* Top Bar Navigation instead of Sidebar */}
