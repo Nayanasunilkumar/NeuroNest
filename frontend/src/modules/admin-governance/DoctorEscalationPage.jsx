@@ -3,7 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { 
     ShieldAlert, User, Star, AlertTriangle, Calendar, 
     Video, MessageCircle, FileText, Ban, AlertCircle,
-    CheckCircle, XCircle, Info, Send, Phone, UserMinus, ShieldCheck
+    CheckCircle, XCircle, Info, Send, Phone, UserMinus, ShieldCheck,
+    ArrowLeft, RefreshCcw
 } from 'lucide-react';
 import { governanceApi } from '../../shared/services/api/governance';
 import './Escalation.css';
