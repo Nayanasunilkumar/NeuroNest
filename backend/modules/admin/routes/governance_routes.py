@@ -105,6 +105,44 @@ def close_escalation(id):
     db.session.commit()
     return jsonify({"message": f"Escalation {id} closed as {final_status}"}), 200
 
+@governance_bp.route('/doctor/<int:doctor_id>/action', methods=['POST'])
+@admin_required
+def take_doctor_action(doctor_id):
+    data = request.json
+    user = _resolve_current_user()
+    admin_id = user.id if user else None
+    
+    action_type = data.get('action_type')
+    note = data.get('note', '')
+    
+    if not action_type:
+        return jsonify({"error": "Action type required"}), 400
+
+    # Ensure profile exists
+    profile = DoctorProfile.query.filter_by(user_id=doctor_id).first()
+    if not profile:
+        return jsonify({"error": "Doctor not found"}), 404
+
+    # If an open escalation exists, use that. Otherwise create a manual one.
+    escalation = DoctorEscalation.query.filter_by(doctor_id=doctor_id, status='open').first()
+    if not escalation:
+        escalation = DoctorEscalation(
+            doctor_id=doctor_id,
+            reason="Manual Administrative Intervention",
+            risk_level=profile.risk_level or "low",
+            status="open",
+            admin_notes=f"Action taken directly by Admin {user.full_name if user else 'ID '+str(admin_id)}"
+        )
+        db.session.add(escalation)
+        db.session.flush() # Get ID
+
+    success, message = GovernanceService.perform_admin_action(escalation.id, admin_id, action_type, note)
+    
+    if not success:
+        return jsonify({"error": message}), 400
+        
+    return jsonify({"message": message}), 200
+
 @governance_bp.route('/doctor/<int:doctor_id>/governance', methods=['GET'])
 @admin_required
 def get_doctor_governance(doctor_id):
@@ -116,6 +154,13 @@ def get_doctor_governance(doctor_id):
     history = DoctorEscalation.query.filter_by(doctor_id=doctor_id).order_by(DoctorEscalation.created_at.desc()).all()
     
     profile_data = profile.to_dict()
+    # Ensure status is synced with User account_status
+    if profile.user and profile.user.account_status == 'active' and profile.doctor_status == 'suspended':
+        # Auto-fix mismatch
+        profile.doctor_status = 'active'
+        db.session.commit()
+        profile_data['telemetry']['doctor_status'] = 'active'
+
     return jsonify({
         "doctor_details": {
             "full_name": profile_data.get('full_name'),

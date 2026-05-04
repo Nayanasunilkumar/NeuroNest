@@ -16,5 +16,9 @@ export const governanceApi = {
     getDoctorGovernance: async (doctorId) => {
         const response = await api.get(`/api/admin/governance/doctor/${doctorId}/governance`);
         return response.data;
+    },
+    takeDoctorAction: async (doctorId, actionData) => {
+        const response = await api.post(`/api/admin/governance/doctor/${doctorId}/action`, actionData);
+        return response.data;
     }
 };

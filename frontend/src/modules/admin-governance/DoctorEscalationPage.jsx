@@ -40,21 +40,15 @@ const DoctorEscalationPage = () => {
 
         setSubmitting(true);
         try {
-            // Find active escalation if any
-            const activeEscalation = data.history.find(e => e.status === 'open' || e.status === 'investigating');
-            if (activeEscalation) {
-                await governanceApi.takeAction(activeEscalation.id, {
-                    action_type: actionType,
-                    note: actionNote
-                });
-                alert("Action performed successfully.");
-                setActionNote('');
-                fetchData();
-            } else {
-                alert("No active escalation found to perform actions on.");
-            }
+            await governanceApi.takeDoctorAction(doctor_id, {
+                action_type: actionType,
+                note: actionNote || `Case ${actionType}d by administrative review.`
+            });
+            alert("Action performed successfully.");
+            setActionNote('');
+            fetchData();
         } catch (err) {
-            alert("Action failed: " + err.message);
+            alert("Action failed: " + (err.response?.data?.error || err.message));
         } finally {
             setSubmitting(false);
         }
