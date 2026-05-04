@@ -9,7 +9,10 @@ class AdminReportsService:
             AdminReportsService._analytics_enabled_appointment_query()
             .with_entities(
                 func.date(Appointment.appointment_date).label('date'),
-                func.count(Appointment.id).label('count')
+                func.count(Appointment.id).label('count'),
+                func.sum(case((cast(Appointment.status, String).ilike('Completed'), 1), else_=0)).label('completed'),
+                func.sum(case((cast(Appointment.status, String).ilike('%Cancelled%'), 1), else_=0)).label('cancelled'),
+                func.sum(case((cast(Appointment.status, String).ilike('Pending'), 1), else_=0)).label('pending'),
             )
             .filter(
                 Appointment.appointment_date >= start_date,
@@ -112,7 +115,16 @@ class AdminReportsService:
                 )
 
         return {
-            "daily_trends": [{"date": str(d.date), "count": d.count} for d in daily_trends],
+            "daily_trends": [
+                {
+                    "date": str(d.date),
+                    "total": int(d.count or 0),
+                    "completed": int(d.completed or 0),
+                    "cancelled": int(d.cancelled or 0),
+                    "pending": int(d.pending or 0),
+                }
+                for d in daily_trends
+            ],
             "period_days": days
         }
 
@@ -125,9 +137,12 @@ class AdminReportsService:
             User.full_name,
             func.count(Appointment.id).label('total_appointments'),
             func.sum(case((cast(Appointment.status, String).ilike('Completed'), 1), else_=0)).label('completed_count'),
-            func.sum(case((cast(Appointment.status, String).ilike('%Cancelled%'), 1), else_=0)).label('cancelled_count')
+            func.sum(case((cast(Appointment.status, String).ilike('%Cancelled%'), 1), else_=0)).label('cancelled_count'),
+            func.avg(Review.rating).label('avg_rating'),
         ).join(
             Appointment, User.id == Appointment.doctor_id, isouter=True
+        ).outerjoin(
+            Review, User.id == Review.doctor_id
         ).outerjoin(
             NotificationPreference, NotificationPreference.user_id == Appointment.patient_id
         ).filter(
@@ -142,19 +157,26 @@ class AdminReportsService:
             total = stat.total_appointments or 0
             completed = stat.completed_count or 0
             cancelled = stat.cancelled_count or 0
-            
+            avg_rating = float(stat.avg_rating) if stat.avg_rating else 0.0
+
             completion_rate = (completed / total * 100) if total > 0 else 0
             cancellation_rate = (cancelled / total * 100) if total > 0 else 0
 
             results.append({
                 "doctor_id": stat.id,
-                "doctor_name": stat.full_name,
+                "name": stat.full_name,          # unified key used by frontend radar & table
+                "doctor_name": stat.full_name,   # kept for backwards compatibility
                 "total_appointments": total,
                 "completed": int(completed),
                 "cancelled": int(cancelled),
+                "pending": max(0, total - int(completed) - int(cancelled)),
+                "avg_rating": round(avg_rating, 2),
+                "response_rate": round(completion_rate, 1),
                 "completion_rate_pct": round(completion_rate, 1),
                 "cancellation_rate_pct": round(cancellation_rate, 1)
             })
+
+
 
         return results
 
