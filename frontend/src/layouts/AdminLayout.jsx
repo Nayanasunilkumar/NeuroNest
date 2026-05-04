@@ -248,14 +248,6 @@ const AdminLayout = () => {
               {darkMode ? <Sun size={19} /> : <Moon size={19} />}
             </button>
 
-            <button
-              type="button"
-              className={`admin-navbar-iconbtn ${profileOpen ? 'active' : ''}`}
-              onClick={() => togglePanel('profile')}
-              aria-label="Open admin profile menu"
-            >
-              <User size={19} />
-            </button>
 
             <button
               type="button"
