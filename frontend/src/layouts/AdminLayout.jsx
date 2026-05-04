@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
+import { createPortal } from 'react-dom';
 import { logout, getUser } from '../shared/utils/auth';
 import { useTheme } from '../shared/context/ThemeContext';
 import { useSystemConfig } from '../shared/context/SystemConfigContext';
@@ -367,8 +368,8 @@ const AdminLayout = () => {
               </div>
             )}
 
-            {notificationsOpen && (
-              <div className="admin-navbar-popover admin-navbar-notificationspanel">
+            {notificationsOpen && createPortal(
+              <div className="admin-navbar-popover admin-navbar-notificationspanel" style={{ position: 'fixed', top: '75px', right: '40px' }}>
                 <div className="admin-navbar-popoverhead">
                   <div>
                     <strong>Notifications</strong>
@@ -401,7 +402,9 @@ const AdminLayout = () => {
                         <div className="notif-content-v2">
                           <div className="notif-title-row">
                             <strong>{item.title}</strong>
-                            <span className="notif-time">{new Date(item.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                            <span className="notif-time">
+                              {item.created_at ? new Date(item.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
+                            </span>
                           </div>
                           <p>{item.message}</p>
                           <div className="notif-actions-v2">
@@ -419,7 +422,8 @@ const AdminLayout = () => {
                     ))
                   )}
                 </div>
-              </div>
+              </div>,
+              document.body
             )}
 
             {profileOpen && (
