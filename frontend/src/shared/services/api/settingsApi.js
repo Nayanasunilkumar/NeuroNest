@@ -25,5 +25,13 @@ export const adminSettingsApi = {
             headers: { Authorization: `Bearer ${token}` }
         });
         return response.data;
+    },
+
+    sendTestEmail: async () => {
+        const token = localStorage.getItem('neuronest_token');
+        const response = await axios.post(`${API_BASE_URL}/api/admin/settings/test-email`, {}, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        return response.data;
     }
 };

@@ -90,3 +90,29 @@ def update_settings_batch():
         return jsonify({"message": f"Successfully updated {updated_count} system settings"}), 200
         
     return jsonify({"message": "No settings found to update"}), 400
+
+# SEND TEST EMAIL TO SUPPORT ADDR
+@admin_settings_bp.route("/test-email", methods=["POST"], strict_slashes=False)
+@super_admin_required
+def send_test_email():
+    from modules.shared.services.notification_service import NotificationService
+    
+    # Get the currently configured support email
+    support_setting = SystemSetting.query.filter_by(setting_key="support_email").first()
+    target_email = support_setting.setting_value if support_setting else "neuronest4@gmail.com"
+    
+    try:
+        success = NotificationService.send_email(
+            target_email, 
+            "NeuroNest — Notification System Test", 
+            f"This is a diagnostic test of the NeuroNest notification system.\n\n"
+            f"If you are receiving this, the platform's communication engine is correctly configured "
+            f"and authorized to send to: {target_email}.\n\n"
+            f"Timestamp: {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')} UTC",
+            event_type="approved"
+        )
+        if success:
+            return jsonify({"message": f"Test email successfully dispatched to {target_email}"}), 200
+        return jsonify({"error": "Mail carrier rejected the request. Check API logs."}), 500
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
