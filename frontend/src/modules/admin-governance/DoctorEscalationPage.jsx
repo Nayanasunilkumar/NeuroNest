@@ -92,77 +92,102 @@ const DoctorEscalationPage = () => {
                 </div>
             </div>
 
-            <div className="governance-grid">
-                {/* Analytics Sidebar */}
-                <div className="analytics-column">
-                    <div className="governance-card performance-nexus">
-                         <h3>Clinical Performance</h3>
-                         <div className="clinical-pulse-bar" style={{ height: 4, background: 'var(--admin-border)', borderRadius: 2, marginBottom: '1.5rem', overflow: 'hidden' }}>
+            <div className="governance-bento-grid">
+                {/* 1. Clinical Intelligence */}
+                <div className="bento-item performance-nexus">
+                    <div className="governance-card">
+                        <h3>Clinical Intelligence</h3>
+                        <div className="clinical-pulse-bar" style={{ height: 4, background: 'var(--admin-border)', borderRadius: 2, marginBottom: '1.5rem', overflow: 'hidden' }}>
                             <div style={{ width: `${(telemetry.avg_rating / 5) * 100}%`, height: '100%', background: 'var(--admin-warning)', borderRadius: 2 }} />
-                         </div>
-                         <div className="metric-row">
+                        </div>
+                        <div className="metric-row">
                             <div className="event-icon" style={{ width: 32, height: 32, borderRadius: 8 }}>
                                 <Star size={16} style={{ color: 'var(--admin-warning)' }} />
                             </div>
-                            <span>Average Rating</span>
+                            <span>Avg. Patient Rating</span>
                             <strong>{telemetry.avg_rating.toFixed(1)}</strong>
-                         </div>
-                         <div className="metric-row">
+                        </div>
+                        <div className="metric-row">
                             <div className="event-icon" style={{ width: 32, height: 32, borderRadius: 8 }}>
                                 <AlertTriangle size={16} style={{ color: 'var(--admin-danger)' }} />
                             </div>
-                            <span>Critical Reviews</span>
+                            <span>Critical Feedback</span>
                             <strong style={{ color: telemetry.critical_review_count > 0 ? 'var(--admin-danger)' : 'inherit' }}>
                                 {telemetry.critical_review_count}
                             </strong>
-                         </div>
-                         <div className="metric-row">
+                        </div>
+                        <div className="metric-row">
                             <div className="event-icon" style={{ width: 32, height: 32, borderRadius: 8 }}>
                                 <Calendar size={16} style={{ color: 'var(--admin-info)' }} />
                             </div>
                             <span>Missed Sessions</span>
                             <strong>{telemetry.missed_appointments_count}</strong>
-                         </div>
-                         <div className="metric-row">
-                            <div className="event-icon" style={{ width: 32, height: 32, borderRadius: 8 }}>
-                                <Info size={16} style={{ color: 'var(--admin-accent)' }} />
-                            </div>
-                            <span>Patient Reports</span>
-                            <strong>{telemetry.report_count}</strong>
-                         </div>
-                    </div>
-
-                    <div className="governance-card risk-matrix">
-                        <h3>Risk Mitigation Actions</h3>
-                        <textarea 
-                            placeholder="Add administrative notes or reasoning for action..."
-                            value={actionNote}
-                            onChange={(e) => setActionNote(e.target.value)}
-                        />
-                        <div className="action-button-grid">
-                            <button className="btn-action warn" onClick={() => handleAction('warning')}>
-                                <AlertTriangle size={14} /> Issue Warning
-                            </button>
-                            <button className="btn-action restrict" onClick={() => handleAction('restrict')}>
-                                <Ban size={14} /> Restrict Video
-                            </button>
-                            <button className="btn-action suspend" onClick={() => handleAction('suspend')}>
-                                <UserMinus size={14} /> Suspend Account
-                            </button>
-                            <button className="btn-action resolve" onClick={() => handleAction('resolve')}>
-                                <ShieldCheck size={14} /> Resolve Case
-                            </button>
                         </div>
                     </div>
                 </div>
 
-                {/* Event Stream Column */}
-                <div className="stream-column">
+                {/* 2. Case Governance */}
+                <div className="bento-item case-governance">
+                    <div className="governance-card">
+                        <h3>Current Oversight Status</h3>
+                        <div className="status-display">
+                            <div className="status-main">
+                                <span className={`status-pill large ${telemetry.doctor_status}`}>
+                                    {telemetry.doctor_status.replace('_', ' ')}
+                                </span>
+                            </div>
+                            <div className="case-details">
+                                <div className="detail-item">
+                                    <span>Last Evaluated</span>
+                                    <strong>{history.length > 0 ? new Date(history[0].created_at).toLocaleDateString() : 'Never'}</strong>
+                                </div>
+                                <div className="detail-item">
+                                    <span>Open Issues</span>
+                                    <strong>{history.filter(e => e.status === 'open').length}</strong>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="telemetry-ping" style={{ marginTop: '2rem', padding: '1rem', background: 'var(--admin-surface-2)', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <div className="ping-dot" style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--admin-success)', boxShadow: '0 0 8px var(--admin-success)' }} />
+                            <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--admin-text-muted)' }}>LIVE TELEMETRY ACTIVE</span>
+                        </div>
+                    </div>
+                </div>
+
+                {/* 3. Immediate Response */}
+                <div className="bento-item risk-matrix">
+                    <div className="governance-card">
+                        <h3>Immediate Response</h3>
+                        <textarea 
+                            placeholder="Add administrative reasoning..."
+                            value={actionNote}
+                            onChange={(e) => setActionNote(e.target.value)}
+                            style={{ height: '80px', marginBottom: '1rem' }}
+                        />
+                        <div className="action-button-grid" style={{ gridTemplateColumns: '1fr 1fr' }}>
+                            <button className="btn-action warn small" onClick={() => handleAction('warning')}>
+                                <AlertTriangle size={12} /> Warn
+                            </button>
+                            <button className="btn-action restrict small" onClick={() => handleAction('restrict')}>
+                                <Ban size={12} /> Restrict
+                            </button>
+                            <button className="btn-action suspend small" style={{ gridColumn: 'span 2' }} onClick={() => handleAction('suspend')}>
+                                <UserMinus size={12} /> Suspend Account
+                            </button>
+                        </div>
+                        <button className="btn-action resolve" style={{ width: '100%', marginTop: '1rem' }} onClick={() => handleAction('resolve')}>
+                            <ShieldCheck size={14} /> Resolve & Close Case
+                        </button>
+                    </div>
+                </div>
+
+                {/* 4. Full Event Stream (Full Width) */}
+                <div className="bento-item full-stream" style={{ gridColumn: 'span 3' }}>
                     <div className="governance-card">
                         <h3>Oversight Event Stream</h3>
-                        <div className="event-list">
+                        <div className="event-list horizontal">
                             {history.length === 0 ? (
-                                <p className="empty-stream">No significant governance events recorded.</p>
+                                <p className="empty-stream">No governance events on record.</p>
                             ) : (
                                 history.map((event, i) => (
                                     <div key={i} className="event-item" data-status={event.status}>
@@ -175,12 +200,17 @@ const DoctorEscalationPage = () => {
                                                 <span className={`event-status ${event.status}`}>{event.status}</span>
                                             </div>
                                             <p className="event-reason">{event.reason}</p>
-                                            {event.actions && event.actions.map((act, j) => (
-                                                <div key={j} className="audit-log">
-                                                    <strong>{act.admin_name}</strong> took action: <span>{act.action_type.toUpperCase()}</span>
-                                                    <p className="audit-note">"{act.note}"</p>
-                                                </div>
-                                            ))}
+                                            <div className="audit-timeline">
+                                                {event.actions && event.actions.map((act, j) => (
+                                                    <div key={j} className="audit-log mini">
+                                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                                                            <strong>{act.admin_name}</strong>
+                                                            <span className="act-type">{act.action_type}</span>
+                                                        </div>
+                                                        <p className="audit-note">"{act.note}"</p>
+                                                    </div>
+                                                ))}
+                                            </div>
                                         </div>
                                     </div>
                                 ))

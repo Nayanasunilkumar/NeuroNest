@@ -130,11 +130,16 @@
 .status-pill.suspended    { background: rgba(239, 68, 68, 0.1);  color: #ef4444; }
 
 /* ── Grid ────────────────────────────────────────────────────────────────────── */
-.governance-grid {
+/* ── Bento Grid ────────────────────────────────────────────────────────────── */
+.governance-bento-grid {
   display: grid;
-  grid-template-columns: 350px 1fr;
-  gap: 2rem;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
   animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.bento-item {
+  height: 100%;
 }
 
 /* ── Cards ───────────────────────────────────────────────────────────────────── */
@@ -156,12 +161,14 @@
 }
 
 .governance-card h3 {
-  font-size: 0.75rem;
-  font-weight: 800;
+  font-size: 0.7rem;
+  font-weight: 900;
   margin-bottom: 1.5rem;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.12em;
   color: var(--admin-text-muted);
+  border-left: 3px solid var(--admin-accent);
+  padding-left: 10px;
 }
 
 /* ── Metric rows ─────────────────────────────────────────────────────────────── */
@@ -188,10 +195,49 @@
 }
 
 .metric-row strong {
-  font-size: 1.5rem;
-  font-weight: 800;
+  font-size: 1.35rem;
+  font-weight: 900;
   color: var(--admin-text);
   font-variant-numeric: tabular-nums;
+}
+
+/* ── Status Display ── */
+.status-display {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.status-pill.large {
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  border-radius: 10px;
+  display: inline-block;
+}
+
+.case-details {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.detail-item span {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--admin-text-muted);
+  text-transform: uppercase;
+}
+
+.detail-item strong {
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--admin-text);
 }
 
 /* ── Risk matrix ─────────────────────────────────────────────────────────────── */
@@ -242,12 +288,37 @@
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.btn-action.warn     { background: rgba(245, 158, 11, 0.1);  color: #d97706; border-color: rgba(245, 158, 11, 0.25); }
-.btn-action.restrict { background: rgba(139, 92, 246, 0.1);  color: #7c3aed; border-color: rgba(139, 92, 246, 0.25); }
-.btn-action.suspend  { background: rgba(239, 68, 68, 0.1);   color: #ef4444; border-color: rgba(239, 68, 68, 0.25);  }
-.btn-action.resolve  { background: #10b981; color: #fff; border-color: transparent; margin-top: 1rem; }
+.btn-action.warn.small     { background: rgba(245, 158, 11, 0.08);  color: #d97706; border-color: rgba(245, 158, 11, 0.15); font-size: 0.75rem; padding: 0.6rem; }
+.btn-action.restrict.small { background: rgba(139, 92, 246, 0.08);  color: #7c3aed; border-color: rgba(139, 92, 246, 0.15); font-size: 0.75rem; padding: 0.6rem; }
+.btn-action.suspend.small  { background: rgba(239, 68, 68, 0.08);   color: #ef4444; border-color: rgba(239, 68, 68, 0.15);  font-size: 0.75rem; padding: 0.6rem; }
 
 .btn-action:hover { transform: translateY(-2px); box-shadow: 0 6px 18px var(--admin-shadow); }
+
+/* ── Audit Timeline Mini ── */
+.audit-timeline {
+  margin-top: 1rem;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.audit-log.mini {
+  background: var(--admin-surface-2);
+  border-radius: 12px;
+  padding: 0.75rem;
+  font-size: 0.75rem;
+  border-left: 2px solid var(--admin-accent);
+}
+
+.audit-log.mini strong { color: var(--admin-text); font-size: 0.8rem; }
+.act-type {
+  font-size: 0.6rem;
+  font-weight: 900;
+  color: var(--admin-accent);
+  text-transform: uppercase;
+  background: rgba(139, 92, 246, 0.1);
+  padding: 1px 5px;
+  border-radius: 3px;
+}
 
 /* ── Event stream ────────────────────────────────────────────────────────────── */
 .event-item {
