@@ -137,48 +137,152 @@ const TrendChart = ({ data }) => {
   );
 };
 
-// ─── Doctor radar chart ───────────────────────────────────────────────────────
+// ─── Doctor radar chart (custom SVG — recharts keying was unreliable) ────────
+const RADAR_COLORS = ['#6366f1', '#10b981', '#f59e0b', '#f43f5e', '#06b6d4', '#8b5cf6'];
+const AXES = [
+  { key: 'total_appointments', label: 'Appointments', scale: 1 },
+  { key: 'completed',          label: 'Completed',    scale: 1 },
+  { key: 'avg_rating',         label: 'Rating',       scale: 20 },  // ×20 → out of 100
+  { key: 'pending',            label: 'Pending',      scale: 1 },
+  { key: 'response_rate',      label: 'Response %',   scale: 1 },
+];
+
+const polarToXY = (angle, r, cx, cy) => ({
+  x: cx + r * Math.sin(angle),
+  y: cy - r * Math.cos(angle),
+});
+
 const DoctorRadar = ({ doctors }) => {
+  const [hovered, setHovered] = useState(null);
+  const [tooltip, setTooltip]   = useState(null);
+
   if (!doctors?.length) return <div className="ar-no-data">No doctor data available</div>;
 
-  // Take top 6 doctors; build radar dimensions
-  const top = doctors.slice(0, 6);
-  const radarData = [
-    { metric: 'Appointments', ...Object.fromEntries(top.map((d) => [d.name?.split(' ')[1] || d.name, d.total_appointments || 0])) },
-    { metric: 'Completed',    ...Object.fromEntries(top.map((d) => [d.name?.split(' ')[1] || d.name, d.completed || 0]))          },
-    { metric: 'Rating',       ...Object.fromEntries(top.map((d) => [d.name?.split(' ')[1] || d.name, (d.avg_rating || 0) * 20]))  },
-    { metric: 'Pending',      ...Object.fromEntries(top.map((d) => [d.name?.split(' ')[1] || d.name, d.pending || 0]))            },
-    { metric: 'Response',     ...Object.fromEntries(top.map((d) => [d.name?.split(' ')[1] || d.name, d.response_rate || 0]))      },
-  ];
+  const top    = doctors.slice(0, 6);
+  const n      = AXES.length;
+  const cx     = 220, cy = 200, rMax = 150;
+  const step   = (2 * Math.PI) / n;
+  const rings  = [0.25, 0.5, 0.75, 1];
 
-  const RADAR_COLORS = ['#6366f1', '#10b981', '#f59e0b', '#f43f5e', '#06b6d4', '#8b5cf6'];
+  // Compute per-axis max for normalisation
+  const axisMax = AXES.map(ax =>
+    Math.max(1, ...top.map(d => (d[ax.key] ?? 0) * ax.scale))
+  );
+
+  const doctorPoints = top.map(doc =>
+    AXES.map((ax, i) => {
+      const val = Math.min((doc[ax.key] ?? 0) * ax.scale, axisMax[i]);
+      const r   = (val / axisMax[i]) * rMax;
+      return polarToXY(i * step, r, cx, cy);
+    })
+  );
+
+  const axisPoints = AXES.map((_, i) => polarToXY(i * step, rMax, cx, cy));
 
   return (
-    <ResponsiveContainer width="100%" height={280}>
-      <RadarChart data={radarData} margin={{ top: 8, right: 24, bottom: 0, left: 24 }}>
-        <PolarGrid stroke={COLORS.grid} />
-        <PolarAngleAxis dataKey="metric" tick={{ fill: COLORS.text, fontSize: 11 }} />
-        <PolarRadiusAxis tick={false} axisLine={false} />
-        <Tooltip content={<ChartTooltip />} />
-        <Legend iconType="square" iconSize={10} wrapperStyle={{ fontSize: 11, color: COLORS.text }} />
-        {top.map((d, i) => {
-          const key = d.name?.split(' ')[1] || d.name;
+    <div style={{ position: 'relative' }}>
+      <svg width="100%" viewBox="0 0 440 400" style={{ overflow: 'visible' }}>
+        {/* Ring grid */}
+        {rings.map(r => {
+          const pts = AXES.map((_, i) => {
+            const p = polarToXY(i * step, rMax * r, cx, cy);
+            return `${p.x},${p.y}`;
+          }).join(' ');
+          return <polygon key={r} points={pts} fill="none" stroke="#e2e8f0" strokeWidth={1} />;
+        })}
+        {/* Axis spokes */}
+        {axisPoints.map((pt, i) => (
+          <line key={i} x1={cx} y1={cy} x2={pt.x} y2={pt.y} stroke="#e2e8f0" strokeWidth={1} />
+        ))}
+        {/* Doctor polygons */}
+        {doctorPoints.map((pts, di) => {
+          const color   = RADAR_COLORS[di % RADAR_COLORS.length];
+          const polyStr = pts.map(p => `${p.x},${p.y}`).join(' ');
+          const isHov   = hovered === di;
           return (
-            <Radar
-              key={key}
-              name={key}
-              dataKey={key}
-              stroke={RADAR_COLORS[i % RADAR_COLORS.length]}
-              fill={RADAR_COLORS[i % RADAR_COLORS.length]}
-              fillOpacity={0.1}
-              strokeWidth={1.5}
+            <polygon
+              key={di} points={polyStr}
+              fill={color} fillOpacity={isHov ? 0.25 : 0.08}
+              stroke={color} strokeWidth={isHov ? 2.5 : 1.5}
+              style={{ cursor: 'pointer', transition: 'fill-opacity 0.2s, stroke-width 0.2s' }}
+              onMouseEnter={() => setHovered(di)}
+              onMouseLeave={() => setHovered(null)}
             />
           );
         })}
-      </RadarChart>
-    </ResponsiveContainer>
+        {/* Dots with tooltip */}
+        {doctorPoints.map((pts, di) =>
+          pts.map((pt, ai) => (
+            <circle
+              key={`${di}-${ai}`} cx={pt.x} cy={pt.y} r={hovered === di ? 5 : 3}
+              fill={RADAR_COLORS[di % RADAR_COLORS.length]}
+              stroke="#fff" strokeWidth={1.5}
+              style={{ cursor: 'pointer', transition: 'r 0.15s' }}
+              onMouseEnter={() => {
+                setHovered(di);
+                const doc = top[di]; const ax = AXES[ai];
+                setTooltip({
+                  x: pt.x, y: pt.y,
+                  doctor: doc.name,
+                  metric: ax.label,
+                  value: ax.scale === 20
+                    ? `${doc[ax.key]?.toFixed(1) ?? '—'} / 5`
+                    : doc[ax.key] ?? '—',
+                  color: RADAR_COLORS[di % RADAR_COLORS.length],
+                });
+              }}
+              onMouseLeave={() => { setHovered(null); setTooltip(null); }}
+            />
+          ))
+        )}
+        {/* Axis labels */}
+        {AXES.map((ax, i) => {
+          const pt    = polarToXY(i * step, rMax + 22, cx, cy);
+          const align = pt.x < cx - 5 ? 'end' : pt.x > cx + 5 ? 'start' : 'middle';
+          return (
+            <text key={i} x={pt.x} y={pt.y}
+              textAnchor={align} dominantBaseline="middle"
+              fontSize={11} fontWeight={600} fill="#64748b">
+              {ax.label}
+            </text>
+          );
+        })}
+        {/* SVG tooltip */}
+        {tooltip && (() => {
+          const tx = tooltip.x > 340 ? tooltip.x - 120 : tooltip.x + 12;
+          const ty = tooltip.y < 60  ? tooltip.y + 8   : tooltip.y - 44;
+          return (
+            <g>
+              <rect x={tx} y={ty} width={120} height={40} rx={6} fill="#0f172a" opacity={0.92} />
+              <text x={tx+8} y={ty+13} fontSize={10} fontWeight={700} fill={tooltip.color}>{tooltip.doctor}</text>
+              <text x={tx+8} y={ty+27} fontSize={10} fill="#cbd5e1">{tooltip.metric}: {tooltip.value}</text>
+            </g>
+          );
+        })()}
+      </svg>
+      {/* Legend */}
+      <div style={{ display:'flex', flexWrap:'wrap', gap:'8px 16px', justifyContent:'center', marginTop:-8, padding:'0 12px 4px' }}>
+        {top.map((d, i) => (
+          <div key={i}
+            style={{
+              display:'flex', alignItems:'center', gap:6,
+              padding:'3px 10px', borderRadius:20, cursor:'pointer',
+              background: hovered===i ? `${RADAR_COLORS[i]}18` : 'transparent',
+              border:`1px solid ${hovered===i ? RADAR_COLORS[i] : 'transparent'}`,
+              transition:'all 0.15s',
+            }}
+            onMouseEnter={() => setHovered(i)}
+            onMouseLeave={() => setHovered(null)}
+          >
+            <div style={{ width:10, height:10, borderRadius:3, background:RADAR_COLORS[i%RADAR_COLORS.length], flexShrink:0 }} />
+            <span style={{ fontSize:11, fontWeight:600, color:'#475569' }}>{d.name}</span>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 };
+
 
 // ─── Status breakdown bar chart ───────────────────────────────────────────────
 const StatusBar = ({ overview }) => {
