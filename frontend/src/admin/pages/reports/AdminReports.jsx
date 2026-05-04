@@ -12,6 +12,7 @@ import {
 import AppointmentCharts from './components/AppointmentCharts';
 import DoctorPerformanceTable from './components/DoctorPerformanceTable';
 import GovernancePanel from './components/GovernancePanel';
+import { generateEnterpriseReport, downloadReport } from './utils/pdfReportGenerator';
 import '../../../admin/styles/admin-reports.css';
 import { formatDateTimeIST, formatDateIST } from '../../../shared/utils/time';
 
@@ -365,23 +366,9 @@ const AdminReports = () => {
         triggerDownload(URL.createObjectURL(blob), `enterprise_report_${days}d_${dateSlug}.json`);
 
       } else if (format === 'pdf') {
-        const element = document.getElementById('admin-reports-content');
-        const actions  = document.getElementById('reports-header-actions');
-        if (actions) actions.style.display = 'none';
-        const { default: html2pdf } = await import('html2pdf.js');
-        const container = document.querySelector('.admin-reports-root');
-        if (container) container.classList.add('is-pdf-exporting');
-        
-        await html2pdf().set({
-          margin: 0,
-          filename: `enterprise_report_${days}d_${dateSlug}.pdf`,
-          image: { type: 'jpeg', quality: 0.98 },
-          html2canvas: { scale: 2, useCORS: true },
-          jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-        }).from(element).save();
-
-        if (container) container.classList.remove('is-pdf-exporting');
-        if (actions) actions.style.display = 'flex';
+        // ✅ Data-driven PDF — NOT a UI screenshot
+        const doc = await generateEnterpriseReport({ overview, appointments, doctors, governance, days });
+        downloadReport(doc, days);
 
       } else if (format === 'csv') {
         const res = await axios.get(`/api/admin/reports/governance-audit?days=${days}`);
