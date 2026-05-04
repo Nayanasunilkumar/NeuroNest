@@ -31,15 +31,14 @@ const DoctorPerformanceTable = ({ doctors }) => {
     return             { bg: 'rgba(239,68,68,0.1)',   color: '#dc2626', Icon: ArrowDownRight };
   };
 
-  // Column definitions — single source of truth for header + cell alignment
+  // Column definitions — drives both th and td alignment
   const cols = [
-    { key: 'doctor_name',         label: 'Doctor',          align: 'left',  width: '22%',  sortable: false },
-    { key: 'total_appointments',  label: 'Total Appts',     align: 'right', width: '14%',  sortable: true  },
-    { key: 'completed',           label: 'Completed',       align: 'right', width: '14%',  sortable: true  },
-    { key: 'cancelled',           label: 'Cancelled',       align: 'right', width: '13%',  sortable: true  },
-    { key: 'pending',             label: 'Pending',         align: 'right', width: '13%',  sortable: true  },
-    { key: 'avg_rating',          label: 'Avg Rating',      align: 'right', width: '13%',  sortable: true  },
-    { key: 'completion_rate_pct', label: 'Completion Rate', align: 'right', width: '11%',  sortable: true  },
+    { key: 'doctor_name',         label: 'Doctor',          align: 'left',   width: '26%', sortable: false },
+    { key: 'total_appointments',  label: 'Total Appts',     align: 'center', width: '15%', sortable: true  },
+    { key: 'completed',           label: 'Completed',       align: 'center', width: '15%', sortable: true  },
+    { key: 'cancelled',           label: 'Cancelled',       align: 'center', width: '14%', sortable: true  },
+    { key: 'pending',             label: 'Pending',         align: 'center', width: '15%', sortable: true  },
+    { key: 'completion_rate_pct', label: 'Completion Rate', align: 'center', width: '15%', sortable: true  },
   ];
 
   return (
@@ -70,7 +69,7 @@ const DoctorPerformanceTable = ({ doctors }) => {
                   background: 'transparent',
                 }}
               >
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, justifyContent: col.align === 'right' ? 'flex-end' : 'flex-start', width: '100%' }}>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, justifyContent: col.align === 'left' ? 'flex-start' : 'center', width: '100%' }}>
                   {col.label}
                   {col.sortable && (
                     <span style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
@@ -107,32 +106,27 @@ const DoctorPerformanceTable = ({ doctors }) => {
                 </td>
 
                 {/* Total */}
-                <td style={{ padding: '1rem', textAlign: 'right', fontWeight: 600 }}>
+                <td style={{ padding: '1rem', textAlign: 'center', fontWeight: 600 }}>
                   {doc.total_appointments ?? 0}
                 </td>
 
                 {/* Completed */}
-                <td style={{ padding: '1rem', textAlign: 'right', fontWeight: 600, color: '#059669' }}>
+                <td style={{ padding: '1rem', textAlign: 'center', fontWeight: 600, color: '#059669' }}>
                   {doc.completed ?? 0}
                 </td>
 
                 {/* Cancelled */}
-                <td style={{ padding: '1rem', textAlign: 'right', fontWeight: 600, color: '#dc2626' }}>
+                <td style={{ padding: '1rem', textAlign: 'center', fontWeight: 600, color: '#dc2626' }}>
                   {doc.cancelled ?? 0}
                 </td>
 
                 {/* Pending */}
-                <td style={{ padding: '1rem', textAlign: 'right', fontWeight: 600, color: '#d97706' }}>
+                <td style={{ padding: '1rem', textAlign: 'center', fontWeight: 600, color: '#d97706' }}>
                   {pending}
                 </td>
 
-                {/* Avg rating */}
-                <td style={{ padding: '1rem', textAlign: 'right', fontWeight: 600, color: '#6366f1' }}>
-                  {doc.avg_rating > 0 ? `${doc.avg_rating.toFixed(1)} ★` : '—'}
-                </td>
-
                 {/* Completion rate badge */}
-                <td style={{ padding: '1rem', textAlign: 'right' }}>
+                <td style={{ padding: '1rem', textAlign: 'center' }}>
                   <span style={{
                     display: 'inline-flex', alignItems: 'center', gap: 4,
                     padding: '3px 10px', borderRadius: 99,
