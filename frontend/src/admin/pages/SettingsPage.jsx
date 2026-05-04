@@ -248,17 +248,19 @@ const SettingsPage = () => {
                                     No settings available in this category.
                                 </p>
                             ) : (
-                                Object.keys(settings).map(key => (
-                                    <div className="settings-field" key={key}>
-                                        <div className="field-info">
-                                            <label>{formatLabel(key)}</label>
-                                            <span className="field-key-helper">{key}</span>
+                                Object.keys(settings)
+                                    .filter(key => key !== 'enable_sms_notifications')
+                                    .map(key => (
+                                        <div className="settings-field" key={key}>
+                                            <div className="field-info">
+                                                <label>{formatLabel(key)}</label>
+                                                <span className="field-key-helper">{key}</span>
+                                            </div>
+                                            <div className="field-input">
+                                                {renderInput(key, settings[key])}
+                                            </div>
                                         </div>
-                                        <div className="field-input">
-                                            {renderInput(key, settings[key])}
-                                        </div>
-                                    </div>
-                                ))
+                                    ))
                             )}
                         </div>
                     </div>
