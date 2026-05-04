@@ -139,7 +139,7 @@ const TrendChart = ({ data }) => {
 };
 
 // ─── Doctor radar chart (custom SVG — recharts keying was unreliable) ────────
-const RADAR_COLORS = ['#6366f1', '#10b981', '#f59e0b', '#f43f5e', '#06b6d4', '#8b5cf6'];
+const RADAR_COLORS = ['#6366f1', '#10b981', '#f59e0b', '#f43f5e', '#06b6d4', '#8b5cf6', '#ec4899'];
 const AXES = [
   { key: 'total_appointments', label: 'Appointments', scale: 1 },
   { key: 'completed',          label: 'Completed',    scale: 1 },
@@ -159,7 +159,7 @@ const DoctorRadar = ({ doctors }) => {
 
   if (!doctors?.length) return <div className="ar-no-data">No doctor data available</div>;
 
-  const top    = doctors.slice(0, 6);
+  const top    = doctors.slice(0, 7);
   const n      = AXES.length;
   const cx     = 220, cy = 200, rMax = 150;
   const step   = (2 * Math.PI) / n;
@@ -554,7 +554,7 @@ const AdminReports = () => {
               <div className="ar-bento-header">
                 <div>
                   <h3>Doctor Performance Radar</h3>
-                  <p className="ar-bento-sub">Top 6 doctors across 5 dimensions</p>
+                  <p className="ar-bento-sub">Top 7 doctors across 5 dimensions</p>
                 </div>
                 <span className="ar-badge ar-badge-success">Efficiency</span>
               </div>
