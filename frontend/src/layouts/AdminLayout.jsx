@@ -1399,9 +1399,26 @@ const AdminLayout = () => {
           padding: 1.25rem;
           background: #ffffff;
           border-radius: 0 0 24px 24px;
+          max-height: 480px;
+          overflow-y: auto;
+          scrollbar-width: thin;
+          scrollbar-color: #cbd5e1 transparent;
         }
+
+        .admin-notif-preferences::-webkit-scrollbar {
+          width: 5px;
+        }
+        .admin-notif-preferences::-webkit-scrollbar-thumb {
+          background: #cbd5e1;
+          border-radius: 10px;
+        }
+
         .admin-theme-dark .admin-notif-preferences {
           background: #0f172a;
+          scrollbar-color: #334155 transparent;
+        }
+        .admin-theme-dark .admin-notif-preferences::-webkit-scrollbar-thumb {
+          background: #334155;
         }
 
         .admin-notif-preference-list {
@@ -1409,6 +1426,7 @@ const AdminLayout = () => {
           flex-direction: column;
           gap: 12px;
           margin-top: 1.5rem;
+          padding-bottom: 1.5rem;
         }
 
         .admin-notif-preference-row {
