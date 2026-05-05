@@ -64,6 +64,9 @@ const AdminLayout = () => {
   const location = useLocation();
   const overlayRef = useRef(null);
   const navScrollRef = useRef(null);
+  const notifOverlayRef = useRef(null);
+  const bellButtonRef = useRef(null);
+
   const [currentTime, setCurrentTime] = useState(new Date());
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
@@ -98,9 +101,15 @@ const AdminLayout = () => {
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (overlayRef.current && !overlayRef.current.contains(event.target)) {
-        setProfileOpen(false);
+      // Check both refs independently
+      const clickedProfile = overlayRef.current && overlayRef.current.contains(event.target);
+      const clickedNotif = notifOverlayRef.current && notifOverlayRef.current.contains(event.target);
+      const clickedBell = bellButtonRef.current && bellButtonRef.current.contains(event.target);
+      
+      if (!clickedProfile) setProfileOpen(false);
+      if (!clickedNotif && !clickedBell) {
         setNotificationsOpen(false);
+        setExpandedNotif(null);
       }
     };
 
@@ -351,6 +360,7 @@ const AdminLayout = () => {
 
             <div className="admin-navbar-bell-container">
               <button
+                ref={bellButtonRef}
                 type="button"
                 className={`admin-navbar-iconbtn ${notificationsOpen ? 'active' : ''}`}
                 onClick={() => togglePanel('notifications')}
@@ -361,7 +371,7 @@ const AdminLayout = () => {
               </button>
 
               {notificationsOpen && createPortal(
-                <div className="admin-navbar-popover admin-navbar-notificationspanel" ref={overlayRef}>
+                <div className="admin-navbar-popover admin-navbar-notificationspanel" ref={notifOverlayRef}>
                   <div className="admin-navbar-popoverhead">
                     <div className="flex justify-between items-center w-full mb-3">
                       <div className="flex items-center gap-2">
@@ -460,15 +470,20 @@ const AdminLayout = () => {
                             key={notif.id} 
                             className={`admin-navbar-notification ${notif.is_read ? 'read' : 'unread'} severity-${notif.metadata?.severity || 'info'} ${expandedNotif === notif.id ? 'expanded' : ''}`}
                             onClick={() => {
-                              if (expandedNotif === notif.id) {
-                                handleNotificationClick(notif);
-                              } else {
+                              if (expandedNotif !== notif.id) {
                                 setExpandedNotif(notif.id);
                               }
                             }}
                           >
                             <div className="flex gap-3">
-                              <div className={`notif-icon-box ${notif.metadata?.severity === 'critical' ? 'critical' : ''}`}>
+                              <div 
+                                className={`notif-icon-box cursor-pointer hover:scale-110 transition-transform ${notif.metadata?.severity === 'critical' ? 'critical' : ''}`}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setExpandedNotif(expandedNotif === notif.id ? null : notif.id);
+                                }}
+                                title="Click to view details"
+                              >
                                 {getNotifIcon(notif.type, notif.metadata?.severity)}
                               </div>
                               <div className="flex-1 min-w-0">
@@ -525,7 +540,11 @@ const AdminLayout = () => {
                                     </button>
                                     <button 
                                       className="notif-quick-btn"
-                                      onClick={(e) => { e.stopPropagation(); handleMarkAsRead(notif.id); setExpandedNotif(null); }}
+                                      onClick={(e) => { 
+                                        e.stopPropagation(); 
+                                        handleMarkAsRead(notif.id); 
+                                        // Keep it expanded so user sees the change (dot disappears)
+                                      }}
                                     >
                                       Mark as Reviewed
                                     </button>
