@@ -4,6 +4,7 @@ import ManagePatients from './pages/ManagePatients';
 import ManageAppointments from './pages/ManageAppointments';
 import AnnouncementsPage from './pages/AnnouncementsPage';
 import AdminReports from './pages/reports/AdminReports';
+import AdminNotificationCenter from './pages/AdminNotificationCenter';
 
 export const adminRoutes = [
   { path: 'dashboard', element: AdminDashboard },
@@ -12,4 +13,5 @@ export const adminRoutes = [
   { path: 'appointments', element: ManageAppointments },
   { path: 'announcements', element: AnnouncementsPage },
   { path: 'reports', element: AdminReports },
+  { path: 'notifications', element: AdminNotificationCenter },
 ];

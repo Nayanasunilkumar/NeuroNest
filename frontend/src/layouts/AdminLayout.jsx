@@ -530,8 +530,8 @@ const AdminLayout = () => {
                   
                   {!showNotificationSettings && (
                     <div className="p-3 border-top bg-slate-50/50 flex justify-center">
-                      <Link to="/admin/reports-analytics" className="text-[10px] fw-bold text-blue-600 hover:text-blue-700 no-underline uppercase tracking-widest flex items-center gap-1">
-                        Open Full Nexus Archive
+                      <Link to="/admin/notifications" className="text-[10px] fw-bold text-blue-600 hover:text-blue-700 no-underline uppercase tracking-widest flex items-center gap-1">
+                        Open Administrative Nexus Center
                         <ChevronRight size={12} />
                       </Link>
                     </div>
