@@ -443,23 +443,42 @@ const AdminLayout = () => {
                   
                   {showNotificationSettings ? (
                     <div className="admin-notif-preferences">
-                      <div className="flex justify-between items-center mb-4">
-                        <h6 className="mb-0 fw-bold">Nexus Routing Preferences</h6>
-                        <button className="btn btn-sm btn-light border-0" onClick={() => setShowNotificationSettings(false)}>Back</button>
+                      <div className="flex items-center gap-3 mb-6">
+                        <button className="notif-back-btn flex items-center gap-1" onClick={() => setShowNotificationSettings(false)}>
+                          <ChevronLeft size={14} />
+                          Back
+                        </button>
+                        <h6 className="mb-0 fw-bold text-slate-800 dark:text-slate-200">Nexus Routing Preferences</h6>
                       </div>
+                      
                       <div className="admin-notif-preference-list">
-                        {notificationPreferenceItems.map(pref => (
-                          <label key={pref.key} className="admin-notif-preference-row">
-                            <span>{pref.label} Alert Feed</span>
-                            <input
-                              type="checkbox"
-                              checked={notificationPreferences[pref.key]}
-                              onChange={(event) => {
-                                const { checked } = event.target;
-                                setNotificationPreferences((current) => ({ ...current, [pref.key]: checked }));
-                              }}
-                            />
-                          </label>
+                        {[
+                          { key: 'credentialing', label: 'Credentialing', icon: <ShieldCheck size={16} /> },
+                          { key: 'escalations', label: 'Escalations', icon: <ShieldAlert size={16} /> },
+                          { key: 'systemHealth', label: 'System Health', icon: <Activity size={16} /> },
+                          { key: 'appointments', label: 'Appointments', icon: <CalendarDays size={16} /> },
+                        ].map(pref => (
+                          <div key={pref.key} className="admin-notif-preference-row" onClick={() => {
+                            setNotificationPreferences(prev => ({ ...prev, [pref.key]: !prev[pref.key] }));
+                          }}>
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500">
+                                {pref.icon}
+                              </div>
+                              <span>{pref.label} Alert Feed</span>
+                            </div>
+                            <label className="nexus-switch" onClick={(e) => e.stopPropagation()}>
+                              <input
+                                type="checkbox"
+                                checked={notificationPreferences[pref.key]}
+                                onChange={(event) => {
+                                  const { checked } = event.target;
+                                  setNotificationPreferences((current) => ({ ...current, [pref.key]: checked }));
+                                }}
+                              />
+                              <span className="nexus-slider" />
+                            </label>
+                          </div>
                         ))}
                       </div>
                     </div>
@@ -1030,6 +1049,18 @@ const AdminLayout = () => {
           min-height: 0;
           overflow-y: auto;
         }
+        .admin-navbar-searchitem {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 12px 16px;
+          background: #f8fafc;
+          border: 1px solid #e2e8f0;
+          border-radius: 16px;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          width: 100%;
+        }
         .admin-navbar-searchitem,
         .admin-navbar-profilelink {
           width: 100%;
@@ -1362,6 +1393,116 @@ const AdminLayout = () => {
           font-weight: 800;
           text-transform: uppercase;
         }
+        /* Routing Preferences & Toggles */
+        .admin-notif-preferences {
+          padding: 1.25rem;
+          background: #ffffff;
+          border-radius: 0 0 24px 24px;
+        }
+        .admin-theme-dark .admin-notif-preferences {
+          background: #0f172a;
+        }
+
+        .admin-notif-preference-list {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+          margin-top: 1.5rem;
+        }
+
+        .admin-notif-preference-row {
+          display: flex !important;
+          justify-content: space-between !important;
+          align-items: center !important;
+          padding: 12px 16px !important;
+          background: #f8fafc !important;
+          border: 1px solid #e2e8f0 !important;
+          border-radius: 16px !important;
+          cursor: pointer !important;
+          transition: all 0.2s ease !important;
+          width: 100% !important;
+        }
+
+        .admin-notif-preference-row:hover {
+          background: #f1f5f9 !important;
+          border-color: #cbd5e1 !important;
+          transform: translateY(-1px);
+        }
+
+        .admin-theme-dark .admin-notif-preference-row {
+          background: #1e293b !important;
+          border-color: #334155 !important;
+        }
+
+        .admin-notif-preference-row span {
+          font-size: 0.8rem !important;
+          font-weight: 700 !important;
+          color: #334155 !important;
+        }
+        .admin-theme-dark .admin-notif-preference-row span {
+          color: #94a3b8 !important;
+        }
+
+        /* Custom Switch */
+        .nexus-switch {
+          position: relative;
+          display: inline-block;
+          width: 36px;
+          height: 20px;
+        }
+
+        .nexus-switch input {
+          opacity: 0;
+          width: 0;
+          height: 0;
+        }
+
+        .nexus-slider {
+          position: absolute;
+          cursor: pointer;
+          top: 0; left: 0; right: 0; bottom: 0;
+          background-color: #cbd5e1;
+          transition: .3s;
+          border-radius: 20px;
+        }
+
+        .nexus-slider:before {
+          position: absolute;
+          content: "";
+          height: 14px;
+          width: 14px;
+          left: 3px;
+          bottom: 3px;
+          background-color: white;
+          transition: .3s;
+          border-radius: 50%;
+        }
+
+        input:checked + .nexus-slider {
+          background-color: #10b981;
+        }
+
+        input:checked + .nexus-slider:before {
+          transform: translateX(16px);
+        }
+
+        .notif-back-btn {
+          padding: 6px 12px;
+          border-radius: 8px;
+          background: #f1f5f9;
+          border: 1px solid #e2e8f0;
+          font-size: 0.7rem;
+          font-weight: 800;
+          color: #475569;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+
+        .notif-back-btn:hover {
+          background: #e2e8f0;
+          transform: translateX(-2px);
+        }
+
         .admin-theme-dark .admin-navbar-notificationspanel {
           background: #0f172a;
           border-color: #1e293b;
