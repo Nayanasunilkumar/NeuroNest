@@ -807,16 +807,16 @@ const AdminLayout = () => {
           border-color: transparent;
         }
         .admin-navbar-popover {
-          position: absolute;
-          top: calc(100% + 12px);
-          right: 0;
+          position: fixed;
+          top: 72px;
+          right: 24px;
           border-radius: 20px;
           border: 1px solid var(--nn-border);
           background: var(--nn-surface);
           box-shadow: 0 24px 50px rgba(2, 6, 23, 0.28);
           backdrop-filter: blur(20px);
           overflow: hidden;
-          z-index: 21000;
+          z-index: 999999;
         }
         .admin-navbar-searchpanel {
           width: 320px;
@@ -826,11 +826,15 @@ const AdminLayout = () => {
           width: 340px;
         }
         .admin-navbar-notificationspanel {
+          position: fixed;
+          top: 72px;
+          right: 24px;
           display: flex;
           flex-direction: column;
           width: min(420px, calc(100vw - 24px));
           max-height: min(620px, calc(100vh - 88px));
           background: #ffffff;
+          z-index: 999999;
         }
         .admin-theme-dark .admin-navbar-notificationspanel {
           background: #111827;
