@@ -173,12 +173,25 @@ const AdminLayout = () => {
     }
   };
 
+  const [expandedNotif, setExpandedNotif] = useState(null);
+  const [resolvingId, setResolvingId] = useState(null);
+  const [lastActionToast, setLastActionToast] = useState(null);
+
   const handleMarkAsRead = async (id) => {
+    setResolvingId(id);
     try {
       await notificationApi.markAsRead(id);
-      setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n));
+      
+      // Delay state update slightly for animation feel
+      setTimeout(() => {
+        setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n));
+        setResolvingId(null);
+        setLastActionToast("Case marked as reviewed");
+        setTimeout(() => setLastActionToast(null), 2500);
+      }, 600);
     } catch (err) {
       console.error('Failed to mark as read:', err);
+      setResolvingId(null);
     }
   };
 
@@ -231,14 +244,13 @@ const AdminLayout = () => {
   }, [notifications, notificationFilter, notificationPreferences]);
 
   const urgentTotal = useMemo(() => notifications.filter(n => (n.metadata?.severity === 'critical' || n.type === 'escalation') && !n.is_read).length, [notifications]);
+  
   const notificationPreferenceItems = [
     { key: 'credentialing', label: 'Credentialing' },
     { key: 'escalations', label: 'Escalations' },
     { key: 'systemHealth', label: 'System Health' },
     { key: 'appointments', label: 'Appointments' },
   ];
-
-  const [expandedNotif, setExpandedNotif] = useState(null);
 
   useEffect(() => {
     const navElement = navScrollRef.current;
@@ -468,7 +480,7 @@ const AdminLayout = () => {
                         filteredNotifications.slice(0, 10).map((notif) => (
                           <div 
                             key={notif.id} 
-                            className={`admin-navbar-notification ${notif.is_read ? 'read' : 'unread'} severity-${notif.metadata?.severity || 'info'} ${expandedNotif === notif.id ? 'expanded' : ''}`}
+                            className={`admin-navbar-notification ${notif.is_read ? 'read' : 'unread'} severity-${notif.metadata?.severity || 'info'} ${expandedNotif === notif.id ? 'expanded' : ''} ${resolvingId === notif.id ? 'notif-marking-success' : ''} ${notificationFilter === 'unread' && notif.is_read ? 'notif-exit' : ''}`}
                             onClick={() => {
                               if (expandedNotif !== notif.id) {
                                 setExpandedNotif(notif.id);
@@ -563,6 +575,13 @@ const AdminLayout = () => {
                           </div>
                         ))
                       )}
+                    </div>
+                  )}
+
+                  {lastActionToast && (
+                    <div className="admin-notif-toast">
+                      <CheckCircle size={14} className="text-green-400" />
+                      <span>{lastActionToast}</span>
                     </div>
                   )}
                   
@@ -1211,6 +1230,56 @@ const AdminLayout = () => {
         .notif-quick-btn.primary:hover {
           background: #1d4ed8;
           box-shadow: 0 6px 15px rgba(37, 99, 235, 0.3);
+        }
+
+        /* Success & Feedback Animations */
+        .notif-marking-success {
+          animation: resolve-glow 1s ease-out forwards;
+        }
+
+        @keyframes resolve-glow {
+          0% { background: #f0f7ff; border-color: #2563eb; }
+          40% { background: #f0fdf4; border-color: #22c55e; box-shadow: 0 0 20px rgba(34, 197, 94, 0.2); }
+          100% { background: #ffffff; border-color: #e2e8f0; }
+        }
+
+        .notif-exit {
+          animation: slide-fade-out 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+
+        @keyframes slide-fade-out {
+          0% { opacity: 1; transform: translateX(0); }
+          100% { opacity: 0; transform: translateX(30px); height: 0; margin: 0; padding: 0; border: 0; }
+        }
+
+        .admin-notif-toast {
+          position: absolute;
+          bottom: 20px;
+          left: 50%;
+          transform: translateX(-50%);
+          background: #0f172a;
+          color: white;
+          padding: 8px 20px;
+          border-radius: 99px;
+          font-size: 11px;
+          font-weight: 800;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+          z-index: 100;
+          animation: toast-in-out 2.5s ease-in-out forwards;
+        }
+
+        @keyframes toast-in-out {
+          0% { opacity: 0; transform: translate(-50%, 20px); }
+          15% { opacity: 1; transform: translate(-50%, 0); }
+          85% { opacity: 1; transform: translate(-50%, 0); }
+          100% { opacity: 0; transform: translate(-50%, -10px); }
+        }
+
+        .admin-theme-dark .admin-notif-toast {
+          background: #3b82f6;
         }
 
         .nexus-loading-spinner {
