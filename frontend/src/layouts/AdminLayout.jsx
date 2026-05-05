@@ -385,7 +385,7 @@ const AdminLayout = () => {
               {notificationsOpen && createPortal(
                 <div className="admin-navbar-popover admin-navbar-notificationspanel" ref={notifOverlayRef}>
                   <div className="admin-navbar-popoverhead">
-                    <div className="flex justify-between items-start w-full mb-4">
+                    <div className="flex justify-between items-start w-full mb-2">
                       <div>
                         <div className="flex items-center gap-2 mb-1.5">
                           <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
@@ -415,15 +415,21 @@ const AdminLayout = () => {
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2 mb-4">
-                      <span className="notif-stat-pill all">
-                        {notifications.length} Total Alerts
-                      </span>
-                      {urgentTotal > 0 && (
-                        <span className="notif-stat-pill urgent animate-pulse">
-                          {urgentTotal} Critical Action{urgentTotal > 1 ? 's' : ''} Required
+                    <div className="nexus-telemetry-grid">
+                      <div className="telemetry-card">
+                        <span className="telemetry-label">Active Surveillance</span>
+                        <span className="telemetry-value">
+                          <Activity size={12} className="text-blue-500" />
+                          {notifications.length} Alerts
                         </span>
-                      )}
+                      </div>
+                      <div className="telemetry-card">
+                        <span className="telemetry-label">Critical Actions</span>
+                        <span className="telemetry-value text-rose-600">
+                          <ShieldAlert size={12} className={urgentTotal > 0 ? "text-rose-500 animate-pulse" : "text-slate-300"} />
+                          {urgentTotal} Required
+                        </span>
+                      </div>
                     </div>
                     
                     {/* Tabs */}
@@ -1097,19 +1103,6 @@ const AdminLayout = () => {
           color: var(--nn-text-muted);
           font-size: 0.82rem;
         }
-        .admin-notif-tabs {
-          display: flex;
-          gap: 4px;
-          padding: 3px;
-          background: #f1f5f9;
-          border-radius: 10px;
-          margin-bottom: 12px;
-        }
-        .admin-navbar-notificationspanel {
-          width: 380px;
-          border-radius: 20px;
-          overflow: hidden;
-          background: #ffffff;
           box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
           border: 1px solid #e2e8f0;
         }
