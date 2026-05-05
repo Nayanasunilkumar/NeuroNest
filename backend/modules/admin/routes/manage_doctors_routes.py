@@ -212,6 +212,15 @@ def add_doctor():
     
     db.session.commit()
 
+    # 🏥 Admin Credentialing Alert
+    NotificationService.send_admin_notification(
+        title="New Specialist Provisioned",
+        message=f"Dr. {full_name} ({specialization}) has been added to the system and is awaiting final credential verification.",
+        notif_type="credentialing",
+        severity="info",
+        payload={"doctor_id": new_user.id}
+    )
+
     frontend_base_url = os.getenv("FRONTEND_URL", "https://neuro-nest-two.vercel.app").rstrip("/")
     login_link = f"{frontend_base_url}/login"
     email_subject = "Doctor Account Created – Neuronest"

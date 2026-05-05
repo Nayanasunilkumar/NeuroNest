@@ -545,6 +545,16 @@ def _auto_transition_announcement_statuses():
     for a in publish_to_expired:
         a.status = "Expired"
         changed = True
+        
+        # 📢 Admin Announcement Expiry Alert
+        from modules.shared.services.notification_service import NotificationService
+        NotificationService.send_admin_notification(
+            title="Critical Announcement Expired",
+            message=f"The announcement '{a.title}' has expired and is now archived. Please review if a renewal is necessary.",
+            notif_type="announcement_expiry",
+            severity="info",
+            payload={"announcement_id": a.id}
+        )
 
     if changed:
         db.session.commit()

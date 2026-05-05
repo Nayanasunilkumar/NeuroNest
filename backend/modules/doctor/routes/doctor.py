@@ -828,6 +828,19 @@ def cancel_appointment(appointment_id):
             },
         )
     )
+    
+    # 🗓️ Admin Appointment Conflict Alert
+    from modules.shared.services.notification_service import NotificationService
+    doctor_name = appointment.doctor.full_name if appointment.doctor else f"Doctor #{current_user_id}"
+    patient_name = appointment.patient.full_name if appointment.patient else f"Patient #{appointment.patient_id}"
+    
+    NotificationService.send_admin_notification(
+        title="Specialist Schedule Conflict",
+        message=f"Dr. {doctor_name} has cancelled an appointment with {patient_name} on {appointment.appointment_date}. Intervention may be required.",
+        notif_type="appointment_conflict",
+        severity="warning",
+        payload={"appointment_id": appointment.id, "doctor_id": current_user_id}
+    )
     NotificationService.notify_appointment_event(appointment.id, "cancelled")
     db.session.commit()
     

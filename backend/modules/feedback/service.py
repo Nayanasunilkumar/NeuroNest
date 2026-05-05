@@ -215,6 +215,19 @@ class FeedbackService:
                 reason=data.get('complaint_reason', 'Patient marked as serious complaint'),
                 status='open'
             ))
+            
+            # 🚨 Admin Escalation Alert
+            from modules.shared.services.notification_service import NotificationService
+            patient_name = review.patient.full_name if review.patient else f"Patient #{review.patient_id}"
+            doctor_name = appt.doctor.full_name if appt.doctor else "Medical Staff"
+            
+            NotificationService.send_admin_notification(
+                title="Critical Feedback Escalation",
+                message=f"A serious complaint has been filed by {patient_name} against Dr. {doctor_name}. Immediate review is required.",
+                notif_type="escalation",
+                severity="critical",
+                payload={"review_id": review.id, "doctor_id": appt.doctor_id}
+            )
         
         db.session.commit()
         

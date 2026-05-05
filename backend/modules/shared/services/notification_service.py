@@ -139,6 +139,33 @@ class NotificationService:
             except Exception:
                 pass
 
+    @staticmethod
+    def send_admin_notification(title, message, notif_type="system", severity="info", payload=None):
+        """Broadcasts a notification to all administrative users."""
+        from database.models import db, User, InAppNotification
+        admins = User.query.filter(User.role.in_(["admin", "super_admin"])).all()
+        
+        full_payload = payload or {}
+        full_payload["severity"] = severity
+
+        for admin in admins:
+            notif = InAppNotification(
+                user_id=admin.id,
+                title=title,
+                message=message,
+                type=notif_type,
+                payload=full_payload
+            )
+            db.session.add(notif)
+            
+            try:
+                from extensions.socket import socketio
+                socketio.emit('new_in_app_notification', notif.to_dict(), room=f"user_{admin.id}")
+            except Exception:
+                pass
+        
+        db.session.commit()
+
         # ── 3. OPTIONAL EMAIL (Respecting Preferences) ──
         if email_subject and user.email:
             should_send_email = False

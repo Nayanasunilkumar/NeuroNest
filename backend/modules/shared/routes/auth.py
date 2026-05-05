@@ -115,6 +115,17 @@ def log_security_event(user_id, event_type, description, commit=True):
         db.session.add(activity)
         if commit:
             db.session.commit()
+            
+        # 🛡️ Admin Security Alert for specific high-risk events
+        if event_type in ["login_failed", "unauthorized_access", "password_reset_requested"]:
+            from modules.shared.services.notification_service import NotificationService
+            NotificationService.send_admin_notification(
+                title="Security Anomaly Detected",
+                message=f"A security event of type '{event_type.replace('_', ' ')}' was recorded for User ID {user_id}. Source IP: {request.remote_addr}.",
+                notif_type="system",
+                severity="warning",
+                payload={"user_id": user_id, "event_type": event_type, "ip": request.remote_addr}
+            )
     except Exception:
         current_app.logger.exception("Error logging security event for user %s", user_id)
         db.session.rollback()
