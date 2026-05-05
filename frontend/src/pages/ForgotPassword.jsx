@@ -18,7 +18,7 @@ const ForgotPassword = () => {
     setError("");
 
     try {
-      const { data } = await forgotPassword({ email: email.trim().lower() });
+      const { data } = await forgotPassword({ email: email.trim().toLowerCase() });
       setMessage(data.message || "Reset instructions sent to your email.");
     } catch (err) {
       const status = err?.response?.status;
