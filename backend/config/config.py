@@ -72,7 +72,11 @@ class Config:
     VITALS_DEVICE_PATIENT_EMAIL = (os.getenv("VITALS_DEVICE_PATIENT_EMAIL") or "").strip().lower() or None
 
     # Default to sqlite for local development if DATABASE_URL is not provided
-    SQLALCHEMY_DATABASE_URI = (os.getenv("DATABASE_URL") or f"sqlite:///{BASE_DIR / 'neuronest.db'}").replace("postgres://", "postgresql://", 1)
+    _raw_db_url = os.getenv("DATABASE_URL")
+    if _raw_db_url and _raw_db_url.startswith("postgres://"):
+        _raw_db_url = _raw_db_url.replace("postgres://", "postgresql://", 1)
+    
+    SQLALCHEMY_DATABASE_URI = _raw_db_url or f"sqlite:///{BASE_DIR / 'neuronest.db'}"
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     # SQLAlchemy Engine config to fix "SSL connection closed unexpectedly" on Neon/Render
