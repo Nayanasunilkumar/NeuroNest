@@ -284,7 +284,7 @@ const AdminNotificationCenter = () => {
                             {notif.metadata.risk_level?.toUpperCase() || 'MODERATE'}
                           </span>
                         </div>
-                        {notif.metadata.stats.complaints > 0 && (
+                        {notif.metadata?.stats?.complaints > 0 && (
                           <div className="telemetry-box">
                             <span className="label">Incident Volume</span>
                             <span className="value">{notif.metadata.stats.complaints} Reports</span>
@@ -358,7 +358,7 @@ const AdminNotificationCenter = () => {
         )}
       </div>
 
-      <style jsx>{`
+      <style>{`
         .admin-notif-center-wrapper {
           padding: 3rem 2rem;
           max-width: 1300px;
