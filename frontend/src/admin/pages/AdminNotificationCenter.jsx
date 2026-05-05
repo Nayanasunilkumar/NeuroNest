@@ -100,11 +100,15 @@ const AdminNotificationCenter = () => {
     }
   };
 
-  const getNotifIcon = (type, severity) => {
-    if (severity === 'critical' || type === 'escalation') return <ShieldAlert size={20} className="text-rose-500" />;
-    if (type === 'credentialing') return <ShieldCheck size={20} className="text-blue-500" />;
-    if (type === 'system') return <Activity size={20} className="text-amber-500" />;
-    if (type === 'appointment_conflict' || type === 'appointment') return <AlertTriangle size={20} className="text-orange-500" />;
+  const getNotifIcon = (type, severity, title = '') => {
+    const t = (type || '').toLowerCase();
+    const s = (severity || '').toLowerCase();
+    const ttl = (title || '').toLowerCase();
+
+    if (s === 'critical' || t === 'escalation' || ttl.includes('escalation')) return <ShieldAlert size={20} className="text-rose-500" />;
+    if (t === 'credentialing' || ttl.includes('credential')) return <ShieldCheck size={20} className="text-blue-500" />;
+    if (t === 'system') return <Activity size={20} className="text-amber-500" />;
+    if (t === 'appointment_conflict' || t === 'appointment' || ttl.includes('appointment')) return <AlertTriangle size={20} className="text-orange-500" />;
     return <Bell size={20} className="text-slate-400" />;
   };
 
@@ -128,17 +132,18 @@ const AdminNotificationCenter = () => {
       const search = searchTerm.toLowerCase();
       const matchesSearch = title.includes(search) || message.includes(search);
       
-      const type = n.type || '';
-      const category = n.metadata?.category || '';
-      const severity = n.metadata?.severity || '';
+      const type = (n.type || '').toLowerCase();
+      const category = (n.metadata?.category || '').toLowerCase();
+      const severity = (n.metadata?.severity || '').toLowerCase();
+      const title_lower = title.toLowerCase();
 
       const matchesType = filterType === 'all' || 
                          (filterType === 'unread' && !n.is_read) ||
                          (filterType === 'unresolved' && !n.is_resolved) ||
                          (filterType === 'critical' && severity === 'critical') ||
-                         (filterType === 'escalations' && (type === 'escalation' || category === 'escalation')) ||
-                         (filterType === 'credentialing' && type === 'credentialing') ||
-                         (filterType === 'appointments' && (type === 'appointment_conflict' || type === 'appointment'));
+                         (filterType === 'escalations' && (type === 'escalation' || category === 'escalation' || title_lower.includes('escalation'))) ||
+                         (filterType === 'credentialing' && (type === 'credentialing' || title_lower.includes('credential'))) ||
+                         (filterType === 'appointments' && (type === 'appointment_conflict' || type === 'appointment' || title_lower.includes('appointment')));
       
       return matchesSearch && matchesType;
     });
@@ -286,7 +291,7 @@ const AdminNotificationCenter = () => {
                 >
                   <div className="record-visual">
                     <div className="icon-vault">
-                      {getNotifIcon(notif.type, notif.metadata?.severity)}
+                      {getNotifIcon(notif.type, notif.metadata?.severity, notif.title)}
                     </div>
                   </div>
                   
