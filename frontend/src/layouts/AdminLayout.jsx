@@ -551,7 +551,7 @@ const AdminLayout = () => {
                                       <ExternalLink size={10} className="ml-1" />
                                     </button>
                                     <button 
-                                      className={`notif-quick-btn ${resolvingId === notif.id || notif.is_read ? 'opacity-70 cursor-default' : ''}`}
+                                      className={`notif-quick-btn ${notif.is_read ? 'success' : ''} ${resolvingId === notif.id ? 'opacity-70 cursor-default' : ''}`}
                                       disabled={resolvingId === notif.id || notif.is_read}
                                       onClick={(e) => { 
                                         if (notif.is_read) return;
@@ -560,10 +560,7 @@ const AdminLayout = () => {
                                       }}
                                     >
                                       {notif.is_read ? (
-                                        <>
-                                          <Check size={12} className="mr-1 text-green-500" />
-                                          Reviewed
-                                        </>
+                                        'Reviewed'
                                       ) : resolvingId === notif.id ? (
                                         <>
                                           <div className="w-3 h-3 border-2 border-slate-400 border-t-transparent rounded-full animate-spin mr-1" />
@@ -1243,6 +1240,18 @@ const AdminLayout = () => {
         .notif-quick-btn.primary:hover {
           background: #1d4ed8;
           box-shadow: 0 6px 15px rgba(37, 99, 235, 0.3);
+        }
+
+        .notif-quick-btn.success {
+          background: #f0fdf4;
+          color: #166534;
+          border-color: #bbf7d0;
+        }
+
+        .admin-theme-dark .notif-quick-btn.success {
+          background: rgba(34, 197, 94, 0.1);
+          color: #4ade80;
+          border-color: rgba(34, 197, 94, 0.2);
         }
 
         /* Success & Feedback Animations */
