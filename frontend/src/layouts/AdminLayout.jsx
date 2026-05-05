@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
+import { createPortal } from 'react-dom';
 import { logout, getUser } from '../shared/utils/auth';
 import { useTheme } from '../shared/context/ThemeContext';
 import { useSystemConfig } from '../shared/context/SystemConfigContext';
@@ -336,8 +337,8 @@ const AdminLayout = () => {
                 {unreadCount > 0 && <span className="admin-navbar-bell-dot" />}
               </button>
 
-              {notificationsOpen && (
-                <div className="admin-navbar-popover admin-navbar-notificationspanel">
+              {notificationsOpen && createPortal(
+                <div className="admin-navbar-popover admin-navbar-notificationspanel" ref={overlayRef}>
                   <div className="admin-navbar-popoverhead">
                     <div className="flex justify-between items-center w-full mb-1">
                       <div className="flex items-center gap-2">
@@ -468,7 +469,8 @@ const AdminLayout = () => {
                       </Link>
                     </div>
                   )}
-                </div>
+                </div>,
+                document.body
               )}
             </div>
 
@@ -493,8 +495,8 @@ const AdminLayout = () => {
 
 
 
-            {profileOpen && (
-              <div className="admin-navbar-popover admin-navbar-profilepanel">
+            {profileOpen && createPortal(
+              <div className="admin-navbar-popover admin-navbar-profilepanel" ref={overlayRef}>
                 <div className="admin-navbar-profilehead">
                   <span className="admin-navbar-avatar large">{adminName.slice(0, 1).toUpperCase()}</span>
                   <div>
@@ -514,7 +516,8 @@ const AdminLayout = () => {
                     <span>Logout</span>
                   </button>
                 </div>
-              </div>
+              </div>,
+              document.body
             )}
           </div>
         </div>
