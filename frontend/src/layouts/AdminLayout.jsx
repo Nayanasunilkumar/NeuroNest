@@ -186,7 +186,7 @@ const AdminLayout = () => {
       setTimeout(() => {
         setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n));
         setResolvingId(null);
-        setLastActionToast("Case marked as reviewed");
+        setLastActionToast("Case marked as read");
         setTimeout(() => setLastActionToast(null), 2500);
       }, 600);
     } catch (err) {
@@ -560,14 +560,14 @@ const AdminLayout = () => {
                                       }}
                                     >
                                       {notif.is_read ? (
-                                        'Reviewed'
+                                        'Read'
                                       ) : resolvingId === notif.id ? (
                                         <>
                                           <div className="w-3 h-3 border-2 border-slate-400 border-t-transparent rounded-full animate-spin mr-1" />
-                                          Reviewing...
+                                          Reading...
                                         </>
                                       ) : (
-                                        'Mark as Reviewed'
+                                        'Mark as Read'
                                       )}
                                     </button>
                                     {notif.metadata?.severity === 'critical' && (
