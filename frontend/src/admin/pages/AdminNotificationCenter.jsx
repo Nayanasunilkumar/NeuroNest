@@ -74,8 +74,13 @@ const AdminNotificationCenter = () => {
       
       const notif = notifications.find(n => n.id === id);
       const doctorId = notif?.metadata?.doctor_id;
+      const userId = notif?.metadata?.user_id;
+
       if (doctorId) {
         navigate(`/admin/governance/doctor/${doctorId}`);
+      } else if (userId) {
+        // If it's a security anomaly, we can navigate to the patient profile or just stay here
+        // For now, let's keep it here but we could add a security log page
       }
     } catch (error) {
       console.error('Mark resolved failed:', error);
@@ -329,7 +334,7 @@ const AdminNotificationCenter = () => {
                   </div>
 
                   <div className="record-actions-dock">
-                    {notif.type === 'escalation' || notif.metadata?.severity === 'critical' ? (
+                    {notif.type === 'escalation' || notif.type === 'system' || notif.metadata?.severity === 'critical' ? (
                       <button 
                         onClick={(e) => handleMarkResolved(notif.id, e)}
                         className={`dock-btn ${notif.is_resolved ? 'success' : 'primary'}`}
