@@ -474,16 +474,7 @@ const AdminLayout = () => {
                                     </strong>
                                     {!notif.is_read && <div className="w-1.5 h-1.5 rounded-full bg-blue-500 flex-shrink-0 animate-pulse" />}
                                   </div>
-                                  <div className="flex items-center gap-1">
-                                    <button 
-                                      className="notif-action-btn delete" 
-                                      onClick={(e) => handleDeleteNotification(notif.id, e)}
-                                      title="Delete"
-                                    >
-                                      <Trash2 size={13} />
-                                    </button>
                                   </div>
-                                </div>
                                 <p className="admin-navbar-notification-message">
                                   {(notif.message || notif.content || "").replace(/Dr\. Dr\./g, 'Dr.')}
                                 </p>
@@ -1158,6 +1149,31 @@ const AdminLayout = () => {
         .stat-value { color: #0f172a; font-weight: 800; }
         .admin-theme-dark .stat-value { color: #f1f5f9; }
 
+        .notif-quick-btn {
+          appearance: none !important;
+          -webkit-appearance: none !important;
+          padding: 8px 16px;
+          border-radius: 12px;
+          font-size: 0.75rem;
+          font-weight: 800;
+          border: 1px solid #e2e8f0;
+          background: #ffffff;
+          color: #475569;
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          transition: all 0.25s ease;
+          cursor: pointer;
+          outline: none;
+          line-height: 1;
+        }
+
+        .notif-quick-btn:hover {
+          background: #f8fafc;
+          border-color: #cbd5e1;
+          transform: translateY(-1px);
+        }
+
         .notif-quick-btn.primary {
           background: #2563eb;
           color: white;
@@ -1167,7 +1183,7 @@ const AdminLayout = () => {
 
         .notif-quick-btn.primary:hover {
           background: #1d4ed8;
-          transform: translateY(-1px);
+          box-shadow: 0 6px 15px rgba(37, 99, 235, 0.3);
         }
 
         .nexus-loading-spinner {
