@@ -279,7 +279,7 @@ const AdminNotificationCenter = () => {
                         {notif.metadata?.severity === 'critical' && (
                           <span className="record-tag-critical">CRITICAL</span>
                         )}
-                        {notif.is_read && (
+                        {notif.is_resolved && (
                           <span className="record-tag-resolved">RESOLVED</span>
                         )}
                       </div>
