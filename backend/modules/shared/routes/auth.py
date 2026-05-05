@@ -7,7 +7,7 @@ from flask_jwt_extended import create_access_token, get_jwt, get_jwt_identity, j
 from extensions.socket import socketio
 from modules.shared.services.notification_service import NotificationService
 
-auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
+auth_bp = Blueprint("auth", __name__)
 
 
 def _require_diagnostic_access():

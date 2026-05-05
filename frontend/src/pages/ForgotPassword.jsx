@@ -21,7 +21,9 @@ const ForgotPassword = () => {
       const { data } = await forgotPassword({ email: email.trim().lower() });
       setMessage(data.message || "Reset instructions sent to your email.");
     } catch (err) {
-      setError(err?.response?.data?.message || "Failed to process request. Please try again.");
+      const status = err?.response?.status;
+      const detail = err?.response?.data?.message || err?.message;
+      setError(`Error (${status || 'Network'}): ${detail || 'Please try again later.'}`);
     } finally {
       setLoading(false);
     }
