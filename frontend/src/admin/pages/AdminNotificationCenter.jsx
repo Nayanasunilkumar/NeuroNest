@@ -117,52 +117,48 @@ const AdminNotificationCenter = () => {
   };
 
   return (
-    <div className="admin-notif-center p-6 max-w-6xl mx-auto">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
-        <div>
-          <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white mb-1">Administrative Nexus</h1>
-          <p className="text-slate-500 dark:text-slate-400">System-wide governance monitoring & audit center</p>
+    <div className="admin-notif-center-wrapper">
+      <div className="admin-notif-center-header">
+        <div className="admin-notif-center-titlebox">
+          <h1>Administrative Nexus</h1>
+          <p>System-wide governance monitoring & audit center</p>
         </div>
-        <div className="flex gap-2">
+        <div className="admin-notif-center-actions">
           <button 
             onClick={handleMarkAllAsRead}
-            className="px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 transition-colors flex items-center gap-2"
+            className="nexus-btn secondary"
           >
-            <Check size={16} /> Mark All Read
+            <Check size={16} /> 
+            <span>Mark All Read</span>
           </button>
           <button 
             onClick={fetchNotifications}
-            className="px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-blue-700 transition-colors shadow-sm"
+            className="nexus-btn primary"
           >
-            Refresh Feed
+            <span>Refresh Feed</span>
           </button>
         </div>
       </div>
 
-      <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+      <div className="nexus-glass-card">
         {/* Toolbar */}
-        <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex flex-wrap gap-4 items-center justify-between">
-          <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-800/50 px-4 py-2 rounded-2xl w-full md:w-96">
-            <Search size={18} className="text-slate-400" />
+        <div className="nexus-toolbar">
+          <div className="nexus-search-box">
+            <Search size={18} />
             <input 
               type="text" 
-              placeholder="Search notifications..."
-              className="bg-transparent border-0 outline-none text-sm w-full text-slate-700 dark:text-slate-200"
+              placeholder="Search through intelligence logs..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
           
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 md:pb-0">
+          <div className="nexus-filter-row">
             {['all', 'unread', 'critical', 'system'].map(type => (
               <button
                 key={type}
                 onClick={() => { setFilterType(type); setPage(1); }}
-                className={`px-4 py-1.5 rounded-full text-xs font-bold capitalize transition-all ${
-                  filterType === type 
-                    ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-md' 
-                    : 'bg-slate-50 text-slate-500 dark:bg-slate-800 dark:text-slate-400 hover:bg-slate-100'
-                }`}
+                className={`nexus-pill-btn ${filterType === type ? 'active' : ''}`}
               >
                 {type}
               </button>
@@ -171,85 +167,70 @@ const AdminNotificationCenter = () => {
         </div>
 
         {/* Content */}
-        <div className="min-h-[600px]">
+        <div className="nexus-content-pool">
           {loading ? (
-            <div className="flex flex-col items-center justify-center h-[400px]">
-              <div className="animate-spin rounded-full h-10 w-10 border-4 border-blue-100 border-t-blue-600 mb-4" />
-              <p className="text-slate-400 font-medium">Synchronizing Secure Nexus Feed...</p>
+            <div className="nexus-loading-state">
+              <div className="nexus-spinner" />
+              <p>Synchronizing Nexus Feed...</p>
             </div>
           ) : displayedNotifications.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-[400px] text-center p-8">
-              <div className="w-20 h-20 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center mb-6">
-                <CheckCircle size={40} className="text-slate-200 dark:text-slate-700" />
-              </div>
-              <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-2">System Status: Optimal</h3>
-              <p className="text-slate-500 max-w-sm">No notifications found matching your current filter criteria. You're all caught up!</p>
+            <div className="nexus-empty-state">
+              <CheckCircle size={48} className="nexus-empty-icon" />
+              <h3>System Status: Optimal</h3>
+              <p>No intelligence logs found matching your criteria.</p>
             </div>
           ) : (
-            <div className="divide-y divide-slate-100 dark:divide-slate-800">
+            <div className="nexus-notif-list">
               {displayedNotifications.map((notif) => (
                 <div 
                   key={notif.id}
-                  className={`p-6 flex gap-5 transition-all hover:bg-slate-50/50 dark:hover:bg-slate-800/30 ${!notif.is_read ? 'bg-blue-50/20 dark:bg-blue-900/10' : ''}`}
+                  className={`nexus-notif-item ${!notif.is_read ? 'unread' : ''} severity-${notif.metadata?.severity || 'info'}`}
                 >
-                  <div className={`w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 ${
-                    notif.metadata?.severity === 'critical' 
-                      ? 'bg-rose-50 dark:bg-rose-900/20 border border-rose-100 dark:border-rose-900/30' 
-                      : 'bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700'
-                  }`}>
+                  <div className="nexus-notif-icon-shell">
                     {getNotifIcon(notif.type, notif.metadata?.severity)}
                   </div>
                   
-                  <div className="flex-1 min-w-0">
-                    <div className="flex justify-between items-start mb-2">
-                      <div className="flex items-center gap-3">
-                        <h4 className={`text-lg font-bold leading-tight ${notif.is_read ? 'text-slate-600 dark:text-slate-400' : 'text-slate-900 dark:text-white'}`}>
-                          {notif.title}
-                        </h4>
-                        {!notif.is_read && <span className="w-2 h-2 rounded-full bg-blue-600 animate-pulse" />}
+                  <div className="nexus-notif-body">
+                    <div className="nexus-notif-header">
+                      <div className="nexus-notif-title-row">
+                        <h4 className="nexus-notif-title">{notif.title}</h4>
+                        {!notif.is_read && <span className="nexus-unread-dot" />}
                         {notif.metadata?.severity === 'critical' && (
-                          <span className="bg-rose-500 text-white text-[10px] px-2 py-0.5 rounded-md font-black uppercase tracking-tighter">Critical Impact</span>
+                          <span className="nexus-critical-tag">Critical Impact</span>
                         )}
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="nexus-notif-actions">
                         {!notif.is_read && (
-                          <button 
-                            onClick={(e) => handleMarkRead(notif.id, e)}
-                            className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-all"
-                            title="Mark Read"
-                          >
+                          <button onClick={(e) => handleMarkRead(notif.id, e)} title="Mark Read">
                             <Check size={18} />
                           </button>
                         )}
-                        <button 
-                          onClick={(e) => handleDelete(notif.id, e)}
-                          className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-all"
-                          title="Delete"
-                        >
+                        <button onClick={(e) => handleDelete(notif.id, e)} title="Delete" className="delete">
                           <Trash2 size={18} />
                         </button>
                       </div>
                     </div>
                     
-                    <p className={`text-sm mb-4 max-w-3xl leading-relaxed ${notif.is_read ? 'text-slate-500' : 'text-slate-600 dark:text-slate-300'}`}>
+                    <p className="nexus-notif-message">
                       {(notif.message || notif.content || "").replace(/Dr\. Dr\./g, 'Dr.')}
                     </p>
                     
-                    <div className="flex flex-wrap items-center gap-6">
-                      <div className="flex items-center gap-1.5 text-xs font-bold text-slate-400 uppercase tracking-widest">
+                    <div className="nexus-notif-footer">
+                      <div className="nexus-notif-meta">
                         <Clock3 size={14} />
-                        {formatRelativeTime(notif.created_at)}
+                        <span>{formatRelativeTime(notif.created_at)}</span>
+                        {notif.metadata?.category && (
+                          <>
+                            <span className="separator">|</span>
+                            <span className="nexus-notif-cat">{notif.metadata.category}</span>
+                          </>
+                        )}
                       </div>
-                      {notif.metadata?.category && (
-                        <div className="px-3 py-1 bg-slate-100 dark:bg-slate-800 rounded-lg text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest border border-slate-200 dark:border-slate-700">
-                          {notif.metadata.category}
-                        </div>
-                      )}
                       <button 
                         onClick={() => handleAction(notif)}
-                        className="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1 group no-underline"
+                        className="nexus-action-link"
                       >
-                        Launch Governance Module <ExternalLink size={12} className="transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                        Launch Governance Module <ExternalLink size={12} />
                       </button>
                     </div>
                   </div>
@@ -261,38 +242,26 @@ const AdminNotificationCenter = () => {
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="p-6 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
-            <p className="text-sm text-slate-500">
-              Showing <span className="font-bold text-slate-800 dark:text-slate-200">{(page - 1) * itemsPerPage + 1}</span> to <span className="font-bold text-slate-800 dark:text-slate-200">{Math.min(page * itemsPerPage, filteredNotifications.length)}</span> of <span className="font-bold text-slate-800 dark:text-slate-200">{filteredNotifications.length}</span> entries
+          <div className="nexus-pagination">
+            <p>
+              Showing <strong>{(page - 1) * itemsPerPage + 1}</strong> to <strong>{Math.min(page * itemsPerPage, filteredNotifications.length)}</strong> of <strong>{filteredNotifications.length}</strong> entries
             </p>
-            <div className="flex gap-2">
-              <button 
-                disabled={page === 1}
-                onClick={() => setPage(page - 1)}
-                className="p-2 border border-slate-200 dark:border-slate-700 rounded-xl disabled:opacity-30 disabled:cursor-not-allowed hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
-              >
+            <div className="nexus-page-controls">
+              <button disabled={page === 1} onClick={() => setPage(page - 1)}>
                 <ChevronLeft size={20} />
               </button>
-              <div className="flex gap-1">
+              <div className="nexus-page-numbers">
                 {[...Array(totalPages)].map((_, i) => (
                   <button
                     key={i}
                     onClick={() => setPage(i + 1)}
-                    className={`w-10 h-10 rounded-xl text-sm font-bold transition-all ${
-                      page === i + 1 
-                        ? 'bg-blue-600 text-white shadow-lg shadow-blue-200 dark:shadow-none' 
-                        : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800'
-                    }`}
+                    className={page === i + 1 ? 'active' : ''}
                   >
                     {i + 1}
                   </button>
                 ))}
               </div>
-              <button 
-                disabled={page === totalPages}
-                onClick={() => setPage(page + 1)}
-                className="p-2 border border-slate-200 dark:border-slate-700 rounded-xl disabled:opacity-30 disabled:cursor-not-allowed hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
-              >
+              <button disabled={page === totalPages} onClick={() => setPage(page + 1)}>
                 <ChevronRight size={20} />
               </button>
             </div>
@@ -301,13 +270,425 @@ const AdminNotificationCenter = () => {
       </div>
 
       <style jsx>{`
-        .admin-notif-center {
-          animation: fadeIn 0.4s ease-out;
+        .admin-notif-center-wrapper {
+          padding: 2rem;
+          max-width: 1100px;
+          margin: 0 auto;
+          animation: nexusFadeIn 0.5s ease;
         }
-        @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(10px); }
+
+        @keyframes nexusFadeIn {
+          from { opacity: 0; transform: translateY(20px); }
           to { opacity: 1; transform: translateY(0); }
         }
+
+        .admin-notif-center-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-end;
+          margin-bottom: 2.5rem;
+        }
+
+        .admin-notif-center-titlebox h1 {
+          font-size: 2.25rem;
+          font-weight: 850;
+          color: #0f172a;
+          margin: 0 0 0.5rem 0;
+          letter-spacing: -0.02em;
+        }
+
+        .admin-notif-center-titlebox p {
+          color: #64748b;
+          font-size: 1.1rem;
+          margin: 0;
+        }
+
+        .admin-notif-center-actions {
+          display: flex;
+          gap: 1rem;
+        }
+
+        .nexus-btn {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+          padding: 0.75rem 1.5rem;
+          border-radius: 14px;
+          font-weight: 700;
+          font-size: 0.95rem;
+          transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+          cursor: pointer;
+          border: 1px solid transparent;
+        }
+
+        .nexus-btn.primary {
+          background: #2563eb;
+          color: white;
+          box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+        }
+
+        .nexus-btn.primary:hover {
+          background: #1d4ed8;
+          transform: translateY(-2px);
+          box-shadow: 0 8px 20px rgba(37, 99, 235, 0.3);
+        }
+
+        .nexus-btn.secondary {
+          background: white;
+          color: #475569;
+          border-color: #e2e8f0;
+        }
+
+        .nexus-btn.secondary:hover {
+          background: #f8fafc;
+          border-color: #cbd5e1;
+          color: #1e293b;
+        }
+
+        .nexus-glass-card {
+          background: white;
+          border-radius: 30px;
+          border: 1px solid #e2e8f0;
+          box-shadow: 0 10px 40px rgba(0,0,0,0.04);
+          overflow: hidden;
+        }
+
+        .nexus-toolbar {
+          padding: 1.5rem;
+          border-bottom: 1px solid #f1f5f9;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          gap: 2rem;
+          background: #fcfdfe;
+        }
+
+        .nexus-search-box {
+          flex: 1;
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+          background: #f1f5f9;
+          padding: 0.75rem 1.25rem;
+          border-radius: 16px;
+          border: 1px solid transparent;
+          transition: all 0.2s ease;
+        }
+
+        .nexus-search-box:focus-within {
+          background: white;
+          border-color: #3b82f6;
+          box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+        }
+
+        .nexus-search-box input {
+          border: 0;
+          background: transparent;
+          outline: none;
+          width: 100%;
+          font-size: 0.95rem;
+          color: #1e293b;
+        }
+
+        .nexus-search-box input::placeholder {
+          color: #94a3b8;
+        }
+
+        .nexus-filter-row {
+          display: flex;
+          gap: 0.5rem;
+        }
+
+        .nexus-pill-btn {
+          padding: 0.5rem 1.25rem;
+          border-radius: 12px;
+          font-size: 0.85rem;
+          font-weight: 700;
+          text-transform: capitalize;
+          background: #f1f5f9;
+          color: #64748b;
+          border: 0;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+
+        .nexus-pill-btn:hover {
+          background: #e2e8f0;
+          color: #475569;
+        }
+
+        .nexus-pill-btn.active {
+          background: #0f172a;
+          color: white;
+          box-shadow: 0 4px 10px rgba(15, 23, 42, 0.2);
+        }
+
+        .nexus-content-pool {
+          min-height: 500px;
+        }
+
+        .nexus-notif-list {
+          display: flex;
+          flex-direction: column;
+        }
+
+        .nexus-notif-item {
+          display: flex;
+          gap: 1.5rem;
+          padding: 1.75rem 2rem;
+          border-bottom: 1px solid #f1f5f9;
+          transition: all 0.2s ease;
+          position: relative;
+        }
+
+        .nexus-notif-item:hover {
+          background: #f8fafc;
+        }
+
+        .nexus-notif-item.unread {
+          background: rgba(37, 99, 235, 0.02);
+        }
+
+        .nexus-notif-item.unread::before {
+          content: '';
+          position: absolute;
+          left: 0;
+          top: 0;
+          bottom: 0;
+          width: 4px;
+          background: #2563eb;
+        }
+
+        .nexus-notif-icon-shell {
+          width: 3.5rem;
+          height: 3.5rem;
+          border-radius: 18px;
+          background: white;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border: 1px solid #e2e8f0;
+          flex-shrink: 0;
+          box-shadow: 0 4px 10px rgba(0,0,0,0.02);
+        }
+
+        .nexus-notif-body {
+          flex: 1;
+        }
+
+        .nexus-notif-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          margin-bottom: 0.5rem;
+        }
+
+        .nexus-notif-title-row {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+        }
+
+        .nexus-notif-title {
+          font-size: 1.2rem;
+          font-weight: 800;
+          color: #0f172a;
+          margin: 0;
+        }
+
+        .nexus-unread-dot {
+          width: 8px;
+          height: 8px;
+          background: #3b82f6;
+          border-radius: 50%;
+        }
+
+        .nexus-critical-tag {
+          background: #ef4444;
+          color: white;
+          font-size: 0.65rem;
+          font-weight: 900;
+          padding: 2px 8px;
+          border-radius: 6px;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+        }
+
+        .nexus-notif-actions {
+          display: flex;
+          gap: 0.5rem;
+        }
+
+        .nexus-notif-actions button {
+          width: 32px;
+          height: 32px;
+          border-radius: 8px;
+          border: 0;
+          background: transparent;
+          color: #94a3b8;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+
+        .nexus-notif-actions button:hover {
+          background: #f1f5f9;
+          color: #3b82f6;
+        }
+
+        .nexus-notif-actions button.delete:hover {
+          background: #fee2e2;
+          color: #ef4444;
+        }
+
+        .nexus-notif-message {
+          color: #64748b;
+          font-size: 1.05rem;
+          line-height: 1.6;
+          margin: 0 0 1.25rem 0;
+          max-width: 800px;
+        }
+
+        .nexus-notif-footer {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        }
+
+        .nexus-notif-meta {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+          color: #94a3b8;
+          font-size: 0.85rem;
+          font-weight: 700;
+        }
+
+        .nexus-notif-meta .separator {
+          opacity: 0.3;
+        }
+
+        .nexus-notif-cat {
+          text-transform: uppercase;
+          letter-spacing: 0.1em;
+          background: #f1f5f9;
+          padding: 2px 8px;
+          border-radius: 4px;
+          font-size: 0.75rem;
+        }
+
+        .nexus-action-link {
+          background: transparent;
+          border: 0;
+          color: #2563eb;
+          font-weight: 800;
+          font-size: 0.85rem;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+
+        .nexus-action-link:hover {
+          color: #1d4ed8;
+          transform: translateX(4px);
+        }
+
+        .nexus-pagination {
+          padding: 1.5rem 2rem;
+          background: #fcfdfe;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          border-top: 1px solid #f1f5f9;
+        }
+
+        .nexus-pagination p {
+          margin: 0;
+          color: #64748b;
+          font-size: 0.9rem;
+        }
+
+        .nexus-page-controls {
+          display: flex;
+          align-items: center;
+          gap: 1rem;
+        }
+
+        .nexus-page-numbers {
+          display: flex;
+          gap: 0.5rem;
+        }
+
+        .nexus-page-numbers button {
+          width: 36px;
+          height: 36px;
+          border-radius: 10px;
+          border: 1px solid #e2e8f0;
+          background: white;
+          color: #64748b;
+          font-weight: 700;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+
+        .nexus-page-numbers button.active {
+          background: #2563eb;
+          color: white;
+          border-color: #2563eb;
+          box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2);
+        }
+
+        .nexus-empty-state {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          padding: 6rem 2rem;
+          text-align: center;
+        }
+
+        .nexus-empty-icon {
+          color: #e2e8f0;
+          margin-bottom: 1.5rem;
+        }
+
+        .nexus-loading-state {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          padding: 6rem 2rem;
+        }
+
+        .nexus-spinner {
+          width: 40px;
+          height: 40px;
+          border: 4px solid #f1f5f9;
+          border-top-color: #3b82f6;
+          border-radius: 50%;
+          animation: spin 0.8s linear infinite;
+          margin-bottom: 1rem;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .admin-theme-dark .nexus-glass-card { background: #0f172a; border-color: #1e293b; }
+        .admin-theme-dark .nexus-toolbar { background: #111827; border-color: #1e293b; }
+        .admin-theme-dark .nexus-search-box { background: #1e293b; }
+        .admin-theme-dark .nexus-search-box input { color: #f1f5f9; }
+        .admin-theme-dark .nexus-pill-btn { background: #1e293b; color: #94a3b8; }
+        .admin-theme-dark .nexus-pill-btn.active { background: white; color: #0f172a; }
+        .admin-theme-dark .nexus-notif-item { border-color: #1e293b; }
+        .admin-theme-dark .nexus-notif-item:hover { background: #1e293b; }
+        .admin-theme-dark .nexus-notif-icon-shell { background: #1e293b; border-color: #334155; }
+        .admin-theme-dark .nexus-notif-title { color: white; }
+        .admin-theme-dark .nexus-notif-cat { background: #1e293b; color: #94a3b8; }
+        .admin-theme-dark .nexus-pagination { background: #111827; border-color: #1e293b; }
+        .admin-theme-dark .admin-notif-center-titlebox h1 { color: #f1f5f9; }
       `}</style>
     </div>
   );
