@@ -385,37 +385,45 @@ const AdminLayout = () => {
               {notificationsOpen && createPortal(
                 <div className="admin-navbar-popover admin-navbar-notificationspanel" ref={notifOverlayRef}>
                   <div className="admin-navbar-popoverhead">
-                    <div className="flex justify-between items-center w-full mb-3">
-                      <div className="flex items-center gap-2">
-                        <strong>Nexus Intelligence</strong>
-                        <div className="flex items-center gap-1.5 ml-2">
-                          <span className="notif-stat-pill all">
-                            {notifications.length} Total
-                          </span>
-                          {urgentTotal > 0 && (
-                            <span className="notif-stat-pill urgent animate-pulse">
-                              {urgentTotal} Critical
-                            </span>
-                          )}
+                    <div className="flex justify-between items-start w-full mb-4">
+                      <div>
+                        <div className="flex items-center gap-2 mb-1.5">
+                          <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                          <span className="text-[9px] fw-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest">Live Telemetry Active</span>
                         </div>
+                        <h5 className="mb-0 fw-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
+                          Nexus Intelligence
+                          <span className="text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-500 px-2 py-0.5 rounded-full fw-normal">v4.2</span>
+                        </h5>
                       </div>
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-3 pt-1">
                         <button 
-                          className="text-slate-400 hover:text-slate-600 border-0 bg-transparent p-0 transition-transform hover:rotate-90"
+                          className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 border-0 bg-transparent p-0 transition-all hover:scale-110"
                           onClick={() => setShowNotificationSettings(!showNotificationSettings)}
-                          title="Notification Settings"
+                          title="Nexus Routing Preferences"
                         >
-                          <Settings2 size={16} />
+                          <Settings2 size={18} />
                         </button>
                         {unreadCount > 0 && (
                           <button 
-                            className="text-xs text-blue-500 hover:text-blue-600 fw-bold border-0 bg-transparent p-0"
+                            className="text-[10px] text-blue-600 hover:text-blue-700 fw-bold border-0 bg-blue-50 dark:bg-blue-900/30 px-2 py-1 rounded-lg transition-colors"
                             onClick={handleMarkAllAsRead}
                           >
-                            Mark all read
+                            Mark All Read
                           </button>
                         )}
                       </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 mb-4">
+                      <span className="notif-stat-pill all">
+                        {notifications.length} Total Alerts
+                      </span>
+                      {urgentTotal > 0 && (
+                        <span className="notif-stat-pill urgent animate-pulse">
+                          {urgentTotal} Critical Action{urgentTotal > 1 ? 's' : ''} Required
+                        </span>
+                      )}
                     </div>
                     
                     {/* Tabs */}
