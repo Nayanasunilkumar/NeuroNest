@@ -551,14 +551,20 @@ const AdminLayout = () => {
                                       <ExternalLink size={10} className="ml-1" />
                                     </button>
                                     <button 
-                                      className={`notif-quick-btn ${resolvingId === notif.id ? 'opacity-50 pointer-events-none' : ''}`}
-                                      disabled={resolvingId === notif.id}
+                                      className={`notif-quick-btn ${resolvingId === notif.id || notif.is_read ? 'opacity-70 cursor-default' : ''}`}
+                                      disabled={resolvingId === notif.id || notif.is_read}
                                       onClick={(e) => { 
+                                        if (notif.is_read) return;
                                         e.stopPropagation(); 
                                         handleMarkAsRead(notif.id); 
                                       }}
                                     >
-                                      {resolvingId === notif.id ? (
+                                      {notif.is_read ? (
+                                        <>
+                                          <Check size={12} className="mr-1 text-green-500" />
+                                          Reviewed
+                                        </>
+                                      ) : resolvingId === notif.id ? (
                                         <>
                                           <div className="w-3 h-3 border-2 border-slate-400 border-t-transparent rounded-full animate-spin mr-1" />
                                           Reviewing...
