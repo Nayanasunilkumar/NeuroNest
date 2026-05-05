@@ -551,14 +551,21 @@ const AdminLayout = () => {
                                       <ExternalLink size={10} className="ml-1" />
                                     </button>
                                     <button 
-                                      className="notif-quick-btn"
+                                      className={`notif-quick-btn ${resolvingId === notif.id ? 'opacity-50 pointer-events-none' : ''}`}
+                                      disabled={resolvingId === notif.id}
                                       onClick={(e) => { 
                                         e.stopPropagation(); 
                                         handleMarkAsRead(notif.id); 
-                                        // Keep it expanded so user sees the change (dot disappears)
                                       }}
                                     >
-                                      Mark as Reviewed
+                                      {resolvingId === notif.id ? (
+                                        <>
+                                          <div className="w-3 h-3 border-2 border-slate-400 border-t-transparent rounded-full animate-spin mr-1" />
+                                          Reviewing...
+                                        </>
+                                      ) : (
+                                        'Mark as Reviewed'
+                                      )}
                                     </button>
                                     {notif.metadata?.severity === 'critical' && (
                                       <button 
