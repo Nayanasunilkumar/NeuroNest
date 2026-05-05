@@ -37,7 +37,7 @@ const ManageDoctors = () => {
     const statCards = [
         { label: "Total Providers", value: stats.total, color: "primary", icon: <Users size={20} />, filter: "all" },
         { label: "Verified Specialists", value: stats.verified, color: "success", icon: <Verified size={20} />, filter: "verified" },
-        { label: "Pending Review", value: stats.pending, color: "warning", icon: <ShieldQuestion size={20} />, filter: "pending" },
+        { label: "High Risk Flags", value: doctors.filter(d => ['high', 'critical'].includes(d.risk_level)).length, color: "danger", icon: <ShieldAlert size={20} />, filter: "risk" },
         { label: "Active Roster", value: stats.active, color: "info", icon: <UserCheck size={20} />, filter: "active" },
     ];
 
@@ -448,15 +448,16 @@ const ManageDoctors = () => {
                                     <th className="py-3 border-0 small fw-black text-uppercase opacity-50">Specialist</th>
                                     <th className="py-3 border-0 small fw-black text-uppercase opacity-50">Credentials</th>
                                     <th className="py-3 border-0 small fw-black text-uppercase opacity-50 text-center">Verification</th>
+                                    <th className="py-3 border-0 small fw-black text-uppercase opacity-50 text-center">Risk</th>
                                     <th className="py-3 border-0 small fw-black text-uppercase opacity-50 text-center">Account</th>
                                     <th className="py-3 border-0 small fw-black text-uppercase opacity-50 text-end px-4">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {loading && doctors.length === 0 ? (
-                                    <tr><td colSpan="6" className="text-center py-5 opacity-50 fw-bold">INITIALIZING CLINICAL DATA...</td></tr>
+                                    <tr><td colSpan="7" className="text-center py-5 opacity-50 fw-bold">INITIALIZING CLINICAL DATA...</td></tr>
                                 ) : doctors.length === 0 ? (
-                                    <tr><td colSpan="6" className="text-center py-5 opacity-50 fw-bold">NO RECORDS FOUND</td></tr>
+                                    <tr><td colSpan="7" className="text-center py-5 opacity-50 fw-bold">NO RECORDS FOUND</td></tr>
                                 ) : (
                                     doctors.map((doc, index) => {
                                       const shouldOpenMenuUp = index >= doctors.length - 2;
@@ -474,7 +475,12 @@ const ManageDoctors = () => {
                                                         {doc.full_name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || '??'}
                                                     </div>
                                                     <div>
-                                                        <div className="fw-black text-dark small mb-0">{doc.full_name}</div>
+                                                        <div className="flex items-center gap-2">
+                                                            <div className="fw-black text-dark small mb-0">{doc.full_name}</div>
+                                                            {['high', 'critical'].includes(doc.risk_level) && (
+                                                                <ShieldAlert size={12} className="text-rose-500 animate-pulse" title={`${doc.risk_level.toUpperCase()} RISK FLAG`} />
+                                                            )}
+                                                        </div>
                                                         <div className="text-secondary" style={{ fontSize: '0.75rem' }}>{doc.email}</div>
                                                     </div>
                                                 </button>
@@ -493,6 +499,14 @@ const ManageDoctors = () => {
                                                         <AlertTriangle size={12} className="me-1 mb-1" /> Pending
                                                     </span>
                                                 )}
+                                            </td>
+                                            <td className="text-center">
+                                                <div className="d-flex flex-column align-items-center">
+                                                    <span className={`fw-black mb-0 ${doc.risk_score > 60 ? 'text-rose-600' : doc.risk_score > 30 ? 'text-orange-500' : 'text-emerald-500'}`} style={{ fontSize: '0.85rem' }}>
+                                                        {Math.round(doc.risk_score)}%
+                                                    </span>
+                                                    <span className="text-secondary text-uppercase fw-bold" style={{ fontSize: '0.6rem', letterSpacing: '0.5px' }}>{doc.risk_level}</span>
+                                                </div>
                                             </td>
                                             <td className="text-center">
                                                 <span className={`badge rounded-pill px-3 py-2 ${doc.account_status === 'active' ? 'bg-info bg-opacity-10 text-info border-info' : doc.account_status === 'suspended' ? 'bg-warning bg-opacity-10 text-warning border-warning' : 'bg-danger bg-opacity-10 text-danger border-danger'} border border-opacity-25`}>

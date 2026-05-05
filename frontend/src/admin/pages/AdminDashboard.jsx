@@ -10,6 +10,7 @@ import {
   Users,
   UserPlus,
   Calendar,
+  ShieldAlert,
 } from 'lucide-react';
 import { adminDashboardApi } from '../../shared/services/api/adminDashboardApi';
 import './AdminDashboard.css';
@@ -34,6 +35,16 @@ const STAT_META = {
     icon: Clock3,
     tone: 'violet',
     accent: 'linear-gradient(135deg, #4f46e5 0%, #8b5cf6 100%)',
+  },
+  high_risk_doctors: {
+    icon: ShieldAlert,
+    tone: 'rose',
+    accent: 'linear-gradient(135deg, #be123c 0%, #fb7185 100%)',
+  },
+  pending_governance: {
+    icon: Activity,
+    tone: 'amber',
+    accent: 'linear-gradient(135deg, #b45309 0%, #fbbf24 100%)',
   },
   default: {
     icon: Activity,

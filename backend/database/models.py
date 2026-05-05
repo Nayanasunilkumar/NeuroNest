@@ -722,9 +722,13 @@ class InAppNotification(db.Model):
     message = db.Column(db.Text, nullable=False)
     payload = db.Column(db.JSON, nullable=True)
     is_read = db.Column(db.Boolean, nullable=False, default=False)
+    is_resolved = db.Column(db.Boolean, nullable=False, default=False)
+    resolved_at = db.Column(db.DateTime(timezone=True), nullable=True)
+    resolved_by = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=True)
     created_at = db.Column(db.DateTime(timezone=True), default=datetime.utcnow, nullable=False)
 
-    user = db.relationship("User", backref="notifications")
+    user = db.relationship("User", foreign_keys=[user_id], backref="notifications")
+    resolver = db.relationship("User", foreign_keys=[resolved_by])
 
     def to_dict(self):
         return {
@@ -735,6 +739,9 @@ class InAppNotification(db.Model):
             "message": self.message,
             "metadata": self.payload or {},
             "is_read": self.is_read,
+            "is_resolved": self.is_resolved,
+            "resolved_at": self.resolved_at.isoformat() if self.resolved_at else None,
+            "resolved_by": self.resolved_by,
             "created_at": self.created_at.isoformat() if self.created_at else None,
         }
 
@@ -1055,6 +1062,7 @@ class DoctorProfile(db.Model):
     missed_appointments_count = db.Column(db.Integer, default=0)
     avg_rating = db.Column(db.Float, default=5.0)
     risk_level = db.Column(db.String(20), default="low") # low, medium, high, critical
+    risk_score = db.Column(db.Float, default=0.0)
     # Doctor-specific status (synchronizes with User.account_status)
     # active, under_review, restricted, suspended, blocked
     doctor_status = db.Column(db.String(20), default="active") 
@@ -1108,6 +1116,7 @@ class DoctorProfile(db.Model):
                 "missed_appointments_count": self.missed_appointments_count,
                 "avg_rating": self.avg_rating,
                 "risk_level": self.risk_level,
+                "risk_score": self.risk_score,
                 "doctor_status": self.doctor_status
             },
             "created_at": self.created_at.isoformat() + 'Z' if self.created_at else None,
@@ -1730,4 +1739,34 @@ class LatestVitalState(db.Model):
             "device_status": device_payload["device_status"] if device_payload else "offline",
             "last_seen_timestamp": device_payload["last_seen_timestamp"] if device_payload else None,
             "device_name": device_payload["device_name"] if device_payload else None,
+        }
+# =========================================
+# ADMINISTRATIVE AUDIT LOGS
+# =========================================
+class AdminAuditLog(db.Model):
+    __tablename__ = "admin_audit_logs"
+    
+    id = db.Column(db.Integer, primary_key=True)
+    admin_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False, index=True)
+    action = db.Column(db.String(100), nullable=False) # e.g. "suspend_doctor", "resolve_escalation"
+    target_type = db.Column(db.String(50), nullable=True) # e.g. "doctor", "notification"
+    target_id = db.Column(db.String(100), nullable=True)
+    details = db.Column(db.JSON, nullable=True)
+    ip_address = db.Column(db.String(45), nullable=True)
+    user_agent = db.Column(db.String(255), nullable=True)
+    created_at = db.Column(db.DateTime(timezone=True), default=datetime.utcnow, nullable=False, index=True)
+    
+    admin = db.relationship("User", foreign_keys=[admin_id])
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "admin_id": self.admin_id,
+            "admin_name": self.admin.full_name if self.admin else "Unknown Admin",
+            "action": self.action,
+            "target_type": self.target_type,
+            "target_id": self.target_id,
+            "details": self.details or {},
+            "ip_address": self.ip_address,
+            "created_at": self.created_at.isoformat() if self.created_at else None
         }

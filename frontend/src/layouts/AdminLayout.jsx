@@ -136,6 +136,7 @@ const AdminLayout = () => {
   }, []);
 
   const unreadCount = useMemo(() => notifications.filter(n => !n.is_read).length, [notifications]);
+  const unresolvedCount = useMemo(() => notifications.filter(n => !n.is_resolved).length, [notifications]);
 
   const handleMarkAllAsRead = async () => {
     try {
@@ -143,6 +144,16 @@ const AdminLayout = () => {
       setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
     } catch (err) {
       console.error('Failed to mark all as read:', err);
+    }
+  };
+
+  const handleResolve = async (id, e) => {
+    if (e) e.stopPropagation();
+    try {
+      await notificationApi.resolve(id);
+      setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_resolved: true, is_read: true } : n));
+    } catch (err) {
+      console.error('Failed to resolve escalation:', err);
     }
   };
 
@@ -426,8 +437,8 @@ const AdminLayout = () => {
                       <div className="telemetry-card">
                         <span className="telemetry-label">Critical Actions</span>
                         <span className="telemetry-value text-rose-600">
-                          <ShieldAlert size={12} className={urgentTotal > 0 ? "text-rose-500 animate-pulse" : "text-slate-300"} />
-                          {urgentTotal} Required
+                          <ShieldAlert size={12} className={notifications.filter(n => n.metadata?.severity === 'critical' && !n.is_resolved).length > 0 ? "text-rose-500 animate-pulse" : "text-slate-300"} />
+                          {notifications.filter(n => n.metadata?.severity === 'critical' && !n.is_resolved).length} Required
                         </span>
                       </div>
                     </div>
@@ -444,7 +455,7 @@ const AdminLayout = () => {
                         className={`admin-notif-tab ${notificationFilter === 'unread' ? 'active' : ''}`}
                         onClick={() => { setNotificationFilter('unread'); setExpandedNotif(null); }}
                       >
-                        Unread {unreadCount > 0 && `(${unreadCount})`}
+                        Action Required {unresolvedCount > 0 && `(${unresolvedCount})`}
                       </button>
                       <button 
                         className={`admin-notif-tab ${notificationFilter === 'urgent' ? 'active' : ''}`}
@@ -576,28 +587,6 @@ const AdminLayout = () => {
 
                                 {expandedNotif === notif.id && (
                                   <div className="notif-expanded-actions mt-3 pt-3 border-top flex items-center gap-2">
-                                    <button 
-                                      className="notif-quick-btn primary"
-                                      onClick={(e) => { e.stopPropagation(); handleNotificationClick(notif); }}
-                                    >
-                                      Review Case
-                                      <ExternalLink size={10} className="ml-1" />
-                                    </button>
-                                    <button 
-                                      className={`notif-quick-btn ${notif.is_read ? 'success' : ''} ${resolvingId === notif.id ? 'opacity-70 cursor-default' : ''}`}
-                                      disabled={resolvingId === notif.id || notif.is_read}
-                                      onClick={(e) => { 
-                                        if (notif.is_read) return;
-                                        e.stopPropagation(); 
-                                        handleMarkAsRead(notif.id); 
-                                      }}
-                                    >
-                                      {notif.is_read ? (
-                                        'Read'
-                                      ) : resolvingId === notif.id ? (
-                                        <>
-                                          <div className="w-3 h-3 border-2 border-slate-400 border-t-transparent rounded-full animate-spin mr-1" />
-                                          Reading...
                                         </>
                                       ) : (
                                         'Mark as Read'
@@ -1393,6 +1382,29 @@ const AdminLayout = () => {
           font-size: 8px;
           font-weight: 800;
           text-transform: uppercase;
+        }
+
+        .notif-quick-btn.secondary {
+          background: #f1f5f9;
+          color: #475569;
+          border-color: #e2e8f0;
+        }
+        .notif-quick-btn.secondary:hover {
+          background: #e2e8f0;
+          color: #1e293b;
+        }
+
+        .resolution-mini-tag {
+          display: flex;
+          align-items: center;
+          color: #10b981;
+          font-weight: 800;
+          font-size: 10px;
+          text-transform: uppercase;
+          background: rgba(16, 185, 129, 0.08);
+          padding: 4px 10px;
+          border-radius: 8px;
+          letter-spacing: 0.02em;
         }
         /* Routing Preferences & Toggles */
         .admin-notif-preferences {

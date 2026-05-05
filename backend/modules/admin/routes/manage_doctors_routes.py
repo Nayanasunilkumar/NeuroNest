@@ -120,6 +120,9 @@ def get_doctors():
                 DoctorProfile.specialization,
                 DoctorProfile.license_number,
                 DoctorProfile.sector,
+                DoctorProfile.risk_level,
+                DoctorProfile.risk_score,
+                DoctorProfile.doctor_status,
                 DoctorProfile.created_at
             ).filter(DoctorProfile.user_id.in_(doctor_ids)).all()
             profiles_by_user = {
@@ -137,6 +140,9 @@ def get_doctors():
                 "specialization": getattr(profile, "specialization", None) or "N/A",
                 "license_number": getattr(profile, "license_number", None) or "N/A",
                 "sector": getattr(profile, "sector", None) or "North Sector",
+                "risk_level": getattr(profile, "risk_level", "low"),
+                "risk_score": getattr(profile, "risk_score", 0.0),
+                "doctor_status": getattr(profile, "doctor_status", "active"),
                 "created_at": str(getattr(profile, "created_at", None) or datetime.utcnow())
             })
 

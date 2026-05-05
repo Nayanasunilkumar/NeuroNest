@@ -26,8 +26,9 @@ const AdminNotificationCenter = () => {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterType, setFilterType] = useState('all'); // all, unread, critical, system
   const [page, setPage] = useState(1);
+  const [lastUpdated, setLastUpdated] = useState(new Date());
+  const [selectedIds, setSelectedIds] = useState([]);
   const itemsPerPage = 10;
 
   useEffect(() => {
@@ -39,6 +40,7 @@ const AdminNotificationCenter = () => {
     try {
       const response = await notificationApi.getNotifications();
       setNotifications(response || []);
+      setLastUpdated(new Date());
     } catch (error) {
       console.error('Failed to fetch notifications:', error);
     } finally {
@@ -66,6 +68,17 @@ const AdminNotificationCenter = () => {
     }
   };
 
+  const handleResolve = async (id, e) => {
+    e.stopPropagation();
+    try {
+      await notificationApi.resolve(id);
+      setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_resolved: true, is_read: true } : n));
+    } catch (error) {
+      console.error('Resolution failed:', error);
+      alert('Failed to resolve escalation. Please retry.');
+    }
+  };
+
   const handleMarkAllAsRead = async () => {
     try {
       await notificationApi.markAllAsRead();
@@ -77,6 +90,30 @@ const AdminNotificationCenter = () => {
       console.error('Mark all read failed:', error);
       alert('Failed to mark notifications as read. Please check your connection.');
     }
+  };
+  
+  const handleBulkResolve = async () => {
+    if (selectedIds.length === 0) return;
+    if (!window.confirm(`Resolve ${selectedIds.length} clinical escalations?`)) return;
+    
+    setLoading(true);
+    try {
+      await Promise.all(selectedIds.map(id => notificationApi.resolve(id)));
+      setNotifications(prev => prev.map(n => 
+        selectedIds.includes(n.id) ? { ...n, is_resolved: true, is_read: true } : n
+      ));
+      setSelectedIds([]);
+    } catch (error) {
+      console.error('Bulk resolution failed:', error);
+      alert('Partial failure during bulk resolution. Refreshing feed.');
+      fetchNotifications();
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const toggleSelect = (id) => {
+    setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
   };
 
   const getNotifIcon = (type, severity) => {
@@ -104,15 +141,21 @@ const AdminNotificationCenter = () => {
     return notifications.filter(n => {
       const title = (n.title || "").toLowerCase();
       const message = (n.message || n.content || "").toLowerCase();
+      const doctorName = (n.payload?.doctor_name || n.metadata?.doctor_name || "").toLowerCase();
+      const patientName = (n.payload?.patient_name || n.metadata?.patient_name || "").toLowerCase();
       const search = searchTerm.toLowerCase();
-      const matchesSearch = title.includes(search) || message.includes(search);
+      
+      const matchesSearch = title.includes(search) || 
+                           message.includes(search) || 
+                           doctorName.includes(search) || 
+                           patientName.includes(search);
       
       const type = n.type || '';
       const category = n.metadata?.category || '';
       const severity = n.metadata?.severity || '';
 
       const matchesType = filterType === 'all' || 
-                         (filterType === 'unread' && !n.is_read) ||
+                         (filterType === 'unresolved' && !n.is_resolved) ||
                          (filterType === 'critical' && severity === 'critical') ||
                          (filterType === 'escalations' && (type === 'escalation' || category === 'escalation')) ||
                          (filterType === 'credentialing' && type === 'credentialing') ||
@@ -151,7 +194,13 @@ const AdminNotificationCenter = () => {
             <span className="text-xs fw-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest">Global Governance Active</span>
           </div>
           <h1>Administrative Nexus</h1>
-          <p>Institutional audit center for real-time governance monitoring</p>
+          <div className="flex items-center gap-2">
+            <p className="mb-0">Institutional audit center for real-time governance monitoring</p>
+            <span className="text-[10px] text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded flex items-center gap-1.5">
+              <Clock3 size={10} />
+              Last synchronized: {formatRelativeTime(lastUpdated)}
+            </span>
+          </div>
         </div>
         <div className="admin-notif-center-actions">
           <button 
@@ -162,16 +211,26 @@ const AdminNotificationCenter = () => {
             Mark All Read
           </button>
           <button 
+            className="nexus-action-btn primary"
             onClick={fetchNotifications}
-            className="nexus-header-btn primary"
+            disabled={loading}
           >
-            <Activity size={14} />
-            Refresh Feed
+            <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
+            {loading ? 'Synchronizing...' : 'Refresh Feed'}
           </button>
+          
+          {selectedIds.length > 0 && (
+            <button 
+              className="nexus-action-btn success shadow-lg animate-bounce"
+              onClick={handleBulkResolve}
+            >
+              <CheckCircle size={14} />
+              Bulk Resolve ({selectedIds.length})
+            </button>
+          )}
         </div>
       </div>
 
-      {/* Executive Summary Stats */}
       <div className="nexus-executive-summary">
         <div className="summary-card">
           <span className="summary-label">Total Intelligence</span>
@@ -180,12 +239,12 @@ const AdminNotificationCenter = () => {
         </div>
         <div className="summary-card">
           <span className="summary-label">Awaiting Review</span>
-          <span className="summary-value text-blue-600">{notifications.filter(n => !n.is_read).length}</span>
+          <span className="summary-value text-blue-600">{notifications.filter(n => !n.is_resolved).length}</span>
           <div className="summary-footer">Pending administrative action</div>
         </div>
         <div className="summary-card urgent">
           <span className="summary-label text-rose-500">Critical Escalations</span>
-          <span className="summary-value text-rose-600">{notifications.filter(n => n.metadata?.severity === 'critical' && !n.is_read).length}</span>
+          <span className="summary-value text-rose-600">{notifications.filter(n => n.metadata?.severity === 'critical' && !n.is_resolved).length}</span>
           <div className="summary-footer">Immediate impact required</div>
         </div>
         <div className="summary-card">
@@ -196,7 +255,6 @@ const AdminNotificationCenter = () => {
       </div>
 
       <div className="nexus-main-deck">
-        {/* Toolbar */}
         <div className="nexus-control-bar">
           <div className="nexus-search-wrap">
             <Search size={18} className="text-slate-400" />
@@ -209,8 +267,24 @@ const AdminNotificationCenter = () => {
           </div>
           
           <div className="nexus-filter-strip">
-            {['all', 'unread', 'critical', 'escalations', 'credentialing', 'appointments'].map(type => {
-              const count = type === 'unread' ? notifications.filter(n => !n.is_read).length : 0;
+            <div className="flex items-center gap-3 mr-auto">
+              <div className="record-select-all">
+                <input 
+                  type="checkbox" 
+                  checked={displayedNotifications.length > 0 && displayedNotifications.every(n => selectedIds.includes(n.id))}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setSelectedIds(prev => [...new Set([...prev, ...displayedNotifications.map(n => n.id)])]);
+                    } else {
+                      setSelectedIds(prev => prev.filter(id => !displayedNotifications.find(n => n.id === id)));
+                    }
+                  }}
+                />
+              </div>
+            </div>
+            {['all', 'unresolved', 'critical', 'escalations', 'credentialing', 'appointments'].map(type => {
+              const count = type === 'unresolved' ? notifications.filter(n => !n.is_resolved).length : 
+                            type === 'critical' ? notifications.filter(n => n.metadata?.severity === 'critical' && !n.is_resolved).length : 0;
               return (
                 <button
                   key={type}
@@ -225,7 +299,6 @@ const AdminNotificationCenter = () => {
           </div>
         </div>
 
-        {/* Content Pool */}
         <div className="nexus-records-pool">
           {loading ? (
             <div className="nexus-syncing-state">
@@ -242,9 +315,16 @@ const AdminNotificationCenter = () => {
             <div className="nexus-record-stack">
               {displayedNotifications.map((notif) => (
                 <div 
-                  key={notif.id}
-                  className={`nexus-record-item ${notif.is_read ? 'is-read' : 'is-unread'} severity-${notif.metadata?.severity || 'info'}`}
+                  key={notif.id} 
+                  className={`nexus-record ${notif.is_read ? 'read' : 'unread'} severity-${notif.metadata?.severity || 'info'} ${selectedIds.includes(notif.id) ? 'selected' : ''}`}
                 >
+                  <div className="record-selection-overlay">
+                    <input 
+                      type="checkbox" 
+                      checked={selectedIds.includes(notif.id)}
+                      onChange={() => toggleSelect(notif.id)}
+                    />
+                  </div>
                   <div className="record-visual">
                     <div className="icon-vault">
                       {getNotifIcon(notif.type, notif.metadata?.severity)}
@@ -255,11 +335,13 @@ const AdminNotificationCenter = () => {
                     <div className="record-head">
                       <div className="flex items-center gap-3">
                         <h4 className="record-title">{notif.title}</h4>
-                        {notif.metadata?.severity === 'critical' && (
+                        {notif.metadata?.severity === 'critical' && !notif.is_resolved && (
                           <span className="record-tag-critical">CRITICAL</span>
                         )}
-                        {notif.is_read && (
+                        {notif.is_resolved ? (
                           <span className="record-tag-resolved">RESOLVED</span>
+                        ) : (
+                          <span className="record-tag-pending">PENDING</span>
                         )}
                       </div>
                       <div className="record-timestamp">
@@ -295,32 +377,43 @@ const AdminNotificationCenter = () => {
                   </div>
 
                   <div className="record-actions-dock">
-                    <button 
-                      onClick={() => handleAction(notif)}
-                      className="dock-btn primary"
-                    >
-                      Review Case
-                      <ExternalLink size={12} />
-                    </button>
-                    <button 
-                      onClick={(e) => handleMarkRead(notif.id, e)}
-                      className={`dock-btn ${notif.is_read ? 'success' : 'secondary'}`}
-                      disabled={notif.is_read}
-                    >
-                      {notif.is_read ? (
-                        <><Check size={14} /> Read</>
-                      ) : (
-                        'Mark as Read'
-                      )}
-                    </button>
-                    {!notif.is_read && (
-                      <button 
-                        onClick={(e) => handleDelete(notif.id, e)}
-                        className="dock-btn danger"
-                        title="Archive Record"
-                      >
-                        <Trash2 size={14} />
-                      </button>
+                    {!notif.is_resolved ? (
+                      <>
+                        <button 
+                          onClick={() => handleAction(notif)}
+                          className="dock-btn primary"
+                        >
+                          Review Case
+                          <ExternalLink size={12} />
+                        </button>
+                        {!notif.is_read && (
+                          <button 
+                            onClick={(e) => handleMarkRead(notif.id, e)}
+                            className="dock-btn secondary"
+                          >
+                            Mark as Read
+                          </button>
+                        )}
+                        <button 
+                          onClick={(e) => handleResolve(notif.id, e)}
+                          className="dock-btn success"
+                        >
+                          <Check size={14} />
+                          Resolve Case
+                        </button>
+                        <button 
+                          onClick={(e) => handleDelete(notif.id, e)}
+                          className="dock-btn danger"
+                          title="Archive Record"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </>
+                    ) : (
+                      <div className="resolution-complete-tag">
+                        <CheckCircle size={16} />
+                        Case Resolved
+                      </div>
                     )}
                   </div>
                 </div>
@@ -722,14 +815,68 @@ const AdminNotificationCenter = () => {
           letter-spacing: 0.05em;
         }
 
-        .record-tag-resolved {
-          background: #f0fdf4;
-          color: #166534;
+        .nexus-record.selected {
+          border-color: #6366f1;
+          background: rgba(99, 102, 241, 0.03);
+          box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1);
+        }
+
+        .record-selection-overlay {
+          padding: 1.25rem 0 1.25rem 1.25rem;
+          display: flex;
+          align-items: center;
+        }
+
+        .record-selection-overlay input[type="checkbox"] {
+          width: 18px;
+          height: 18px;
+          border-radius: 6px;
+          cursor: pointer;
+          border: 2px solid #cbd5e1;
+          transition: all 0.2s;
+        }
+
+        .record-selection-overlay input[type="checkbox"]:checked {
+          background-color: #6366f1;
+          border-color: #6366f1;
+        }
+
+        .nexus-action-btn.success {
+          background: #10b981;
+          color: white;
+          border: none;
+        }
+
+        .animate-bounce {
+          animation: bounce 1s infinite;
+        }
+
+        @keyframes bounce {
+          0%, 100% { transform: translateY(-5%); animation-timing-function: cubic-bezier(0.8, 0, 1, 1); }
+          50% { transform: translateY(0); animation-timing-function: cubic-bezier(0, 0, 0.2, 1); }
+        }
+
+        .record-tag-pending {
+          background: #fef9c3;
+          color: #854d0e;
           font-size: 10px;
-          font-weight: 900;
+          font-weight: 800;
           padding: 2px 8px;
           border-radius: 6px;
-          border: 1px solid #bbf7d0;
+          border: 1px solid #fef08a;
+        }
+
+        .resolution-complete-tag {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          color: #10b981;
+          font-weight: 700;
+          font-size: 0.9rem;
+          padding: 0.5rem 1rem;
+          background: rgba(16, 185, 129, 0.05);
+          border-radius: 12px;
+          border: 1px solid rgba(16, 185, 129, 0.1);
         }
 
         .admin-theme-dark .nexus-main-deck { background: #0f172a; border-color: #1e293b; }

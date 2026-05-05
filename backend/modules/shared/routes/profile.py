@@ -262,6 +262,25 @@ def mark_notification_read(id):
     
     return jsonify({"message": "Notification marked as read"}), 200
 
+@profile_bp.route("/notifications/<int:id>/resolve", methods=["PATCH"])
+@jwt_required()
+def resolve_notification(id):
+    user_id = int(get_jwt_identity())
+    from database.models import InAppNotification, datetime
+    
+    notification = InAppNotification.query.filter_by(id=id, user_id=user_id).first()
+    if not notification:
+        return jsonify({"message": "Notification not found"}), 404
+        
+    notification.is_resolved = True
+    notification.resolved_at = datetime.utcnow()
+    notification.resolved_by = user_id
+    # Resolving implicitly marks as read if not already done
+    notification.is_read = True 
+    db.session.commit()
+    
+    return jsonify({"message": "Escalation resolved and archived"}), 200
+
 @profile_bp.route("/notifications/read-all", methods=["PATCH"])
 @jwt_required()
 def mark_all_notifications_read():

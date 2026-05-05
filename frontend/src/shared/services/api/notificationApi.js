@@ -26,6 +26,14 @@ export const notificationApi = {
         return response.data;
     },
 
+    resolve: async (id) => {
+        const token = localStorage.getItem('neuronest_token');
+        const response = await axios.patch(`${API_BASE_URL}/api/profile/notifications/${id}/resolve`, {}, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        return response.data;
+    },
+
     deleteNotification: async (id) => {
         const token = localStorage.getItem('neuronest_token');
         const response = await axios.delete(`${API_BASE_URL}/api/profile/notifications/${id}`, {

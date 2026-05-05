@@ -4,7 +4,7 @@ from flask import Blueprint, jsonify
 from flask_jwt_extended import get_jwt_identity, jwt_required
 from sqlalchemy import func
 
-from database.models import Appointment, DoctorEscalation, Review, User
+from database.models import Appointment, DoctorEscalation, Review, User, DoctorProfile, InAppNotification
 from models.announcement import Announcement
 
 admin_dashboard_bp = Blueprint("admin_dashboard", __name__)
@@ -303,6 +303,9 @@ def get_dashboard_summary():
             func.date(User.created_at) < today,
         ).count()
 
+        high_risk_doctors = DoctorProfile.query.filter(DoctorProfile.risk_level.in_(["high", "critical"])).count()
+        unresolved_governance = InAppNotification.query.filter(InAppNotification.is_resolved == False).count()
+
         return jsonify(
             {
                 "stats": [
@@ -336,6 +339,20 @@ def get_dashboard_summary():
                         "trend": _trend_label(today_appointments, yesterday_appointments),
                         "color": "orange",
                         "id": "today_appointments",
+                    },
+                    {
+                        "label": "High Risk Doctors",
+                        "value": f"{high_risk_doctors:,}",
+                        "trend": "Review Required" if high_risk_doctors > 0 else "System Clear",
+                        "color": "rose",
+                        "id": "high_risk_doctors",
+                    },
+                    {
+                        "label": "Pending Governance",
+                        "value": f"{unresolved_governance:,}",
+                        "trend": "Action Needed" if unresolved_governance > 0 else "Operational",
+                        "color": "amber",
+                        "id": "pending_governance",
                     },
                 ],
                 "activities": _build_activities(),
