@@ -318,7 +318,7 @@ img, video {
     gap: 10px;
   }
 
-  .btn-save-premium {
+  .settings-pane-container .btn-save-premium {
     width: 100%;
     justify-content: center;
   }
