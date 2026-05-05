@@ -19,7 +19,6 @@ import {
   Moon,
   Settings,
   ShieldCheck,
-  ShieldAlert,
   Star,
   Stethoscope,
   Sun,
