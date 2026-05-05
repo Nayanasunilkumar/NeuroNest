@@ -330,7 +330,7 @@ const AdminLayout = () => {
             </div>
           </div>
 
-          <div className="admin-navbar-right" ref={overlayRef}>
+          <div className="admin-navbar-right">
 
 
             <div className="admin-navbar-time" aria-label="System time">
@@ -539,6 +539,9 @@ const AdminLayout = () => {
                 </div>,
                 document.body
               )}
+            </div>
+
+            <button
               type="button"
               className="admin-navbar-iconbtn"
               onClick={toggleTheme}
