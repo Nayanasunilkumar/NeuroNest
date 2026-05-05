@@ -72,23 +72,42 @@ const ForgotPassword = () => {
             </div>
 
             {message ? (
-              <div className="text-center">
-                <div className="alert alert-success border-0 rounded-3 mb-4">
-                  {message}
+              <div className="text-center py-4">
+                <div 
+                  className="rounded-circle bg-emerald-50 text-emerald-500 mx-auto mb-4 d-flex align-items-center justify-content-center"
+                  style={{ width: '64px', height: '64px' }}
+                >
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                    <polyline points="22 4 12 14.01 9 11.01" />
+                  </svg>
                 </div>
-                <Link to="/login" className="btn btn-primary w-100 fw-bold rounded-3">
+                <h4 className="fw-bold text-dark mb-3">Email Sent!</h4>
+                <p className="text-muted mb-4 px-3" style={{ fontSize: '0.95rem' }}>
+                  {message}
+                </p>
+                <Link to="/login" className="btn btn-primary w-100 fw-bold rounded-3 py-2 shadow-sm">
                   Back to Login
                 </Link>
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="d-flex flex-column">
-                <p className="text-muted mb-4 text-center" style={{ fontSize: '0.9rem' }}>
+                <p className="text-muted mb-4 text-center px-2" style={{ fontSize: '0.9rem', lineHeight: '1.6' }}>
                   Enter your email address and we'll send you instructions to reset your password.
                 </p>
 
                 {error && (
-                  <div className="alert alert-danger border-0 rounded-3 mb-4">
-                    {error}
+                  <div 
+                    className="alert d-flex align-items-center fw-bold p-3 rounded-3 mb-4 border-0"
+                    style={{ background: "#FEF2F2", color: "#DC2626", border: "1px solid #FECACA" }}
+                    role="alert"
+                  >
+                    <svg width="16" height="16" className="me-2 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                      <circle cx="12" cy="12" r="10" />
+                      <line x1="12" y1="8" x2="12" y2="12" />
+                      <line x1="12" y1="16" x2="12.01" y2="16" />
+                    </svg>
+                    <span style={{ fontSize: '0.85rem' }}>{error}</span>
                   </div>
                 )}
 
