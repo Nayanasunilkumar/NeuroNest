@@ -222,7 +222,7 @@ const Login = () => {
                     Password
                   </label>
                   <Link
-                    to="/login"
+                    to="/forgot-password"
                     className="text-decoration-none fw-bold"
                     style={{
                       fontSize: "13px",

@@ -283,3 +283,61 @@ def login():
     except Exception:
         current_app.logger.exception("Login crash")
         return jsonify({"message": "Login failed due to a server error"}), 500
+
+
+# --------------------------------------------------
+# FORGOT PASSWORD API
+# --------------------------------------------------
+@auth_bp.route("/forgot-password", methods=["POST"])
+def forgot_password():
+    data = request.get_json() or {}
+    email = (data.get("email") or "").strip().lower()
+
+    if not email:
+        return jsonify({"message": "Email is required"}), 400
+
+    user = User.query.filter_by(email=email).first()
+    if not user:
+        # Security best practice: don't reveal if user exists
+        return jsonify({"message": "If an account exists with this email, you will receive reset instructions."}), 200
+
+    # Simulate token generation
+    import secrets
+    reset_token = secrets.token_urlsafe(32)
+    current_app.logger.info(f"Password reset requested for {email}. Mock Token: {reset_token}")
+    
+    try:
+        # Note: In production, the URL should point to the frontend reset page
+        reset_url = f"https://neuro-nest-two.vercel.app/reset-password?token={reset_token}&email={email}"
+        NotificationService.send_email(
+            email, 
+            "Reset Your NeuroNest Password",
+            f"Hello {user.full_name},\n\nYou requested a password reset. Please click the link below to set a new password:\n\n{reset_url}\n\nIf you did not request this, please ignore this email."
+        )
+    except Exception:
+        current_app.logger.exception("Failed to send reset email")
+
+    return jsonify({"message": "If an account exists with this email, you will receive reset instructions."}), 200
+
+
+@auth_bp.route("/reset-password", methods=["POST"])
+def reset_password():
+    data = request.get_json() or {}
+    token = data.get("token")
+    email = data.get("email")
+    new_password = data.get("password")
+
+    if not token or not new_password or not email:
+        return jsonify({"message": "Email, Token and new password required"}), 400
+
+    user = User.query.filter_by(email=email).first()
+    if not user:
+        return jsonify({"message": "Invalid request"}), 400
+
+    user.password_hash = hash_password(new_password)
+    user.must_change_password = False
+    db.session.commit()
+
+    log_security_event(user.id, "password_reset_success", "User successfully reset their password")
+    
+    return jsonify({"message": "Password reset successfully. You can now log in."}), 200
