@@ -184,6 +184,20 @@ const AdminLayout = () => {
     return <Info size={16} className="text-blue-400" />;
   };
 
+  const formatRelativeTime = (date) => {
+    const now = new Date();
+    const diff = now - new Date(date);
+    const mins = Math.floor(diff / 60000);
+    const hours = Math.floor(mins / 60);
+    const days = Math.floor(hours / 24);
+
+    if (mins < 1) return 'Just now';
+    if (mins < 60) return `${mins}m ago`;
+    if (hours < 24) return `${hours}h ago`;
+    if (days < 7) return `${days}d ago`;
+    return new Date(date).toLocaleDateString([], { month: 'short', day: 'numeric' });
+  };
+
   const getNotificationPreferenceKey = (notif) => {
     if (notif.type === 'credentialing') return 'credentialing';
     if (notif.type === 'escalation' || notif.metadata?.severity === 'critical') return 'escalations';
@@ -199,13 +213,15 @@ const AdminLayout = () => {
     return list;
   }, [notifications, notificationFilter, notificationPreferences]);
 
-  const urgentCount = useMemo(() => notifications.filter(n => (n.metadata?.severity === 'critical' || n.type === 'escalation') && !n.is_read).length, [notifications]);
+  const urgentTotal = useMemo(() => notifications.filter(n => (n.metadata?.severity === 'critical' || n.type === 'escalation') && !n.is_read).length, [notifications]);
   const notificationPreferenceItems = [
     { key: 'credentialing', label: 'Credentialing' },
     { key: 'escalations', label: 'Escalations' },
     { key: 'systemHealth', label: 'System Health' },
     { key: 'appointments', label: 'Appointments' },
   ];
+
+  const [expandedNotif, setExpandedNotif] = useState(null);
 
   useEffect(() => {
     const navElement = navScrollRef.current;
@@ -339,10 +355,19 @@ const AdminLayout = () => {
               {notificationsOpen && createPortal(
                 <div className="admin-navbar-popover admin-navbar-notificationspanel" ref={overlayRef}>
                   <div className="admin-navbar-popoverhead">
-                    <div className="flex justify-between items-center w-full mb-1">
+                    <div className="flex justify-between items-center w-full mb-3">
                       <div className="flex items-center gap-2">
-                        <strong>Notifications</strong>
-                        {urgentCount > 0 && <span className="bg-rose-500 text-white text-[10px] px-1.5 py-0.5 rounded-full animate-pulse">URGENT</span>}
+                        <strong>Nexus Intelligence</strong>
+                        <div className="flex items-center gap-1.5 ml-2">
+                          <span className="notif-stat-pill all">
+                            {notifications.length} Total
+                          </span>
+                          {urgentTotal > 0 && (
+                            <span className="notif-stat-pill urgent animate-pulse">
+                              {urgentTotal} Critical
+                            </span>
+                          )}
+                        </div>
                       </div>
                       <div className="flex items-center gap-3">
                         <button 
@@ -362,27 +387,26 @@ const AdminLayout = () => {
                         )}
                       </div>
                     </div>
-                    <span>System-wide clinical & governance intelligence</span>
                     
                     {/* Tabs */}
-                    <div className="admin-notif-tabs mt-4">
+                    <div className="admin-notif-tabs">
                       <button 
                         className={`admin-notif-tab ${notificationFilter === 'all' ? 'active' : ''}`}
-                        onClick={() => setNotificationFilter('all')}
+                        onClick={() => { setNotificationFilter('all'); setExpandedNotif(null); }}
                       >
-                        All
+                        All History
                       </button>
                       <button 
                         className={`admin-notif-tab ${notificationFilter === 'unread' ? 'active' : ''}`}
-                        onClick={() => setNotificationFilter('unread')}
+                        onClick={() => { setNotificationFilter('unread'); setExpandedNotif(null); }}
                       >
                         Unread {unreadCount > 0 && `(${unreadCount})`}
                       </button>
                       <button 
                         className={`admin-notif-tab ${notificationFilter === 'urgent' ? 'active' : ''}`}
-                        onClick={() => setNotificationFilter('urgent')}
+                        onClick={() => { setNotificationFilter('urgent'); setExpandedNotif(null); }}
                       >
-                        Urgent {urgentCount > 0 && `(${urgentCount})`}
+                        Urgent {urgentTotal > 0 && `(${urgentTotal})`}
                       </button>
                     </div>
                   </div>
@@ -390,13 +414,13 @@ const AdminLayout = () => {
                   {showNotificationSettings ? (
                     <div className="admin-notif-preferences">
                       <div className="flex justify-between items-center mb-4">
-                        <h6 className="mb-0 fw-bold">Preferences</h6>
+                        <h6 className="mb-0 fw-bold">Nexus Routing Preferences</h6>
                         <button className="btn btn-sm btn-light border-0" onClick={() => setShowNotificationSettings(false)}>Back</button>
                       </div>
                       <div className="admin-notif-preference-list">
                         {notificationPreferenceItems.map(pref => (
                           <label key={pref.key} className="admin-notif-preference-row">
-                            <span>{pref.label}</span>
+                            <span>{pref.label} Alert Feed</span>
                             <input
                               type="checkbox"
                               checked={notificationPreferences[pref.key]}
@@ -412,19 +436,28 @@ const AdminLayout = () => {
                   ) : (
                     <div className="admin-navbar-notificationlist scroll-smooth">
                       {loadingNotifications && notifications.length === 0 ? (
-                        <div className="admin-navbar-empty py-8 text-center opacity-50">SYNCHRONIZING NEXUS...</div>
-                      ) : filteredNotifications.length === 0 ? (
                         <div className="admin-navbar-empty py-12 text-center">
-                          <CheckCircle size={32} className="mx-auto mb-3 opacity-20" />
-                          <p className="mb-0 fw-bold opacity-50">You're all caught up!</p>
-                          <span className="text-xs opacity-40">No pending alerts in {notificationFilter} view</span>
+                          <div className="nexus-loading-spinner mb-4 mx-auto" />
+                          <p className="fw-bold text-slate-400">SYNCHRONIZING NEXUS FEED...</p>
+                        </div>
+                      ) : filteredNotifications.length === 0 ? (
+                        <div className="admin-navbar-empty py-16 text-center">
+                          <CheckCircle size={40} className="mx-auto mb-4 opacity-10" />
+                          <p className="mb-1 fw-bold text-slate-500">System Clear</p>
+                          <span className="text-xs text-slate-400">No events detected in {notificationFilter} intelligence pool</span>
                         </div>
                       ) : (
                         filteredNotifications.slice(0, 10).map((notif) => (
                           <div 
                             key={notif.id} 
-                            className={`admin-navbar-notification ${notif.is_read ? 'read' : 'unread'} severity-${notif.metadata?.severity || 'info'}`}
-                            onClick={() => handleNotificationClick(notif)}
+                            className={`admin-navbar-notification ${notif.is_read ? 'read' : 'unread'} severity-${notif.metadata?.severity || 'info'} ${expandedNotif === notif.id ? 'expanded' : ''}`}
+                            onClick={() => {
+                              if (expandedNotif === notif.id) {
+                                handleNotificationClick(notif);
+                              } else {
+                                setExpandedNotif(notif.id);
+                              }
+                            }}
                           >
                             <div className="flex gap-3">
                               <div className={`notif-icon-box ${notif.metadata?.severity === 'critical' ? 'critical' : ''}`}>
@@ -433,31 +466,60 @@ const AdminLayout = () => {
                               <div className="flex-1 min-w-0">
                                 <div className="flex justify-between items-start mb-1">
                                   <div className="flex items-center gap-2 min-w-0">
+                                    {notif.metadata?.severity === 'critical' && (
+                                      <span className="notif-critical-badge">CRITICAL</span>
+                                    )}
                                     <strong className="admin-navbar-notification-title">
                                       {notif.title}
                                     </strong>
                                     {!notif.is_read && <div className="w-1.5 h-1.5 rounded-full bg-blue-500 flex-shrink-0 animate-pulse" />}
                                   </div>
-                                  <button 
-                                    className="notif-action-btn" 
-                                    onClick={(e) => handleDeleteNotification(notif.id, e)}
-                                    title="Delete"
-                                  >
-                                    <Trash2 size={14} />
-                                  </button>
+                                  <div className="flex items-center gap-1">
+                                    <button 
+                                      className="notif-action-btn delete" 
+                                      onClick={(e) => handleDeleteNotification(notif.id, e)}
+                                      title="Delete"
+                                    >
+                                      <Trash2 size={13} />
+                                    </button>
+                                  </div>
                                 </div>
                                 <p className="admin-navbar-notification-message">
                                   {(notif.message || notif.content || "").replace(/Dr\. Dr\./g, 'Dr.')}
                                 </p>
+                                
                                 <div className="admin-navbar-notification-meta">
-                                  <div className="flex items-center gap-1">
-                                    <Clock3 size={10} />
-                                    {new Date(notif.created_at).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                  <div className="flex items-center gap-1.5">
+                                    <div className="flex items-center gap-1" title={new Date(notif.created_at).toLocaleString()}>
+                                      <Clock3 size={10} />
+                                      {formatRelativeTime(notif.created_at)}
+                                    </div>
+                                    {notif.metadata?.category && (
+                                      <>
+                                        <span className="text-[8px] opacity-30">|</span>
+                                        <span className="admin-notif-tag">{notif.metadata.category}</span>
+                                      </>
+                                    )}
                                   </div>
-                                  {notif.metadata?.category && (
-                                    <span className="admin-notif-tag">{notif.metadata.category}</span>
-                                  )}
                                 </div>
+
+                                {expandedNotif === notif.id && (
+                                  <div className="notif-expanded-actions mt-3 pt-3 border-top flex items-center gap-2">
+                                    <button 
+                                      className="notif-quick-btn primary"
+                                      onClick={(e) => { e.stopPropagation(); handleNotificationClick(notif); }}
+                                    >
+                                      {notif.type === 'escalation' ? 'Review Case' : 'Take Action'}
+                                      <ExternalLink size={10} className="ml-1" />
+                                    </button>
+                                    <button 
+                                      className="notif-quick-btn"
+                                      onClick={(e) => { e.stopPropagation(); handleMarkAsRead(notif.id); setExpandedNotif(null); }}
+                                    >
+                                      Dismiss
+                                    </button>
+                                  </div>
+                                )}
                               </div>
                             </div>
                           </div>
@@ -467,18 +529,16 @@ const AdminLayout = () => {
                   )}
                   
                   {!showNotificationSettings && (
-                    <div className="p-2 border-top bg-slate-50/50">
-                      <Link to="/admin/reports-analytics" className="admin-navbar-profilelink text-center justify-center py-2">
-                        <span className="text-xs fw-bold text-blue-600">Enter Notification History Archive →</span>
+                    <div className="p-3 border-top bg-slate-50/50 flex justify-center">
+                      <Link to="/admin/reports-analytics" className="text-[10px] fw-bold text-blue-600 hover:text-blue-700 no-underline uppercase tracking-widest flex items-center gap-1">
+                        Open Full Nexus Archive
+                        <ChevronRight size={12} />
                       </Link>
                     </div>
                   )}
                 </div>,
                 document.body
               )}
-            </div>
-
-            <button
               type="button"
               className="admin-navbar-iconbtn"
               onClick={toggleTheme}
@@ -1017,6 +1077,130 @@ const AdminLayout = () => {
         .admin-navbar-notification:hover {
           background: #f1f5f9;
         }
+        .notif-stat-pill {
+          padding: 2px 8px;
+          border-radius: 999px;
+          font-size: 9px;
+          font-weight: 800;
+          text-transform: uppercase;
+          letter-spacing: 0.02em;
+        }
+        .notif-stat-pill.all { background: #f1f5f9; color: #64748b; }
+        .notif-stat-pill.urgent { background: #fee2e2; color: #ef4444; }
+
+        .notif-critical-badge {
+          background: #ef4444;
+          color: white;
+          font-size: 8px;
+          font-weight: 900;
+          padding: 2px 4px;
+          border-radius: 4px;
+          letter-spacing: 0.05em;
+          flex-shrink: 0;
+        }
+
+        .admin-navbar-notification {
+          padding: 14px 16px;
+          cursor: pointer;
+          transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+          border-bottom: 1px solid #f1f5f9;
+          position: relative;
+          min-width: 0;
+        }
+        .admin-navbar-notification.unread {
+          background: #f8fafc;
+          box-shadow: inset 3px 0 0 #3b82f6;
+        }
+        .admin-navbar-notification.expanded {
+          background: #ffffff;
+          box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+          margin: 8px;
+          border-radius: 16px;
+          border: 1px solid #e2e8f0;
+          z-index: 2;
+        }
+        .admin-navbar-notification:hover {
+          background: #f1f5f9;
+          transform: translateY(-1px);
+        }
+        .admin-navbar-notification.expanded:hover {
+          transform: none;
+        }
+        
+        .notif-quick-btn {
+          padding: 6px 12px;
+          border-radius: 8px;
+          font-size: 10px;
+          font-weight: 700;
+          border: 1px solid #e2e8f0;
+          background: #ffffff;
+          color: #475569;
+          display: flex;
+          align-items: center;
+          transition: all 0.2s ease;
+        }
+        .notif-quick-btn:hover {
+          background: #f8fafc;
+          border-color: #cbd5e1;
+        }
+        .notif-quick-btn.primary {
+          background: #2563eb;
+          color: #ffffff;
+          border-color: #2563eb;
+        }
+        .notif-quick-btn.primary:hover {
+          background: #1d4ed8;
+        }
+
+        .nexus-loading-spinner {
+          width: 24px;
+          height: 24px;
+          border: 3px solid #e2e8f0;
+          border-top-color: #2563eb;
+          border-radius: 50%;
+          animation: nexus-spin 0.8s linear infinite;
+        }
+        @keyframes nexus-spin { to { transform: rotate(360deg); } }
+
+        .admin-navbar-notification-title {
+          display: block;
+          max-width: 100%;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+          color: #1f2937;
+          font-size: 13.5px;
+          font-weight: 750;
+          line-height: 1.2;
+        }
+        .admin-navbar-notification.unread .admin-navbar-notification-title {
+          color: #0f172a;
+        }
+        .admin-navbar-notification-message {
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+          overflow-wrap: anywhere;
+          color: #64748b;
+          font-size: 11.5px;
+          line-height: 1.5;
+          margin: 4px 0 8px;
+        }
+        .admin-navbar-notification.expanded .admin-navbar-notification-message {
+          -webkit-line-clamp: unset;
+        }
+        .admin-navbar-notification-meta {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 4px;
+          color: #94a3b8;
+          font-size: 9px;
+          font-weight: 700;
+          letter-spacing: 0.05em;
+          text-transform: uppercase;
+        }
         .admin-notif-tag {
           padding: 2px 6px;
           border-radius: 4px;
@@ -1030,38 +1214,17 @@ const AdminLayout = () => {
           background: #334155;
           color: #94a3b8;
         }
-        .admin-navbar-notification-title {
-          display: block;
-          max-width: 100%;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
-          color: #1f2937;
-          font-size: 13px;
-          font-weight: 700;
-          line-height: 1.2;
+        .admin-theme-dark .notif-stat-pill.all { background: #1f2937; color: #94a3b8; }
+        .admin-theme-dark .admin-navbar-notification.unread {
+          background: #162033;
+          box-shadow: inset 3px 0 0 #3b82f6;
         }
-        .admin-navbar-notification-message {
-          display: -webkit-box;
-          -webkit-line-clamp: 2;
-          -webkit-box-orient: vertical;
-          overflow: hidden;
-          overflow-wrap: anywhere;
-          color: #64748b;
-          font-size: 11.5px;
-          line-height: 1.45;
-          margin: 4px 0 8px;
+        .admin-theme-dark .admin-navbar-notification.expanded {
+          background: #111827;
+          border-color: #334155;
         }
-        .admin-navbar-notification-meta {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 4px;
-          color: #94a3b8;
-          font-size: 9px;
-          font-weight: 700;
-          letter-spacing: 0.05em;
-          text-transform: uppercase;
+        .admin-theme-dark .admin-navbar-notification-title {
+          color: #f1f5f9;
         }
         .admin-theme-dark .admin-navbar-notification {
           border-bottom-color: #1f2937;
