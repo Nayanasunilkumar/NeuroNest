@@ -26,7 +26,7 @@ const AdminNotificationCenter = () => {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterType, setFilterType] = useState('all'); // all, unread, critical, system
+  const [filterType, setFilterType] = useState('unresolved'); // all, unread, unresolved, critical, system
   const [page, setPage] = useState(1);
   const itemsPerPage = 10;
 
@@ -129,6 +129,7 @@ const AdminNotificationCenter = () => {
 
       const matchesType = filterType === 'all' || 
                          (filterType === 'unread' && !n.is_read) ||
+                         (filterType === 'unresolved' && !n.is_resolved) ||
                          (filterType === 'critical' && severity === 'critical') ||
                          (filterType === 'escalations' && (type === 'escalation' || category === 'escalation')) ||
                          (filterType === 'credentialing' && type === 'credentialing') ||
@@ -200,14 +201,14 @@ const AdminNotificationCenter = () => {
           <div className="summary-footer">System-wide logs</div>
         </div>
         <div className="summary-card">
-          <span className="summary-label">Awaiting Review</span>
-          <span className="summary-value text-blue-600">{notifications.filter(n => !n.is_read).length}</span>
+          <span className="summary-label">Awaiting Resolution</span>
+          <span className="summary-value text-blue-600">{notifications.filter(n => !n.is_resolved).length}</span>
           <div className="summary-footer">Pending administrative action</div>
         </div>
         <div className="summary-card urgent">
-          <span className="summary-label text-rose-500">Critical Escalations</span>
-          <span className="summary-value text-rose-600">{notifications.filter(n => n.metadata?.severity === 'critical' && !n.is_read).length}</span>
-          <div className="summary-footer">Immediate impact required</div>
+          <span className="summary-label text-rose-500">Critical Alerts</span>
+          <span className="summary-value text-rose-600">{notifications.filter(n => n.metadata?.severity === 'critical' && !n.is_resolved).length}</span>
+          <div className="summary-footer">Immediate resolution required</div>
         </div>
         <div className="summary-card">
           <span className="summary-label">Health Status</span>
@@ -230,15 +231,16 @@ const AdminNotificationCenter = () => {
           </div>
           
           <div className="nexus-filter-strip">
-            {['all', 'unread', 'critical', 'escalations', 'credentialing', 'appointments'].map(type => {
-              const count = type === 'unread' ? notifications.filter(n => !n.is_read).length : 0;
+            {['all', 'unresolved', 'unread', 'critical', 'escalations', 'credentialing', 'appointments'].map(type => {
+              const count = type === 'unread' ? notifications.filter(n => !n.is_read).length : 
+                            type === 'unresolved' ? notifications.filter(n => !n.is_resolved).length : 0;
               return (
                 <button
                   key={type}
                   onClick={() => { setFilterType(type); setPage(1); }}
                   className={`nexus-strip-pill ${filterType === type ? 'active' : ''}`}
                 >
-                  {type}
+                  {type === 'unresolved' ? 'Pending Actions' : type}
                   {count > 0 && <span className="pill-badge">{count}</span>}
                 </button>
               );
@@ -255,9 +257,20 @@ const AdminNotificationCenter = () => {
             </div>
           ) : displayedNotifications.length === 0 ? (
             <div className="nexus-zero-state">
-              <ShieldCheck size={64} className="text-slate-200" />
-              <h3>Intelligence Feed Empty</h3>
-              <p>No records found matching your current filter parameters.</p>
+              <div className="zero-state-icon-wrap">
+                {filterType === 'unread' ? <CheckCircle size={48} /> : <ShieldCheck size={48} />}
+              </div>
+              <h3>{filterType === 'unread' ? 'All Alerts Seen' : 'Nexus Clear'}</h3>
+              <p>
+                {filterType === 'unread' ? 'You have reviewed all incoming intelligence logs.' : 
+                 filterType === 'unresolved' ? 'Outstanding cases have been successfully mitigated.' :
+                 'No records found matching your current institutional filters.'}
+              </p>
+              {filterType !== 'all' && (
+                <button onClick={() => setFilterType('all')} className="nexus-zero-btn">
+                  View All History
+                </button>
+              )}
             </div>
           ) : (
             <div className="nexus-record-stack">
@@ -738,10 +751,44 @@ const AdminNotificationCenter = () => {
           color: #94a3b8;
         }
 
-        .dock-btn.danger:hover {
-          background: #fff1f2;
-          color: #e11d48;
-          border-color: #fecdd3;
+        .nexus-zero-btn {
+          margin-top: 1.5rem;
+          padding: 10px 24px;
+          border-radius: 12px;
+          background: #f1f5f9;
+          border: 1px solid #e2e8f0;
+          color: #475569;
+          font-weight: 800;
+          font-size: 0.85rem;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+
+        .nexus-zero-btn:hover {
+          background: #e2e8f0;
+          transform: translateY(-2px);
+        }
+
+        .zero-state-icon-wrap {
+          width: 80px;
+          height: 80px;
+          border-radius: 50%;
+          background: #f8fafc;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin-bottom: 1.5rem;
+          color: #cbd5e1;
+          border: 2px dashed #e2e8f0;
+        }
+
+        .nexus-zero-state {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          padding: 5rem 2rem;
+          text-align: center;
         }
 
         .record-tag-critical {
