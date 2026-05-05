@@ -7,7 +7,6 @@ import { useSystemConfig } from '../shared/context/SystemConfigContext';
 import '../admin/styles/admin-theme.css';
 import {
   BarChart3,
-  Bell,
   CalendarDays,
   ChevronLeft,
   ChevronRight,
@@ -16,7 +15,6 @@ import {
   LogOut,
   Menu,
   Moon,
-  Search,
   Settings,
   ShieldCheck,
   ShieldAlert,
@@ -31,7 +29,7 @@ import {
   ExternalLink,
   Info
 } from 'lucide-react';
-import { notificationApi } from '../shared/services/api/notificationApi';
+
 import { useNavigate } from 'react-router-dom';
 
 const ADMIN_NAV_ITEMS = [
@@ -45,18 +43,6 @@ const ADMIN_NAV_ITEMS = [
   { label: 'Settings', to: '/admin/settings', icon: Settings },
 ];
 
-const SEARCH_ITEMS = [
-  ...ADMIN_NAV_ITEMS,
-  { label: 'Platform Settings', to: '/admin/settings', icon: Settings },
-  { label: 'Announcements', to: '/admin/announcements', icon: Bell },
-];
-
-const NOTIFICATION_ITEMS = [
-  { title: 'New appointment', detail: 'Neurology consult requested for 14:30', tone: 'info' },
-  { title: 'Cancelled appointment', detail: 'Patient #442 cancelled tomorrow 09:00 slot', tone: 'warning' },
-  { title: 'Critical alert', detail: 'High-risk escalation flagged in governance queue', tone: 'danger' },
-  { title: 'New review', detail: 'A new patient review needs moderation', tone: 'success' },
-  { title: 'System announcement', detail: 'Maintenance window scheduled for tonight', tone: 'neutral' },
 ];
 
 const PROFILE_LINKS = [
@@ -75,13 +61,8 @@ const AdminLayout = () => {
   const navScrollRef = useRef(null);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [searchOpen, setSearchOpen] = useState(false);
-  const [notificationsOpen, setNotificationsOpen] = useState(false);
-  const [notifications, setNotifications] = useState([]);
-  const [unreadCount, setUnreadCount] = useState(0);
-  const [fetchingNotifications, setFetchingNotifications] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+
   const [canScrollNavLeft, setCanScrollNavLeft] = useState(false);
   const [canScrollNavRight, setCanScrollNavRight] = useState(false);
 
@@ -95,16 +76,12 @@ const AdminLayout = () => {
 
   useEffect(() => {
     setMobileMenuOpen(false);
-    setSearchOpen(false);
-    setNotificationsOpen(false);
     setProfileOpen(false);
   }, [location.pathname]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (overlayRef.current && !overlayRef.current.contains(event.target)) {
-        setSearchOpen(false);
-        setNotificationsOpen(false);
         setProfileOpen(false);
       }
     };
@@ -133,84 +110,11 @@ const AdminLayout = () => {
     };
   }, [location.pathname]);
 
-  const filteredSearchItems = useMemo(() => {
-    const normalized = searchQuery.trim().toLowerCase();
-    if (!normalized) return SEARCH_ITEMS;
-    return SEARCH_ITEMS.filter((item) => item.label.toLowerCase().includes(normalized));
-  }, [searchQuery]);
 
-  const fetchNotifications = async () => {
-    try {
-      setFetchingNotifications(true);
-      const data = await notificationApi.getNotifications();
-      setNotifications(data);
-      setUnreadCount(data.filter(n => !n.is_read).length);
-    } catch (err) {
-      console.error("Failed to fetch notifications:", err);
-    } finally {
-      setFetchingNotifications(false);
-    }
-  };
 
-  useEffect(() => {
-    fetchNotifications();
-    const interval = setInterval(fetchNotifications, 60000); // Polling every min
-    return () => clearInterval(interval);
-  }, []);
 
-  const markRead = async (id) => {
-    try {
-      await notificationApi.markAsRead(id);
-      setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n));
-      setUnreadCount(prev => Math.max(0, prev - 1));
-    } catch (err) {
-      console.error("Failed to mark notification read:", err);
-    }
-  };
-
-  const markAllRead = async () => {
-    try {
-      await notificationApi.markAllAsRead();
-      setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
-      setUnreadCount(0);
-    } catch (err) {
-      console.error("Failed to mark all read:", err);
-    }
-  };
-
-  const deleteNotification = async (id, e) => {
-    e.stopPropagation();
-    try {
-      await notificationApi.deleteNotification(id);
-      setNotifications(prev => {
-        const filtered = prev.filter(n => n.id !== id);
-        const isUnread = !prev.find(n => n.id === id)?.is_read;
-        if (isUnread) setUnreadCount(c => Math.max(0, c - 1));
-        return filtered;
-      });
-    } catch (err) {
-      console.error("Failed to delete notification:", err);
-    }
-  };
-
-  const handleNotificationAction = (notif) => {
-    markRead(notif.id);
-    setNotificationsOpen(false);
-    
-    // Smart routing based on payload
-    if (notif.type === 'admin_alert' && notif.metadata?.doctor_id) {
-      navigate(`/admin/governance/doctor/${notif.metadata.doctor_id}`);
-    } else if (notif.metadata?.appointment_id) {
-      navigate(`/admin/appointments`);
-    }
-  };
 
   const togglePanel = (panel) => {
-    setSearchOpen(panel === 'search' ? !searchOpen : false);
-    if (panel === 'notifications' && !notificationsOpen) {
-      fetchNotifications();
-    }
-    setNotificationsOpen(panel === 'notifications' ? !notificationsOpen : false);
     setProfileOpen(panel === 'profile' ? !profileOpen : false);
   };
 
@@ -293,24 +197,7 @@ const AdminLayout = () => {
           </div>
 
           <div className="admin-navbar-right" ref={overlayRef}>
-            <button
-              type="button"
-              className={`admin-navbar-iconbtn ${searchOpen ? 'active' : ''}`}
-              onClick={() => togglePanel('search')}
-              aria-label="Open global search"
-            >
-              <Search size={19} />
-            </button>
 
-            <button
-              type="button"
-              className={`admin-navbar-iconbtn admin-navbar-bell ${notificationsOpen ? 'active' : ''}`}
-              onClick={() => togglePanel('notifications')}
-              aria-label="Open notifications"
-            >
-              <Bell size={19} />
-              {unreadCount > 0 && <span className="admin-navbar-bell-dot" aria-hidden="true" />}
-            </button>
 
             <div className="admin-navbar-time" aria-label="System time">
               <Clock3 size={16} />
@@ -339,92 +226,7 @@ const AdminLayout = () => {
               <LogOut size={19} />
             </button>
 
-            {searchOpen && (
-              <div className="admin-navbar-popover admin-navbar-searchpanel">
-                <div className="admin-navbar-popoverhead">
-                  <strong>Global Search</strong>
-                  <span>Patients, doctors, appointments, reports</span>
-                </div>
-                <div className="admin-navbar-searchbox">
-                  <Search size={16} />
-                  <input
-                    type="text"
-                    placeholder="Search destinations..."
-                    value={searchQuery}
-                    onChange={(event) => setSearchQuery(event.target.value)}
-                  />
-                </div>
-                <div className="admin-navbar-searchresults">
-                  {filteredSearchItems.map(({ label, to, icon: Icon }) => (
-                    <Link key={to} to={to} className="admin-navbar-searchitem">
-                      <Icon size={16} />
-                      <span>{label}</span>
-                    </Link>
-                  ))}
-                  {filteredSearchItems.length === 0 && (
-                    <div className="admin-navbar-empty">No matching destinations</div>
-                  )}
-                </div>
-              </div>
-            )}
 
-            {notificationsOpen && createPortal(
-              <div className="admin-navbar-popover admin-navbar-notificationspanel" style={{ position: 'fixed', top: '75px', right: '40px', zIndex: 999999 }}>
-                <div className="admin-navbar-popoverhead">
-                  <div>
-                    <strong>Notifications</strong>
-                    <span>Operational alerts and system updates</span>
-                  </div>
-                  {unreadCount > 0 && (
-                    <button className="btn-mark-all-read" onClick={markAllRead}>
-                      Mark all as read
-                    </button>
-                  )}
-                </div>
-                <div className="admin-navbar-notificationlist">
-                  {notifications.length === 0 ? (
-                    <div className="notif-empty-state">
-                      <ShieldCheck size={32} />
-                      <p>System secure. No new alerts.</p>
-                    </div>
-                  ) : (
-                    notifications.map((item) => (
-                      <div 
-                        key={item.id} 
-                        className={`admin-navbar-notification-v2 ${!item.is_read ? 'unread' : ''}`}
-                        onClick={() => handleNotificationAction(item)}
-                      >
-                        <div className={`notif-icon-v2 type-${item.type}`}>
-                          {item.type === 'admin_alert' ? <ShieldAlert size={14} /> : 
-                           item.type === 'appointment' ? <CalendarDays size={14} /> :
-                           <Info size={14} />}
-                        </div>
-                        <div className="notif-content-v2">
-                          <div className="notif-title-row">
-                            <strong>{item.title}</strong>
-                            <span className="notif-time">
-                              {item.created_at ? new Date(item.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
-                            </span>
-                          </div>
-                          <p>{item.message}</p>
-                          <div className="notif-actions-v2">
-                            <button className="notif-btn-icon" onClick={(e) => deleteNotification(item.id, e)} title="Delete">
-                              <Trash2 size={12} />
-                            </button>
-                            {item.metadata?.doctor_id && (
-                              <button className="notif-btn-link">
-                                Review Practitioner <ExternalLink size={10} />
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>,
-              document.body
-            )}
 
             {profileOpen && (
               <div className="admin-navbar-popover admin-navbar-profilepanel">

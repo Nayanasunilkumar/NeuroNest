@@ -38,5 +38,6 @@ ngrok.yml
 # Local sqlite databases (do not commit)
 backend/neuronest.db
 backend/neuro.db
+backend/database/*.db
 
 .vercel

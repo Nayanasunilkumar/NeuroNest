@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Archive, CheckCircle, Clock, Eye, Megaphone, Plus, Search, UserX, X } from 'lucide-react';
+import { Archive, CheckCircle, Clock, Eye, Megaphone, Plus, Search, UserX, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { adminAnnouncementApi } from '../../shared/services/api/announcementApi';
 import AnnouncementTable from '../../shared/components/announcements/AnnouncementTable';
 import CreateAnnouncementModal from '../../shared/components/announcements/CreateAnnouncementModal';
@@ -26,6 +26,8 @@ const AnnouncementsPage = () => {
   const [audienceFilter, setAudienceFilter] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedAnnouncement, setSelectedAnnouncement] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   const fetchAnnouncements = async () => {
     setLoading(true);
@@ -69,6 +71,11 @@ const AnnouncementsPage = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Reset to first page when search or filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, statusFilter, priorityFilter, categoryFilter, audienceFilter]);
+
   const handleCreateOrUpdate = async (formData) => {
     try {
       if (selectedAnnouncement) {
@@ -109,13 +116,20 @@ const AnnouncementsPage = () => {
     }
   };
 
-  const applyClientFilter = useMemo(() => {
+  const filteredAnnouncements = useMemo(() => {
     const q = searchQuery.toLowerCase();
     return announcements.filter((a) => {
       if (!q) return true;
       return (a.title || '').toLowerCase().includes(q) || (a.content || '').toLowerCase().includes(q);
     });
   }, [announcements, searchQuery]);
+
+  const totalPages = Math.ceil(filteredAnnouncements.length / itemsPerPage);
+  
+  const paginatedAnnouncements = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredAnnouncements.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredAnnouncements, currentPage]);
 
   return (
     <div className="admin-announcements-root">
@@ -244,15 +258,56 @@ const AnnouncementsPage = () => {
         {loading ? (
           <div className="py-20 text-center text-slate-500 font-bold animate-pulse">LOADING COMMUNICATIONS NEXUS...</div>
         ) : (
-          <AnnouncementTable
-            announcements={applyClientFilter}
-            onEdit={(item) => {
-              setSelectedAnnouncement(item);
-              setIsModalOpen(true);
-            }}
-            onDelete={handleDelete}
-            onStatusChange={handleStatusChange}
-          />
+          <>
+            <AnnouncementTable
+              announcements={paginatedAnnouncements}
+              onEdit={(item) => {
+                setSelectedAnnouncement(item);
+                setIsModalOpen(true);
+              }}
+              onDelete={handleDelete}
+              onStatusChange={handleStatusChange}
+            />
+            
+            {filteredAnnouncements.length > 0 && (
+              <div className="pagination-wrapper">
+                <div className="pagination-info">
+                  Showing <span>{(currentPage - 1) * itemsPerPage + 1}</span> to <span>{Math.min(currentPage * itemsPerPage, filteredAnnouncements.length)}</span> of <span>{filteredAnnouncements.length}</span> announcements
+                </div>
+                <div className="pagination-controls">
+                  <button 
+                    className="pagination-btn"
+                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                    disabled={currentPage === 1}
+                  >
+                    <ChevronLeft size={16} />
+                    Previous
+                  </button>
+                  
+                  <div className="pagination-pages">
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                      <button
+                        key={page}
+                        className={`page-number ${currentPage === page ? 'active' : ''}`}
+                        onClick={() => setCurrentPage(page)}
+                      >
+                        {page}
+                      </button>
+                    ))}
+                  </div>
+
+                  <button 
+                    className="pagination-btn"
+                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                    disabled={currentPage === totalPages || totalPages === 0}
+                  >
+                    Next
+                    <ChevronRight size={16} />
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
 
