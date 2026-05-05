@@ -146,31 +146,60 @@ const AdminNotificationCenter = () => {
     <div className="admin-notif-center-wrapper">
       <div className="admin-notif-center-header">
         <div className="admin-notif-center-titlebox">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="text-xs fw-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest">Global Governance Active</span>
+          </div>
           <h1>Administrative Nexus</h1>
-          <p>System-wide governance monitoring & audit center</p>
+          <p>Institutional audit center for real-time governance monitoring</p>
         </div>
         <div className="admin-notif-center-actions">
           <button 
             onClick={handleMarkAllAsRead}
-            className="nexus-btn secondary"
+            className="nexus-header-btn"
           >
-            <Check size={16} /> 
-            <span>Mark All Read</span>
+            <Check size={14} /> 
+            Mark All Read
           </button>
           <button 
             onClick={fetchNotifications}
-            className="nexus-btn primary"
+            className="nexus-header-btn primary"
           >
-            <span>Refresh Feed</span>
+            <Activity size={14} />
+            Refresh Feed
           </button>
         </div>
       </div>
 
-      <div className="nexus-glass-card">
+      {/* Executive Summary Stats */}
+      <div className="nexus-executive-summary">
+        <div className="summary-card">
+          <span className="summary-label">Total Intelligence</span>
+          <span className="summary-value">{notifications.length}</span>
+          <div className="summary-footer">System-wide logs</div>
+        </div>
+        <div className="summary-card">
+          <span className="summary-label">Awaiting Review</span>
+          <span className="summary-value text-blue-600">{notifications.filter(n => !n.is_read).length}</span>
+          <div className="summary-footer">Pending administrative action</div>
+        </div>
+        <div className="summary-card urgent">
+          <span className="summary-label text-rose-500">Critical Escalations</span>
+          <span className="summary-value text-rose-600">{notifications.filter(n => n.metadata?.severity === 'critical' && !n.is_read).length}</span>
+          <div className="summary-footer">Immediate impact required</div>
+        </div>
+        <div className="summary-card">
+          <span className="summary-label">Health Status</span>
+          <span className="summary-value text-emerald-600">OPTIMAL</span>
+          <div className="summary-footer">All systems operational</div>
+        </div>
+      </div>
+
+      <div className="nexus-main-deck">
         {/* Toolbar */}
-        <div className="nexus-toolbar">
-          <div className="nexus-search-box">
-            <Search size={18} />
+        <div className="nexus-control-bar">
+          <div className="nexus-search-wrap">
+            <Search size={18} className="text-slate-400" />
             <input 
               type="text" 
               placeholder="Search through intelligence logs..."
@@ -179,128 +208,120 @@ const AdminNotificationCenter = () => {
             />
           </div>
           
-          <div className="nexus-filter-row">
+          <div className="nexus-filter-strip">
             {['all', 'unread', 'critical', 'escalations', 'credentialing', 'appointments'].map(type => {
               const count = type === 'unread' ? notifications.filter(n => !n.is_read).length : 0;
               return (
                 <button
                   key={type}
                   onClick={() => { setFilterType(type); setPage(1); }}
-                  className={`nexus-pill-btn ${filterType === type ? 'active' : ''}`}
+                  className={`nexus-strip-pill ${filterType === type ? 'active' : ''}`}
                 >
                   {type}
-                  {count > 0 && <span className="nexus-pill-badge">{count}</span>}
+                  {count > 0 && <span className="pill-badge">{count}</span>}
                 </button>
               );
             })}
           </div>
         </div>
 
-        {/* Content */}
-        <div className="nexus-content-pool">
+        {/* Content Pool */}
+        <div className="nexus-records-pool">
           {loading ? (
-            <div className="nexus-loading-state">
-              <div className="nexus-spinner" />
-              <p>Synchronizing Nexus Feed...</p>
+            <div className="nexus-syncing-state">
+              <div className="syncing-spinner" />
+              <p>Synchronizing Global Nexus Feed...</p>
             </div>
           ) : displayedNotifications.length === 0 ? (
-            <div className="nexus-empty-state">
-              <CheckCircle size={48} className="nexus-empty-icon" />
-              <h3>System Status: Optimal</h3>
-              <p>No intelligence logs found matching your criteria.</p>
+            <div className="nexus-zero-state">
+              <ShieldCheck size={64} className="text-slate-200" />
+              <h3>Intelligence Feed Empty</h3>
+              <p>No records found matching your current filter parameters.</p>
             </div>
           ) : (
-            <div className="nexus-notif-list">
+            <div className="nexus-record-stack">
               {displayedNotifications.map((notif) => (
                 <div 
                   key={notif.id}
-                  className={`nexus-notif-item ${!notif.is_read ? 'unread' : ''} severity-${notif.metadata?.severity || 'info'}`}
+                  className={`nexus-record-item ${notif.is_read ? 'is-read' : 'is-unread'} severity-${notif.metadata?.severity || 'info'}`}
                 >
-                  <div className="nexus-notif-icon-shell">
-                    {getNotifIcon(notif.type, notif.metadata?.severity)}
+                  <div className="record-visual">
+                    <div className="icon-vault">
+                      {getNotifIcon(notif.type, notif.metadata?.severity)}
+                    </div>
                   </div>
                   
-                  <div className="nexus-notif-body">
-                    <div className="nexus-notif-header">
-                      <div className="nexus-notif-title-row">
-                        <h4 className="nexus-notif-title">{notif.title}</h4>
-                        {!notif.is_read && <span className="nexus-unread-dot" />}
+                  <div className="record-main">
+                    <div className="record-head">
+                      <div className="flex items-center gap-3">
+                        <h4 className="record-title">{notif.title}</h4>
                         {notif.metadata?.severity === 'critical' && (
-                          <span className="nexus-critical-tag">CRITICAL IMPACT</span>
+                          <span className="record-tag-critical">CRITICAL</span>
+                        )}
+                        {notif.is_read && (
+                          <span className="record-tag-resolved">RESOLVED</span>
                         )}
                       </div>
-                      <div className="nexus-notif-actions">
-                        {!notif.is_read && (
-                          <button onClick={(e) => handleMarkRead(notif.id, e)} title="Mark Read">
-                            <Check size={18} />
-                          </button>
-                        )}
-                        {notif.metadata?.severity !== 'critical' && (
-                          <button onClick={(e) => handleDelete(notif.id, e)} title="Delete" className="delete">
-                            <Trash2 size={18} />
-                          </button>
-                        )}
+                      <div className="record-timestamp">
+                        <Clock3 size={12} />
+                        {formatRelativeTime(notif.created_at)}
                       </div>
                     </div>
                     
-                    <p className="nexus-notif-message">
-                      {notif.message.includes('Dr.') ? (
-                        <>
-                          {notif.message.split(/Dr\.\s*([\w\s]+)/).map((part, i) => {
-                            if (i === 1) return <span key={i} className="entity-link" onClick={() => navigate(`/admin/manage-doctors?search=${part}`)}>Dr. {part}</span>;
-                            return part;
-                          })}
-                        </>
-                      ) : notif.message}
+                    <p className="record-message">
+                      {(notif.message || notif.content || "").replace(/Dr\.\s*Dr\./g, 'Dr.')}
                     </p>
 
                     {notif.metadata?.stats && (
-                      <div className="nexus-stats-grid">
-                        <div className="nexus-stat-pill">
-                          <span className="nexus-stat-label">Telemetry Feed</span>
-                          <span className="nexus-stat-value">{notif.metadata.stats.complaints || 0} Complaints</span>
+                      <div className="record-telemetry">
+                        <div className="telemetry-box">
+                          <span className="label">Department</span>
+                          <span className="value">{notif.metadata.department || 'General Governance'}</span>
                         </div>
-                        <div className="nexus-stat-pill">
-                          <span className="nexus-stat-label">Risk Score</span>
-                          <span className="nexus-stat-value">{notif.metadata.risk_level?.toUpperCase() || 'CRITICAL'}</span>
+                        <div className="telemetry-box">
+                          <span className="label">Risk Impact</span>
+                          <span className={`value ${notif.metadata.severity === 'critical' ? 'text-rose-600' : ''}`}>
+                            {notif.metadata.risk_level?.toUpperCase() || 'MODERATE'}
+                          </span>
                         </div>
-                        {notif.metadata.department && (
-                          <div className="nexus-stat-pill">
-                            <span className="nexus-stat-label">Department</span>
-                            <span className="nexus-stat-value">{notif.metadata.department}</span>
+                        {notif.metadata.stats.complaints > 0 && (
+                          <div className="telemetry-box">
+                            <span className="label">Incident Volume</span>
+                            <span className="value">{notif.metadata.stats.complaints} Reports</span>
                           </div>
                         )}
                       </div>
                     )}
-                    
-                    <div className="nexus-notif-footer">
-                      <div className="nexus-notif-meta">
-                        <Clock3 size={14} />
-                        <span>{formatRelativeTime(notif.created_at)}</span>
-                        <span className="separator">•</span>
-                        <span>{new Date(notif.created_at).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
-                        {notif.metadata?.category && (
-                          <>
-                            <span className="separator">|</span>
-                            <span className="nexus-notif-cat">{notif.metadata.category}</span>
-                          </>
-                        )}
-                      </div>
-                      <div className="flex gap-2">
-                         <button 
-                          onClick={() => handleAction(notif)}
-                          className="nexus-btn primary !py-1.5 !px-4 !text-xs"
-                        >
-                          Review Case <ExternalLink size={12} />
-                        </button>
-                        <button 
-                          onClick={(e) => handleMarkRead(notif.id, e)}
-                          className="nexus-btn secondary !py-1.5 !px-4 !text-xs"
-                        >
-                          Mark Reviewed
-                        </button>
-                      </div>
-                    </div>
+                  </div>
+
+                  <div className="record-actions-dock">
+                    <button 
+                      onClick={() => handleAction(notif)}
+                      className="dock-btn primary"
+                    >
+                      Review Case
+                      <ExternalLink size={12} />
+                    </button>
+                    <button 
+                      onClick={(e) => handleMarkRead(notif.id, e)}
+                      className={`dock-btn ${notif.is_read ? 'success' : 'secondary'}`}
+                      disabled={notif.is_read}
+                    >
+                      {notif.is_read ? (
+                        <><Check size={14} /> Read</>
+                      ) : (
+                        'Mark as Read'
+                      )}
+                    </button>
+                    {!notif.is_read && (
+                      <button 
+                        onClick={(e) => handleDelete(notif.id, e)}
+                        className="dock-btn danger"
+                        title="Archive Record"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    )}
                   </div>
                 </div>
               ))}
@@ -308,17 +329,17 @@ const AdminNotificationCenter = () => {
           )}
         </div>
 
-        {/* Pagination */}
+        {/* Pagination Dashboard */}
         {totalPages > 1 && (
-          <div className="nexus-pagination">
-            <p>
-              Showing <strong>{(page - 1) * itemsPerPage + 1}</strong> to <strong>{Math.min(page * itemsPerPage, filteredNotifications.length)}</strong> of <strong>{filteredNotifications.length}</strong> entries
-            </p>
-            <div className="nexus-page-controls">
-              <button disabled={page === 1} onClick={() => setPage(page - 1)}>
-                <ChevronLeft size={20} />
+          <div className="nexus-pagination-deck">
+            <div className="pagination-info">
+              Showing <strong>{(page - 1) * itemsPerPage + 1}</strong> - <strong>{Math.min(page * itemsPerPage, filteredNotifications.length)}</strong> of <strong>{filteredNotifications.length}</strong> Intelligence Logs
+            </div>
+            <div className="pagination-controls">
+              <button className="page-nav-btn" disabled={page === 1} onClick={() => setPage(page - 1)}>
+                <ChevronLeft size={18} />
               </button>
-              <div className="nexus-page-numbers">
+              <div className="page-bullets">
                 {[...Array(totalPages)].map((_, i) => (
                   <button
                     key={i}
@@ -329,8 +350,8 @@ const AdminNotificationCenter = () => {
                   </button>
                 ))}
               </div>
-              <button disabled={page === totalPages} onClick={() => setPage(page + 1)}>
-                <ChevronRight size={20} />
+              <button className="page-nav-btn" disabled={page === totalPages} onClick={() => setPage(page + 1)}>
+                <ChevronRight size={18} />
               </button>
             </div>
           </div>
@@ -339,14 +360,14 @@ const AdminNotificationCenter = () => {
 
       <style jsx>{`
         .admin-notif-center-wrapper {
-          padding: 2rem;
-          max-width: 1100px;
+          padding: 3rem 2rem;
+          max-width: 1300px;
           margin: 0 auto;
-          animation: nexusFadeIn 0.5s ease;
+          animation: nexusPageIn 0.6s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
-        @keyframes nexusFadeIn {
-          from { opacity: 0; transform: translateY(20px); }
+        @keyframes nexusPageIn {
+          from { opacity: 0; transform: translateY(30px); }
           to { opacity: 1; transform: translateY(0); }
         }
 
@@ -354,442 +375,377 @@ const AdminNotificationCenter = () => {
           display: flex;
           justify-content: space-between;
           align-items: flex-end;
-          margin-bottom: 2.5rem;
+          margin-bottom: 3rem;
         }
 
         .admin-notif-center-titlebox h1 {
-          font-size: 2.25rem;
-          font-weight: 850;
+          font-size: 2.75rem;
+          font-weight: 900;
           color: #0f172a;
-          margin: 0 0 0.5rem 0;
-          letter-spacing: -0.02em;
+          margin: 0;
+          letter-spacing: -0.04em;
         }
 
         .admin-notif-center-titlebox p {
           color: #64748b;
-          font-size: 1.1rem;
-          margin: 0;
+          font-size: 1.15rem;
+          font-weight: 500;
+          margin: 4px 0 0;
         }
 
         .admin-notif-center-actions {
           display: flex;
-          gap: 1rem;
+          gap: 12px;
         }
 
-        .nexus-btn {
+        .nexus-header-btn {
           display: flex;
           align-items: center;
-          gap: 0.75rem;
-          padding: 0.75rem 1.5rem;
+          gap: 8px;
+          padding: 10px 20px;
           border-radius: 14px;
-          font-weight: 700;
-          font-size: 0.95rem;
-          transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+          font-weight: 800;
+          font-size: 0.85rem;
           cursor: pointer;
-          border: 1px solid transparent;
+          transition: all 0.2s ease;
+          border: 1px solid #e2e8f0;
+          background: white;
+          color: #475569;
         }
 
-        .nexus-btn.primary {
+        .nexus-header-btn:hover {
+          background: #f8fafc;
+          border-color: #cbd5e1;
+          transform: translateY(-2px);
+        }
+
+        .nexus-header-btn.primary {
           background: #2563eb;
           color: white;
+          border-color: #2563eb;
           box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
         }
 
-        .nexus-btn.primary:hover {
+        .nexus-header-btn.primary:hover {
           background: #1d4ed8;
-          transform: translateY(-2px);
           box-shadow: 0 8px 20px rgba(37, 99, 235, 0.3);
         }
 
-        .nexus-btn.secondary {
-          background: white;
-          color: #475569;
-          border-color: #e2e8f0;
+        /* Executive Summary Grid */
+        .nexus-executive-summary {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          gap: 20px;
+          margin-bottom: 3rem;
         }
 
-        .nexus-btn.secondary:hover {
-          background: #f8fafc;
-          border-color: #cbd5e1;
-          color: #1e293b;
-        }
-
-        .nexus-glass-card {
+        .summary-card {
           background: white;
-          border-radius: 30px;
+          padding: 24px;
+          border-radius: 24px;
           border: 1px solid #e2e8f0;
-          box-shadow: 0 10px 40px rgba(0,0,0,0.04);
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+          box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+        }
+
+        .summary-card.urgent {
+          border-color: #fecdd3;
+          background: #fffbfa;
+        }
+
+        .summary-label {
+          font-size: 0.75rem;
+          font-weight: 800;
+          color: #64748b;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+        }
+
+        .summary-value {
+          font-size: 2rem;
+          font-weight: 900;
+          color: #0f172a;
+        }
+
+        .summary-footer {
+          font-size: 0.7rem;
+          color: #94a3b8;
+          font-weight: 600;
+        }
+
+        /* Main Deck */
+        .nexus-main-deck {
+          background: white;
+          border-radius: 32px;
+          border: 1px solid #e2e8f0;
+          box-shadow: 0 20px 50px rgba(0, 0, 0, 0.04);
           overflow: hidden;
         }
 
-        .nexus-toolbar {
-          padding: 1.5rem;
+        .nexus-control-bar {
+          padding: 24px 32px;
           border-bottom: 1px solid #f1f5f9;
           display: flex;
           justify-content: space-between;
           align-items: center;
-          gap: 2rem;
+          gap: 32px;
           background: #fcfdfe;
         }
 
-        .nexus-search-box {
+        .nexus-search-wrap {
           flex: 1;
           display: flex;
           align-items: center;
-          gap: 0.75rem;
+          gap: 12px;
           background: #f1f5f9;
-          padding: 0.75rem 1.25rem;
-          border-radius: 16px;
+          padding: 12px 20px;
+          border-radius: 18px;
           border: 1px solid transparent;
           transition: all 0.2s ease;
         }
 
-        .nexus-search-box:focus-within {
+        .nexus-search-wrap:focus-within {
           background: white;
           border-color: #3b82f6;
-          box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+          box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.08);
         }
 
-        .nexus-search-box input {
+        .nexus-search-wrap input {
           border: 0;
           background: transparent;
           outline: none;
           width: 100%;
           font-size: 0.95rem;
+          font-weight: 600;
           color: #1e293b;
         }
 
-        .nexus-search-box input::placeholder {
-          color: #94a3b8;
-        }
-
-        .nexus-filter-row {
+        .nexus-filter-strip {
           display: flex;
-          gap: 0.5rem;
+          gap: 6px;
+          background: #f1f5f9;
+          padding: 4px;
+          border-radius: 14px;
         }
 
-        .nexus-pill-btn {
-          padding: 0.5rem 1.25rem;
-          border-radius: 12px;
-          font-size: 0.85rem;
-          font-weight: 700;
-          text-transform: capitalize;
-          background: #f1f5f9;
-          color: #64748b;
+        .nexus-strip-pill {
+          padding: 8px 16px;
+          border-radius: 10px;
+          font-size: 0.8rem;
+          font-weight: 800;
+          text-transform: uppercase;
+          letter-spacing: 0.02em;
           border: 0;
+          background: transparent;
+          color: #64748b;
           cursor: pointer;
           transition: all 0.2s ease;
+          display: flex;
+          align-items: center;
+          gap: 8px;
         }
 
-        .nexus-pill-btn:hover {
-          background: #e2e8f0;
-          color: #475569;
+        .nexus-strip-pill.active {
+          background: white;
+          color: #0f172a;
+          box-shadow: 0 4px 10px rgba(0,0,0,0.06);
         }
 
-        .nexus-pill-btn.active {
-          background: #0f172a;
-          color: white;
-          box-shadow: 0 4px 10px rgba(15, 23, 42, 0.2);
-        }
-
-        .nexus-pill-badge {
+        .pill-badge {
           background: #2563eb;
           color: white;
-          font-size: 0.65rem;
+          font-size: 10px;
           padding: 1px 6px;
           border-radius: 6px;
-          margin-left: 0.5rem;
-          font-weight: 900;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
         }
 
-        .nexus-pill-btn.active .nexus-pill-badge {
-          background: white;
-          color: #2563eb;
-        }
-
-        .nexus-content-pool {
-          min-height: 500px;
-        }
-
-        .nexus-notif-list {
-          display: flex;
-          flex-direction: column;
-        }
-
-        .nexus-notif-item {
-          display: flex;
-          gap: 1.5rem;
-          padding: 1.75rem 2rem;
+        .nexus-record-item {
+          display: grid;
+          grid-template-columns: auto 1fr auto;
+          gap: 32px;
+          padding: 24px 32px;
           border-bottom: 1px solid #f1f5f9;
-          transition: all 0.2s ease;
-          position: relative;
+          transition: all 0.3s ease;
         }
 
-        .nexus-notif-item:hover {
+        .nexus-record-item:hover {
           background: #f8fafc;
         }
 
-        .nexus-notif-item.unread {
-          background: rgba(37, 99, 235, 0.02);
+        .nexus-record-item.is-unread {
+          background: rgba(37, 99, 235, 0.01);
+          border-left: 4px solid #2563eb;
         }
 
-        .nexus-notif-item.unread::before {
-          content: '';
-          position: absolute;
-          left: 0;
-          top: 0;
-          bottom: 0;
-          width: 4px;
-          background: #2563eb;
+        .record-visual {
+          display: flex;
+          align-items: flex-start;
+          padding-top: 4px;
         }
 
-        .nexus-notif-icon-shell {
-          width: 3.5rem;
-          height: 3.5rem;
+        .icon-vault {
+          width: 54px;
+          height: 54px;
           border-radius: 18px;
           background: white;
           display: flex;
           align-items: center;
           justify-content: center;
           border: 1px solid #e2e8f0;
-          flex-shrink: 0;
-          box-shadow: 0 4px 10px rgba(0,0,0,0.02);
+          box-shadow: 0 4px 12px rgba(0,0,0,0.03);
         }
 
-        .nexus-notif-body {
-          flex: 1;
-        }
-
-        .nexus-notif-header {
+        .record-head {
           display: flex;
           justify-content: space-between;
-          align-items: flex-start;
-          margin-bottom: 0.5rem;
-        }
-
-        .nexus-notif-title-row {
-          display: flex;
           align-items: center;
-          gap: 0.75rem;
+          margin-bottom: 8px;
         }
 
-        .nexus-notif-title {
-          font-size: 1.2rem;
-          font-weight: 800;
+        .record-title {
+          font-size: 1.25rem;
+          font-weight: 850;
           color: #0f172a;
           margin: 0;
+          letter-spacing: -0.02em;
         }
 
-        .nexus-unread-dot {
-          width: 8px;
-          height: 8px;
-          background: #3b82f6;
-          border-radius: 50%;
-        }
-
-        .nexus-notif-item.severity-critical {
-          border-left: 5px solid #ef4444;
-          background: #fffafa;
-        }
-
-        .admin-theme-dark .nexus-notif-item.severity-critical {
-          background: #2d1616;
-          border-left-color: #ef4444;
-        }
-
-        .nexus-notif-item.unread.severity-critical {
-          animation: critical-row-pulse 3s infinite;
-        }
-
-        @keyframes critical-row-pulse {
-          0% { box-shadow: inset 0 0 0 0 rgba(239, 68, 68, 0.05); }
-          50% { box-shadow: inset 0 0 40px 0 rgba(239, 68, 68, 0.1); }
-          100% { box-shadow: inset 0 0 0 0 rgba(239, 68, 68, 0.05); }
-        }
-
-        .nexus-critical-tag {
-          background: #ef4444;
-          color: white;
-          font-size: 0.7rem;
-          font-weight: 900;
-          padding: 3px 10px;
-          border-radius: 6px;
-          text-transform: uppercase;
-          letter-spacing: 0.05em;
-          box-shadow: 0 4px 10px rgba(239, 68, 68, 0.3);
-          animation: badge-pulse 1s infinite;
-        }
-
-        @keyframes badge-pulse {
-          0% { transform: scale(1); }
-          50% { transform: scale(1.05); }
-          100% { transform: scale(1); }
-        }
-
-        .nexus-stats-grid {
+        .record-timestamp {
           display: flex;
-          gap: 1.5rem;
-          margin: 1rem 0;
-          padding: 1rem;
-          background: rgba(0,0,0,0.03);
-          border-radius: 16px;
-          border: 1px dashed #e2e8f0;
+          align-items: center;
+          gap: 6px;
+          font-size: 0.75rem;
+          font-weight: 700;
+          color: #94a3b8;
+          text-transform: uppercase;
         }
 
-        .admin-theme-dark .nexus-stats-grid {
-          background: rgba(255,255,255,0.05);
-          border-color: #334155;
+        .record-message {
+          font-size: 1rem;
+          color: #475569;
+          line-height: 1.6;
+          margin: 0 0 16px 0;
+          max-width: 800px;
         }
 
-        .nexus-stat-pill {
+        .record-telemetry {
+          display: flex;
+          gap: 24px;
+        }
+
+        .telemetry-box {
           display: flex;
           flex-direction: column;
           gap: 2px;
         }
 
-        .nexus-stat-label {
+        .telemetry-box .label {
           font-size: 0.65rem;
           font-weight: 800;
-          color: #64748b;
+          color: #94a3b8;
           text-transform: uppercase;
           letter-spacing: 0.05em;
         }
 
-        .nexus-stat-value {
-          font-size: 1rem;
-          font-weight: 900;
-          color: #0f172a;
-        }
-
-        .admin-theme-dark .nexus-stat-value {
-          color: white;
-        }
-
-        .entity-link {
-          color: #2563eb;
-          text-decoration: none;
+        .telemetry-box .value {
+          font-size: 0.9rem;
           font-weight: 800;
-          cursor: pointer;
-          border-bottom: 1px dashed #2563eb;
+          color: #334155;
         }
 
-        .entity-link:hover {
-          color: #1d4ed8;
-          border-bottom-style: solid;
-        }
-
-        .nexus-action-link {
-          background: transparent;
-          border: 0;
-          color: #2563eb;
-          font-weight: 800;
-          font-size: 0.85rem;
+        .record-actions-dock {
           display: flex;
-          align-items: center;
-          gap: 0.5rem;
+          flex-direction: column;
+          gap: 8px;
+          min-width: 160px;
+        }
+
+        .dock-btn {
+          width: 100%;
+          padding: 10px 16px;
+          border-radius: 12px;
+          font-size: 0.8rem;
+          font-weight: 800;
           cursor: pointer;
           transition: all 0.2s ease;
-        }
-
-        .nexus-action-link:hover {
-          color: #1d4ed8;
-          transform: translateX(4px);
-        }
-
-        .nexus-pagination {
-          padding: 1.5rem 2rem;
-          background: #fcfdfe;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          border-top: 1px solid #f1f5f9;
-        }
-
-        .nexus-pagination p {
-          margin: 0;
-          color: #64748b;
-          font-size: 0.9rem;
-        }
-
-        .nexus-page-controls {
           display: flex;
           align-items: center;
-          gap: 1rem;
-        }
-
-        .nexus-page-numbers {
-          display: flex;
-          gap: 0.5rem;
-        }
-
-        .nexus-page-numbers button {
-          width: 36px;
-          height: 36px;
-          border-radius: 10px;
+          justify-content: center;
+          gap: 8px;
           border: 1px solid #e2e8f0;
           background: white;
-          color: #64748b;
-          font-weight: 700;
-          cursor: pointer;
-          transition: all 0.2s ease;
+          color: #475569;
         }
 
-        .nexus-page-numbers button.active {
+        .dock-btn:hover {
+          background: #f8fafc;
+          border-color: #cbd5e1;
+        }
+
+        .dock-btn.primary {
           background: #2563eb;
           color: white;
           border-color: #2563eb;
-          box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2);
         }
 
-        .nexus-empty-state {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          padding: 6rem 2rem;
-          text-align: center;
+        .dock-btn.primary:hover {
+          background: #1d4ed8;
+          transform: translateY(-1px);
         }
 
-        .nexus-empty-icon {
-          color: #e2e8f0;
-          margin-bottom: 1.5rem;
+        .dock-btn.success {
+          background: #f0fdf4;
+          color: #166534;
+          border-color: #bbf7d0;
         }
 
-        .nexus-loading-state {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          padding: 6rem 2rem;
+        .dock-btn.danger {
+          border-color: transparent;
+          color: #94a3b8;
         }
 
-        .nexus-spinner {
-          width: 40px;
-          height: 40px;
-          border: 4px solid #f1f5f9;
-          border-top-color: #3b82f6;
-          border-radius: 50%;
-          animation: spin 0.8s linear infinite;
-          margin-bottom: 1rem;
+        .dock-btn.danger:hover {
+          background: #fff1f2;
+          color: #e11d48;
+          border-color: #fecdd3;
         }
 
-        @keyframes spin { to { transform: rotate(360deg); } }
+        .record-tag-critical {
+          background: #ef4444;
+          color: white;
+          font-size: 10px;
+          font-weight: 900;
+          padding: 2px 8px;
+          border-radius: 6px;
+          letter-spacing: 0.05em;
+        }
 
-        .admin-theme-dark .nexus-glass-card { background: #0f172a; border-color: #1e293b; }
-        .admin-theme-dark .nexus-toolbar { background: #111827; border-color: #1e293b; }
-        .admin-theme-dark .nexus-search-box { background: #1e293b; }
-        .admin-theme-dark .nexus-search-box input { color: #f1f5f9; }
-        .admin-theme-dark .nexus-pill-btn { background: #1e293b; color: #94a3b8; }
-        .admin-theme-dark .nexus-pill-btn.active { background: white; color: #0f172a; }
-        .admin-theme-dark .nexus-notif-item { border-color: #1e293b; }
-        .admin-theme-dark .nexus-notif-item:hover { background: #1e293b; }
-        .admin-theme-dark .nexus-notif-icon-shell { background: #1e293b; border-color: #334155; }
-        .admin-theme-dark .nexus-notif-title { color: white; }
-        .admin-theme-dark .nexus-notif-cat { background: #1e293b; color: #94a3b8; }
-        .admin-theme-dark .nexus-pagination { background: #111827; border-color: #1e293b; }
-        .admin-theme-dark .admin-notif-center-titlebox h1 { color: #f1f5f9; }
+        .record-tag-resolved {
+          background: #f0fdf4;
+          color: #166534;
+          font-size: 10px;
+          font-weight: 900;
+          padding: 2px 8px;
+          border-radius: 6px;
+          border: 1px solid #bbf7d0;
+        }
+
+        .admin-theme-dark .nexus-main-deck { background: #0f172a; border-color: #1e293b; }
+        .admin-theme-dark .summary-card { background: #1e293b; border-color: #334155; }
+        .admin-theme-dark .summary-value { color: white; }
+        .admin-theme-dark .record-title { color: white; }
+        .admin-theme-dark .record-message { color: #94a3b8; }
+        .admin-theme-dark .telemetry-box .value { color: #cbd5e1; }
+        .admin-theme-dark .nexus-record-item:hover { background: #1e293b; }
+        .admin-theme-dark .nexus-header-btn { background: #1e293b; border-color: #334155; color: #94a3b8; }
+        .admin-theme-dark .nexus-strip-pill.active { background: #0f172a; color: white; }
+        .admin-theme-dark .nexus-control-bar { background: #111827; border-color: #1e293b; }
+        .admin-theme-dark .nexus-search-wrap { background: #1e293b; }
+        .admin-theme-dark .nexus-search-wrap input { color: white; }
+        .admin-theme-dark .dock-btn { background: #1e293b; border-color: #334155; color: #94a3b8; }
+        .admin-theme-dark .dock-btn.success { background: rgba(34,197,94,0.1); color: #4ade80; border-color: rgba(34,197,94,0.2); }
       `}</style>
     </div>
   );
