@@ -69,9 +69,13 @@ const AdminNotificationCenter = () => {
   const handleMarkAllAsRead = async () => {
     try {
       await notificationApi.markAllAsRead();
+      // Optimistic update
       setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+      // Forced refresh to ensure server sync
+      setTimeout(fetchNotifications, 500);
     } catch (error) {
       console.error('Mark all read failed:', error);
+      alert('Failed to mark notifications as read. Please check your connection.');
     }
   };
 
@@ -165,15 +169,19 @@ const AdminNotificationCenter = () => {
           </div>
           
           <div className="nexus-filter-row">
-            {['all', 'unread', 'critical', 'escalations', 'credentialing', 'appointments'].map(type => (
-              <button
-                key={type}
-                onClick={() => { setFilterType(type); setPage(1); }}
-                className={`nexus-pill-btn ${filterType === type ? 'active' : ''}`}
-              >
-                {type}
-              </button>
-            ))}
+            {['all', 'unread', 'critical', 'escalations', 'credentialing', 'appointments'].map(type => {
+              const count = type === 'unread' ? notifications.filter(n => !n.is_read).length : 0;
+              return (
+                <button
+                  key={type}
+                  onClick={() => { setFilterType(type); setPage(1); }}
+                  className={`nexus-pill-btn ${filterType === type ? 'active' : ''}`}
+                >
+                  {type}
+                  {count > 0 && <span className="nexus-pill-badge">{count}</span>}
+                </button>
+              );
+            })}
           </div>
         </div>
 
@@ -432,6 +440,24 @@ const AdminNotificationCenter = () => {
           background: #0f172a;
           color: white;
           box-shadow: 0 4px 10px rgba(15, 23, 42, 0.2);
+        }
+
+        .nexus-pill-badge {
+          background: #2563eb;
+          color: white;
+          font-size: 0.65rem;
+          padding: 1px 6px;
+          border-radius: 6px;
+          margin-left: 0.5rem;
+          font-weight: 900;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .nexus-pill-btn.active .nexus-pill-badge {
+          background: white;
+          color: #2563eb;
         }
 
         .nexus-content-pool {
