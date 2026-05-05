@@ -7,6 +7,7 @@ import { useSystemConfig } from '../shared/context/SystemConfigContext';
 import '../admin/styles/admin-theme.css';
 import {
   BarChart3,
+  Bell,
   CalendarDays,
   ChevronLeft,
   ChevronRight,
@@ -41,8 +42,6 @@ const ADMIN_NAV_ITEMS = [
   { label: 'Announcements', to: '/admin/announcements', icon: Bell },
   { label: 'Reports', to: '/admin/reports-analytics', icon: BarChart3 },
   { label: 'Settings', to: '/admin/settings', icon: Settings },
-];
-
 ];
 
 const PROFILE_LINKS = [
