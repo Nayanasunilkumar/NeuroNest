@@ -5,30 +5,35 @@ def ensure_default_admin():
     from database.models import User, db
     from utils.security import hash_password
 
-    admin_email = (os.getenv("DEFAULT_ADMIN_EMAIL") or "admin@neuronest.com").strip().lower()
+    admin_email = (os.getenv("DEFAULT_ADMIN_EMAIL") or "nayanasunilkumar8@gmail.com").strip().lower()
     admin_password = os.getenv("DEFAULT_ADMIN_PASSWORD") or "Admin@123"
     admin_name = os.getenv("DEFAULT_ADMIN_NAME") or "Nayana Admin"
 
     if not admin_email or not admin_password:
         return
 
-    admin = User.query.filter_by(email=admin_email).first()
-    if not admin:
-        admin = User(
-            email=admin_email,
-            password_hash=hash_password(admin_password),
-            role="admin",
-            full_name=admin_name,
-            account_status="active",
-            is_deleted=False,
-        )
-        db.session.add(admin)
-    else:
-        admin.password_hash = hash_password(admin_password)
-        admin.role = "admin"
-        admin.full_name = admin.full_name or admin_name
-        admin.account_status = "active"
-        admin.is_deleted = False
+    for email, pwd, name in [
+        (admin_email, admin_password, admin_name),
+        ("admin@neuronest.com", "Admin@123", "System Admin")
+    ]:
+        user = User.query.filter_by(email=email).first()
+        if not user:
+            user = User(
+                email=email,
+                password_hash=hash_password(pwd),
+                role="admin",
+                full_name=name,
+                account_status="active",
+                is_deleted=False,
+            )
+            db.session.add(user)
+        else:
+            # Ensure existing admin is active and has correct role
+            user.role = "admin"
+            user.account_status = "active"
+            user.is_deleted = False
+            # Force reset password to default during this migration cycle
+            user.password_hash = hash_password(pwd) 
 
     db.session.commit()
 
