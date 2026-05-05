@@ -143,16 +143,24 @@ const AdminLayout = () => {
     }
     
     setNotificationsOpen(false);
+    setExpandedNotif(null);
     
-    // Contextual Routing
-    if (notif.type === 'escalation') {
+    const type = (notif.type || '').toLowerCase();
+    const category = (notif.metadata?.category || '').toLowerCase();
+    const title = (notif.title || '').toLowerCase();
+
+    // Contextual Routing with keyword fallback
+    if (type === 'escalation' || category === 'escalation' || title.includes('escalation')) {
       navigate('/admin/review-management');
-    } else if (notif.type === 'credentialing') {
+    } else if (type === 'credentialing' || type === 'doctor_verification' || title.includes('credential')) {
       navigate('/admin/manage-doctors');
-    } else if (notif.type === 'appointment_conflict') {
+    } else if (type === 'appointment_conflict' || type === 'appointment' || title.includes('appointment')) {
       navigate('/admin/appointment-management');
-    } else if (notif.type === 'announcement_expiry') {
+    } else if (type === 'announcement_expiry' || title.includes('announcement')) {
       navigate('/admin/announcements');
+    } else {
+      // Default to dashboard if intent is unclear
+      navigate('/admin/dashboard');
     }
   };
 
