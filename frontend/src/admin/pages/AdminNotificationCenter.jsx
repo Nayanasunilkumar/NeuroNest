@@ -226,7 +226,7 @@ const AdminNotificationCenter = () => {
                         <h4 className="nexus-notif-title">{notif.title}</h4>
                         {!notif.is_read && <span className="nexus-unread-dot" />}
                         {notif.metadata?.severity === 'critical' && (
-                          <span className="nexus-critical-tag">Critical Impact</span>
+                          <span className="nexus-critical-tag">CRITICAL IMPACT</span>
                         )}
                       </div>
                       <div className="nexus-notif-actions">
@@ -235,20 +235,50 @@ const AdminNotificationCenter = () => {
                             <Check size={18} />
                           </button>
                         )}
-                        <button onClick={(e) => handleDelete(notif.id, e)} title="Delete" className="delete">
-                          <Trash2 size={18} />
-                        </button>
+                        {notif.metadata?.severity !== 'critical' && (
+                          <button onClick={(e) => handleDelete(notif.id, e)} title="Delete" className="delete">
+                            <Trash2 size={18} />
+                          </button>
+                        )}
                       </div>
                     </div>
                     
                     <p className="nexus-notif-message">
-                      {(notif.message || notif.content || "").replace(/Dr\. Dr\./g, 'Dr.')}
+                      {notif.message.includes('Dr.') ? (
+                        <>
+                          {notif.message.split(/Dr\.\s*([\w\s]+)/).map((part, i) => {
+                            if (i === 1) return <span key={i} className="entity-link" onClick={() => navigate(`/admin/manage-doctors?search=${part}`)}>Dr. {part}</span>;
+                            return part;
+                          })}
+                        </>
+                      ) : notif.message}
                     </p>
+
+                    {notif.metadata?.stats && (
+                      <div className="nexus-stats-grid">
+                        <div className="nexus-stat-pill">
+                          <span className="nexus-stat-label">Telemetry Feed</span>
+                          <span className="nexus-stat-value">{notif.metadata.stats.complaints || 0} Complaints</span>
+                        </div>
+                        <div className="nexus-stat-pill">
+                          <span className="nexus-stat-label">Risk Score</span>
+                          <span className="nexus-stat-value">{notif.metadata.risk_level?.toUpperCase() || 'CRITICAL'}</span>
+                        </div>
+                        {notif.metadata.department && (
+                          <div className="nexus-stat-pill">
+                            <span className="nexus-stat-label">Department</span>
+                            <span className="nexus-stat-value">{notif.metadata.department}</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
                     
                     <div className="nexus-notif-footer">
                       <div className="nexus-notif-meta">
                         <Clock3 size={14} />
                         <span>{formatRelativeTime(notif.created_at)}</span>
+                        <span className="separator">•</span>
+                        <span>{new Date(notif.created_at).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
                         {notif.metadata?.category && (
                           <>
                             <span className="separator">|</span>
@@ -256,12 +286,20 @@ const AdminNotificationCenter = () => {
                           </>
                         )}
                       </div>
-                      <button 
-                        onClick={() => handleAction(notif)}
-                        className="nexus-action-link"
-                      >
-                        Launch Governance Module <ExternalLink size={12} />
-                      </button>
+                      <div className="flex gap-2">
+                         <button 
+                          onClick={() => handleAction(notif)}
+                          className="nexus-btn primary !py-1.5 !px-4 !text-xs"
+                        >
+                          Review Case <ExternalLink size={12} />
+                        </button>
+                        <button 
+                          onClick={(e) => handleMarkRead(notif.id, e)}
+                          className="nexus-btn secondary !py-1.5 !px-4 !text-xs"
+                        >
+                          Mark Reviewed
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -551,80 +589,95 @@ const AdminNotificationCenter = () => {
           border-radius: 50%;
         }
 
+        .nexus-notif-item.severity-critical {
+          border-left: 5px solid #ef4444;
+          background: #fffafa;
+        }
+
+        .admin-theme-dark .nexus-notif-item.severity-critical {
+          background: #2d1616;
+          border-left-color: #ef4444;
+        }
+
+        .nexus-notif-item.unread.severity-critical {
+          animation: critical-row-pulse 3s infinite;
+        }
+
+        @keyframes critical-row-pulse {
+          0% { box-shadow: inset 0 0 0 0 rgba(239, 68, 68, 0.05); }
+          50% { box-shadow: inset 0 0 40px 0 rgba(239, 68, 68, 0.1); }
+          100% { box-shadow: inset 0 0 0 0 rgba(239, 68, 68, 0.05); }
+        }
+
         .nexus-critical-tag {
           background: #ef4444;
           color: white;
-          font-size: 0.65rem;
+          font-size: 0.7rem;
           font-weight: 900;
-          padding: 2px 8px;
+          padding: 3px 10px;
           border-radius: 6px;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+          box-shadow: 0 4px 10px rgba(239, 68, 68, 0.3);
+          animation: badge-pulse 1s infinite;
+        }
+
+        @keyframes badge-pulse {
+          0% { transform: scale(1); }
+          50% { transform: scale(1.05); }
+          100% { transform: scale(1); }
+        }
+
+        .nexus-stats-grid {
+          display: flex;
+          gap: 1.5rem;
+          margin: 1rem 0;
+          padding: 1rem;
+          background: rgba(0,0,0,0.03);
+          border-radius: 16px;
+          border: 1px dashed #e2e8f0;
+        }
+
+        .admin-theme-dark .nexus-stats-grid {
+          background: rgba(255,255,255,0.05);
+          border-color: #334155;
+        }
+
+        .nexus-stat-pill {
+          display: flex;
+          flex-direction: column;
+          gap: 2px;
+        }
+
+        .nexus-stat-label {
+          font-size: 0.65rem;
+          font-weight: 800;
+          color: #64748b;
           text-transform: uppercase;
           letter-spacing: 0.05em;
         }
 
-        .nexus-notif-actions {
-          display: flex;
-          gap: 0.5rem;
+        .nexus-stat-value {
+          font-size: 1rem;
+          font-weight: 900;
+          color: #0f172a;
         }
 
-        .nexus-notif-actions button {
-          width: 32px;
-          height: 32px;
-          border-radius: 8px;
-          border: 0;
-          background: transparent;
-          color: #94a3b8;
-          display: flex;
-          align-items: center;
-          justify-content: center;
+        .admin-theme-dark .nexus-stat-value {
+          color: white;
+        }
+
+        .entity-link {
+          color: #2563eb;
+          text-decoration: none;
+          font-weight: 800;
           cursor: pointer;
-          transition: all 0.2s ease;
+          border-bottom: 1px dashed #2563eb;
         }
 
-        .nexus-notif-actions button:hover {
-          background: #f1f5f9;
-          color: #3b82f6;
-        }
-
-        .nexus-notif-actions button.delete:hover {
-          background: #fee2e2;
-          color: #ef4444;
-        }
-
-        .nexus-notif-message {
-          color: #64748b;
-          font-size: 1.05rem;
-          line-height: 1.6;
-          margin: 0 0 1.25rem 0;
-          max-width: 800px;
-        }
-
-        .nexus-notif-footer {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-        }
-
-        .nexus-notif-meta {
-          display: flex;
-          align-items: center;
-          gap: 0.75rem;
-          color: #94a3b8;
-          font-size: 0.85rem;
-          font-weight: 700;
-        }
-
-        .nexus-notif-meta .separator {
-          opacity: 0.3;
-        }
-
-        .nexus-notif-cat {
-          text-transform: uppercase;
-          letter-spacing: 0.1em;
-          background: #f1f5f9;
-          padding: 2px 8px;
-          border-radius: 4px;
-          font-size: 0.75rem;
+        .entity-link:hover {
+          color: #1d4ed8;
+          border-bottom-style: solid;
         }
 
         .nexus-action-link {

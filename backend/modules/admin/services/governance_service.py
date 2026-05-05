@@ -72,7 +72,20 @@ class GovernanceService:
                     message=f"System has automatically flagged {'Dr. ' if not doctor_name.startswith('Dr.') else ''}{doctor_name} for immediate review.",
                     notif_type="escalation",
                     severity="critical",
-                    payload={"doctor_id": profile.user_id, "risk_level": profile.risk_level}
+                    payload={
+                        "doctor_id": profile.user_id,
+                        "doctor_license": profile.license_number,
+                        "risk_level": profile.risk_level,
+                        "department": profile.department or "General Medicine",
+                        "hospital": profile.hospital_name or "NeuroNest Primary",
+                        "stats": {
+                            "complaints": profile.report_count,
+                            "critical_reviews": profile.critical_review_count,
+                            "missed_appointments": profile.missed_appointments_count,
+                            "avg_rating": round(profile.avg_rating, 1)
+                        },
+                        "reason": "Threshold for critical telemetry exceeded. Multiple high-severity indicators detected."
+                    }
                 )
 
         db.session.commit()

@@ -487,18 +487,30 @@ const AdminLayout = () => {
                                 <p className="admin-navbar-notification-message">
                                   {(notif.message || notif.content || "").replace(/Dr\. Dr\./g, 'Dr.')}
                                 </p>
+
+                                {notif.metadata?.stats && (
+                                  <div className="notif-stats-grid">
+                                    <div className="stat-item">
+                                      <span className="stat-label">Complaints</span>
+                                      <span className="stat-value">{notif.metadata.stats.complaints || 0}</span>
+                                    </div>
+                                    <div className="stat-item">
+                                      <span className="stat-label">Risk Level</span>
+                                      <span className="stat-value text-rose-600">{(notif.metadata.risk_level || 'CRITICAL').toUpperCase()}</span>
+                                    </div>
+                                  </div>
+                                )}
                                 
                                 <div className="admin-navbar-notification-meta">
-                                  <div className="flex items-center gap-1.5">
+                                  <div className="flex items-center gap-1.5 w-full justify-between">
                                     <div className="flex items-center gap-1" title={new Date(notif.created_at).toLocaleString()}>
                                       <Clock3 size={10} />
-                                      {formatRelativeTime(notif.created_at)}
+                                      <span>{formatRelativeTime(notif.created_at)}</span>
+                                      <span className="opacity-40">•</span>
+                                      <span>{new Date(notif.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                                     </div>
                                     {notif.metadata?.category && (
-                                      <>
-                                        <span className="text-[8px] opacity-30">|</span>
-                                        <span className="admin-notif-tag">{notif.metadata.category}</span>
-                                      </>
+                                      <span className="admin-notif-tag">{notif.metadata.category}</span>
                                     )}
                                   </div>
                                 </div>
@@ -509,15 +521,23 @@ const AdminLayout = () => {
                                       className="notif-quick-btn primary"
                                       onClick={(e) => { e.stopPropagation(); handleNotificationClick(notif); }}
                                     >
-                                      {notif.type === 'escalation' ? 'Review Case' : 'Take Action'}
+                                      Review Case
                                       <ExternalLink size={10} className="ml-1" />
                                     </button>
                                     <button 
                                       className="notif-quick-btn"
                                       onClick={(e) => { e.stopPropagation(); handleMarkAsRead(notif.id); setExpandedNotif(null); }}
                                     >
-                                      Dismiss
+                                      Mark as Reviewed
                                     </button>
+                                    {notif.metadata?.severity === 'critical' && (
+                                      <button 
+                                        className="notif-quick-btn border-rose-200 text-rose-600"
+                                        onClick={(e) => { e.stopPropagation(); window.location.href = '/admin/review-management'; }}
+                                      >
+                                        Escalate
+                                      </button>
+                                    )}
                                   </div>
                                 )}
                               </div>
@@ -1083,58 +1103,60 @@ const AdminLayout = () => {
 
         .admin-navbar-notification.severity-critical {
           border-left: 4px solid #ef4444;
+          background: #fff5f5;
         }
 
-        .admin-navbar-notification-title {
-          font-size: 0.875rem;
-          font-weight: 800;
-          color: #0f172a;
-          margin-bottom: 4px;
-          display: block;
+        .admin-navbar-notification.severity-critical.unread {
+          animation: critical-pulse 2s infinite;
         }
 
-        .admin-navbar-notification-message {
-          font-size: 0.8rem;
-          color: #475569;
-          line-height: 1.5;
-          margin-bottom: 12px;
+        @keyframes critical-pulse {
+          0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.2); }
+          70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+          100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
         }
 
-        .notif-icon-box {
-          width: 36px;
-          height: 36px;
-          border-radius: 10px;
+        .notif-critical-badge {
+          background: #ef4444;
+          color: white;
+          font-size: 8px;
+          font-weight: 900;
+          padding: 2px 6px;
+          border-radius: 4px;
+          letter-spacing: 0.05em;
+          animation: pulse-mini 1s infinite;
+        }
+
+        @keyframes pulse-mini {
+          0% { opacity: 1; }
+          50% { opacity: 0.7; }
+          100% { opacity: 1; }
+        }
+
+        .notif-stats-grid {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 8px;
+          margin: 8px 0;
+          padding: 8px;
+          background: rgba(0,0,0,0.03);
+          border-radius: 8px;
+          font-size: 10px;
+        }
+
+        .admin-theme-dark .notif-stats-grid {
+          background: rgba(255,255,255,0.05);
+        }
+
+        .stat-item {
           display: flex;
-          align-items: center;
-          justify-content: center;
-          background: #f1f5f9;
-          color: #64748b;
-          flex-shrink: 0;
+          flex-direction: column;
+          gap: 2px;
         }
 
-        .notif-icon-box.critical {
-          background: #fee2e2;
-          color: #ef4444;
-        }
-
-        .notif-quick-btn {
-          padding: 8px 16px;
-          border-radius: 10px;
-          font-size: 0.75rem;
-          font-weight: 700;
-          border: 1px solid #e2e8f0;
-          background: white;
-          color: #475569;
-          display: inline-flex;
-          align-items: center;
-          gap: 6px;
-          transition: all 0.2s;
-        }
-
-        .notif-quick-btn:hover {
-          background: #f8fafc;
-          border-color: #cbd5e1;
-        }
+        .stat-label { color: #64748b; font-weight: 600; text-transform: uppercase; font-size: 8px; }
+        .stat-value { color: #0f172a; font-weight: 800; }
+        .admin-theme-dark .stat-value { color: #f1f5f9; }
 
         .notif-quick-btn.primary {
           background: #2563eb;
