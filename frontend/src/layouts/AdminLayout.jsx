@@ -999,160 +999,153 @@ const AdminLayout = () => {
           border-radius: 10px;
           margin-bottom: 12px;
         }
+        .admin-navbar-notificationspanel {
+          width: 380px;
+          border-radius: 20px;
+          overflow: hidden;
+          background: #ffffff;
+          box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
+          border: 1px solid #e2e8f0;
+        }
+
+        .admin-notif-header {
+          padding: 20px 20px 16px;
+          background: #0f172a;
+          color: white;
+        }
+
+        .notif-stat-pill.all {
+          background: rgba(255, 255, 255, 0.1);
+          color: rgba(255, 255, 255, 0.8);
+          font-size: 10px;
+          padding: 3px 10px;
+          border-radius: 6px;
+          font-weight: 800;
+          text-transform: uppercase;
+        }
+
+        .admin-notif-tabs {
+          display: flex;
+          gap: 6px;
+          background: #f1f5f9;
+          padding: 4px;
+          border-radius: 12px;
+          margin-top: 12px;
+        }
+
         .admin-notif-tab {
           flex: 1;
           border: 0;
           background: transparent;
-          padding: 6px 2px;
-          font-size: 0.7rem;
+          padding: 8px 4px;
+          font-size: 0.75rem;
           font-weight: 700;
           color: #64748b;
           border-radius: 8px;
-          transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+          transition: all 0.2s;
         }
+
         .admin-notif-tab.active {
           background: #ffffff;
           color: #0f172a;
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
         }
-        .admin-notif-preferences {
-          padding: 20px;
-        }
-        .admin-notif-preferences h6 {
-          color: var(--nn-text-main);
-        }
-        .admin-notif-preference-list {
-          display: grid;
-          gap: 10px;
-        }
-        .admin-notif-preference-row {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 16px;
-          min-height: 44px;
-          padding: 10px 12px;
-          border: 1px solid #e2e8f0;
-          border-radius: 12px;
+
+        .admin-navbar-notificationlist {
+          max-height: 480px;
+          overflow-y: auto;
+          padding: 10px;
           background: #f8fafc;
-          color: #334155;
-          font-size: 0.84rem;
-          font-weight: 700;
-          cursor: pointer;
         }
-        .admin-notif-preference-row:hover {
-          background: #eef6ff;
-          border-color: #bfdbfe;
-        }
-        .admin-notif-preference-row input {
-          width: 18px;
-          height: 18px;
-          accent-color: #2563eb;
-          flex-shrink: 0;
-        }
-        .admin-theme-dark .admin-notif-tabs {
-          background: #1f2937;
-        }
-        .admin-theme-dark .admin-notif-tab.active {
-          background: #0f172a;
-          color: #e5edff;
-        }
-        .admin-theme-dark .admin-notif-preference-row {
-          background: #162033;
-          border-color: #334155;
-          color: #dbeafe;
-        }
+
         .admin-navbar-notification {
-          padding: 12px 16px;
+          background: white;
+          padding: 16px;
+          border-radius: 14px;
+          margin-bottom: 10px;
+          border: 1px solid #e2e8f0;
           cursor: pointer;
-          transition: all 0.15s ease;
-          border-bottom: 1px solid #f1f5f9;
+          transition: all 0.2s;
           position: relative;
-          min-width: 0;
+          overflow: hidden;
         }
-        .admin-navbar-notification > .flex,
-        .admin-navbar-notification .flex-1 {
-          min-width: 0;
-        }
-        .admin-navbar-notification.unread {
-          background: #f8fafc;
-        }
+
         .admin-navbar-notification:hover {
-          background: #f1f5f9;
+          border-color: #cbd5e1;
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
         }
-        .notif-stat-pill {
-          padding: 2px 8px;
-          border-radius: 999px;
-          font-size: 9px;
+
+        .admin-navbar-notification.unread {
+          border-left: 4px solid #2563eb;
+          background: #f0f7ff;
+        }
+
+        .admin-navbar-notification.severity-critical {
+          border-left: 4px solid #ef4444;
+        }
+
+        .admin-navbar-notification-title {
+          font-size: 0.875rem;
           font-weight: 800;
-          text-transform: uppercase;
-          letter-spacing: 0.02em;
+          color: #0f172a;
+          margin-bottom: 4px;
+          display: block;
         }
-        .notif-stat-pill.all { background: #f1f5f9; color: #64748b; }
-        .notif-stat-pill.urgent { background: #fee2e2; color: #ef4444; }
 
-        .notif-critical-badge {
-          background: #ef4444;
-          color: white;
-          font-size: 8px;
-          font-weight: 900;
-          padding: 2px 4px;
-          border-radius: 4px;
-          letter-spacing: 0.05em;
+        .admin-navbar-notification-message {
+          font-size: 0.8rem;
+          color: #475569;
+          line-height: 1.5;
+          margin-bottom: 12px;
+        }
+
+        .notif-icon-box {
+          width: 36px;
+          height: 36px;
+          border-radius: 10px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: #f1f5f9;
+          color: #64748b;
           flex-shrink: 0;
         }
 
-        .admin-navbar-notification {
-          padding: 14px 16px;
-          cursor: pointer;
-          transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-          border-bottom: 1px solid #f1f5f9;
-          position: relative;
-          min-width: 0;
+        .notif-icon-box.critical {
+          background: #fee2e2;
+          color: #ef4444;
         }
-        .admin-navbar-notification.unread {
-          background: #f8fafc;
-          box-shadow: inset 3px 0 0 #3b82f6;
-        }
-        .admin-navbar-notification.expanded {
-          background: #ffffff;
-          box-shadow: 0 10px 25px rgba(0,0,0,0.05);
-          margin: 8px;
-          border-radius: 16px;
-          border: 1px solid #e2e8f0;
-          z-index: 2;
-        }
-        .admin-navbar-notification:hover {
-          background: #f1f5f9;
-          transform: translateY(-1px);
-        }
-        .admin-navbar-notification.expanded:hover {
-          transform: none;
-        }
-        
+
         .notif-quick-btn {
-          padding: 6px 12px;
-          border-radius: 8px;
-          font-size: 10px;
+          padding: 8px 16px;
+          border-radius: 10px;
+          font-size: 0.75rem;
           font-weight: 700;
           border: 1px solid #e2e8f0;
-          background: #ffffff;
+          background: white;
           color: #475569;
-          display: flex;
+          display: inline-flex;
           align-items: center;
-          transition: all 0.2s ease;
+          gap: 6px;
+          transition: all 0.2s;
         }
+
         .notif-quick-btn:hover {
           background: #f8fafc;
           border-color: #cbd5e1;
         }
+
         .notif-quick-btn.primary {
           background: #2563eb;
-          color: #ffffff;
+          color: white;
           border-color: #2563eb;
+          box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
         }
+
         .notif-quick-btn.primary:hover {
           background: #1d4ed8;
+          transform: translateY(-1px);
         }
 
         .nexus-loading-spinner {
@@ -1213,33 +1206,51 @@ const AdminLayout = () => {
           font-weight: 800;
           text-transform: uppercase;
         }
-        .admin-theme-dark .admin-notif-tag {
-          background: #334155;
-          color: #94a3b8;
+        .admin-theme-dark .admin-navbar-notificationspanel {
+          background: #0f172a;
+          border-color: #1e293b;
+          box-shadow: 0 25px 60px rgba(0, 0, 0, 0.4);
         }
-        .admin-theme-dark .notif-stat-pill.all { background: #1f2937; color: #94a3b8; }
-        .admin-theme-dark .admin-navbar-notification.unread {
-          background: #162033;
-          box-shadow: inset 3px 0 0 #3b82f6;
-        }
-        .admin-theme-dark .admin-navbar-notification.expanded {
-          background: #111827;
+
+        .admin-theme-dark .admin-navbar-notification {
+          background: #1e293b;
           border-color: #334155;
         }
-        .admin-theme-dark .admin-navbar-notification-title {
-          color: #f1f5f9;
-        }
-        .admin-theme-dark .admin-navbar-notification {
-          border-bottom-color: #1f2937;
-        }
-        .admin-theme-dark .admin-navbar-notification.unread,
+
         .admin-theme-dark .admin-navbar-notification:hover {
-          background: #162033;
+          background: #27374d;
+          border-color: #475569;
         }
+
         .admin-theme-dark .admin-navbar-notification-title {
-          color: #e5edff;
+          color: white;
         }
+
         .admin-theme-dark .admin-navbar-notification-message {
+          color: #94a3b8;
+        }
+
+        .admin-theme-dark .admin-navbar-notificationlist {
+          background: #0f172a;
+        }
+
+        .admin-theme-dark .admin-notif-tabs {
+          background: #1e293b;
+        }
+
+        .admin-theme-dark .admin-notif-tab.active {
+          background: #0f172a;
+          color: white;
+        }
+
+        .admin-theme-dark .notif-quick-btn {
+          background: #1e293b;
+          border-color: #334155;
+          color: #94a3b8;
+        }
+
+        .admin-theme-dark .notif-icon-box {
+          background: #334155;
           color: #94a3b8;
         }
         .notif-icon-box {
