@@ -34,8 +34,7 @@ import {
   AlertTriangle,
   Settings2,
   Filter,
-  Check,
-  Archive as ArchiveIcon
+  Check
 } from 'lucide-react';
 
 import { useNavigate } from 'react-router-dom';
@@ -442,9 +441,9 @@ const AdminLayout = () => {
                                   <button 
                                     className="notif-action-btn" 
                                     onClick={(e) => handleDeleteNotification(notif.id, e)}
-                                    title="Archive"
+                                    title="Delete"
                                   >
-                                    <ArchiveIcon size={14} />
+                                    <Trash2 size={14} />
                                   </button>
                                 </div>
                                 <p className="admin-navbar-notification-message">
@@ -820,11 +819,14 @@ const AdminLayout = () => {
           right: 24px;
           border-radius: 20px;
           border: 1px solid var(--nn-border);
-          background: var(--nn-surface);
+          background: #ffffff;
           box-shadow: 0 24px 50px rgba(2, 6, 23, 0.28);
-          backdrop-filter: blur(20px);
           overflow: hidden;
           z-index: 999999;
+        }
+        .admin-theme-dark .admin-navbar-popover {
+          background: #0f172a;
+          border-color: #1e293b;
         }
         .admin-navbar-searchpanel {
           width: 320px;

@@ -65,15 +65,15 @@ class GovernanceService:
                 
                 # 📢 Notify Administrators
                 from modules.shared.services.notification_service import NotificationService
-                admins = User.query.filter(User.role.in_(['admin', 'super_admin'])).all()
-                for admin in admins:
-                    NotificationService.send_in_app(
-                        user_id=admin.id,
-                        title="Critical Doctor Escalation",
-                        message=f"System has automatically flagged Dr. {profile.user.full_name} for immediate review.",
-                        notif_type="admin_alert",
-                        payload={"doctor_id": profile.user_id, "risk_level": profile.risk_level}
-                    )
+                doctor_name = profile.user.full_name
+                
+                NotificationService.send_admin_notification(
+                    title="Critical Doctor Escalation",
+                    message=f"System has automatically flagged {'Dr. ' if not doctor_name.startswith('Dr.') else ''}{doctor_name} for immediate review.",
+                    notif_type="escalation",
+                    severity="critical",
+                    payload={"doctor_id": profile.user_id, "risk_level": profile.risk_level}
+                )
 
         db.session.commit()
 
