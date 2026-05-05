@@ -223,7 +223,7 @@ class FeedbackService:
             
             NotificationService.send_admin_notification(
                 title="Critical Feedback Escalation",
-                message=f"A serious complaint has been filed by {patient_name} against Dr. {doctor_name}. Immediate review is required.",
+                message=f"A serious complaint has been filed by {patient_name} against {'Dr. ' if not doctor_name.startswith('Dr.') else ''}{doctor_name}. Immediate review is required.",
                 notif_type="escalation",
                 severity="critical",
                 payload={"review_id": review.id, "doctor_id": appt.doctor_id}

@@ -821,7 +821,7 @@ def cancel_appointment(appointment_id):
             user_id=appointment.patient_id,
             type="appointment_cancelled",
             title="Appointment Cancelled",
-            message=f"Your appointment with Dr. {appointment.doctor.full_name if appointment.doctor else appointment.doctor_id} was cancelled by doctor.",
+            message=f"Your appointment with {'Dr. ' if not (appointment.doctor and appointment.doctor.full_name and appointment.doctor.full_name.startswith('Dr.')) else ''}{appointment.doctor.full_name if appointment.doctor else appointment.doctor_id} was cancelled by doctor.",
             payload={
                 "appointment_id": appointment.id,
                 "doctor_id": appointment.doctor_id,
@@ -836,7 +836,7 @@ def cancel_appointment(appointment_id):
     
     NotificationService.send_admin_notification(
         title="Specialist Schedule Conflict",
-        message=f"Dr. {doctor_name} has cancelled an appointment with {patient_name} on {appointment.appointment_date}. Intervention may be required.",
+        message=f"{'Dr. ' if not doctor_name.startswith('Dr.') else ''}{doctor_name} has cancelled an appointment with {patient_name} on {appointment.appointment_date}. Intervention may be required.",
         notif_type="appointment_conflict",
         severity="warning",
         payload={"appointment_id": appointment.id, "doctor_id": current_user_id}

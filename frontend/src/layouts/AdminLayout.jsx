@@ -432,27 +432,32 @@ const AdminLayout = () => {
                                 {getNotifIcon(notif.type, notif.metadata?.severity)}
                               </div>
                               <div className="flex-1 min-w-0">
-                                <div className="flex justify-between items-start mb-0.5">
+                                <div className="flex justify-between items-start mb-1">
                                   <div className="flex items-center gap-2 min-w-0">
                                     <strong className="admin-navbar-notification-title">
                                       {notif.title}
                                     </strong>
-                                    {!notif.is_read && <div className="w-1.5 h-1.5 rounded-full bg-blue-500 flex-shrink-0" />}
+                                    {!notif.is_read && <div className="w-1.5 h-1.5 rounded-full bg-blue-500 flex-shrink-0 animate-pulse" />}
                                   </div>
                                   <button 
-                                    className="notif-action-btn -mr-1 -mt-1" 
+                                    className="notif-action-btn" 
                                     onClick={(e) => handleDeleteNotification(notif.id, e)}
                                     title="Archive"
                                   >
-                                    <ArchiveIcon size={12} />
+                                    <ArchiveIcon size={14} />
                                   </button>
                                 </div>
                                 <p className="admin-navbar-notification-message">
-                                  {notif.message || notif.content}
+                                  {(notif.message || notif.content || "").replace(/Dr\. Dr\./g, 'Dr.')}
                                 </p>
                                 <div className="admin-navbar-notification-meta">
-                                  <Clock3 size={10} />
-                                  {new Date(notif.created_at).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                  <div className="flex items-center gap-1">
+                                    <Clock3 size={10} />
+                                    {new Date(notif.created_at).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                  </div>
+                                  {notif.metadata?.category && (
+                                    <span className="admin-notif-tag">{notif.metadata.category}</span>
+                                  )}
                                 </div>
                               </div>
                             </div>
@@ -1010,6 +1015,19 @@ const AdminLayout = () => {
         .admin-navbar-notification:hover {
           background: #f1f5f9;
         }
+        .admin-notif-tag {
+          padding: 2px 6px;
+          border-radius: 4px;
+          background: #f1f5f9;
+          color: #64748b;
+          font-size: 8px;
+          font-weight: 800;
+          text-transform: uppercase;
+        }
+        .admin-theme-dark .admin-notif-tag {
+          background: #334155;
+          color: #94a3b8;
+        }
         .admin-navbar-notification-title {
           display: block;
           max-width: 100%;
@@ -1018,6 +1036,7 @@ const AdminLayout = () => {
           white-space: nowrap;
           color: #1f2937;
           font-size: 13px;
+          font-weight: 700;
           line-height: 1.2;
         }
         .admin-navbar-notification-message {
@@ -1027,19 +1046,19 @@ const AdminLayout = () => {
           overflow: hidden;
           overflow-wrap: anywhere;
           color: #64748b;
-          font-size: 11px;
-          line-height: 1.35;
-          margin: 0;
+          font-size: 11.5px;
+          line-height: 1.45;
+          margin: 4px 0 8px;
         }
         .admin-navbar-notification-meta {
           display: flex;
           align-items: center;
+          justify-content: space-between;
           gap: 4px;
-          margin-top: 6px;
           color: #94a3b8;
           font-size: 9px;
           font-weight: 700;
-          letter-spacing: 0.08em;
+          letter-spacing: 0.05em;
           text-transform: uppercase;
         }
         .admin-theme-dark .admin-navbar-notification {
