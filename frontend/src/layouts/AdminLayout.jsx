@@ -132,6 +132,25 @@ const AdminLayout = () => {
     }
   };
 
+  const handleNotificationClick = async (notif) => {
+    if (!notif.is_read) {
+      await handleMarkAsRead(notif.id);
+    }
+    
+    setNotificationsOpen(false);
+    
+    // Contextual Routing
+    if (notif.type === 'escalation') {
+      navigate('/admin/review-management');
+    } else if (notif.type === 'credentialing') {
+      navigate('/admin/manage-doctors');
+    } else if (notif.type === 'appointment_conflict') {
+      navigate('/admin/appointment-management');
+    } else if (notif.type === 'announcement_expiry') {
+      navigate('/admin/announcements');
+    }
+  };
+
   const handleMarkAsRead = async (id) => {
     try {
       await notificationApi.markAsRead(id);
@@ -379,27 +398,32 @@ const AdminLayout = () => {
                           <div 
                             key={notif.id} 
                             className={`admin-navbar-notification ${notif.is_read ? 'read' : 'unread'} severity-${notif.metadata?.severity || 'info'}`}
-                            onClick={() => !notif.is_read && handleMarkAsRead(notif.id)}
+                            onClick={() => handleNotificationClick(notif)}
                           >
                             <div className="flex gap-3">
                               <div className={`notif-icon-box ${notif.metadata?.severity === 'critical' ? 'critical' : ''}`}>
                                 {getNotifIcon(notif.type, notif.metadata?.severity)}
                               </div>
-                              <div className="flex-1 min-width-0">
-                                <div className="flex justify-between items-start gap-2">
-                                  <strong className="text-sm text-slate-800 truncate">{notif.title}</strong>
-                                  <div className="flex items-center gap-1">
-                                    <button 
-                                      className="notif-action-btn" 
-                                      onClick={(e) => handleDeleteNotification(notif.id, e)}
-                                      title="Archive"
-                                    >
-                                      <ArchiveIcon size={12} />
-                                    </button>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex justify-between items-start mb-0.5">
+                                  <div className="flex items-center gap-2 min-w-0">
+                                    <strong className="text-[13px] text-slate-800 truncate leading-tight">
+                                      {notif.title}
+                                    </strong>
+                                    {!notif.is_read && <div className="w-1.5 h-1.5 rounded-full bg-blue-500 flex-shrink-0" />}
                                   </div>
+                                  <button 
+                                    className="notif-action-btn -mr-1 -mt-1" 
+                                    onClick={(e) => handleDeleteNotification(notif.id, e)}
+                                    title="Archive"
+                                  >
+                                    <ArchiveIcon size={12} />
+                                  </button>
                                 </div>
-                                <span className="text-xs text-slate-500 line-clamp-2 mt-1">{notif.message || notif.content}</span>
-                                <div className="text-[10px] mt-2 text-slate-400 flex items-center gap-1">
+                                <p className="text-[11px] text-slate-500 leading-normal m-0 line-clamp-2">
+                                  {notif.message || notif.content}
+                                </p>
+                                <div className="text-[9px] mt-1.5 text-slate-400 flex items-center gap-1 font-medium uppercase tracking-wider">
                                   <Clock3 size={10} />
                                   {new Date(notif.created_at).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                                 </div>
@@ -852,70 +876,74 @@ const AdminLayout = () => {
         .admin-notif-tabs {
           display: flex;
           gap: 4px;
-          padding: 2px;
-          background: var(--nn-surface-secondary);
-          border-radius: 12px;
-          border: 1px solid var(--nn-border);
+          padding: 3px;
+          background: #f1f5f9;
+          border-radius: 10px;
+          margin-bottom: 12px;
         }
         .admin-notif-tab {
           flex: 1;
           border: 0;
           background: transparent;
-          padding: 6px 4px;
+          padding: 6px 2px;
           font-size: 0.7rem;
           font-weight: 700;
-          color: var(--nn-text-muted);
-          border-radius: 10px;
-          transition: all 0.2s ease;
+          color: #64748b;
+          border-radius: 8px;
+          transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
         .admin-notif-tab.active {
-          background: var(--nn-surface);
-          color: var(--nn-text-main);
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+          background: #ffffff;
+          color: #0f172a;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
         }
         .admin-navbar-notification {
-          padding: 14px 16px;
+          padding: 12px 16px;
           cursor: pointer;
-          transition: all 0.2s ease;
-          border-bottom: 1px solid var(--nn-divider);
+          transition: all 0.15s ease;
+          border-bottom: 1px solid #f1f5f9;
           position: relative;
         }
         .admin-navbar-notification.unread {
-          background: color-mix(in srgb, var(--nn-primary) 4%, transparent);
+          background: #f8fafc;
         }
         .admin-navbar-notification:hover {
-          background: var(--nn-surface-secondary);
+          background: #f1f5f9;
         }
         .notif-icon-box {
-          width: 36px;
-          height: 36px;
-          border-radius: 12px;
-          background: var(--nn-surface);
+          width: 32px;
+          height: 32px;
+          border-radius: 10px;
+          background: #ffffff;
           display: flex;
           align-items: center;
           justify-content: center;
           flex-shrink: 0;
-          border: 1px solid var(--nn-border);
+          border: 1px solid #e2e8f0;
+          transition: transform 0.2s ease;
+        }
+        .admin-navbar-notification:hover .notif-icon-box {
+          transform: scale(1.05);
         }
         .notif-icon-box.critical {
           background: #fff1f2;
           border-color: #fecdd3;
         }
         .notif-action-btn {
-          width: 24px;
-          height: 24px;
+          width: 26px;
+          height: 26px;
           border-radius: 6px;
           border: 0;
           background: transparent;
-          color: var(--nn-text-muted);
+          color: #94a3b8;
           display: flex;
           align-items: center;
           justify-content: center;
           transition: all 0.2s ease;
         }
         .notif-action-btn:hover {
-          background: var(--nn-border);
-          color: var(--nn-text-main);
+          background: #fee2e2;
+          color: #ef4444;
         }
         .severity-critical {
           border-left: 3px solid #f43f5e !important;
@@ -928,8 +956,8 @@ const AdminLayout = () => {
           flex-direction: column;
           align-items: center;
           justify-content: center;
-          padding: 40px 20px;
-          color: var(--nn-text-muted);
+          padding: 48px 24px;
+          color: #94a3b8;
         }
         .admin-navbar-mobiletoggle,
         .admin-navbar-mobilepanel {
