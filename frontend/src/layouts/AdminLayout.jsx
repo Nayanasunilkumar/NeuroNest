@@ -5,6 +5,7 @@ import { logout, getUser } from '../shared/utils/auth';
 import { useTheme } from '../shared/context/ThemeContext';
 import { useSystemConfig } from '../shared/context/SystemConfigContext';
 import '../admin/styles/admin-theme.css';
+import { notificationApi } from '../shared/services/api/notificationApi';
 import {
   BarChart3,
   Bell,
@@ -61,6 +62,9 @@ const AdminLayout = () => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  const [loadingNotifications, setLoadingNotifications] = useState(false);
 
   const [canScrollNavLeft, setCanScrollNavLeft] = useState(false);
   const [canScrollNavRight, setCanScrollNavRight] = useState(false);
@@ -76,18 +80,58 @@ const AdminLayout = () => {
   useEffect(() => {
     setMobileMenuOpen(false);
     setProfileOpen(false);
+    setNotificationsOpen(false);
   }, [location.pathname]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (overlayRef.current && !overlayRef.current.contains(event.target)) {
         setProfileOpen(false);
+        setNotificationsOpen(false);
       }
     };
 
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  const fetchNotifications = async () => {
+    setLoadingNotifications(true);
+    try {
+      const data = await notificationApi.getNotifications();
+      setNotifications(data || []);
+    } catch (err) {
+      console.error('Failed to fetch notifications:', err);
+    } finally {
+      setLoadingNotifications(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchNotifications();
+    const interval = setInterval(fetchNotifications, 60000); // Refresh every minute
+    return () => clearInterval(interval);
+  }, []);
+
+  const unreadCount = useMemo(() => notifications.filter(n => !n.is_read).length, [notifications]);
+
+  const handleMarkAllAsRead = async () => {
+    try {
+      await notificationApi.markAllAsRead();
+      setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+    } catch (err) {
+      console.error('Failed to mark all as read:', err);
+    }
+  };
+
+  const handleMarkAsRead = async (id) => {
+    try {
+      await notificationApi.markAsRead(id);
+      setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n));
+    } catch (err) {
+      console.error('Failed to mark as read:', err);
+    }
+  };
 
   useEffect(() => {
     const navElement = navScrollRef.current;
@@ -115,6 +159,7 @@ const AdminLayout = () => {
 
   const togglePanel = (panel) => {
     setProfileOpen(panel === 'profile' ? !profileOpen : false);
+    setNotificationsOpen(panel === 'notifications' ? !notificationsOpen : false);
   };
 
   const scrollAdminNav = (direction) => {
@@ -204,6 +249,75 @@ const AdminLayout = () => {
                 <strong>{currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</strong>
                 <span>{currentTime.toLocaleDateString([], { month: 'short', day: '2-digit' })}</span>
               </div>
+            </div>
+
+            <div className="admin-navbar-bell-container">
+              <button
+                type="button"
+                className={`admin-navbar-iconbtn ${notificationsOpen ? 'active' : ''}`}
+                onClick={() => togglePanel('notifications')}
+                aria-label="Notifications"
+              >
+                <Bell size={19} />
+                {unreadCount > 0 && <span className="admin-navbar-bell-dot" />}
+              </button>
+
+              {notificationsOpen && (
+                <div className="admin-navbar-popover admin-navbar-notificationspanel">
+                  <div className="admin-navbar-popoverhead">
+                    <div className="flex justify-between items-center w-full">
+                      <strong>Notifications</strong>
+                      {unreadCount > 0 && (
+                        <button 
+                          className="text-xs text-blue-500 hover:text-blue-600 fw-bold border-0 bg-transparent p-0"
+                          onClick={handleMarkAllAsRead}
+                        >
+                          Mark all read
+                        </button>
+                      )}
+                    </div>
+                    <span>You have {unreadCount} unread alerts</span>
+                  </div>
+                  
+                  <div className="admin-navbar-notificationlist scroll-smooth">
+                    {loadingNotifications && notifications.length === 0 ? (
+                      <div className="admin-navbar-empty py-8 text-center opacity-50">Loading alerts...</div>
+                    ) : notifications.length === 0 ? (
+                      <div className="admin-navbar-empty py-12 text-center">
+                        <CheckCircle size={32} className="mx-auto mb-3 opacity-20" />
+                        <p className="mb-0 fw-bold opacity-50">System Clear</p>
+                        <span className="text-xs opacity-40">No pending administrative alerts</span>
+                      </div>
+                    ) : (
+                      notifications.slice(0, 5).map((notif) => (
+                        <div 
+                          key={notif.id} 
+                          className={`admin-navbar-notification ${notif.is_read ? 'opacity-60' : ''}`}
+                          onClick={() => !notif.is_read && handleMarkAsRead(notif.id)}
+                        >
+                          <div className="flex justify-between items-start gap-2">
+                            <strong className={notif.is_read ? 'fw-medium' : 'fw-bold'}>{notif.title}</strong>
+                            {!notif.is_read && <div className="w-2 h-2 rounded-full bg-blue-500 mt-1.5 flex-shrink-0" />}
+                          </div>
+                          <span>{notif.content}</span>
+                          <div className="text-[10px] mt-2 opacity-50 flex items-center gap-1">
+                            <Clock3 size={10} />
+                            {new Date(notif.created_at).toLocaleString()}
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                  
+                  {notifications.length > 5 && (
+                    <div className="p-2 border-top">
+                      <Link to="/admin/reports-analytics" className="admin-navbar-profilelink text-center justify-center">
+                        <span className="text-xs fw-bold">View All History</span>
+                      </Link>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             <button
@@ -451,18 +565,21 @@ const AdminLayout = () => {
           background: color-mix(in srgb, var(--nn-primary) 12%, var(--nn-surface));
           box-shadow: 0 8px 20px rgba(15, 23, 42, 0.12);
         }
-        .admin-navbar-bell {
+        .admin-navbar-bell-container {
           position: relative;
+          display: flex;
+          align-items: center;
         }
         .admin-navbar-bell-dot {
           position: absolute;
-          top: 9px;
-          right: 10px;
+          top: 8px;
+          right: 8px;
           width: 8px;
           height: 8px;
           border-radius: 999px;
-          background: #fb7185;
-          box-shadow: 0 0 0 2px color-mix(in srgb, var(--nn-surface) 94%, transparent);
+          background: #ef4444;
+          border: 2px solid var(--nn-surface);
+          z-index: 10;
         }
         .admin-navbar-time {
           min-height: 40px;
