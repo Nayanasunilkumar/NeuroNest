@@ -113,12 +113,24 @@ def get_all_appointments():
         else:
             query = query.filter(Appointment.status == internal_status)
         
-    # Search within the selected doctor's scope
+    # 🔍 Advanced Institutional Search (Patient + Doctor + ID Axis)
     if search:
-        query = query.join(User, Appointment.patient_id == User.id).filter(
+        from sqlalchemy.orm import aliased
+        PatientUser = aliased(User)
+        DoctorUser = aliased(User)
+        
+        query = query.join(PatientUser, Appointment.patient_id == PatientUser.id) \
+                     .join(DoctorUser, Appointment.doctor_id == DoctorUser.id) \
+                     .filter(
             or_(
-                User.full_name.ilike(f"%{search}%"),
-                User.email.ilike(f"%{search}%"),
+                # Patient Axis
+                PatientUser.full_name.ilike(f"%{search}%"),
+                PatientUser.email.ilike(f"%{search}%"),
+                Appointment.patient_id.cast(db.String).ilike(f"%{search}%"),
+                # Specialist Axis
+                DoctorUser.full_name.ilike(f"%{search}%"),
+                Appointment.doctor_id.cast(db.String).ilike(f"%{search}%"),
+                # Record Axis
                 Appointment.id.cast(db.String).ilike(f"%{search}%")
             )
         )

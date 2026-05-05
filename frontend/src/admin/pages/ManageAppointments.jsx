@@ -202,6 +202,14 @@ const ManageAppointments = () => {
                                         ? (doctors.find(d => d.id == selectedDoctor)?.full_name || 'Specialist')
                                         : 'All Specialists'}
                                 </span>
+                                {search && (
+                                    <>
+                                        <span style={{ opacity: 0.3 }}>/</span>
+                                        <span style={{ color: 'var(--admin-accent)', background: 'var(--admin-accent-subtle)', padding: '2px 8px', borderRadius: '4px' }}>
+                                            Search: "{search}"
+                                        </span>
+                                    </>
+                                )}
                             </div>
                         )}
                         

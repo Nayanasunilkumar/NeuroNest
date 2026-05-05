@@ -96,7 +96,7 @@ const AppointmentFilters = ({
                         <Search size={14} />
                         <input 
                             type="text" 
-                            placeholder="ID / Patient Search..."
+                            placeholder="Search ID, Name, Specialist..."
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                         />
