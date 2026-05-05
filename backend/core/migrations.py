@@ -5,43 +5,51 @@ def ensure_default_admin():
     from database.models import User, db
     from utils.security import hash_password
 
-    admin_email = (os.getenv("DEFAULT_ADMIN_EMAIL") or "nayanasunilkumar8@gmail.com").strip().lower()
+    admin_email = (os.getenv("DEFAULT_ADMIN_EMAIL") or "admin@neuronest.com").strip().lower()
     admin_password = os.getenv("DEFAULT_ADMIN_PASSWORD") or "Admin@123"
-    admin_name = os.getenv("DEFAULT_ADMIN_NAME") or "Nayana Admin"
+    admin_name = os.getenv("DEFAULT_ADMIN_NAME") or "System Administrator"
 
     if not admin_email or not admin_password:
         return
 
-    for email, pwd, name in [
-        (admin_email, admin_password, admin_name),
-        ("admin@neuronest.com", "Admin@123", "System Admin")
-    ]:
-        user = User.query.filter_by(email=email).first()
-        if not user:
-            user = User(
-                email=email,
-                password_hash=hash_password(pwd),
-                role="admin",
-                full_name=name,
-                account_status="active",
-                is_deleted=False,
-            )
-            db.session.add(user)
-        else:
-            # Ensure existing admin is active and has correct role
-            user.role = "admin"
-            user.account_status = "active"
-            user.is_deleted = False
-            # Force reset password to default during this migration cycle
-            user.password_hash = hash_password(pwd) 
+    # Only bootstrap the specific admin account
+    user = User.query.filter_by(email=admin_email).first()
+    if not user:
+        user = User(
+            email=admin_email,
+            password_hash=hash_password(admin_password),
+            role="admin",
+            full_name=admin_name,
+            account_status="active",
+            is_deleted=False,
+        )
+        db.session.add(user)
+    else:
+        # Ensure the default system admin stays active and has correct role
+        user.role = "admin"
+        user.account_status = "active"
+        user.is_deleted = False
+        # Optional: update password only if it matches a recovery flag or environment var
+        if os.getenv("FORCE_ADMIN_PASSWORD_RESET") == "true":
+             user.password_hash = hash_password(admin_password)
 
     db.session.commit()
 
 
 def run_startup_migrations():
-    from database.models import db
+    from database.models import db, User
 
     ensure_default_admin()
+
+    # One-time fix: Restore nayanasunilkumar8@gmail.com to doctor role if it was accidentally promoted
+    try:
+        doctor_user = User.query.filter_by(email="nayanasunilkumar8@gmail.com").first()
+        if doctor_user and doctor_user.role == "admin":
+            doctor_user.role = "doctor"
+            db.session.commit()
+            print("[MIGRATION] ✓ Restored nayanasunilkumar8@gmail.com to doctor role")
+    except Exception:
+        pass
 
     if db.engine.dialect.name == "sqlite":
         print("[MIGRATION] SQLite detected; skipping ALTER-based compatibility migrations")
