@@ -37,7 +37,7 @@ const AdminNotificationCenter = () => {
   const fetchNotifications = async () => {
     setLoading(true);
     try {
-      const response = await notificationApi.getAdminNotifications();
+      const response = await notificationApi.getNotifications();
       setNotifications(response || []);
     } catch (error) {
       console.error('Failed to fetch notifications:', error);
@@ -50,7 +50,7 @@ const AdminNotificationCenter = () => {
     e.stopPropagation();
     try {
       await notificationApi.deleteNotification(id);
-      setNotifications(notifications.filter(n => n.id !== id));
+      setNotifications(prev => prev.filter(n => n.id !== id));
     } catch (error) {
       console.error('Delete failed:', error);
     }
@@ -60,7 +60,7 @@ const AdminNotificationCenter = () => {
     e.stopPropagation();
     try {
       await notificationApi.markAsRead(id);
-      setNotifications(notifications.map(n => n.id === id ? { ...n, is_read: true } : n));
+      setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n));
     } catch (error) {
       console.error('Mark read failed:', error);
     }
@@ -69,7 +69,7 @@ const AdminNotificationCenter = () => {
   const handleMarkAllAsRead = async () => {
     try {
       await notificationApi.markAllAsRead();
-      setNotifications(notifications.map(n => ({ ...n, is_read: true })));
+      setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
     } catch (error) {
       console.error('Mark all read failed:', error);
     }
@@ -79,7 +79,7 @@ const AdminNotificationCenter = () => {
     if (severity === 'critical' || type === 'escalation') return <ShieldAlert size={20} className="text-rose-500" />;
     if (type === 'credentialing') return <ShieldCheck size={20} className="text-blue-500" />;
     if (type === 'system') return <Activity size={20} className="text-amber-500" />;
-    if (type === 'appointment_conflict') return <AlertTriangle size={20} className="text-orange-500" />;
+    if (type === 'appointment_conflict' || type === 'appointment') return <AlertTriangle size={20} className="text-orange-500" />;
     return <Bell size={20} className="text-slate-400" />;
   };
 
@@ -98,11 +98,22 @@ const AdminNotificationCenter = () => {
 
   const filteredNotifications = useMemo(() => {
     return notifications.filter(n => {
-      const matchesSearch = (n.title + n.message).toLowerCase().includes(searchTerm.toLowerCase());
+      const title = (n.title || "").toLowerCase();
+      const message = (n.message || n.content || "").toLowerCase();
+      const search = searchTerm.toLowerCase();
+      const matchesSearch = title.includes(search) || message.includes(search);
+      
+      const type = n.type || '';
+      const category = n.metadata?.category || '';
+      const severity = n.metadata?.severity || '';
+
       const matchesType = filterType === 'all' || 
                          (filterType === 'unread' && !n.is_read) ||
-                         (filterType === 'critical' && n.metadata?.severity === 'critical') ||
-                         (filterType === 'system' && n.type === 'system');
+                         (filterType === 'critical' && severity === 'critical') ||
+                         (filterType === 'escalations' && (type === 'escalation' || category === 'escalation')) ||
+                         (filterType === 'credentialing' && type === 'credentialing') ||
+                         (filterType === 'appointments' && (type === 'appointment_conflict' || type === 'appointment'));
+      
       return matchesSearch && matchesType;
     });
   }, [notifications, searchTerm, filterType]);
@@ -154,7 +165,7 @@ const AdminNotificationCenter = () => {
           </div>
           
           <div className="nexus-filter-row">
-            {['all', 'unread', 'critical', 'system'].map(type => (
+            {['all', 'unread', 'critical', 'escalations', 'credentialing', 'appointments'].map(type => (
               <button
                 key={type}
                 onClick={() => { setFilterType(type); setPage(1); }}
