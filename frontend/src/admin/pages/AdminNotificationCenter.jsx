@@ -65,6 +65,22 @@ const AdminNotificationCenter = () => {
       console.error('Mark read failed:', error);
     }
   };
+  
+  const handleMarkResolved = async (id, e) => {
+    e.stopPropagation();
+    try {
+      await notificationApi.markAsResolved(id);
+      setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_resolved: true, is_read: true } : n));
+      
+      const notif = notifications.find(n => n.id === id);
+      const doctorId = notif?.metadata?.doctor_id;
+      if (doctorId) {
+        navigate(`/admin/governance/doctor/${doctorId}`);
+      }
+    } catch (error) {
+      console.error('Mark resolved failed:', error);
+    }
+  };
 
   const handleMarkAllAsRead = async () => {
     try {
@@ -131,7 +147,12 @@ const AdminNotificationCenter = () => {
     const title = (notif.title || '').toLowerCase();
 
     if (type === 'escalation' || category === 'escalation' || title.includes('escalation')) {
-      navigate('/admin/review-management');
+      const doctorId = notif.metadata?.doctor_id;
+      if (doctorId) {
+        navigate(`/admin/governance/doctor/${doctorId}`);
+      } else {
+        navigate('/admin/review-management');
+      }
     } else if (type === 'credentialing' || type === 'doctor_verification' || title.includes('credential')) {
       navigate('/admin/manage-doctors');
     } else if (type === 'appointment_conflict' || type === 'appointment' || title.includes('appointment')) {
@@ -287,7 +308,7 @@ const AdminNotificationCenter = () => {
                         {notif.metadata?.stats?.complaints > 0 && (
                           <div className="telemetry-box">
                             <span className="label">Incident Volume</span>
-                            <span className="value">{notif.metadata.stats.complaints} Reports</span>
+                            <span className="value">{(Number(notif.metadata.stats.complaints) || 0)} Reports</span>
                           </div>
                         )}
                       </div>
@@ -295,13 +316,24 @@ const AdminNotificationCenter = () => {
                   </div>
 
                   <div className="record-actions-dock">
-                    <button 
-                      onClick={() => handleAction(notif)}
-                      className="dock-btn primary"
-                    >
-                      Review Case
-                      <ExternalLink size={12} />
-                    </button>
+                    {notif.type === 'escalation' || notif.metadata?.severity === 'critical' ? (
+                      <button 
+                        onClick={(e) => handleMarkResolved(notif.id, e)}
+                        className={`dock-btn ${notif.is_resolved ? 'success' : 'primary'}`}
+                        disabled={notif.is_resolved}
+                      >
+                        {notif.is_resolved ? <><Check size={14} /> Resolved</> : 'Mark as Resolved'}
+                      </button>
+                    ) : (
+                      <button 
+                        onClick={() => handleAction(notif)}
+                        className="dock-btn primary"
+                      >
+                        Review Case
+                        <ExternalLink size={12} />
+                      </button>
+                    )}
+                    
                     <button 
                       onClick={(e) => handleMarkRead(notif.id, e)}
                       className={`dock-btn ${notif.is_read ? 'success' : 'secondary'}`}

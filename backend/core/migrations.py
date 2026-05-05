@@ -92,6 +92,7 @@ def run_startup_migrations():
             conn.execute(db.text("UPDATE prescription_items SET created_at = COALESCE(created_at, CURRENT_TIMESTAMP)"))
             conn.execute(db.text("UPDATE prescription_items SET updated_at = COALESCE(updated_at, created_at, CURRENT_TIMESTAMP)"))
             conn.execute(db.text("ALTER TABLE users ADD COLUMN IF NOT EXISTS must_change_password BOOLEAN DEFAULT FALSE"))
+            conn.execute(db.text("ALTER TABLE in_app_notifications ADD COLUMN IF NOT EXISTS is_resolved BOOLEAN DEFAULT FALSE"))
 
             for column_name, column_type in [
                 ("status", "VARCHAR(20) DEFAULT 'Pending'"),

@@ -261,6 +261,31 @@ def mark_notification_read(id):
     db.session.commit()
     
     return jsonify({"message": "Notification marked as read"}), 200
+    
+@profile_bp.route("/notifications/<int:id>/resolve", methods=["PATCH"])
+@jwt_required()
+def mark_notification_resolved(id):
+    user_id = int(get_jwt_identity())
+    from database.models import InAppNotification, DoctorEscalation, DoctorProfile
+    
+    notification = InAppNotification.query.filter_by(id=id, user_id=user_id).first()
+    if not notification:
+        return jsonify({"message": "Notification not found"}), 404
+        
+    notification.is_resolved = True
+    notification.is_read = True # Resolving implies reading
+    
+    # If it's an escalation, try to resolve the underlying escalation too
+    payload = notification.payload or {}
+    doctor_id = payload.get("doctor_id")
+    if doctor_id:
+        escalation = DoctorEscalation.query.filter_by(doctor_id=doctor_id, status="open").first()
+        if escalation:
+            from modules.admin.services.governance_service import GovernanceService
+            GovernanceService.perform_admin_action(escalation.id, user_id, "resolve", "Resolved via administrative notification center")
+            
+    db.session.commit()
+    return jsonify({"message": "Notification and associated issues marked as resolved"}), 200
 
 @profile_bp.route("/notifications/read-all", methods=["PATCH"])
 @jwt_required()

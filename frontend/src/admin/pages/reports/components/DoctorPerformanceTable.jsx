@@ -85,9 +85,9 @@ const DoctorPerformanceTable = ({ doctors }) => {
 
         <tbody>
           {sorted.map((doc, idx) => {
-            const badge = getRateBadge(doc.completion_rate_pct ?? 0);
+            const badge = getRateBadge(Number(doc.completion_rate_pct) || 0);
             const BadgeIcon = badge.Icon;
-            const pending = doc.pending ?? Math.max(0, (doc.total_appointments || 0) - (doc.completed || 0) - (doc.cancelled || 0));
+            const pending = (Number(doc.pending) || 0) || Math.max(0, (Number(doc.total_appointments) || 0) - (Number(doc.completed) || 0) - (Number(doc.cancelled) || 0));
             return (
               <tr
                 key={doc.doctor_id ?? idx}
@@ -100,7 +100,7 @@ const DoctorPerformanceTable = ({ doctors }) => {
                   <div style={{ fontSize: '0.875rem' }}>{doc.doctor_name || doc.name || '—'}</div>
                   {doc.avg_rating > 0 && (
                     <div style={{ fontSize: '0.7rem', color: '#94a3b8', marginTop: 2 }}>
-                      {'★'.repeat(Math.round(doc.avg_rating))}{'☆'.repeat(5 - Math.round(doc.avg_rating))} {doc.avg_rating?.toFixed(1)}
+                      {'★'.repeat(Math.round(doc.avg_rating || 0))}{'☆'.repeat(5 - Math.round(doc.avg_rating || 0))} {(Number(doc.avg_rating) || 0).toFixed(1)}
                     </div>
                   )}
                 </td>
@@ -134,7 +134,7 @@ const DoctorPerformanceTable = ({ doctors }) => {
                     fontWeight: 700, fontSize: '0.75rem',
                   }}>
                     <BadgeIcon size={12} strokeWidth={2.5} />
-                    {(doc.completion_rate_pct ?? 0).toFixed(1)}%
+                    {(Number(doc.completion_rate_pct) || 0).toFixed(1)}%
                   </span>
                 </td>
               </tr>

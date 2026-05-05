@@ -160,7 +160,12 @@ const AdminLayout = () => {
 
     // Contextual Routing with keyword fallback
     if (type === 'escalation' || category === 'escalation' || title.includes('escalation')) {
-      navigate('/admin/review-management');
+      const doctorId = notif.metadata?.doctor_id;
+      if (doctorId) {
+        navigate(`/admin/governance/doctor/${doctorId}`);
+      } else {
+        navigate('/admin/governance/queue');
+      }
     } else if (type === 'credentialing' || type === 'doctor_verification' || title.includes('credential')) {
       navigate('/admin/manage-doctors');
     } else if (type === 'appointment_conflict' || type === 'appointment' || title.includes('appointment')) {
@@ -191,6 +196,31 @@ const AdminLayout = () => {
       }, 600);
     } catch (err) {
       console.error('Failed to mark as read:', err);
+      setResolvingId(null);
+    }
+  };
+
+  const handleMarkAsResolved = async (notif) => {
+    setResolvingId(notif.id);
+    try {
+      await notificationApi.markAsResolved(notif.id);
+      
+      // Delay state update slightly for animation feel
+      setTimeout(() => {
+        setNotifications(prev => prev.map(n => n.id === notif.id ? { ...n, is_resolved: true, is_read: true } : n));
+        setResolvingId(null);
+        setLastActionToast("Alert integrated into resolved history");
+        setTimeout(() => setLastActionToast(null), 2500);
+        
+        // Contextual navigation after resolution
+        const type = (notif.type || '').toLowerCase();
+        const doctorId = notif.metadata?.doctor_id;
+        if (type === 'escalation' && doctorId) {
+          navigate(`/admin/governance/doctor/${doctorId}`);
+        }
+      }, 600);
+    } catch (err) {
+      console.error('Failed to mark as resolved:', err);
       setResolvingId(null);
     }
   };
@@ -540,7 +570,16 @@ const AdminLayout = () => {
                                     <strong className="admin-navbar-notification-title">
                                       {notif.title}
                                     </strong>
-                                    {!notif.is_read && <div className="w-1.5 h-1.5 rounded-full bg-blue-500 flex-shrink-0 animate-pulse" />}
+                                    {!notif.is_read && (
+                                      <button 
+                                        className="ml-auto p-1 rounded-full hover:bg-slate-100 text-blue-500 border-0 bg-transparent transition-colors"
+                                        onClick={(e) => { e.stopPropagation(); handleMarkAsRead(notif.id); }}
+                                        title="Quick mark as read"
+                                      >
+                                        <Check size={14} strokeWidth={3} />
+                                      </button>
+                                    )}
+                                    {!notif.is_read && <div className="w-1.5 h-1.5 rounded-full bg-blue-500 flex-shrink-0 animate-pulse ml-1" />}
                                   </div>
                                   </div>
                                 <p className="admin-navbar-notification-message">
@@ -573,46 +612,67 @@ const AdminLayout = () => {
                                     )}
                                   </div>
                                 </div>
-
-                                {expandedNotif === notif.id && (
-                                  <div className="notif-expanded-actions mt-3 pt-3 border-top flex items-center gap-2">
+                                
+                                {/* Quick Resolve for critical items when not expanded */}
+                                {expandedNotif !== notif.id && (notif.type === 'escalation' || notif.metadata?.severity === 'critical') && !notif.is_resolved && (
+                                  <div className="notif-quick-actions-row mt-2">
                                     <button 
-                                      className="notif-quick-btn primary"
-                                      onClick={(e) => { e.stopPropagation(); handleNotificationClick(notif); }}
+                                      className="notif-quick-btn border-rose-100 text-rose-600 bg-rose-50/30 w-full justify-center py-1.5"
+                                      onClick={(e) => { e.stopPropagation(); handleMarkAsResolved(notif); }}
                                     >
-                                      Review Case
-                                      <ExternalLink size={10} className="ml-1" />
+                                      Mark as Resolved
                                     </button>
-                                    <button 
-                                      className={`notif-quick-btn ${notif.is_read ? 'success' : ''} ${resolvingId === notif.id ? 'opacity-70 cursor-default' : ''}`}
-                                      disabled={resolvingId === notif.id || notif.is_read}
-                                      onClick={(e) => { 
-                                        if (notif.is_read) return;
-                                        e.stopPropagation(); 
-                                        handleMarkAsRead(notif.id); 
-                                      }}
-                                    >
-                                      {notif.is_read ? (
-                                        'Read'
-                                      ) : resolvingId === notif.id ? (
-                                        <>
-                                          <div className="w-3 h-3 border-2 border-slate-400 border-t-transparent rounded-full animate-spin mr-1" />
-                                          Reading...
-                                        </>
-                                      ) : (
-                                        'Mark as Read'
-                                      )}
-                                    </button>
-                                    {notif.metadata?.severity === 'critical' && (
-                                      <button 
-                                        className="notif-quick-btn border-rose-200 text-rose-600"
-                                        onClick={(e) => { e.stopPropagation(); window.location.href = '/admin/review-management'; }}
-                                      >
-                                        Escalate
-                                      </button>
-                                    )}
                                   </div>
                                 )}
+
+                                  {expandedNotif === notif.id && (
+                                    <div className="notif-expanded-actions mt-3 pt-3 border-top flex items-center gap-2">
+                                      <button 
+                                        className="notif-quick-btn primary"
+                                        onClick={(e) => { e.stopPropagation(); handleNotificationClick(notif); }}
+                                      >
+                                        Review Case
+                                        <ExternalLink size={10} className="ml-1" />
+                                      </button>
+                                      
+                                      {notif.type === 'escalation' || notif.metadata?.severity === 'critical' ? (
+                                        <button 
+                                          className={`notif-quick-btn ${notif.is_resolved ? 'success' : ''} ${resolvingId === notif.id ? 'opacity-70 cursor-default' : ''}`}
+                                          disabled={resolvingId === notif.id || notif.is_resolved}
+                                          onClick={(e) => { 
+                                            if (notif.is_resolved) return;
+                                            e.stopPropagation(); 
+                                            handleMarkAsResolved(notif); 
+                                          }}
+                                        >
+                                          {notif.is_resolved ? 'Resolved' : resolvingId === notif.id ? 'Resolving...' : 'Mark as Resolved'}
+                                        </button>
+                                      ) : (
+                                        <button 
+                                          className={`notif-quick-btn ${notif.is_read ? 'success' : ''} ${resolvingId === notif.id ? 'opacity-70 cursor-default' : ''}`}
+                                          disabled={resolvingId === notif.id || notif.is_read}
+                                          onClick={(e) => { 
+                                            if (notif.is_read) return;
+                                            e.stopPropagation(); 
+                                            handleMarkAsRead(notif.id); 
+                                          }}
+                                        >
+                                          {notif.is_read ? 'Read' : resolvingId === notif.id ? 'Reading...' : 'Mark as Read'}
+                                        </button>
+                                      )}
+
+                                      {/* Auxiliary Read button for critical cases if they just want to dismiss notification without full resolution */}
+                                      {(notif.type === 'escalation' || notif.metadata?.severity === 'critical') && !notif.is_read && (
+                                        <button 
+                                          className="notif-quick-btn border-slate-200 text-slate-500"
+                                          onClick={(e) => { e.stopPropagation(); handleMarkAsRead(notif.id); }}
+                                          title="Only mark as read"
+                                        >
+                                          <Check size={10} />
+                                        </button>
+                                      )}
+                                    </div>
+                                  )}
                               </div>
                             </div>
                           </div>

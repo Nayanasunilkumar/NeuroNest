@@ -18,6 +18,14 @@ export const notificationApi = {
         return response.data;
     },
 
+    markAsResolved: async (id) => {
+        const token = localStorage.getItem('neuronest_token');
+        const response = await axios.patch(`${API_BASE_URL}/api/profile/notifications/${id}/resolve`, {}, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        return response.data;
+    },
+
     markAllAsRead: async () => {
         const token = localStorage.getItem('neuronest_token');
         const response = await axios.patch(`${API_BASE_URL}/api/profile/notifications/read-all`, {}, {

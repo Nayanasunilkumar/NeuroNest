@@ -23,8 +23,8 @@ const C = {
 // -- Helpers -------------------------------------------------------------------
 const fmt = {
   date:    (d) => new Date(d).toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' }),
-  pct:     (n) => `${Number(n).toFixed(1)}%`,
-  rating:  (n) => n ? `${Number(n).toFixed(1)} / 5.0` : 'N/A',
+  pct:     (n) => `${(Number(n) || 0).toFixed(1)}%`,
+  rating:  (n) => n && !isNaN(Number(n)) ? `${Number(n).toFixed(1)} / 5.0` : 'N/A',
   num:     (n) => Number(n || 0).toLocaleString(),
 };
 

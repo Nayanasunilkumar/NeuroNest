@@ -722,6 +722,7 @@ class InAppNotification(db.Model):
     message = db.Column(db.Text, nullable=False)
     payload = db.Column(db.JSON, nullable=True)
     is_read = db.Column(db.Boolean, nullable=False, default=False)
+    is_resolved = db.Column(db.Boolean, nullable=False, default=False)
     created_at = db.Column(db.DateTime(timezone=True), default=datetime.utcnow, nullable=False)
 
     user = db.relationship("User", backref="notifications")
@@ -735,6 +736,7 @@ class InAppNotification(db.Model):
             "message": self.message,
             "metadata": self.payload or {},
             "is_read": self.is_read,
+            "is_resolved": self.is_resolved,
             "created_at": self.created_at.isoformat() if self.created_at else None,
         }
 

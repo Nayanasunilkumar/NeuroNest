@@ -227,8 +227,8 @@ const DoctorRadar = ({ doctors }) => {
                   doctor: doc.name,
                   metric: ax.label,
                   value: ax.scale === 20
-                    ? `${doc[ax.key]?.toFixed(1) ?? '—'} / 5`
-                    : doc[ax.key] ?? '—',
+                    ? `${(Number(doc[ax.key]) || 0).toFixed(1)} / 5`
+                    : (doc[ax.key] ?? '—'),
                   color: RADAR_COLORS[di % RADAR_COLORS.length],
                 });
               }}
