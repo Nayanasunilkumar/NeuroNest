@@ -217,6 +217,8 @@ const Profile = () => {
       );
   }
 
+  const formatDate = (value) => formatDateIST(value, { month: "short", day: "numeric", year: "numeric" });
+
   const calculateAge = (dob) => {
     if (!dob) return "N/A";
     try { return calculateAgeIST(dob); } catch { return "N/A"; }
