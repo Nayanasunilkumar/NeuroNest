@@ -34,7 +34,9 @@ export default function DataManagementSection({ onExport, onExportPDF, onExportA
     const a = document.createElement('a');
     a.href = url;
     a.download = filename;
+    document.body.appendChild(a);
     a.click();
+    document.body.removeChild(a);
     URL.revokeObjectURL(url);
     setExported(true);
     setTimeout(() => setExported(false), 4000);
