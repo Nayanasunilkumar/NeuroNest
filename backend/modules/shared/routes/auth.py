@@ -272,81 +272,37 @@ def db_repair():
         
         if not sync_all and not email:
             return jsonify({"error": "Email parameter is required. Example: ?email=dr@example.com"}), 400
-            
         user = None
         if email:
             user = User.query.filter_by(email=email.strip().lower()).first()
             if not user or user.role != "doctor":
                 return jsonify({"error": f"Doctor with email {email} not found."}), 404
-
-        # 1. Reassign Appointments
+        
+        # 1. Reassign Appointments (The most critical part)
         all_appts = Appointment.query.all()
         reassigned_count = 0
         claim_all = request.args.get("claim_all") == "true"
-        sync_all = request.args.get("sync_all_users") == "true"
         force = request.args.get("force") == "true"
         
         for appt in all_appts:
-            should_reassign = False
-            target_id = None
-            
-            # Case A: Explicit claim_all (Force every single record to this doctor)
             if claim_all and user:
                 if force or appt.doctor_id != user.id:
-                    should_reassign = True
-                    target_id = user.id
-            
-            # Case B: Universal sync based on orphaned status
-            elif sync_all:
-                exists = User.query.get(appt.doctor_id)
-                if not exists:
-                    # We can't know which doctor it belongs to without email mapping
-                    # So we leave it for explicit claim_all
-                    pass
-            
-            # Case C: Single user orphan check
+                    appt.doctor_id = user.id
+                    reassigned_count += 1
             elif user:
                 exists = User.query.get(appt.doctor_id)
                 if not exists or (exists.email == user.email and exists.id != user.id):
-                    should_reassign = True
-                    target_id = user.id
-                
-            if should_reassign and target_id:
-                appt.doctor_id = target_id
-                reassigned_count += 1
+                    appt.doctor_id = user.id
+                    reassigned_count += 1
 
-        # 2. Reassign Slots and DoctorProfiles to ensure dashboard counters work
+        # 2. Sync associated Slots ONLY for the appointments we are moving
         if user and claim_all:
-            # Optimization: Pre-fetch all existing slot times for this doctor to avoid N+1 queries
-            existing_slots = {
-                s.slot_start_utc for s in AppointmentSlot.query.filter_by(doctor_user_id=user.id).all()
-            }
+            for appt in all_appts:
+                if appt.doctor_id == user.id and appt.slot:
+                    # Force the slot to belong to the doctor too
+                    appt.slot.doctor_user_id = user.id
             
-            all_slots = AppointmentSlot.query.all()
-            for slot in all_slots:
-                if slot.doctor_user_id == user.id:
-                    continue
-                    
-                if slot.slot_start_utc in existing_slots:
-                    # Conflict found
-                    if slot.booked_appointment_id:
-                        # If the orphaned slot has an appointment, we must keep it and remove the empty conflict
-                        # We do this one-by-one only for actual appointments to save time
-                        conflict = AppointmentSlot.query.filter_by(
-                            doctor_user_id=user.id,
-                            slot_start_utc=slot.slot_start_utc
-                        ).first()
-                        if conflict and not conflict.booked_appointment_id:
-                            db.session.delete(conflict)
-                            slot.doctor_user_id = user.id
-                    else:
-                        # Just an empty slot conflict, delete it
-                        db.session.delete(slot)
-                else:
-                    slot.doctor_user_id = user.id
-                    existing_slots.add(slot.slot_start_utc)
-            
-            # Ensure DoctorProfile exists for this user
+            # Ensure DoctorProfile exists
             from database.models import DoctorProfile
             prof = DoctorProfile.query.filter_by(user_id=user.id).first()
             if not prof:
