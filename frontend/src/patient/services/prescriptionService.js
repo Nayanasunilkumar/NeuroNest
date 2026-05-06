@@ -2,7 +2,7 @@ import axios from 'axios';
 import { API_BASE_URL } from '../../config/env';
 
 const BASE_URL = API_BASE_URL;
-const API_URL = `${BASE_URL}/prescriptions`;
+const API_URL = `${BASE_URL}/api/doctor/prescriptions`;
 
 // Helper to get token
 const getAuthHeaders = () => {
@@ -17,7 +17,7 @@ const getAuthHeaders = () => {
 const prescriptionService = {
     // New: Fetch Patient Dossier (Profile + Timeline)
     getPatientDossier: async (patientId) => {
-        const response = await axios.get(`${BASE_URL}/doctor/patients/${patientId}/dossier`, getAuthHeaders());
+        const response = await axios.get(`${BASE_URL}/api/doctor/patients/${patientId}/dossier`, getAuthHeaders());
         return response.data;
     },
 
