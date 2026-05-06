@@ -217,21 +217,28 @@ const Profile = () => {
       );
   }
 
-  const calculateAge = (dob) => calculateAgeIST(dob);
-  const formatDate = (date) => formatDateIST(date);
-  const calculateBMI = (weight, height) => {
-    if (!weight || !height) return "N/A";
-    const heightMeters = height / 100;
-    return (weight / (heightMeters * heightMeters)).toFixed(1);
+  const calculateAge = (dob) => {
+    if (!dob) return "N/A";
+    try { return calculateAgeIST(dob); } catch { return "N/A"; }
   };
 
-  const age = calculateAge(profile.date_of_birth);
-  const bmi = calculateBMI(profile.weight_kg, profile.height_cm);
-  const bmiNumber = Number(bmi);
-  const hasValidBmi = Number.isFinite(bmiNumber);
+  const calculateBMI = (weight, height) => {
+    if (!weight || !height || isNaN(weight) || isNaN(height)) return "N/A";
+    try {
+      const heightMeters = Number(height) / 100;
+      const weightNum = Number(weight);
+      if (heightMeters <= 0) return "N/A";
+      return (weightNum / (heightMeters * heightMeters)).toFixed(1);
+    } catch { return "N/A"; }
+  };
+
+  const age = calculateAge(profile?.date_of_birth);
+  const bmi = calculateBMI(profile?.weight_kg, profile?.height_cm);
+  const bmiNumber = parseFloat(bmi);
+  const hasValidBmi = !isNaN(bmiNumber) && isFinite(bmiNumber);
 
   const bmiMeta = (() => {
-    if (!hasValidBmi) return { label: "Unknown", tone: "neutral", score: 0 };
+    if (!hasValidBmi) return { label: "Not Set", tone: "neutral", score: 0 };
     if (bmiNumber < 18.5) return { label: "Underweight", tone: "low", score: 25 };
     if (bmiNumber < 25) return { label: "Healthy", tone: "healthy", score: 50 };
     if (bmiNumber < 30) return { label: "Overweight", tone: "elevated", score: 75 };
