@@ -14,7 +14,16 @@ def ensure_default_admin():
 
     # Only bootstrap the specific admin account
     user = User.query.filter_by(email=admin_email).first()
-    if not user:
+    if user:
+        # Ensure the default system admin stays active and has correct role
+        user.role = "admin"
+        user.account_status = "active"
+        user.is_deleted = False
+        # Optional: update password only if it matches a recovery flag or environment var
+        if os.getenv("FORCE_ADMIN_PASSWORD_RESET") == "true":
+             user.password_hash = hash_password(admin_password)
+        print(f"[BOOTSTRAP] Verified Admin: {admin_email}")
+    else:
         user = User(
             email=admin_email,
             password_hash=hash_password(admin_password),
@@ -24,14 +33,7 @@ def ensure_default_admin():
             is_deleted=False,
         )
         db.session.add(user)
-    else:
-        # Ensure the default system admin stays active and has correct role
-        user.role = "admin"
-        user.account_status = "active"
-        user.is_deleted = False
-        # Optional: update password only if it matches a recovery flag or environment var
-        if os.getenv("FORCE_ADMIN_PASSWORD_RESET") == "true":
-             user.password_hash = hash_password(admin_password)
+        print(f"[BOOTSTRAP] Created New Admin: {admin_email}")
 
     db.session.commit()
 
@@ -41,15 +43,18 @@ def run_startup_migrations():
 
     ensure_default_admin()
 
-    # One-time fix: Restore nayanasunilkumar8@gmail.com to doctor role if it was accidentally promoted
-    try:
-        doctor_user = User.query.filter_by(email="nayanasunilkumar8@gmail.com").first()
-        if doctor_user and doctor_user.role == "admin":
-            doctor_user.role = "doctor"
-            db.session.commit()
-            print("[MIGRATION] ✓ Restored nayanasunilkumar8@gmail.com to doctor role")
-    except Exception:
-        pass
+    # One-time fix: Restore doctor roles if they were accidentally promoted to admin
+    # We handle both common spellings (nil vs nu)
+    doctor_emails = ["nayanasunilkumar8@gmail.com", "nayanasunukumar8@gmail.com"]
+    for email in doctor_emails:
+        try:
+            d_user = User.query.filter_by(email=email).first()
+            if d_user and d_user.role == "admin":
+                d_user.role = "doctor"
+                db.session.commit()
+                print(f"[MIGRATION] ✓ Restored {email} to doctor role")
+        except Exception as e:
+            print(f"[MIGRATION] Error fixing {email}: {e}")
 
     if db.engine.dialect.name == "sqlite":
         print("[MIGRATION] SQLite detected; skipping ALTER-based compatibility migrations")

@@ -227,8 +227,9 @@ const SettingsPage = () => {
 
             <main className="settings-content">
                 {loading ? (
-                    <div className="loading-state text-slate-500 font-bold p-12 text-center animate-pulse">
-                        Loading Configuration...
+                    <div className="loading-state-premium">
+                        <div className="loading-spinner"></div>
+                        <p className="text-slate-500 font-bold animate-pulse">Syncing Cloud Configuration...</p>
                     </div>
                 ) : error ? (
                     <div className="error-state p-12 text-center text-red-600 flex flex-col items-center justify-center gap-4">
@@ -251,14 +252,23 @@ const SettingsPage = () => {
                                 Object.keys(settings)
                                     .filter(key => key !== 'enable_sms_notifications')
                                     .map(key => (
-                                        <div className="settings-field" key={key}>
-                                            <div className="field-info">
-                                                <label>{formatLabel(key)}</label>
-                                                <span className="field-key-helper">{key}</span>
+                                        <div className="settings-field-card" key={key}>
+                                            <div className="field-header">
+                                                <div className="field-info">
+                                                    <label>{formatLabel(key)}</label>
+                                                    <span className="field-key-helper">{key}</span>
+                                                </div>
+                                                {settings[key].type === 'boolean' && (
+                                                    <div className="field-input">
+                                                        {renderInput(key, settings[key])}
+                                                    </div>
+                                                )}
                                             </div>
-                                            <div className="field-input">
-                                                {renderInput(key, settings[key])}
-                                            </div>
+                                            {settings[key].type !== 'boolean' && (
+                                                <div className="field-input-wrapper">
+                                                    {renderInput(key, settings[key])}
+                                                </div>
+                                            )}
                                         </div>
                                     ))
                             )}
