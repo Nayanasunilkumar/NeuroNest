@@ -285,23 +285,52 @@ def db_repair():
         force = request.args.get("force") == "true"
         
         for appt in all_appts:
+            should_move = False
             if claim_all and user:
                 if force or appt.doctor_id != user.id:
-                    appt.doctor_id = user.id
-                    reassigned_count += 1
+                    should_move = True
             elif user:
                 exists = User.query.get(appt.doctor_id)
                 if not exists or (exists.email == user.email and exists.id != user.id):
-                    appt.doctor_id = user.id
-                    reassigned_count += 1
-
-        # 2. Sync associated Slots ONLY for the appointments we are moving
-        if user and claim_all:
-            for appt in all_appts:
-                if appt.doctor_id == user.id and appt.slot:
-                    # Force the slot to belong to the doctor too
-                    appt.slot.doctor_user_id = user.id
+                    should_move = True
             
+            if should_move:
+                appt.doctor_id = user.id
+                reassigned_count += 1
+                
+                # Handling the Slot Conflict (Precision Fix)
+                if appt.slot:
+                    # Check if Dr. Naina already has a slot at this time
+                    existing_slot = AppointmentSlot.query.filter_by(
+                        doctor_user_id=user.id,
+                        slot_start_utc=appt.slot.slot_start_utc
+                    ).first()
+                    
+                    if existing_slot and existing_slot.id != appt.slot_id:
+                        # Re-link the appointment to the existing slot and delete the orphan
+                        old_slot = appt.slot
+                        appt.slot_id = existing_slot.id
+                        existing_slot.booked_appointment_id = appt.id
+                        existing_slot.status = "booked"
+                        db.session.delete(old_slot)
+                    else:
+                        # No conflict, just move the slot
+                        appt.slot.doctor_user_id = user.id
+
+        # 2. Re-sync all slots to ensure no orphans are left
+        if user and claim_all:
+            # Final sweep for remaining slots without appointments
+            remaining_slots = AppointmentSlot.query.filter(AppointmentSlot.doctor_user_id != user.id).all()
+            for s in remaining_slots:
+                conflict = AppointmentSlot.query.filter_by(
+                    doctor_user_id=user.id,
+                    slot_start_utc=s.slot_start_utc
+                ).first()
+                if conflict:
+                    db.session.delete(s)
+                else:
+                    s.doctor_user_id = user.id
+
             # Ensure DoctorProfile exists
             from database.models import DoctorProfile
             prof = DoctorProfile.query.filter_by(user_id=user.id).first()
