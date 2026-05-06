@@ -262,7 +262,7 @@ def db_audit():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-@auth_bp.route("/diagnostic/repair", methods=["GET"])
+@auth_bp.route("/diagnostic/restore", methods=["GET"])
 def db_repair():
     from database.models import User, Appointment, db, DoctorProfile, AppointmentSlot
     
