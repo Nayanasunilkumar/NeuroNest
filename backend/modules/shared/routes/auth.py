@@ -267,15 +267,17 @@ def db_repair():
     from database.models import User, Appointment, db, DoctorProfile, AppointmentSlot
     
     try:
-        # Allow repair via email parameter so it can be run directly from a browser link
+        sync_all = request.args.get("sync_all_users") == "true"
         email = request.args.get("email")
-        if not email:
+        
+        if not sync_all and not email:
             return jsonify({"error": "Email parameter is required. Example: ?email=dr@example.com"}), 400
             
-        user = User.query.filter_by(email=email.strip().lower()).first()
-        
-        if not user or user.role != "doctor":
-            return jsonify({"error": f"Doctor with email {email} not found."}), 404
+        user = None
+        if email:
+            user = User.query.filter_by(email=email.strip().lower()).first()
+            if not user or user.role != "doctor":
+                return jsonify({"error": f"Doctor with email {email} not found."}), 404
 
         # 1. Reassign Appointments
         all_appts = Appointment.query.all()
