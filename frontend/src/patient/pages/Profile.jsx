@@ -293,11 +293,6 @@ const Profile = () => {
 
   return (
     <div className="patient-profile-page-wrapper">
-      <div className="background-decoration">
-        <div className="blob blob-1"></div>
-        <div className="blob blob-2"></div>
-      </div>
-
       <div className="profile-container py-4 px-3 px-md-5">
         <div className="d-flex align-items-center justify-content-between mb-4">
           <h1 className="h3 fw-black text-dark mb-0">My Health Profile</h1>
