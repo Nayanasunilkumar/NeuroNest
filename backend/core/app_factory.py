@@ -31,16 +31,19 @@ def create_app():
     JWTManager(app)
     socketio.init_app(app)
 
-    with app.app_context():
-        try:
-            db.create_all()
-        except Exception as e:
-            print(f"[DB] ❌ Initial create_all failed: {e}")
-        
-        try:
-            run_startup_migrations()
-        except Exception as e:
-            print(f"[MIGRATION] ❌ Startup migrations failed: {e}")
+    # Run heavy DB initialization in background to allow Port Binding to succeed immediately
+    def background_db_init(app_context):
+        with app_context:
+            try:
+                print("[DB] Starting background initialization...")
+                db.create_all()
+                run_startup_migrations()
+                print("[DB] Background initialization complete.")
+            except Exception as e:
+                print(f"[DB] ❌ Background initialization failed: {e}")
+
+    import threading
+    threading.Thread(target=background_db_init, args=(app.app_context(),), daemon=True).start()
 
     register_feature_modules(app)
     register_socket_handlers()
