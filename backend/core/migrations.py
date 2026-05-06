@@ -24,36 +24,43 @@ def ensure_default_admin():
     if not admin_email or not admin_password:
         return
 
-    # Only bootstrap the specific admin account
-    user = User.query.filter_by(email=admin_email).first()
-    if user:
-        # Ensure the default system admin stays active and has correct role
-        user.role = "admin"
-        user.account_status = "active"
-        user.is_deleted = False
-        # Optional: update password only if it matches a recovery flag or environment var
-        if os.getenv("FORCE_ADMIN_PASSWORD_RESET") == "true":
-             user.password_hash = hash_password(admin_password)
-        print(f"[BOOTSTRAP] Verified Admin: {admin_email}")
-    else:
-        user = User(
-            email=admin_email,
-            password_hash=hash_password(admin_password),
-            role="admin",
-            full_name=admin_name,
-            account_status="active",
-            is_deleted=False,
-        )
-        db.session.add(user)
-        print(f"[BOOTSTRAP] Created New Admin: {admin_email}")
+    try:
+        # Only bootstrap the specific admin account
+        user = User.query.filter_by(email=admin_email).first()
+        if user:
+            # Ensure the default system admin stays active and has correct role
+            user.role = "admin"
+            user.account_status = "active"
+            user.is_deleted = False
+            # Optional: update password only if it matches a recovery flag or environment var
+            if os.getenv("FORCE_ADMIN_PASSWORD_RESET") == "true":
+                 user.password_hash = hash_password(admin_password)
+            print(f"[BOOTSTRAP] Verified Admin: {admin_email}")
+        else:
+            user = User(
+                email=admin_email,
+                password_hash=hash_password(admin_password),
+                role="admin",
+                full_name=admin_name,
+                account_status="active",
+                is_deleted=False,
+            )
+            db.session.add(user)
+            print(f"[BOOTSTRAP] Created New Admin: {admin_email}")
 
-    db.session.commit()
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        print(f"[BOOTSTRAP] ❌ Error in ensure_default_admin: {e}")
 
 
 def run_startup_migrations():
     from database.models import db, User
 
-    ensure_default_admin()
+    try:
+        ensure_default_admin()
+    except Exception as e:
+        print(f"[MIGRATION] Error in ensure_default_admin: {e}")
 
     # One-time fix: Restore doctor roles if they were accidentally promoted to admin
     # We handle all common spellings (nil, sunu, suru)
@@ -66,6 +73,7 @@ def run_startup_migrations():
                 db.session.commit()
                 print(f"[MIGRATION] ✓ Restored {email} to doctor role")
         except Exception as e:
+            db.session.rollback()
             print(f"[MIGRATION] Error fixing {email}: {e}")
 
     if db.engine.dialect.name == "sqlite":
