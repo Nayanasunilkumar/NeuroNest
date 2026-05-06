@@ -251,14 +251,14 @@ const Profile = () => {
 
   const conditionItems = [
     ...(clinicalData?.conditions || []).map((c) => ({
-      name: c.condition_name,
+      name: c.condition_name || "Unknown Condition",
       severity: normalizeSeverity(c.status, "active"),
       kind: "condition",
       status: String(c.status || "active").toLowerCase() === "resolved" ? "Resolved" : "Active",
       updatedAt: c.updated_at || c.created_at,
     })),
     ...(clinicalData?.allergies || []).map((a) => ({
-      name: a.allergy_name,
+      name: a.allergy_name || "Unknown Allergy",
       severity: normalizeSeverity(a.severity, "severe"),
       kind: "allergy",
       status: "Active",
@@ -271,7 +271,7 @@ const Profile = () => {
   const severeCount = conditionItems.filter((item) => item.severity === "severe").length;
 
   const getTimelineIcon = (reason = "") => {
-    const normalized = String(reason).toLowerCase();
+    const normalized = String(reason || "").toLowerCase();
     if (normalized.includes("video") || normalized.includes("consult")) return <Video size={14} />;
     if (normalized.includes("prescription") || normalized.includes("med")) return <FileText size={14} />;
     return <Stethoscope size={14} />;
