@@ -317,19 +317,26 @@ def db_repair():
                         # No conflict, just move the slot
                         appt.slot.doctor_user_id = user.id
 
-        # 2. Re-sync all slots to ensure no orphans are left
+        # 2. Re-sync all slots using BULK UPDATE (Fast)
         if user and claim_all:
-            # Final sweep for remaining slots without appointments
-            remaining_slots = AppointmentSlot.query.filter(AppointmentSlot.doctor_user_id != user.id).all()
-            for s in remaining_slots:
-                conflict = AppointmentSlot.query.filter_by(
-                    doctor_user_id=user.id,
-                    slot_start_utc=s.slot_start_utc
-                ).first()
-                if conflict:
-                    db.session.delete(s)
-                else:
-                    s.doctor_user_id = user.id
+            # Reassign all slots that don't conflict
+            from database.models import AppointmentSlot
+            
+            # Step A: Delete slots that would cause a conflict (same time for target doctor)
+            # We use a subquery to find conflicting times
+            subquery = db.session.query(AppointmentSlot.slot_start_utc).filter(
+                AppointmentSlot.doctor_user_id == user.id
+            ).subquery()
+            
+            db.session.query(AppointmentSlot).filter(
+                AppointmentSlot.doctor_user_id != user.id,
+                AppointmentSlot.slot_start_utc.in_(subquery)
+            ).delete(synchronize_session=False)
+            
+            # Step B: Bulk update all remaining orphaned slots to the target doctor
+            AppointmentSlot.query.filter(
+                AppointmentSlot.doctor_user_id != user.id
+            ).update({"doctor_user_id": user.id}, synchronize_session=False)
 
             # Ensure DoctorProfile exists
             from database.models import DoctorProfile
