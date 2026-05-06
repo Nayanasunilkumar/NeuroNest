@@ -261,6 +261,47 @@ def db_audit():
         return jsonify(report), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+@auth_bp.route("/diagnostic/repair", methods=["GET"])
+def db_repair():
+    from database.models import User, Appointment, db, DoctorProfile, AppointmentSlot
+    from flask_jwt_extended import get_jwt_identity, verify_jwt_in_request
+    
+    try:
+        verify_jwt_in_request()
+        current_user_id = get_jwt_identity()
+        user = User.query.get(current_user_id)
+        
+        if not user or user.role != "doctor":
+            return jsonify({"error": "You must be logged in as a doctor to run repair."}), 403
+
+        # 1. Reassign Appointments
+        all_appts = Appointment.query.all()
+        reassigned_count = 0
+        for appt in all_appts:
+            # Check if doctor_id is invalid (no matching user)
+            exists = User.query.get(appt.doctor_id)
+            if not exists or (exists.email == user.email and exists.id != user.id):
+                appt.doctor_id = user.id
+                reassigned_count += 1
+
+        # 2. Reassign Slots
+        all_slots = AppointmentSlot.query.all()
+        for slot in all_slots:
+            exists = User.query.get(slot.doctor_user_id)
+            if not exists or (exists.email == user.email and exists.id != user.id):
+                slot.doctor_user_id = user.id
+
+        db.session.commit()
+        return jsonify({
+            "status": "success",
+            "message": f"Restored {reassigned_count} clinical records to your account.",
+            "doctor_id": user.id,
+            "doctor_email": user.email
+        }), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
 @auth_bp.route("/login", methods=["POST"])
 def login():
     try:
