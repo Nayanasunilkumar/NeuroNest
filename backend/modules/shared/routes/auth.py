@@ -265,21 +265,23 @@ def db_audit():
 @auth_bp.route("/diagnostic/repair", methods=["GET"])
 def db_repair():
     from database.models import User, Appointment, db, DoctorProfile, AppointmentSlot
-    from flask_jwt_extended import get_jwt_identity, verify_jwt_in_request
     
     try:
-        verify_jwt_in_request()
-        current_user_id = get_jwt_identity()
-        user = User.query.get(current_user_id)
+        # Allow repair via email parameter so it can be run directly from a browser link
+        email = request.args.get("email")
+        if not email:
+            return jsonify({"error": "Email parameter is required. Example: ?email=dr@example.com"}), 400
+            
+        user = User.query.filter_by(email=email.strip().lower()).first()
         
         if not user or user.role != "doctor":
-            return jsonify({"error": "You must be logged in as a doctor to run repair."}), 403
+            return jsonify({"error": f"Doctor with email {email} not found."}), 404
 
         # 1. Reassign Appointments
         all_appts = Appointment.query.all()
         reassigned_count = 0
         for appt in all_appts:
-            # Check if doctor_id is invalid (no matching user)
+            # Check if doctor_id is invalid or belongs to a different ID with same email
             exists = User.query.get(appt.doctor_id)
             if not exists or (exists.email == user.email and exists.id != user.id):
                 appt.doctor_id = user.id
