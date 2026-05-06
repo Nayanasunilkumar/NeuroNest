@@ -316,23 +316,23 @@ def db_repair():
                         appt.slot.doctor_user_id = user.id
 
         # ── PATIENT & PROFILE RESTORATION ──
-        # Ensure all patients have profiles and appointments are linked to existing users
-        from database.models import PatientProfile
-        all_users = User.query.all()
-        for u in all_users:
-            if u.role == "patient":
-                prof = PatientProfile.query.filter_by(user_id=u.id).first()
-                if not prof:
-                    db.session.add(PatientProfile(user_id=u.id, full_name=u.full_name or "Patient"))
-            elif u.role == "doctor":
-                from database.models import DoctorProfile
-                prof = DoctorProfile.query.filter_by(user_id=u.id).first()
-                if not prof:
-                    db.session.add(DoctorProfile(user_id=u.id, full_name=u.full_name or "Doctor"))
+        # Optimized: Find only users missing profiles to avoid N+1 queries
+        users_without_patient_profile = User.query.filter(
+            User.role == "patient",
+            ~User.id.in_(db.session.query(PatientProfile.user_id))
+        ).all()
+        for u in users_without_patient_profile:
+            db.session.add(PatientProfile(user_id=u.id, full_name=u.full_name or "Patient"))
+
+        users_without_doctor_profile = User.query.filter(
+            User.role == "doctor",
+            ~User.id.in_(db.session.query(DoctorProfile.user_id))
+        ).all()
+        for u in users_without_doctor_profile:
+            db.session.add(DoctorProfile(user_id=u.id, full_name=u.full_name or "Doctor"))
 
         # 2. Re-sync all slots using BULK UPDATE (Fast)
         if user and claim_all:
-            # Reassign all slots that don't conflict
             subquery = db.session.query(AppointmentSlot.slot_start_utc).filter(
                 AppointmentSlot.doctor_user_id == user.id
             ).subquery()
