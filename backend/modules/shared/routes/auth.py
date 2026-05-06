@@ -350,8 +350,10 @@ def db_repair():
 @auth_bp.route("/login", methods=["POST"])
 def login():
     try:
+        import time
+        start_time = time.time()
+        
         data = request.get_json() or {}
-
         email = (data.get("email") or "").strip().lower()
         password = data.get("password") or ""
 
@@ -359,8 +361,13 @@ def login():
             return jsonify({"message": "Email and password required"}), 400
 
         user = User.query.filter_by(email=email).first()
+        t1 = time.time()
+        current_app.logger.info(f"[PERF] User fetch took {t1-start_time:.4f}s")
+        
         if not user:
             user = _maybe_bootstrap_doctor_for_dev(email)
+            t_boot = time.time()
+            current_app.logger.info(f"[PERF] Bootstrap took {t_boot-t1:.4f}s")
 
         if not user:
             return jsonify({"message": "Invalid email or password"}), 401
@@ -373,23 +380,30 @@ def login():
             return jsonify({"message": "Account suspended. Please contact administration."}), 403
 
         is_verified = verify_password(password, user.password_hash)
+        t_verify = time.time()
+        current_app.logger.info(f"[PERF] Password verify took {t_verify-t1:.4f}s")
 
         if not is_verified:
             log_security_event(user.id, "login_failed", "Failed login attempt detected")
             return jsonify({"message": "Invalid email or password"}), 401
 
-        # ✅ CRITICAL FIX: identity MUST be string
+        # ✅ identity MUST be string
         token = create_access_token(
-            identity=str(user.id),   # 🔥 THIS FIXES "Subject must be a string"
-            additional_claims={
-                "role": user.role
-            }
+            identity=str(user.id),
+            additional_claims={"role": user.role}
         )
+        t_token = time.time()
+        current_app.logger.info(f"[PERF] Token creation took {t_token-t_verify:.4f}s")
 
         ua = request.headers.get('User-Agent', '')
         device_info = parse_user_agent(ua)
         log_security_event(user.id, "login_success", f"New login from {device_info}", commit=False)
+        t_log = time.time()
+        current_app.logger.info(f"[PERF] Security logging took {t_log-t_token:.4f}s")
+        
         db.session.commit()
+        t_commit = time.time()
+        current_app.logger.info(f"[PERF] Total login took {t_commit-start_time:.4f}s (Commit: {t_commit-t_log:.4f}s)")
 
         return jsonify({
             "message": "Login successful",
