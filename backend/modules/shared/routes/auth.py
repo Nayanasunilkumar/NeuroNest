@@ -317,27 +317,34 @@ def db_repair():
 
         # 2. Reassign Slots and DoctorProfiles to ensure dashboard counters work
         if user and claim_all:
+            # Optimization: Pre-fetch all existing slot times for this doctor to avoid N+1 queries
+            existing_slots = {
+                s.slot_start_utc for s in AppointmentSlot.query.filter_by(doctor_user_id=user.id).all()
+            }
+            
             all_slots = AppointmentSlot.query.all()
             for slot in all_slots:
                 if slot.doctor_user_id == user.id:
                     continue
                     
-                # Check for conflict before reassigning
-                conflict = AppointmentSlot.query.filter_by(
-                    doctor_user_id=user.id,
-                    slot_start_utc=slot.slot_start_utc
-                ).first()
-                
-                if conflict:
-                    # If the orphaned slot has an appointment, we must merge it or delete the empty conflict
-                    if slot.booked_appointment_id and not conflict.booked_appointment_id:
-                        db.session.delete(conflict)
-                        slot.doctor_user_id = user.id
-                    elif not slot.booked_appointment_id:
-                        # Just an empty slot, safe to ignore/delete since we have a conflict
+                if slot.slot_start_utc in existing_slots:
+                    # Conflict found
+                    if slot.booked_appointment_id:
+                        # If the orphaned slot has an appointment, we must keep it and remove the empty conflict
+                        # We do this one-by-one only for actual appointments to save time
+                        conflict = AppointmentSlot.query.filter_by(
+                            doctor_user_id=user.id,
+                            slot_start_utc=slot.slot_start_utc
+                        ).first()
+                        if conflict and not conflict.booked_appointment_id:
+                            db.session.delete(conflict)
+                            slot.doctor_user_id = user.id
+                    else:
+                        # Just an empty slot conflict, delete it
                         db.session.delete(slot)
                 else:
                     slot.doctor_user_id = user.id
+                    existing_slots.add(slot.slot_start_utc)
             
             # Ensure DoctorProfile exists for this user
             from database.models import DoctorProfile
