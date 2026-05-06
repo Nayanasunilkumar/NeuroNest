@@ -225,6 +225,42 @@ def register():
 # --------------------------------------------------
 # LOGIN API
 # --------------------------------------------------
+@auth_bp.route("/diagnostic/audit", methods=["GET"])
+def db_audit():
+    from database.models import User, Appointment, DoctorProfile, PatientProfile
+    from flask_jwt_extended import get_jwt_identity, verify_jwt_in_request
+    
+    current_user_id = None
+    try:
+        verify_jwt_in_request(optional=True)
+        current_user_id = get_jwt_identity()
+    except:
+        pass
+
+    try:
+        report = {
+            "current_session": {
+                "user_id": current_user_id,
+                "is_logged_in": bool(current_user_id)
+            },
+            "database_stats": {
+                "total_users": User.query.count(),
+                "total_appointments": Appointment.query.count(),
+                "total_doctor_profiles": DoctorProfile.query.count(),
+                "total_patient_profiles": PatientProfile.query.count()
+            },
+            "appointment_distribution": {}
+        }
+        
+        # Count appointments per doctor ID
+        appts = Appointment.query.all()
+        for a in appts:
+            doc_id = str(a.doctor_id)
+            report["appointment_distribution"][doc_id] = report["appointment_distribution"].get(doc_id, 0) + 1
+            
+        return jsonify(report), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 @auth_bp.route("/login", methods=["POST"])
 def login():
     try:
