@@ -103,13 +103,31 @@ def parse_user_agent(ua_string):
     return f"{browser} on {os_name}"
 
 def log_security_event(user_id, event_type, description, commit=True):
+    """Synchronous logger (for high-priority/blocking events)"""
     ua = request.headers.get('User-Agent', '')
+    ip = request.remote_addr
+    _execute_log(user_id, event_type, description, ip, ua, commit)
+
+def log_security_event_async(user_id, event_type, description):
+    """Asynchronous logger (for background auditing to speed up response time)"""
+    from threading import Thread
+    app = current_app._get_current_object()
+    ua = request.headers.get('User-Agent', '')
+    ip = request.remote_addr
+    
+    Thread(target=_execute_log_wrapper, args=(app, user_id, event_type, description, ip, ua)).start()
+
+def _execute_log_wrapper(app, user_id, event_type, description, ip, ua):
+    with app.app_context():
+        _execute_log(user_id, event_type, description, ip, ua, commit=True)
+
+def _execute_log(user_id, event_type, description, ip, ua, commit=True):
     try:
         activity = SecurityActivity(
             user_id=user_id,
             event_type=event_type,
             description=description,
-            ip_address=request.remote_addr,
+            ip_address=ip,
             user_agent=ua
         )
         db.session.add(activity)
@@ -118,17 +136,16 @@ def log_security_event(user_id, event_type, description, commit=True):
             
         # 🛡️ Admin Security Alert for specific high-risk events
         if event_type in ["login_failed", "unauthorized_access", "password_reset_requested"]:
-            from modules.shared.services.notification_service import NotificationService
             NotificationService.send_admin_notification(
                 title="Security Anomaly Detected",
-                message=f"A security event of type '{event_type.replace('_', ' ')}' was recorded for User ID {user_id}. Source IP: {request.remote_addr}.",
+                message=f"A security event of type '{event_type.replace('_', ' ')}' was recorded for User ID {user_id}. Source IP: {ip}.",
                 notif_type="system",
                 severity="warning",
-                payload={"user_id": user_id, "event_type": event_type, "ip": request.remote_addr}
+                payload={"user_id": user_id, "event_type": event_type, "ip": ip}
             )
     except Exception:
-        current_app.logger.exception("Error logging security event for user %s", user_id)
         db.session.rollback()
+
 
 
 def _maybe_bootstrap_doctor_for_dev(email: str):
@@ -405,13 +422,16 @@ def login():
 
         ua = request.headers.get('User-Agent', '')
         device_info = parse_user_agent(ua)
-        log_security_event(user.id, "login_success", f"New login from {device_info}", commit=False)
-        t_log = time.time()
-        current_app.logger.info(f"[PERF] Security logging took {t_log-t_token:.4f}s")
         
+        # 🚀 PERFORMANCE OPTIMIZATION: Background logging
+        # We don't block the user's login response for the audit trail
+        log_security_event_async(user.id, "login_success", f"New login from {device_info}")
+        
+        # Minor: commit the main session if needed (bootstrap etc), but usually auth is read-only
         db.session.commit()
         t_commit = time.time()
-        current_app.logger.info(f"[PERF] Total login took {t_commit-start_time:.4f}s (Commit: {t_commit-t_log:.4f}s)")
+        current_app.logger.info(f"[PERF] Login flow complete. Total time: {t_commit-start_time:.4f}s")
+
 
         return jsonify({
             "message": "Login successful",
