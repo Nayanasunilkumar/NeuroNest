@@ -9,6 +9,18 @@ def ensure_default_admin():
     admin_password = os.getenv("DEFAULT_ADMIN_PASSWORD") or "Admin@123"
     admin_name = os.getenv("DEFAULT_ADMIN_NAME") or "System Administrator"
 
+    # 🛑 CRITICAL SAFEGUARD: Prevent specific doctor emails from becoming admin
+    # This prevents accidents if DEFAULT_ADMIN_EMAIL is misconfigured.
+    protected_doctor_emails = [
+        "nayanasunilkumar8@gmail.com", 
+        "nayanasunukumar8@gmail.com", 
+        "nayanasurukumar8@gmail.com"
+    ]
+    
+    if admin_email in protected_doctor_emails:
+        print(f"[BOOTSTRAP] 🚨 BLOCKED: {admin_email} is a protected DOCTOR email. It cannot be set as Admin.")
+        return
+
     if not admin_email or not admin_password:
         return
 
@@ -44,8 +56,8 @@ def run_startup_migrations():
     ensure_default_admin()
 
     # One-time fix: Restore doctor roles if they were accidentally promoted to admin
-    # We handle both common spellings (nil vs nu)
-    doctor_emails = ["nayanasunilkumar8@gmail.com", "nayanasunukumar8@gmail.com"]
+    # We handle all common spellings (nil, sunu, suru)
+    doctor_emails = ["nayanasunilkumar8@gmail.com", "nayanasunukumar8@gmail.com", "nayanasurukumar8@gmail.com"]
     for email in doctor_emails:
         try:
             d_user = User.query.filter_by(email=email).first()
