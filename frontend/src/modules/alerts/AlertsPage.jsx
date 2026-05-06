@@ -169,31 +169,19 @@ const AlertsPage = () => {
       </header>
 
       {status === "no_device" && (
-        <div className="alert alert-info rounded-4 border-0 shadow-sm d-flex align-items-center gap-3 p-4 mb-4" style={{ background: "#F1F5F9", color: "#475569" }}>
+        <div className="alert alert-warning rounded-4 border-0 shadow-sm d-flex align-items-center gap-3 p-4 mb-4" style={{ background: "rgba(245, 158, 11, 0.1)", color: "#92400E" }}>
           <div className="bg-white p-2 rounded-circle shadow-sm">
-            <Activity size={24} className="text-secondary opacity-75" />
+            <Activity size={24} className="text-warning" />
           </div>
           <div>
-            <h3 className="h6 fw-bold mb-1">No Monitoring Device Assigned</h3>
-            <p className="small mb-0 opacity-75">Real-time alerts and clinical event monitoring are currently unavailable for this account.</p>
+            <h3 className="h6 fw-bold mb-1">Live Monitoring Inactive</h3>
+            <p className="small mb-0 opacity-75">No hardware device is currently assigned. You are viewing historical alerts from the database.</p>
           </div>
         </div>
       )}
 
-      {status === "no_device" ? (
-        <div className="card border-0 shadow-sm rounded-4 p-5 text-center bg-light bg-opacity-50">
-          <div className="mb-4 d-inline-flex bg-white p-4 rounded-circle shadow-sm">
-            <Activity size={48} className="text-secondary opacity-25" />
-          </div>
-          <h2 className="h4 fw-black mb-2">No Monitoring Device Assigned</h2>
-          <p className="text-secondary mx-auto mb-0" style={{ maxWidth: "500px" }}>
-            Real-time vital monitoring and clinical event alerts are currently unavailable for this account. 
-            Please contact your health provider to assign a hardware device.
-          </p>
-        </div>
-      ) : (
-        <>
-          {/* Filter Bar */}
+      <>
+        {/* Filter Bar */}
           <div className="card border-0 shadow-sm rounded-4 p-3 mb-4">
             <div className="row g-3 align-items-end">
               <div className="col-12 col-lg-8">

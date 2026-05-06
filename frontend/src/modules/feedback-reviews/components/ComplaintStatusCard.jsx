@@ -51,7 +51,8 @@ const ComplaintStatusCard = ({ complaints }) => {
               {/* Status timeline */}
               <div className="csc-timeline">
                 {['open', 'investigating', 'resolved'].map((step, i) => {
-                  const reached = ['open', 'investigating', 'resolved', 'closed'].indexOf(c.status) >= i;
+                  const currentStatus = (c.status || '').toLowerCase();
+                  const reached = ['open', 'investigating', 'resolved', 'closed'].indexOf(currentStatus) >= i;
                   return (
                     <div key={step} className="csc-step">
                       <div className="csc-step-dot" style={{
@@ -61,7 +62,7 @@ const ComplaintStatusCard = ({ complaints }) => {
                       <span className="csc-step-label" style={{ color: reached ? cfg.color : '#94a3b8' }}>
                         {STATUS_CONFIG[step]?.label || step}
                       </span>
-                      {i < 2 && <div className="csc-step-line" style={{ background: reached && ['open','investigating','resolved','closed'].indexOf(c.status) > i ? cfg.color : 'rgba(0,0,0,0.08)' }} />}
+                      {i < 2 && <div className="csc-step-line" style={{ background: reached && ['open','investigating','resolved','closed'].indexOf(currentStatus) > i ? cfg.color : 'rgba(0,0,0,0.08)' }} />}
                     </div>
                   );
                 })}
