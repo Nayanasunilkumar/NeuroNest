@@ -280,10 +280,21 @@ def db_repair():
         # 1. Reassign Appointments
         all_appts = Appointment.query.all()
         reassigned_count = 0
+        claim_all = request.args.get("claim_all") == "true"
+        
         for appt in all_appts:
-            # Check if doctor_id is invalid or belongs to a different ID with same email
+            # Reassign if orphaned, if matching email but different ID, OR if claim_all is true
             exists = User.query.get(appt.doctor_id)
-            if not exists or (exists.email == user.email and exists.id != user.id):
+            should_reassign = False
+            
+            if claim_all:
+                should_reassign = True
+            elif not exists:
+                should_reassign = True
+            elif exists.email == user.email and exists.id != user.id:
+                should_reassign = True
+                
+            if should_reassign and appt.doctor_id != user.id:
                 appt.doctor_id = user.id
                 reassigned_count += 1
 
@@ -291,7 +302,7 @@ def db_repair():
         all_slots = AppointmentSlot.query.all()
         for slot in all_slots:
             exists = User.query.get(slot.doctor_user_id)
-            if not exists or (exists.email == user.email and exists.id != user.id):
+            if claim_all or not exists or (exists.email == user.email and exists.id != user.id):
                 slot.doctor_user_id = user.id
 
         db.session.commit()
