@@ -142,44 +142,45 @@ def generate_patient_report(data):
     elements.append(id_table)
 
     # 2. Vitals Status
-    elements.append(Paragraph("Clinical Vitals Monitoring", STYLES['SectionHeader']))
-    vitals_data = data.get("vitals", {})
+    if "vitals" in data:
+        elements.append(Paragraph("Clinical Vitals Monitoring", STYLES['SectionHeader']))
+        vitals_data = data.get("vitals", {})
     
-    if vitals_data.get("is_active"):
-        latest = vitals_data.get("latest", {})
-        hr, spo2, temp = (latest.get("hr") or 0), (latest.get("spo2") or 0), (latest.get("temp") or 0)
-        
-        hr_color = "#ef4444" if (hr > 0 and (hr < 60 or hr > 100)) else "#10b981"
-        spo2_color = "#ef4444" if (spo2 > 0 and spo2 < 95) else "#10b981"
-        temp_color = "#ef4444" if (temp > 0 and (temp < 36.1 or temp > 37.5)) else "#10b981"
-        
-        v_rows = [
-            [
-                get_icon("heart_red"), Paragraph("<b>Heart Rate</b>", STYLES['Label']), 
-                Paragraph(f"<font color='{hr_color}'>{hr} BPM</font>", STYLES['Value']),
-                get_icon("oxygen_blue"), Paragraph("<b>SpO2</b>", STYLES['Label']), 
-                Paragraph(f"<font color='{spo2_color}'>{spo2}%</font>", STYLES['Value']),
-                get_icon("temp_green"), Paragraph("<b>Temp</b>", STYLES['Label']), 
-                Paragraph(f"<font color='{temp_color}'>{temp}°C</font>", STYLES['Value'])
+        if vitals_data.get("is_active"):
+            latest = vitals_data.get("latest", {})
+            hr, spo2, temp = (latest.get("hr") or 0), (latest.get("spo2") or 0), (latest.get("temp") or 0)
+            
+            hr_color = "#ef4444" if (hr > 0 and (hr < 60 or hr > 100)) else "#10b981"
+            spo2_color = "#ef4444" if (spo2 > 0 and spo2 < 95) else "#10b981"
+            temp_color = "#ef4444" if (temp > 0 and (temp < 36.1 or temp > 37.5)) else "#10b981"
+            
+            v_rows = [
+                [
+                    get_icon("heart_red"), Paragraph("<b>Heart Rate</b>", STYLES['Label']), 
+                    Paragraph(f"<font color='{hr_color}'>{hr} BPM</font>", STYLES['Value']),
+                    get_icon("oxygen_blue"), Paragraph("<b>SpO2</b>", STYLES['Label']), 
+                    Paragraph(f"<font color='{spo2_color}'>{spo2}%</font>", STYLES['Value']),
+                    get_icon("temp_green"), Paragraph("<b>Temp</b>", STYLES['Label']), 
+                    Paragraph(f"<font color='{temp_color}'>{temp}°C</font>", STYLES['Value'])
+                ]
             ]
-        ]
-        vt = Table(v_rows, colWidths=[0.3*inch, 1.1*inch, 1.1*inch, 0.3*inch, 1.1*inch, 1.1*inch, 0.3*inch, 1.1*inch, 1.1*inch])
-        vt.setStyle(TableStyle([
-            ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
-            ('BACKGROUND', (0,0), (-1,-1), colors.HexColor("#ffffff")),
-            ('BOX', (0,0), (-1,-1), 0.5, colors.HexColor("#e2e8f0")),
-            ('BOTTOMPADDING', (0,0), (-1,-1), 10),
-            ('TOPPADDING', (0,0), (-1,-1), 10),
-            ('LEFTPADDING', (0,0), (-1,-1), 10),
-        ]))
-        elements.append(vt)
-    else:
-        elements.append(Paragraph("<i>No active vitals monitoring data detect for this period.</i>", STYLES['Normal']))
-        elements.append(Spacer(1, 0.1 * inch))
-        alert_data = [[get_icon("bell_warning") or "⚠️", Paragraph("No active vitals monitoring data detected for this period.", STYLES['AlertBox'])]]
-        at = Table(alert_data, colWidths=[0.3*inch, 7.2*inch])
-        at.setStyle(TableStyle([('VALIGN', (0,0), (-1,-1), 'MIDDLE'), ('LEFTPADDING', (0,0), (-1,-1), 10)]))
-        elements.append(at)
+            vt = Table(v_rows, colWidths=[0.3*inch, 1.1*inch, 1.1*inch, 0.3*inch, 1.1*inch, 1.1*inch, 0.3*inch, 1.1*inch, 1.1*inch])
+            vt.setStyle(TableStyle([
+                ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+                ('BACKGROUND', (0,0), (-1,-1), colors.HexColor("#ffffff")),
+                ('BOX', (0,0), (-1,-1), 0.5, colors.HexColor("#e2e8f0")),
+                ('BOTTOMPADDING', (0,0), (-1,-1), 10),
+                ('TOPPADDING', (0,0), (-1,-1), 10),
+                ('LEFTPADDING', (0,0), (-1,-1), 10),
+            ]))
+            elements.append(vt)
+        else:
+            elements.append(Paragraph("<i>No active vitals monitoring data detect for this period.</i>", STYLES['Normal']))
+            elements.append(Spacer(1, 0.1 * inch))
+            alert_data = [[get_icon("bell_warning") or "⚠️", Paragraph("No active vitals monitoring data detected for this period.", STYLES['AlertBox'])]]
+            at = Table(alert_data, colWidths=[0.3*inch, 7.2*inch])
+            at.setStyle(TableStyle([('VALIGN', (0,0), (-1,-1), 'MIDDLE'), ('LEFTPADDING', (0,0), (-1,-1), 10)]))
+            elements.append(at)
     
     # 3. Appointments Table
     appts = data.get("appointments", [])
@@ -290,6 +291,64 @@ def generate_patient_report(data):
             ('BOTTOMPADDING', (0,0), (-1,-1), 14),
         ]))
         elements.append(gt)
+
+    # 5. Medical Conditions
+    conditions = data.get("conditions", [])
+    if conditions:
+        elements.append(Paragraph("Chronic & Medical Conditions", STYLES['SectionHeader']))
+        header = [
+            Paragraph("Condition", STYLES['Label']),
+            Paragraph("Diagnosed Date", STYLES['Label']),
+            Paragraph("Status", STYLES['Label'])
+        ]
+        rows = [header]
+        for c in conditions:
+            rows.append([
+                Paragraph(str(c.get("condition_name", "N/A")), STYLES['Value']),
+                Paragraph(str(c.get("diagnosed_date") or "Unknown"), STYLES['Value']),
+                Paragraph(str(c.get("status", "N/A")).title(), STYLES['Value'])
+            ])
+        t = Table(rows, colWidths=[3.0*inch, 2.0*inch, 2.2*inch])
+        t.setStyle(TableStyle([
+            ('BACKGROUND', (0,0), (-1,0), colors.HexColor("#f1f5f9")),
+            ('ALIGN', (0,0), (-1,-1), 'LEFT'),
+            ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+            ('BOTTOMPADDING', (0,0), (-1,-1), 10),
+            ('TOPPADDING', (0,0), (-1,-1), 10),
+            ('LINEBELOW', (0,0), (-1,0), 1, colors.HexColor("#4f46e5")),
+            ('ROWBACKGROUNDS', (0,1), (-1,-1), [colors.white, colors.HexColor("#f8fafc")]),
+            ('GRID', (0,0), (-1,0), 0.5, colors.transparent),
+        ]))
+        elements.append(t)
+
+    # 6. Allergies
+    allergies = data.get("allergies", [])
+    if allergies:
+        elements.append(Paragraph("Reported Allergies", STYLES['SectionHeader']))
+        header = [
+            Paragraph("Allergy", STYLES['Label']),
+            Paragraph("Severity", STYLES['Label']),
+            Paragraph("Reaction", STYLES['Label'])
+        ]
+        rows = [header]
+        for a in allergies:
+            rows.append([
+                Paragraph(str(a.get("allergy_name", "N/A")), STYLES['Value']),
+                Paragraph(str(a.get("severity", "N/A")).title(), STYLES['Value']),
+                Paragraph(str(a.get("reaction") or "N/A"), STYLES['Value'])
+            ])
+        t = Table(rows, colWidths=[2.5*inch, 1.5*inch, 3.2*inch])
+        t.setStyle(TableStyle([
+            ('BACKGROUND', (0,0), (-1,0), colors.HexColor("#f1f5f9")),
+            ('ALIGN', (0,0), (-1,-1), 'LEFT'),
+            ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+            ('BOTTOMPADDING', (0,0), (-1,-1), 10),
+            ('TOPPADDING', (0,0), (-1,-1), 10),
+            ('LINEBELOW', (0,0), (-1,0), 1, colors.HexColor("#4f46e5")),
+            ('ROWBACKGROUNDS', (0,1), (-1,-1), [colors.white, colors.HexColor("#f8fafc")]),
+            ('GRID', (0,0), (-1,0), 0.5, colors.transparent),
+        ]))
+        elements.append(t)
 
     # Footer Disclaimer Box
     elements.append(Spacer(1, 0.4 * inch))

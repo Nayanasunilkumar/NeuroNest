@@ -340,6 +340,16 @@ def export_data():
         {"uid": uid}
     ).mappings().fetchall()
 
+    conditions = db.session.execute(
+        text("SELECT * FROM patient_conditions WHERE patient_id = :uid ORDER BY diagnosed_date DESC"),
+        {"uid": uid}
+    ).mappings().fetchall()
+
+    allergies = db.session.execute(
+        text("SELECT * FROM patient_allergies WHERE patient_id = :uid ORDER BY diagnosed_date DESC"),
+        {"uid": uid}
+    ).mappings().fetchall()
+
     def _serial(obj):
         if isinstance(obj, (datetime, date, time)):
             return str(obj)
@@ -351,6 +361,8 @@ def export_data():
         "profile": {k: str(v) for k, v in profile.items() if v is not None},
         "appointments": [{k: str(v) if isinstance(v, (date, time, datetime)) else v for k, v in dict(a).items()} for a in appointments],
         "prescriptions": [{k: str(v) if isinstance(v, (date, time, datetime)) else v for k, v in dict(p).items()} for p in prescriptions],
+        "conditions": [{k: str(v) if isinstance(v, (date, time, datetime)) else v for k, v in dict(c).items()} for c in conditions],
+        "allergies": [{k: str(v) if isinstance(v, (date, time, datetime)) else v for k, v in dict(a).items()} for a in allergies],
         "notice": "This export contains your personal health data. Keep it secure."
     }
     return jsonify(export), 200
@@ -389,6 +401,18 @@ def download_report():
         {"uid": uid}
     ).mappings().fetchall()
 
+    # Conditions
+    conditions = db.session.execute(
+        text("SELECT * FROM patient_conditions WHERE patient_id = :uid ORDER BY diagnosed_date DESC"),
+        {"uid": uid}
+    ).mappings().fetchall()
+
+    # Allergies
+    allergies = db.session.execute(
+        text("SELECT * FROM patient_allergies WHERE patient_id = :uid ORDER BY diagnosed_date DESC"),
+        {"uid": uid}
+    ).mappings().fetchall()
+
     vitals = get_vitals_for_report(uid)
 
     data = {
@@ -397,6 +421,8 @@ def download_report():
         "emergency_contact": dict(ec_row) if ec_row else {},
         "appointments": [dict(a) for a in appointments],
         "prescriptions": [dict(p) for p in prescriptions],
+        "conditions": [dict(c) for c in conditions],
+        "allergies": [dict(a) for a in allergies],
         "vitals": vitals
     }
 
