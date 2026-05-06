@@ -14,7 +14,7 @@ export const patientFeedbackService = {
   },
 
   getEligibleAppointments: async () => {
-    const res = await api.get('/appointments/');
+    const res = await api.get('/api/appointments/');
     const all = Array.isArray(res.data) ? res.data : (res.data?.appointments || []);
     return all.filter(a => String(a.status).toLowerCase() === 'completed' && !a.feedback_given);
   },
