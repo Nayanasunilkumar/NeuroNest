@@ -319,7 +319,25 @@ def db_repair():
         if user and claim_all:
             all_slots = AppointmentSlot.query.all()
             for slot in all_slots:
-                slot.doctor_user_id = user.id
+                if slot.doctor_user_id == user.id:
+                    continue
+                    
+                # Check for conflict before reassigning
+                conflict = AppointmentSlot.query.filter_by(
+                    doctor_user_id=user.id,
+                    slot_start_utc=slot.slot_start_utc
+                ).first()
+                
+                if conflict:
+                    # If the orphaned slot has an appointment, we must merge it or delete the empty conflict
+                    if slot.appointment_id and not conflict.appointment_id:
+                        db.session.delete(conflict)
+                        slot.doctor_user_id = user.id
+                    elif not slot.appointment_id:
+                        # Just an empty slot, safe to ignore/delete since we have a conflict
+                        db.session.delete(slot)
+                else:
+                    slot.doctor_user_id = user.id
             
             # Ensure DoctorProfile exists for this user
             from database.models import DoctorProfile
