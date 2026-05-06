@@ -1,17 +1,19 @@
 import axios from "./axios";
 
+const DOCTOR_API = "/api/doctor";
+
 export const getAppointmentRequests = async () => {
-  const response = await axios.get("/doctor/appointment-requests");
+  const response = await axios.get(`${DOCTOR_API}/appointment-requests`);
   return response.data;
 };
 
 export const approveAppointment = async (id) => {
-  const response = await axios.patch(`/doctor/appointments/${id}/approve`);
+  const response = await axios.patch(`${DOCTOR_API}/appointments/${id}/approve`);
   return response.data;
 };
 
 export const rejectAppointment = async (id) => {
-  const response = await axios.patch(`/doctor/appointments/${id}/reject`);
+  const response = await axios.patch(`${DOCTOR_API}/appointments/${id}/reject`);
   return response.data;
 };
 
@@ -23,12 +25,12 @@ export const rescheduleAppointment = async (id, date, time, consultationType = n
   if (consultationType) {
     payload.consultation_type = consultationType;
   }
-  const response = await axios.patch(`/doctor/appointments/${id}/reschedule`, payload);
+  const response = await axios.patch(`${DOCTOR_API}/appointments/${id}/reschedule`, payload);
   return response.data;
 };
 
 export const getSchedule = async (date = null, status = 'all', fallback = null) => {
-  let url = "/doctor/schedule";
+  let url = `${DOCTOR_API}/schedule`;
   const params = new URLSearchParams();
   if (date) params.append("date", date);
   if (status) params.append("status", status);
@@ -40,118 +42,118 @@ export const getSchedule = async (date = null, status = 'all', fallback = null) 
 };
 
 export const getScheduleSlots = async (date) => {
-  const response = await axios.get(`/doctor/schedule/slots?date=${date}`);
+  const response = await axios.get(`${DOCTOR_API}/schedule/slots?date=${date}`);
   return response.data;
 };
 
 export const generateScheduleSlots = async (horizonDays = 60) => {
-  const response = await axios.post("/doctor/schedule/generate", { horizon_days: horizonDays });
+  const response = await axios.post(`${DOCTOR_API}/schedule/generate`, { horizon_days: horizonDays });
   return response.data;
 };
 
 export const getScheduleSettings = async () => {
-  const response = await axios.get("/doctor/schedule/settings");
+  const response = await axios.get(`${DOCTOR_API}/schedule/settings`);
   return response.data;
 };
 
 export const updateScheduleSettings = async (payload) => {
-  const response = await axios.put("/doctor/schedule/settings", payload);
+  const response = await axios.put(`${DOCTOR_API}/schedule/settings`, payload);
   return response.data;
 };
 
 export const blockSlot = async (slotId) => {
-  const response = await axios.patch(`/doctor/slots/${slotId}/block`);
+  const response = await axios.patch(`${DOCTOR_API}/slots/${slotId}/block`);
   return response.data;
 };
 
 export const unblockSlot = async (slotId) => {
-  const response = await axios.patch(`/doctor/slots/${slotId}/unblock`);
+  const response = await axios.patch(`${DOCTOR_API}/slots/${slotId}/unblock`);
   return response.data;
 };
 
 export const getScheduleOverrides = async (date = null) => {
   const suffix = date ? `?date=${encodeURIComponent(date)}` : "";
-  const response = await axios.get(`/doctor/schedule/overrides${suffix}`);
+  const response = await axios.get(`${DOCTOR_API}/schedule/overrides${suffix}`);
   return response.data;
 };
 
 export const createScheduleOverride = async (payload) => {
-  const response = await axios.post("/doctor/schedule/overrides", payload);
+  const response = await axios.post(`${DOCTOR_API}/schedule/overrides`, payload);
   return response.data;
 };
 
 export const deleteScheduleOverride = async (overrideId) => {
-  const response = await axios.delete(`/doctor/schedule/overrides/${overrideId}`);
+  const response = await axios.delete(`${DOCTOR_API}/schedule/overrides/${overrideId}`);
   return response.data;
 };
 
 export const extendAppointment = async (appointmentId, minutes) => {
-  const response = await axios.post(`/doctor/appointments/${appointmentId}/extend`, { minutes });
+  const response = await axios.post(`${DOCTOR_API}/appointments/${appointmentId}/extend`, { minutes });
   return response.data;
 };
 
 export const completeAppointment = async (id) => {
-  const response = await axios.patch(`/doctor/appointments/${id}/complete`);
+  const response = await axios.patch(`${DOCTOR_API}/appointments/${id}/complete`);
   return response.data;
 };
 
 export const cancelAppointment = async (id) => {
-  const response = await axios.patch(`/doctor/appointments/${id}/cancel`);
+  const response = await axios.patch(`${DOCTOR_API}/appointments/${id}/cancel`);
   return response.data;
 };
 
 export const markNoShow = async (id) => {
-  const response = await axios.patch(`/doctor/appointments/${id}/no-show`);
+  const response = await axios.patch(`${DOCTOR_API}/appointments/${id}/no-show`);
   return response.data;
 };
 
 export const getDoctorAppointmentCallState = async (id) => {
-  const response = await axios.get(`/doctor/appointments/${id}/call-state`);
+  const response = await axios.get(`${DOCTOR_API}/appointments/${id}/call-state`);
   return response.data;
 };
 
 export const joinDoctorAppointmentCall = async (id) => {
-  const response = await axios.post(`/doctor/appointments/${id}/join-call`);
+  const response = await axios.post(`${DOCTOR_API}/appointments/${id}/join-call`);
   return response.data;
 };
 
 export const leaveDoctorAppointmentCall = async (id) => {
-  const response = await axios.post(`/doctor/appointments/${id}/leave-call`);
+  const response = await axios.post(`${DOCTOR_API}/appointments/${id}/leave-call`);
   return response.data;
 };
 
 export const getAppointmentHistory = async () => {
-  const response = await axios.get("/doctor/appointments/history");
+  const response = await axios.get(`${DOCTOR_API}/appointments/history`);
   return response.data;
 };
 
 export const getDoctorStats = async () => {
-  const response = await axios.get("/doctor/stats");
+  const response = await axios.get(`${DOCTOR_API}/stats`);
   return response.data;
 };
 
 export const getPatients = async () => {
-  const response = await axios.get("/doctor/patients");
+  const response = await axios.get(`${DOCTOR_API}/patients`);
   return response.data;
 };
 
 export const getPatientRecords = async (patientId) => {
-  const response = await axios.get(`/doctor/patients/${patientId}/records`);
+  const response = await axios.get(`${DOCTOR_API}/patients/${patientId}/records`);
   return response.data;
 };
 
 export const getPatientDossier = async (patientId) => {
-  const response = await axios.get(`/doctor/patients/${patientId}/dossier`);
+  const response = await axios.get(`${DOCTOR_API}/patients/${patientId}/dossier`);
   return response.data;
 };
 
 export const saveClinicalRemark = async (patientId, content) => {
-  const response = await axios.post(`/doctor/patients/${patientId}/remarks`, { content });
+  const response = await axios.post(`${DOCTOR_API}/patients/${patientId}/remarks`, { content });
   return response.data;
 };
 
 export const getClinicalRemarks = async (patientId) => {
-  const response = await axios.get(`/doctor/patients/${patientId}/remarks`);
+  const response = await axios.get(`${DOCTOR_API}/patients/${patientId}/remarks`);
   return response.data;
 };
 
@@ -199,21 +201,21 @@ export const changeDoctorPassword = async (payload) => {
 // ============================================
 
 export const getClinicalPins = async () => {
-  const response = await axios.get("/doctor/pins");
+  const response = await axios.get(`${DOCTOR_API}/pins`);
   return response.data;
 };
 
 export const createClinicalPin = async (payload) => {
-  const response = await axios.post("/doctor/pins", payload);
+  const response = await axios.post(`${DOCTOR_API}/pins`, payload);
   return response.data;
 };
 
 export const updateClinicalPin = async (id, payload) => {
-  const response = await axios.patch(`/doctor/pins/${id}`, payload);
+  const response = await axios.patch(`${DOCTOR_API}/pins/${id}`, payload);
   return response.data;
 };
 
 export const deleteClinicalPin = async (id) => {
-  const response = await axios.delete(`/doctor/pins/${id}`);
+  const response = await axios.delete(`${DOCTOR_API}/pins/${id}`);
   return response.data;
 };
