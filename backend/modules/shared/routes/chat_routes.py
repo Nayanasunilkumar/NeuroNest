@@ -9,6 +9,7 @@ from flask_jwt_extended import get_jwt
 from modules.shared.services.notification_service import NotificationService
 from modules.shared.services.appointment_call_service import get_or_create_direct_conversation
 from modules.doctor.services.doctor_patient_service import (
+    get_doctor_scope_ids,
     get_related_doctor_ids_for_patient,
     get_related_patient_ids_for_doctor,
 )
@@ -315,6 +316,7 @@ def mark_as_read(conversation_id):
 @jwt_required()
 def get_chat_context(other_user_id):
     current_user_id = int(get_jwt_identity())
+    current_user = User.query.get(current_user_id)
     
     # Get other user identity
     other_user = User.query.get(other_user_id)
@@ -328,10 +330,12 @@ def get_chat_context(other_user_id):
     now = datetime.now()
     
     # Query logic: either current is doctor & other is patient, or vice versa
+    current_doctor_ids = get_doctor_scope_ids(current_user_id) if current_user and current_user.role == "doctor" else [current_user_id]
+    other_doctor_ids = get_doctor_scope_ids(other_user_id) if other_user.role == "doctor" else [other_user_id]
     next_apt = Appointment.query.filter(
         or_(
-            and_(Appointment.doctor_id == current_user_id, Appointment.patient_id == other_user_id),
-            and_(Appointment.doctor_id == other_user_id, Appointment.patient_id == current_user_id)
+            and_(Appointment.doctor_id.in_(current_doctor_ids), Appointment.patient_id == other_user_id),
+            and_(Appointment.doctor_id.in_(other_doctor_ids), Appointment.patient_id == current_user_id)
         ),
         Appointment.appointment_date >= now.date(),
         Appointment.status.in_(["approved", "rescheduled"])
@@ -339,8 +343,8 @@ def get_chat_context(other_user_id):
     
     last_apt = Appointment.query.filter(
         or_(
-            and_(Appointment.doctor_id == current_user_id, Appointment.patient_id == other_user_id),
-            and_(Appointment.doctor_id == other_user_id, Appointment.patient_id == current_user_id)
+            and_(Appointment.doctor_id.in_(current_doctor_ids), Appointment.patient_id == other_user_id),
+            and_(Appointment.doctor_id.in_(other_doctor_ids), Appointment.patient_id == current_user_id)
         ),
         Appointment.appointment_date <= now.date(),
         Appointment.status == "completed"

@@ -14,7 +14,7 @@ def seed_data():
         print("--- SEEDING CLINICAL DATA ---")
         
         # 1. Identify the Doctor
-        doctor_email = "nayanasunukumar8@gmail.com"
+        doctor_email = "nayanasunilkumar8@gmail.com"
         doctor = User.query.filter_by(email=doctor_email).first()
         if not doctor:
             print(f"Doctor {doctor_email} not found. Please register first.")

@@ -2,6 +2,7 @@ from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
 from database.models import db, User, Appointment
 from models.prescription_models import Prescription, PrescriptionItem
+from modules.doctor.services.doctor_patient_service import get_doctor_scope_ids
 from datetime import datetime, timedelta, date
 import re
 from typing import Optional
@@ -145,14 +146,15 @@ def create_prescription():
 @prescriptions_bp.route("/doctor", methods=["GET"])
 @jwt_required()
 def get_doctor_prescriptions():
-    current_user_id = get_jwt_identity()
+    current_user_id = int(get_jwt_identity())
     claims = get_jwt()
     
     if claims.get("role") != "doctor":
         return jsonify({"message": "Access denied"}), 403
 
+    doctor_scope_ids = get_doctor_scope_ids(current_user_id)
     prescriptions = Prescription.query.filter(
-        Prescription.doctor_id == current_user_id,
+        Prescription.doctor_id.in_(doctor_scope_ids),
         Prescription.is_deleted.is_(False)
     ).order_by(Prescription.created_at.desc()).all()
     
@@ -173,7 +175,7 @@ def get_doctor_prescriptions():
 @prescriptions_bp.route("/doctor/patient/<int:patient_id>", methods=["GET"])
 @jwt_required()
 def get_patient_prescriptions_doctor_view(patient_id):
-    current_user_id = get_jwt_identity()
+    current_user_id = int(get_jwt_identity())
     claims = get_jwt()
     
     if claims.get("role") != "doctor":
@@ -234,14 +236,18 @@ def get_patient_prescriptions():
 @prescriptions_bp.route("/<int:id>", methods=["GET"])
 @jwt_required()
 def get_prescription_details(id):
-    current_user_id = get_jwt_identity()
+    current_user_id = int(get_jwt_identity())
+    claims = get_jwt()
     prescription = Prescription.query.get_or_404(id)
 
     if prescription.is_deleted:
         return jsonify({"message": "Prescription not found"}), 404
 
     # Access Check: Must be Doctor (owner) or Patient (recipient)
-    if str(prescription.doctor_id) != str(current_user_id) and str(prescription.patient_id) != str(current_user_id):
+    doctor_scope_ids = get_doctor_scope_ids(current_user_id) if claims.get("role") == "doctor" else []
+    has_doctor_access = prescription.doctor_id in doctor_scope_ids
+    has_patient_access = str(prescription.patient_id) == str(current_user_id)
+    if not has_doctor_access and not has_patient_access:
         return jsonify({"message": "Access denied"}), 403
 
     data = _serialize_prescription_with_effective_status(prescription)
@@ -262,7 +268,7 @@ def get_prescription_details(id):
 @prescriptions_bp.route("/<int:id>/status", methods=["PUT"])
 @jwt_required()
 def update_status(id):
-    current_user_id = get_jwt_identity()
+    current_user_id = int(get_jwt_identity())
     claims = get_jwt()
 
     if claims.get("role") != "doctor":
@@ -273,7 +279,7 @@ def update_status(id):
     if prescription.is_deleted:
         return jsonify({"message": "Prescription not found"}), 404
 
-    if str(prescription.doctor_id) != str(current_user_id):
+    if prescription.doctor_id not in get_doctor_scope_ids(current_user_id):
         return jsonify({"message": "Access denied. Not your prescription."}), 403
 
     data = request.get_json()
@@ -294,7 +300,7 @@ def update_status(id):
 @prescriptions_bp.route("/<int:id>", methods=["PUT"])
 @jwt_required()
 def update_prescription(id):
-    current_user_id = get_jwt_identity()
+    current_user_id = int(get_jwt_identity())
     claims = get_jwt()
 
     if claims.get("role") != "doctor":
@@ -305,7 +311,7 @@ def update_prescription(id):
     if prescription.is_deleted:
         return jsonify({"message": "Prescription not found"}), 404
 
-    if str(prescription.doctor_id) != str(current_user_id):
+    if prescription.doctor_id not in get_doctor_scope_ids(current_user_id):
         return jsonify({"message": "Access denied. Not your prescription."}), 403
 
     data = request.get_json()
@@ -355,7 +361,7 @@ def update_prescription(id):
 @prescriptions_bp.route("/<int:id>", methods=["DELETE"])
 @jwt_required()
 def delete_prescription(id):
-    current_user_id = get_jwt_identity()
+    current_user_id = int(get_jwt_identity())
     claims = get_jwt()
 
     if claims.get("role") != "doctor":
@@ -366,7 +372,7 @@ def delete_prescription(id):
     if prescription.is_deleted:
         return jsonify({"message": "Prescription already deleted"}), 200
 
-    if str(prescription.doctor_id) != str(current_user_id):
+    if prescription.doctor_id not in get_doctor_scope_ids(current_user_id):
          return jsonify({"message": "Access denied. Not your prescription."}), 403
 
     prescription.is_deleted = True

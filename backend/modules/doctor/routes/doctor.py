@@ -42,6 +42,7 @@ from modules.shared.services.appointment_call_service import (
 from modules.doctor.services.doctor_patient_service import (
     DOCTOR_PATIENT_TERMINAL_STATUSES,
     doctor_has_patient_relationship,
+    get_doctor_scope_ids,
     get_related_patient_ids_for_doctor,
 )
 
@@ -81,10 +82,11 @@ def get_appointment_requests():
         return jsonify({"message": "Doctor access required"}), 403
     
     current_user_id = int(get_jwt_identity())
+    doctor_scope_ids = get_doctor_scope_ids(current_user_id)
     
     # Get pending appointments for this doctor, joining with patient profile for depth
     requests = Appointment.query.filter(
-        Appointment.doctor_id == current_user_id,
+        Appointment.doctor_id.in_(doctor_scope_ids),
         Appointment.status.in_(["pending"])
     ).order_by(Appointment.appointment_date.asc(), Appointment.appointment_time.asc()).all()
 
@@ -108,7 +110,11 @@ def approve_appointment(appointment_id):
         return jsonify({"message": "Doctor access required"}), 403
     
     current_user_id = int(get_jwt_identity())
-    appointment = Appointment.query.filter_by(id=appointment_id, doctor_id=current_user_id).first()
+    doctor_scope_ids = get_doctor_scope_ids(current_user_id)
+    appointment = Appointment.query.filter(
+        Appointment.id == appointment_id,
+        Appointment.doctor_id.in_(doctor_scope_ids),
+    ).first()
     
     if not appointment:
         return jsonify({"message": "Appointment not found"}), 404
@@ -143,7 +149,11 @@ def reject_appointment(appointment_id):
         return jsonify({"message": "Doctor access required"}), 403
     
     current_user_id = int(get_jwt_identity())
-    appointment = Appointment.query.filter_by(id=appointment_id, doctor_id=current_user_id).first()
+    doctor_scope_ids = get_doctor_scope_ids(current_user_id)
+    appointment = Appointment.query.filter(
+        Appointment.id == appointment_id,
+        Appointment.doctor_id.in_(doctor_scope_ids),
+    ).first()
     
     if not appointment:
         return jsonify({"message": "Appointment not found"}), 404
@@ -178,7 +188,11 @@ def reschedule_appointment(appointment_id):
     if not data or 'appointment_date' not in data or 'appointment_time' not in data:
         return jsonify({"message": "New date and time are required"}), 400
         
-    appointment = Appointment.query.filter_by(id=appointment_id, doctor_id=current_user_id).first()
+    doctor_scope_ids = get_doctor_scope_ids(current_user_id)
+    appointment = Appointment.query.filter(
+        Appointment.id == appointment_id,
+        Appointment.doctor_id.in_(doctor_scope_ids),
+    ).first()
     
     if not appointment:
         return jsonify({"message": "Appointment not found"}), 404
@@ -250,7 +264,11 @@ def get_doctor_call_state(appointment_id):
         return jsonify({"message": "Doctor access required"}), 403
 
     current_user_id = int(get_jwt_identity())
-    appointment = Appointment.query.filter_by(id=appointment_id, doctor_id=current_user_id).first()
+    doctor_scope_ids = get_doctor_scope_ids(current_user_id)
+    appointment = Appointment.query.filter(
+        Appointment.id == appointment_id,
+        Appointment.doctor_id.in_(doctor_scope_ids),
+    ).first()
     if not appointment:
         return jsonify({"message": "Appointment not found"}), 404
 
@@ -277,7 +295,11 @@ def doctor_join_call(appointment_id):
         return jsonify({"message": "Doctor access required"}), 403
 
     current_user_id = int(get_jwt_identity())
-    appointment = Appointment.query.filter_by(id=appointment_id, doctor_id=current_user_id).first()
+    doctor_scope_ids = get_doctor_scope_ids(current_user_id)
+    appointment = Appointment.query.filter(
+        Appointment.id == appointment_id,
+        Appointment.doctor_id.in_(doctor_scope_ids),
+    ).first()
     if not appointment:
         return jsonify({"message": "Appointment not found"}), 404
 
@@ -352,7 +374,11 @@ def doctor_leave_call(appointment_id):
         return jsonify({"message": "Doctor access required"}), 403
 
     current_user_id = int(get_jwt_identity())
-    appointment = Appointment.query.filter_by(id=appointment_id, doctor_id=current_user_id).first()
+    doctor_scope_ids = get_doctor_scope_ids(current_user_id)
+    appointment = Appointment.query.filter(
+        Appointment.id == appointment_id,
+        Appointment.doctor_id.in_(doctor_scope_ids),
+    ).first()
     if not appointment:
         return jsonify({"message": "Appointment not found"}), 404
 
@@ -388,6 +414,7 @@ def get_doctor_schedule():
         return jsonify({"message": "Doctor access required"}), 403
     
     current_user_id = int(get_jwt_identity())
+    doctor_scope_ids = get_doctor_scope_ids(current_user_id)
     date_str = request.args.get('date')
     status_filter = request.args.get('status')
     fallback_mode = (request.args.get('fallback') or '').strip().lower()
@@ -401,7 +428,7 @@ def get_doctor_schedule():
         target_date = date.today()
     
     query = Appointment.query.filter(
-        Appointment.doctor_id == current_user_id,
+        Appointment.doctor_id.in_(doctor_scope_ids),
         Appointment.appointment_date == target_date
     )
     
@@ -416,7 +443,7 @@ def get_doctor_schedule():
 
     if not schedule and fallback_mode == "nearest":
         nearest_date_query = Appointment.query.filter(
-            Appointment.doctor_id == current_user_id,
+            Appointment.doctor_id.in_(doctor_scope_ids),
             Appointment.appointment_date != target_date,
         )
 
@@ -444,7 +471,7 @@ def get_doctor_schedule():
             )
             schedule = (
                 Appointment.query.filter(
-                    Appointment.doctor_id == current_user_id,
+                    Appointment.doctor_id.in_(doctor_scope_ids),
                     Appointment.appointment_date == nearest_date,
                 )
                 .filter(
@@ -781,7 +808,11 @@ def complete_appointment(appointment_id):
         return jsonify({"message": "Doctor access required"}), 403
     
     current_user_id = int(get_jwt_identity())
-    appointment = Appointment.query.filter_by(id=appointment_id, doctor_id=current_user_id).first()
+    doctor_scope_ids = get_doctor_scope_ids(current_user_id)
+    appointment = Appointment.query.filter(
+        Appointment.id == appointment_id,
+        Appointment.doctor_id.in_(doctor_scope_ids),
+    ).first()
     
     if not appointment:
         return jsonify({"message": "Appointment not found"}), 404
@@ -800,7 +831,11 @@ def cancel_appointment(appointment_id):
         return jsonify({"message": "Doctor access required"}), 403
     
     current_user_id = int(get_jwt_identity())
-    appointment = Appointment.query.filter_by(id=appointment_id, doctor_id=current_user_id).first()
+    doctor_scope_ids = get_doctor_scope_ids(current_user_id)
+    appointment = Appointment.query.filter(
+        Appointment.id == appointment_id,
+        Appointment.doctor_id.in_(doctor_scope_ids),
+    ).first()
     
     if not appointment:
         return jsonify({"message": "Appointment not found"}), 404
@@ -853,9 +888,10 @@ def get_appointment_history():
         return jsonify({"message": "Doctor access required"}), 403
     
     current_user_id = int(get_jwt_identity())
+    doctor_scope_ids = get_doctor_scope_ids(current_user_id)
     
     appointments = Appointment.query.filter(
-        Appointment.doctor_id == current_user_id,
+        Appointment.doctor_id.in_(doctor_scope_ids),
         Appointment.status.notin_(["pending"])
     ).order_by(Appointment.appointment_date.desc(), Appointment.appointment_time.desc()).all()
     
@@ -868,6 +904,7 @@ def get_doctor_stats():
         return jsonify({"message": "Doctor access required"}), 403
     
     current_user_id = int(get_jwt_identity())
+    doctor_scope_ids = get_doctor_scope_ids(current_user_id)
     today = date.today()
     
     # 1. Total Patients (Unique)
@@ -875,14 +912,14 @@ def get_doctor_stats():
         
     # 2. Today's Appointments
     today_count = Appointment.query.filter(
-        Appointment.doctor_id == current_user_id,
+        Appointment.doctor_id.in_(doctor_scope_ids),
         Appointment.status.in_(["approved"]),
         Appointment.appointment_date == today
     ).count()
     
     # 3. Pending Requests
     pending_requests = Appointment.query.filter(
-        Appointment.doctor_id == current_user_id,
+        Appointment.doctor_id.in_(doctor_scope_ids),
         Appointment.status.in_(["pending"])
     ).count()
     
@@ -900,6 +937,7 @@ def get_doctor_patients():
         return jsonify({"message": "Doctor access required"}), 403
     
     current_user_id = int(get_jwt_identity())
+    doctor_scope_ids = get_doctor_scope_ids(current_user_id)
     
     # A patient belongs to a doctor if they have a real clinical booking history.
     patient_ids = get_related_patient_ids_for_doctor(current_user_id)
@@ -918,7 +956,7 @@ def get_doctor_patients():
         # Fetch the latest historical interaction from a real appointment record.
         last_visit = Appointment.query.filter(
             Appointment.patient_id == pid,
-            Appointment.doctor_id == current_user_id,
+            Appointment.doctor_id.in_(doctor_scope_ids),
             Appointment.status.notin_(DOCTOR_PATIENT_TERMINAL_STATUSES),
             or_(
                 Appointment.appointment_date < now.date(),
@@ -929,7 +967,7 @@ def get_doctor_patients():
         # Fetch the next real upcoming appointment the doctor still needs to service.
         next_visit = Appointment.query.filter(
             Appointment.patient_id == pid,
-            Appointment.doctor_id == current_user_id,
+            Appointment.doctor_id.in_(doctor_scope_ids),
             Appointment.status.notin_(DOCTOR_PATIENT_TERMINAL_STATUSES),
             or_(
                 Appointment.appointment_date > now.date(),
@@ -977,7 +1015,11 @@ def mark_no_show(appointment_id):
         return jsonify({"message": "Doctor access required"}), 403
     
     current_user_id = int(get_jwt_identity())
-    appointment = Appointment.query.filter_by(id=appointment_id, doctor_id=current_user_id).first()
+    doctor_scope_ids = get_doctor_scope_ids(current_user_id)
+    appointment = Appointment.query.filter(
+        Appointment.id == appointment_id,
+        Appointment.doctor_id.in_(doctor_scope_ids),
+    ).first()
     
     if not appointment:
         return jsonify({"message": "Appointment not found"}), 404
@@ -1004,12 +1046,16 @@ def extend_appointment(appointment_id):
         return jsonify({"message": "Doctor access required"}), 403
 
     current_user_id = int(get_jwt_identity())
+    doctor_scope_ids = get_doctor_scope_ids(current_user_id)
     data = request.get_json() or {}
     minutes = int(data.get("minutes", 15))
     if minutes not in (15, 30):
         return jsonify({"message": "minutes must be 15 or 30"}), 400
 
-    appointment = Appointment.query.filter_by(id=appointment_id, doctor_id=current_user_id).first()
+    appointment = Appointment.query.filter(
+        Appointment.id == appointment_id,
+        Appointment.doctor_id.in_(doctor_scope_ids),
+    ).first()
     if not appointment:
         return jsonify({"message": "Appointment not found"}), 404
     if not appointment.slot_id:
@@ -1023,7 +1069,7 @@ def extend_appointment(appointment_id):
 
     conflicting = (
         AppointmentSlot.query.filter(
-            AppointmentSlot.doctor_user_id == current_user_id,
+            AppointmentSlot.doctor_user_id.in_(doctor_scope_ids),
             AppointmentSlot.id != slot.id,
             AppointmentSlot.slot_start_utc < extension_end,
             AppointmentSlot.slot_end_utc > slot.slot_end_utc,
@@ -1065,7 +1111,7 @@ def get_patient_clinical_dossier(patient_id):
 
     # 2. Fetch Clinical Timeline (All except Pending)
     history = Appointment.query.filter(
-        Appointment.doctor_id == current_user_id,
+        Appointment.doctor_id.in_(doctor_scope_ids),
         Appointment.patient_id == patient_id,
         Appointment.status.notin_(["pending"])
     ).order_by(Appointment.appointment_date.desc(), Appointment.appointment_time.desc()).all()
@@ -1171,11 +1217,12 @@ def get_clinical_remarks(patient_id):
         return jsonify({"message": "Doctor access required"}), 403
     
     current_user_id = int(get_jwt_identity())
+    doctor_scope_ids = get_doctor_scope_ids(current_user_id)
     
     # Verify clinical relationship (or just fetch remarks specifically from this doctor for this patient)
-    remarks = ClinicalRemark.query.filter_by(
-        patient_id=patient_id, 
-        doctor_id=current_user_id
+    remarks = ClinicalRemark.query.filter(
+        ClinicalRemark.patient_id == patient_id,
+        ClinicalRemark.doctor_id.in_(doctor_scope_ids),
     ).order_by(ClinicalRemark.created_at.desc()).all()
     
     return jsonify([r.to_dict() for r in remarks]), 200
@@ -1192,10 +1239,11 @@ def get_clinical_pins():
         return jsonify({"message": "Doctor access required"}), 403
     
     current_user_id = int(get_jwt_identity())
+    doctor_scope_ids = get_doctor_scope_ids(current_user_id)
     
     # Sort completed pins to the bottom, then by created_at desc
-    pins = ClinicalPin.query.filter_by(
-        doctor_id=current_user_id
+    pins = ClinicalPin.query.filter(
+        ClinicalPin.doctor_id.in_(doctor_scope_ids)
     ).order_by(ClinicalPin.completed.asc(), ClinicalPin.created_at.desc()).all()
     
     return jsonify([p.to_dict() for p in pins]), 200
@@ -1236,7 +1284,11 @@ def update_clinical_pin(pin_id):
     current_user_id = int(get_jwt_identity())
     data = request.get_json()
     
-    pin = ClinicalPin.query.filter_by(id=pin_id, doctor_id=current_user_id).first_or_404()
+    doctor_scope_ids = get_doctor_scope_ids(current_user_id)
+    pin = ClinicalPin.query.filter(
+        ClinicalPin.id == pin_id,
+        ClinicalPin.doctor_id.in_(doctor_scope_ids),
+    ).first_or_404()
     
     if "completed" in data:
         pin.completed = data["completed"]
@@ -1256,7 +1308,11 @@ def delete_clinical_pin(pin_id):
     
     current_user_id = int(get_jwt_identity())
     
-    pin = ClinicalPin.query.filter_by(id=pin_id, doctor_id=current_user_id).first_or_404()
+    doctor_scope_ids = get_doctor_scope_ids(current_user_id)
+    pin = ClinicalPin.query.filter(
+        ClinicalPin.id == pin_id,
+        ClinicalPin.doctor_id.in_(doctor_scope_ids),
+    ).first_or_404()
     
     db.session.delete(pin)
     db.session.commit()

@@ -13,7 +13,6 @@ def ensure_default_admin():
     # This prevents accidents if DEFAULT_ADMIN_EMAIL is misconfigured.
     protected_doctor_emails = [
         "nayanasunilkumar8@gmail.com", 
-        "nayanasunukumar8@gmail.com", 
         "nayanasurukumar8@gmail.com"
     ]
     
@@ -54,6 +53,73 @@ def ensure_default_admin():
         print(f"[BOOTSTRAP] ❌ Error in ensure_default_admin: {e}")
 
 
+def ensure_dr_naina_data_alignment():
+    from database.models import (
+        Appointment,
+        ClinicalPin,
+        ClinicalRemark,
+        DoctorAuditLog,
+        DoctorEscalation,
+        DoctorStatusLog,
+        Review,
+        ReviewModerationLog,
+        SlotEventLog,
+        User,
+        db,
+    )
+    from models.prescription_models import Prescription
+    from modules.doctor.services.doctor_patient_service import (
+        get_canonical_dr_naina_user,
+        get_dr_naina_scope_ids,
+    )
+
+    canonical = get_canonical_dr_naina_user()
+    if not canonical:
+        return
+
+    scoped_ids = set(get_dr_naina_scope_ids())
+    scoped_ids.add(canonical.id)
+    legacy_ids = sorted(scoped_ids - {canonical.id})
+    if not legacy_ids:
+        return
+
+    try:
+        reassigned = 0
+        reassignments = (
+            (Appointment, Appointment.doctor_id),
+            (Prescription, Prescription.doctor_id),
+            (ClinicalRemark, ClinicalRemark.doctor_id),
+            (ClinicalPin, ClinicalPin.doctor_id),
+            (Review, Review.doctor_id),
+            (ReviewModerationLog, ReviewModerationLog.doctor_id),
+            (DoctorEscalation, DoctorEscalation.doctor_id),
+            (DoctorStatusLog, DoctorStatusLog.doctor_id),
+            (DoctorAuditLog, DoctorAuditLog.doctor_id),
+            (SlotEventLog, SlotEventLog.doctor_user_id),
+        )
+
+        for model, column in reassignments:
+            reassigned += (
+                db.session.query(model)
+                .filter(column.in_(legacy_ids))
+                .update({column.key: canonical.id}, synchronize_session=False)
+            )
+
+        for user in User.query.filter(User.id.in_(legacy_ids)).all():
+            if not getattr(user, "is_deleted", False):
+                user.account_status = "deactivated"
+                user.is_deleted = True
+
+        db.session.commit()
+        print(
+            f"[MIGRATION] ✓ Reassigned {reassigned} Dr. Naina clinical rows "
+            f"from legacy ids {legacy_ids} to user {canonical.id}"
+        )
+    except Exception as e:
+        db.session.rollback()
+        print(f"[MIGRATION] Error aligning Dr. Naina data: {e}")
+
+
 def run_startup_migrations():
     from database.models import db, User
 
@@ -62,9 +128,14 @@ def run_startup_migrations():
     except Exception as e:
         print(f"[MIGRATION] Error in ensure_default_admin: {e}")
 
+    try:
+        ensure_dr_naina_data_alignment()
+    except Exception as e:
+        print(f"[MIGRATION] Error in ensure_dr_naina_data_alignment: {e}")
+
     # One-time fix: Restore doctor roles if they were accidentally promoted to admin
-    # We handle all common spellings (nil, sunu, suru)
-    doctor_emails = ["nayanasunilkumar8@gmail.com", "nayanasunukumar8@gmail.com", "nayanasurukumar8@gmail.com"]
+    # We handle known protected doctor account spellings.
+    doctor_emails = ["nayanasunilkumar8@gmail.com", "nayanasurukumar8@gmail.com"]
     for email in doctor_emails:
         try:
             d_user = User.query.filter_by(email=email).first()

@@ -12,7 +12,7 @@ def reassign_data():
         print("--- CLINICAL DATA RE-ALIGNMENT ---")
         
         # 1. Target User
-        target_email = "nayanasunukumar8@gmail.com"
+        target_email = "nayanasunilkumar8@gmail.com"
         current_user = User.query.filter_by(email=target_email).first()
         
         if not current_user:

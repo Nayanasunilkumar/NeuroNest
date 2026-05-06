@@ -15,7 +15,7 @@ def emergency_fix():
         print("--- EMERGENCY AUTH FIX ---")
         
         # 1. Fix Doctor Accounts
-        doctor_emails = ["nayanasunukumar8@gmail.com", "nayanasunilkumar8@gmail.com"]
+        doctor_emails = ["nayanasunilkumar8@gmail.com"]
         for email in doctor_emails:
             u = User.query.filter_by(email=email).first()
             if u:

@@ -9,6 +9,7 @@ from flask_jwt_extended import get_jwt, get_jwt_identity, jwt_required
 
 from database.models import Alert, Appointment, User, db
 from extensions.socket import socketio
+from modules.doctor.services.doctor_patient_service import get_doctor_scope_ids
 from modules.shared.services.notification_service import NotificationService
 from utils.pdf_generator import generate_assessment_report
 
@@ -351,9 +352,10 @@ def get_monitored_patients():
         return jsonify({"message": "Access denied"}), 403
 
     if role == "doctor":
+        doctor_scope_ids = get_doctor_scope_ids(current_user_id)
         patients = (
             User.query.join(Appointment, Appointment.patient_id == User.id)
-            .filter(Appointment.doctor_id == current_user_id, User.role == "patient")
+            .filter(Appointment.doctor_id.in_(doctor_scope_ids), User.role == "patient")
             .distinct()
             .all()
         )
