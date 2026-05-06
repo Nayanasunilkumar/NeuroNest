@@ -284,6 +284,7 @@ def db_repair():
         claim_all = request.args.get("claim_all") == "true"
         force = request.args.get("force") == "true"
         
+        # ── DOCTOR RESTORATION ──
         for appt in all_appts:
             should_move = False
             if claim_all and user:
@@ -300,30 +301,38 @@ def db_repair():
                 
                 # Handling the Slot Conflict (Precision Fix)
                 if appt.slot:
-                    # Check if Dr. Naina already has a slot at this time
                     existing_slot = AppointmentSlot.query.filter_by(
                         doctor_user_id=user.id,
                         slot_start_utc=appt.slot.slot_start_utc
                     ).first()
                     
                     if existing_slot and existing_slot.id != appt.slot_id:
-                        # Re-link the appointment to the existing slot and delete the orphan
                         old_slot = appt.slot
                         appt.slot_id = existing_slot.id
                         existing_slot.booked_appointment_id = appt.id
                         existing_slot.status = "booked"
                         db.session.delete(old_slot)
                     else:
-                        # No conflict, just move the slot
                         appt.slot.doctor_user_id = user.id
+
+        # ── PATIENT & PROFILE RESTORATION ──
+        # Ensure all patients have profiles and appointments are linked to existing users
+        from database.models import PatientProfile
+        all_users = User.query.all()
+        for u in all_users:
+            if u.role == "patient":
+                prof = PatientProfile.query.filter_by(user_id=u.id).first()
+                if not prof:
+                    db.session.add(PatientProfile(user_id=u.id, full_name=u.full_name or "Patient"))
+            elif u.role == "doctor":
+                from database.models import DoctorProfile
+                prof = DoctorProfile.query.filter_by(user_id=u.id).first()
+                if not prof:
+                    db.session.add(DoctorProfile(user_id=u.id, full_name=u.full_name or "Doctor"))
 
         # 2. Re-sync all slots using BULK UPDATE (Fast)
         if user and claim_all:
             # Reassign all slots that don't conflict
-            from database.models import AppointmentSlot
-            
-            # Step A: Delete slots that would cause a conflict (same time for target doctor)
-            # We use a subquery to find conflicting times
             subquery = db.session.query(AppointmentSlot.slot_start_utc).filter(
                 AppointmentSlot.doctor_user_id == user.id
             ).subquery()
@@ -333,17 +342,9 @@ def db_repair():
                 AppointmentSlot.slot_start_utc.in_(subquery)
             ).delete(synchronize_session=False)
             
-            # Step B: Bulk update all remaining orphaned slots to the target doctor
             AppointmentSlot.query.filter(
                 AppointmentSlot.doctor_user_id != user.id
             ).update({"doctor_user_id": user.id}, synchronize_session=False)
-
-            # Ensure DoctorProfile exists
-            from database.models import DoctorProfile
-            prof = DoctorProfile.query.filter_by(user_id=user.id).first()
-            if not prof:
-                prof = DoctorProfile(user_id=user.id, full_name=user.full_name or "Dr. Naina")
-                db.session.add(prof)
 
         db.session.commit()
         return jsonify({
