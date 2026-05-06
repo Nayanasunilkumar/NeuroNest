@@ -32,8 +32,15 @@ def create_app():
     socketio.init_app(app)
 
     with app.app_context():
-        db.create_all()
-        run_startup_migrations()
+        try:
+            db.create_all()
+        except Exception as e:
+            print(f"[DB] ❌ Initial create_all failed: {e}")
+        
+        try:
+            run_startup_migrations()
+        except Exception as e:
+            print(f"[MIGRATION] ❌ Startup migrations failed: {e}")
 
     register_feature_modules(app)
     register_socket_handlers()
