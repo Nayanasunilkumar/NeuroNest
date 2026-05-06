@@ -315,7 +315,6 @@ def delete_notification(id):
 @profile_bp.route("/clinical-summary", methods=["GET"])
 @jwt_required()
 def get_my_clinical_summary():
-    # Allow any role to view their own summary (useful for doctors navigating to their profile)
     user_id = int(get_jwt_identity())
     user = User.query.get(user_id)
     if not user:
@@ -323,41 +322,62 @@ def get_my_clinical_summary():
         
     profile = PatientProfile.query.filter_by(user_id=user_id).first()
     
-    # Construct basic identity even if profile is missing
+    # Construct robust identity following PROFILE_KEYS
     identity = {
         "id": user.id,
-        "full_name": user.full_name,
-        "role": user.role,
+        "full_name": user.full_name or "Patient",
         "email": user.email,
-        "profile_image": None,
-        "city": None,
-        "gender": None,
-        "occupation": None,
-        "dob": None,
-        "weight_kg": None,
-        "height_cm": None
+        "role": user.role,
+        "phone": "",
+        "date_of_birth": "",
+        "gender": "",
+        "blood_group": "",
+        "height_cm": "",
+        "weight_kg": "",
+        "address": "",
+        "city": "",
+        "state": "",
+        "country": "",
+        "pincode": "",
+        "allergies": "",
+        "chronic_conditions": "",
+        "profile_image": ""
     }
     
     if profile:
-        identity.update(profile.to_dict())
-    
-    # Use user_id as fallback for patient_id if profile is missing
-    target_id = profile.id if profile else user_id
+        p_dict = profile.to_dict()
+        # Map date_of_birth specifically for frontend compatibility
+        if p_dict.get("date_of_birth"):
+            identity["date_of_birth"] = p_dict["date_of_birth"]
+        
+        # Merge other fields
+        for k in identity.keys():
+            if k in p_dict and p_dict[k] is not None:
+                identity[k] = p_dict[k]
 
-    # Fetch Clinical History
-    medications = PatientMedication.query.filter_by(patient_id=user_id, status='active').all()
-    conditions = PatientCondition.query.filter_by(patient_id=user_id, status='active').all()
-    allergies = PatientAllergy.query.filter_by(patient_id=user_id, status='active').all()
+    # Fetch Clinical History (Defensive Queries)
+    try:
+        medications = PatientMedication.query.filter_by(patient_id=user_id, status='active').all()
+    except Exception: medications = []
     
-    # Fetch Recent appointments
-    appointments = Appointment.query.filter_by(patient_id=user_id).order_by(Appointment.appointment_date.desc()).limit(10).all()
+    try:
+        conditions = PatientCondition.query.filter_by(patient_id=user_id, status='active').all()
+    except Exception: conditions = []
+    
+    try:
+        allergies = PatientAllergy.query.filter_by(patient_id=user_id, status='active').all()
+    except Exception: allergies = []
+    
+    try:
+        appointments = Appointment.query.filter_by(patient_id=user_id).order_by(Appointment.appointment_date.desc()).limit(10).all()
+    except Exception: appointments = []
 
     summary = {
         "identity": identity,
-        "medications": [m.to_dict() for m in medications],
-        "conditions": [c.to_dict() for c in conditions],
-        "allergies": [a.to_dict() for a in allergies],
-        "timeline": [appt.to_dict() for appt in appointments]
+        "medications": [m.to_dict() for m in medications] if medications else [],
+        "conditions": [c.to_dict() for c in conditions] if conditions else [],
+        "allergies": [a.to_dict() for a in allergies] if allergies else [],
+        "timeline": [appt.to_dict() for appt in appointments] if appointments else []
     }
 
     return jsonify(summary), 200
