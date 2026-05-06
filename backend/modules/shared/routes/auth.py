@@ -330,10 +330,10 @@ def db_repair():
                 
                 if conflict:
                     # If the orphaned slot has an appointment, we must merge it or delete the empty conflict
-                    if slot.appointment_id and not conflict.appointment_id:
+                    if slot.booked_appointment_id and not conflict.booked_appointment_id:
                         db.session.delete(conflict)
                         slot.doctor_user_id = user.id
-                    elif not slot.appointment_id:
+                    elif not slot.booked_appointment_id:
                         # Just an empty slot, safe to ignore/delete since we have a conflict
                         db.session.delete(slot)
                 else:
