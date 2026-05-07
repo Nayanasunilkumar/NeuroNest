@@ -3,6 +3,7 @@ from zoneinfo import ZoneInfo
 
 from flask import Blueprint, current_app, jsonify, request
 from flask_jwt_extended import get_jwt, get_jwt_identity, jwt_required
+from sqlalchemy.orm import joinedload
 
 from database.models import (
     Appointment,
@@ -571,7 +572,8 @@ def get_appointments():
 
         current_user_id = int(get_jwt_identity())
         appointments = (
-            Appointment.query.filter_by(patient_id=current_user_id)
+            Appointment.query.options(joinedload(Appointment.doctor))
+            .filter_by(patient_id=current_user_id)
             .order_by(Appointment.appointment_date.desc(), Appointment.appointment_time.desc())
             .all()
         )
