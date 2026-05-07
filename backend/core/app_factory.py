@@ -31,8 +31,14 @@ def create_app():
     JWTManager(app)
     socketio.init_app(app)
 
-    # Run heavy initialization (DB and Scheduler) in background to allow Port Binding to succeed immediately
+    register_feature_modules(app)
+    register_socket_handlers()
+    register_core_routes(app)
+
+    # Start heavy background tasks AFTER all routes are registered
     def background_startup(app_context):
+        import time
+        time.sleep(2) # 🛑 Safety delay to let main thread settle
         with app_context:
             try:
                 print("[DB] Starting background initialization...")
@@ -48,10 +54,6 @@ def create_app():
 
     import threading
     threading.Thread(target=background_startup, args=(app.app_context(),), daemon=True).start()
-
-    register_feature_modules(app)
-    register_socket_handlers()
-    register_core_routes(app)
 
     @app.before_request
     def enforce_account_status():

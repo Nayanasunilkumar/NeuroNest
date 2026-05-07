@@ -1,35 +1,18 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { loginUser } from "../shared/services/api/auth";
-import { saveAuth } from "../shared/utils/auth";
-import { useSystemConfig } from "../shared/context/SystemConfigContext";
+import axios from "../shared/services/api/axios";
 import { API_BASE_URL } from "../config/env";
+import { useSystemConfig } from "../shared/context/SystemConfigContext";
 import "../shared/styles/auth.css";
 
 const EyeIcon = ({ open }) =>
   open ? (
-    <svg
-      viewBox="0 0 24 24"
-      width="16"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
+    <svg viewBox="0 0 24 24" width="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
       <circle cx="12" cy="12" r="3" />
     </svg>
   ) : (
-    <svg
-      viewBox="0 0 24 24"
-      width="16"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
+    <svg viewBox="0 0 24 24" width="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24" />
       <line x1="1" y1="1" x2="23" y2="23" />
     </svg>
@@ -43,77 +26,110 @@ const Login = () => {
   const [showPw, setShowPw] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-
+  const [serverStatus, setServerStatus] = useState('checking'); // 'checking', 'online', 'warming-up', 'offline'
   const [warmupSeconds, setWarmupSeconds] = useState(0);
   const warmupIntervalRef = useRef(null);
 
-  // Wake up the Render backend immediately on page load to eliminate cold-start delay
+  // Pre-warm the server and check status
   useEffect(() => {
-    fetch(`${API_BASE_URL}/`, { method: "GET", cache: "no-store" }).catch(() => {});
-  }, []);
+    let checkCount = 0;
+    const checkServer = async () => {
+      try {
+        await axios.get('/api/modules/config', { timeout: 8000 });
+        setServerStatus('online');
+      } catch (err) {
+        if (err.code === 'ECONNABORTED' || !err.response) {
+          setServerStatus('warming-up');
+        } else {
+          setServerStatus('online'); // If we got a response, even a 4xx, it's alive
+        }
+      }
+    };
+    checkServer();
+    const interval = setInterval(() => {
+      if (serverStatus !== 'online' && checkCount < 10) {
+        checkCount++;
+        checkServer();
+      }
+    }, 15000);
+    return () => clearInterval(interval);
+  }, [serverStatus]);
 
-  const handleSubmit = async (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
     setError("");
-    const form = e.currentTarget;
-    const formEmail = (form.elements.email?.value || email).trim();
-    const formPassword = form.elements.password?.value || password;
-    setEmail(formEmail);
-    setPassword(formPassword);
+    setLoading(true);
+    setWarmupSeconds(0);
 
-    // Show live countdown after 4s if still loading
-    let warmupTimer;
-    const startCountdown = () => {
-      setWarmupSeconds(1);
+    const formEmail = email.trim().toLowerCase();
+    const maxRetries = 3;
+    let attempt = 0;
+
+    // Start a visual timer if login takes long
+    const timerId = setTimeout(() => {
       warmupIntervalRef.current = setInterval(() => {
         setWarmupSeconds(prev => prev + 1);
       }, 1000);
-    };
+    }, 4000);
 
-    const attemptLogin = async (isRetry = false) => {
+    while (attempt < maxRetries) {
       try {
-        setLoading(true);
-        if (isRetry) setError(""); // Clear previous error on retry
-        
-        warmupTimer = setTimeout(startCountdown, 4000);
-        const { data } = await loginUser({ email: formEmail, password: formPassword });
-        
-        clearTimeout(warmupTimer);
+        const response = await axios.post('/api/shared/auth/login', {
+          email: formEmail,
+          password,
+        }, {
+          timeout: 55000 // Timeout before Render's 60s limit
+        });
+
+        clearTimeout(timerId);
         clearInterval(warmupIntervalRef.current);
-        setWarmupSeconds(0);
-        
-        saveAuth(data.token, data.user);
-        const role = data.user.role;
-        if (role === "patient") navigate("/patient/dashboard");
-        else if (role === "doctor") {
-          if (data.user.must_change_password) {
-            navigate("/doctor/settings", {
-              state: { initialTab: "account", forcePasswordChange: true },
-            });
-          } else {
-            navigate("/doctor/dashboard");
-          }
+
+        const { token, user } = response.data;
+        localStorage.setItem('neuronest_token', token);
+        localStorage.setItem('neuronest_user', JSON.stringify(user));
+
+        if (user.role === 'admin') navigate('/admin/dashboard');
+        else if (user.role === 'doctor') {
+            if (user.must_change_password) {
+                navigate("/doctor/settings", { state: { initialTab: "account", forcePasswordChange: true } });
+            } else {
+                navigate('/doctor/dashboard');
+            }
         }
-        else if (role === "admin") navigate("/admin/dashboard");
-        else if (role === "super_admin") navigate("/admin/dashboard");
+        else navigate('/patient/dashboard');
+        
+        return; 
       } catch (err) {
-        clearTimeout(warmupTimer);
+        attempt++;
+        const isNetworkError = !err.response;
+        const isTimeout = err.code === 'ECONNABORTED';
+        const isServerWarming = isNetworkError || isTimeout || (err.response && err.response.status >= 500);
+
+        if (isServerWarming && attempt < maxRetries) {
+          const waitTime = attempt * 2000;
+          setError(`Server is warming up... Retrying (Attempt ${attempt}/${maxRetries}) in ${waitTime/1000}s...`);
+          await new Promise(r => setTimeout(r, waitTime));
+          continue;
+        }
+
+        clearTimeout(timerId);
         clearInterval(warmupIntervalRef.current);
         setWarmupSeconds(0);
 
-        // Auto-retry once if it's a network error/timeout and not already retrying
-        if (!isRetry && (!err.response || err.code === "ECONNABORTED")) {
-          setError("Connection slow. Retrying automatically in 3s...");
-          setTimeout(() => attemptLogin(true), 3000);
-          return;
+        let msg = "Unable to sign in.";
+        if (err.response) {
+          msg = err.response.data?.message || `Error ${err.response.status}: Login failed.`;
+        } else if (isTimeout) {
+          msg = "Connection timed out. The server is still warming up. Please wait a few more seconds and try again.";
+        } else {
+          msg = "Network error. Please check your connection or verify the server is online.";
         }
-
-        setError(err?.response?.data?.message || "Unable to sign in. Please check your connection and try again.");
-        setLoading(false);
+        
+        setError(msg);
+        break;
       }
-    };
-
-    attemptLogin();
+    }
+    setLoading(false);
   };
 
   return (
@@ -125,285 +141,120 @@ const Login = () => {
         overflow: "hidden",
       }}
     >
-      {/* Background depth using standard HTML/CSS + Bootstrap bg */}
       <div
         className="position-absolute top-0 start-0 w-100 h-100"
         style={{
-          background:
-            "radial-gradient(circle at 20% 80%, rgba(120,119,198,0.1) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(255,119,198,0.1) 0%, transparent 50%)",
+          background: "radial-gradient(circle at 20% 80%, rgba(120,119,198,0.1) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(255,119,198,0.1) 0%, transparent 50%)",
           pointerEvents: "none",
         }}
       />
 
-      <div
-        className="row w-100 justify-content-center position-relative"
-        style={{ zIndex: 1, maxWidth: "420px" }}
-      >
-        <div className="col-12 px-3 px-sm-0">
-          <div
-            className="card border-0 rounded-4 p-4 p-sm-5 bg-white"
-            style={{
-              boxShadow:
-                "0 10px 25px rgba(0,0,0,0.08), 0 2px 6px rgba(0,0,0,0.05)",
-              backdropFilter: "blur(10px)",
-            }}
-          >
-            <div className="text-center mb-5">
-              <h2
-                className="fw-bolder text-dark mb-3 d-flex align-items-center justify-content-center gap-2"
-                style={{ letterSpacing: "-0.5px", fontSize: "2rem" }}
-              >
-                <div
-                  className="rounded-circle"
-                  style={{
-                    width: "10px",
-                    height: "10px",
-                    background: "linear-gradient(135deg,#6366F1,#8B5CF6)",
-                  }}
-                />
-                {platformName || "NeuroNest"}
-              </h2>
-              <p
-                className="text-secondary fw-medium text-uppercase"
-                style={{
-                  letterSpacing: "1px",
-                  fontSize: "0.875rem",
-                  marginBottom: "2rem",
-                }}
-              >
-                Sign in to your account
-              </p>
-            </div>
-
-            {error && (
-              <div
-                className="alert d-flex align-items-center fw-bold p-3 rounded-3 mb-4 border-0"
-                style={{
-                  background: "#FEF2F2",
-                  color: "#DC2626",
-                  border: "1px solid #FECACA",
-                }}
-                role="alert"
-              >
-                <svg
-                  width="16"
-                  height="16"
-                  className="me-2"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                >
-                  <circle cx="12" cy="12" r="10" />
-                  <line x1="15" y1="9" x2="9" y2="15" />
-                  <line x1="9" y1="9" x2="15" y2="15" />
-                </svg>
-                {error}
-              </div>
-            )}
-
-            <form onSubmit={handleSubmit} className="d-flex flex-column">
-              {/* Email */}
-              <div className="form-group mb-4">
-                <label
-                  htmlFor="login-email"
-                  className="form-label fw-bold text-secondary text-uppercase mb-3"
-                  style={{
-                    letterSpacing: "1px",
-                    fontSize: "0.75rem",
-                  }}
-                >
-                  Email
-                </label>
-                <input
-                  id="login-email"
-                  name="email"
-                  type="email"
-                  className="form-control form-control-lg border shadow-sm"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@example.com"
-                  required
-                  autoComplete="email"
-                  style={{
-                    fontSize: "0.95rem",
-                    background: "#FFFFFF",
-                    border: "1px solid #E5E7EB",
-                    borderRadius: "10px",
-                    transition: "all 0.2s ease",
-                  }}
-                  onFocus={(e) => {
-                    e.target.style.borderColor = "#6366F1";
-                    e.target.style.boxShadow =
-                      "0 0 0 3px rgba(99,102,241,0.15)";
-                  }}
-                  onBlur={(e) => {
-                    e.target.style.borderColor = "#E5E7EB";
-                    e.target.style.boxShadow = "0 0 0 0px rgba(99,102,241,0)";
-                  }}
-                />
-              </div>
-
-              {/* Password */}
-              <div className="form-group mb-4">
-                <div className="d-flex justify-content-between align-items-center mb-3">
-                  <label
-                    htmlFor="login-pw"
-                    className="form-label fw-bold text-secondary text-uppercase mb-0"
-                    style={{
-                      letterSpacing: "1px",
-                      fontSize: "0.75rem",
-                    }}
-                  >
-                    Password
-                  </label>
-                  <Link
-                    to="/forgot-password"
-                    className="text-decoration-none fw-bold"
-                    style={{
-                      fontSize: "13px",
-                      color: "#6366F1",
-                    }}
-                  >
-                    Forgot password?
-                  </Link>
-                </div>
-                <div className="position-relative">
-                  <input
-                    id="login-pw"
-                    name="password"
-                    type={showPw ? "text" : "password"}
-                    className="form-control form-control-lg border shadow-sm"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
-                    required
-                    autoComplete="current-password"
-                    style={{
-                      fontSize: "0.95rem",
-                      background: "#FFFFFF",
-                      border: "1px solid #E5E7EB",
-                      borderRadius: "10px",
-                      paddingRight: "40px",
-                      transition: "all 0.2s ease",
-                    }}
-                    onFocus={(e) => {
-                      e.target.style.borderColor = "#6366F1";
-                      e.target.style.boxShadow =
-                        "0 0 0 3px rgba(99,102,241,0.15)";
-                    }}
-                    onBlur={(e) => {
-                      e.target.style.borderColor = "#E5E7EB";
-                      e.target.style.boxShadow = "0 0 0 0px rgba(99,102,241,0)";
-                    }}
-                  />
-                  <button
-                    type="button"
-                    className="btn position-absolute border-0"
-                    onClick={() => setShowPw(!showPw)}
-                    aria-label="Toggle password"
-                    style={{
-                      right: "12px",
-                      top: "50%",
-                      transform: "translateY(-50%)",
-                      color: "#9CA3AF",
-                      background: "transparent",
-                      padding: "0",
-                    }}
-                  >
-                    <EyeIcon open={showPw} />
-                  </button>
-                </div>
-              </div>
-
-              {/* CTA */}
-              <button
-                type="submit"
-                className="btn btn-lg w-100 fw-bold d-flex justify-content-center align-items-center gap-2 rounded-3 mb-4"
-                disabled={loading}
-                style={{
-                  background: loading
-                    ? "rgba(13,110,253,0.8)"
-                    : "linear-gradient(135deg, #0d6efd, #6610f2)",
-                  border: "none",
-                  cursor: loading ? "not-allowed" : "pointer",
-                  transition: "all 0.2s ease",
-                  transform: "translateY(0px)",
-                }}
-                onMouseEnter={(e) => {
-                  if (!loading) {
-                    e.target.style.transform = "translateY(-1px)";
-                    e.target.style.boxShadow =
-                      "0 4px 12px rgba(13,110,253,0.3)";
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  e.target.style.transform = "translateY(0px)";
-                  e.target.style.boxShadow = "none";
-                }}
-              >
-                {loading && (
-                  <span
-                    className="spinner-border spinner-border-sm"
-                    role="status"
-                    aria-hidden="true"
-                  />
-                )}
-                {loading ? "Signing in…" : "Sign In"}
-              </button>
-
-              {warmupSeconds > 0 && (
-                <div
-                  className="text-center py-2 px-3 rounded-3 mb-2"
-                  style={{ background: "#FFF7ED", border: "1px solid #FED7AA", fontSize: "0.82rem", color: "#92400E" }}
-                >
-                  ⏳ Server is waking up ({warmupSeconds}s)… This is normal on first daily login. Please keep waiting.
-                </div>
-              )}
-
-              {/* Encryption note */}
-              <div
-                className="d-flex align-items-center justify-content-center mt-3 mb-4"
-                style={{
-                  fontSize: "13px",
-                  color: "#6B7280",
-                }}
-              >
-                <svg
-                  width="14"
-                  height="14"
-                  className="me-2"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                >
-                  <rect x="3" y="11" width="18" height="11" rx="2" />
-                  <path d="M7 11V7a5 5 0 0110 0v4" />
-                </svg>
-                Your medical data is encrypted and secure
-              </div>
-            </form>
-
-            {/* Register link */}
+      <div className="nn-auth-card p-4 p-md-5" style={{ position: "relative", zIndex: 1, width: "100%", maxWidth: "480px" }}>
+        <div className="text-center mb-4">
+          <div className="d-flex align-items-center justify-content-center mb-3">
             <div
-              className="text-center mt-4"
-              style={{ fontSize: "0.875rem", color: "#6B7280" }}
+              className="rounded-circle d-flex align-items-center justify-content-center"
+              style={{ width: "40px", height: "40px", backgroundColor: "rgba(99, 102, 241, 0.1)" }}
             >
-              Don't have an account?{" "}
-              <Link
-                to="/register"
-                className="fw-bold text-decoration-none"
-                style={{
-                  color: "#6366F1",
-                }}
-              >
-                Create one free
+              <div className="rounded-circle" style={{ width: "10px", height: "10px", backgroundColor: "#6366f1" }} />
+            </div>
+            <h1 className="h3 mb-0 ms-2 fw-bold" style={{ color: "#1e293b", letterSpacing: "-0.02em" }}>
+              {platformName || "NeuroNest"}
+            </h1>
+          </div>
+          <p className="text-uppercase fw-bold mb-0" style={{ fontSize: "12px", color: "#64748b", letterSpacing: "0.05em" }}>
+            Sign in to your account
+          </p>
+        </div>
+
+        {serverStatus === 'warming-up' && !error && (
+            <div className="alert alert-info py-2 px-3 mb-4 d-flex align-items-center" style={{ fontSize: '13px', borderRadius: '12px', border: 'none', backgroundColor: '#eff6ff', color: '#1d4ed8' }}>
+                <div className="spinner-border spinner-border-sm me-2" role="status" />
+                <span>Backend is waking up (Free Tier). Please wait...</span>
+            </div>
+        )}
+
+        {error && (
+          <div className="nn-error-bubble mb-4 d-flex align-items-start">
+            <div className="me-2 mt-1">
+              <svg viewBox="0 0 24 24" width="14" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="8" x2="12" y2="12" />
+                <line x1="12" y1="16" x2="12.01" y2="16" />
+              </svg>
+            </div>
+            <span style={{ fontSize: "13px", lineHeight: "1.4" }}>{error}</span>
+          </div>
+        )}
+
+        <form onSubmit={handleLogin} className="d-grid gap-4">
+          <div className="nn-input-group">
+            <label className="nn-input-label">Email</label>
+            <input
+              type="email"
+              className="nn-input-field"
+              placeholder="name@company.com"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              disabled={loading}
+              autoFocus
+            />
+          </div>
+
+          <div className="nn-input-group">
+            <div className="d-flex justify-content-between align-items-center mb-1">
+              <label className="nn-input-label mb-0">Password</label>
+              <Link to="/forgot-password" style={{ fontSize: "12px", fontWeight: "600", color: "#6366f1", textDecoration: "none" }}>
+                Forgot password?
               </Link>
             </div>
+            <div className="position-relative">
+              <input
+                type={showPw ? "text" : "password"}
+                className="nn-input-field pe-5"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                disabled={loading}
+              />
+              <button
+                type="button"
+                className="position-absolute end-0 top-50 translate-middle-y border-0 bg-transparent px-3 text-muted"
+                onClick={() => setShowPw(!showPw)}
+                style={{ height: "100%", zIndex: 5 }}
+              >
+                <EyeIcon open={showPw} />
+              </button>
+            </div>
           </div>
+
+          <button type="submit" className="nn-btn-primary py-3 fw-bold" disabled={loading} style={{ borderRadius: "12px" }}>
+            {loading ? (
+              <div className="d-flex align-items-center justify-content-center">
+                <span className="spinner-border spinner-border-sm me-2" />
+                {warmupSeconds > 0 ? `Connecting... (${warmupSeconds}s)` : "Signing In..."}
+              </div>
+            ) : (
+              "Sign In"
+            )}
+          </button>
+        </form>
+
+        <div className="text-center mt-5">
+          <div className="d-flex align-items-center justify-content-center mb-4 text-muted" style={{ fontSize: "12px" }}>
+            <svg viewBox="0 0 24 24" width="14" fill="none" stroke="currentColor" strokeWidth="2" className="me-2">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+              <path d="M7 11V7a5 5 0 0110 0v4" />
+            </svg>
+            Your medical data is encrypted and secure
+          </div>
+          <p className="mb-0 text-muted" style={{ fontSize: "13px" }}>
+            Don't have an account?{" "}
+            <Link to="/register" style={{ color: "#6366f1", fontWeight: "600", textDecoration: "none" }}>
+              Create one free
+            </Link>
+          </p>
         </div>
       </div>
     </div>
