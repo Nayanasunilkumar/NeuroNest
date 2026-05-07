@@ -70,38 +70,50 @@ const Login = () => {
       }, 1000);
     };
 
-    try {
-      setLoading(true);
-      warmupTimer = setTimeout(startCountdown, 4000);
-      const { data } = await loginUser({ email: formEmail, password: formPassword });
-      clearTimeout(warmupTimer);
-      clearInterval(warmupIntervalRef.current);
-      setWarmupSeconds(0);
-      saveAuth(data.token, data.user);
-      const role = data.user.role;
-      if (role === "patient") navigate("/patient/dashboard");
-      else if (role === "doctor") {
-        if (data.user.must_change_password) {
-          navigate("/doctor/settings", {
-            state: {
-              initialTab: "account",
-              forcePasswordChange: true,
-            },
-          });
-        } else {
-          navigate("/doctor/dashboard");
+    const attemptLogin = async (isRetry = false) => {
+      try {
+        setLoading(true);
+        if (isRetry) setError(""); // Clear previous error on retry
+        
+        warmupTimer = setTimeout(startCountdown, 4000);
+        const { data } = await loginUser({ email: formEmail, password: formPassword });
+        
+        clearTimeout(warmupTimer);
+        clearInterval(warmupIntervalRef.current);
+        setWarmupSeconds(0);
+        
+        saveAuth(data.token, data.user);
+        const role = data.user.role;
+        if (role === "patient") navigate("/patient/dashboard");
+        else if (role === "doctor") {
+          if (data.user.must_change_password) {
+            navigate("/doctor/settings", {
+              state: { initialTab: "account", forcePasswordChange: true },
+            });
+          } else {
+            navigate("/doctor/dashboard");
+          }
         }
+        else if (role === "admin") navigate("/admin/dashboard");
+        else if (role === "super_admin") navigate("/admin/dashboard");
+      } catch (err) {
+        clearTimeout(warmupTimer);
+        clearInterval(warmupIntervalRef.current);
+        setWarmupSeconds(0);
+
+        // Auto-retry once if it's a network error/timeout and not already retrying
+        if (!isRetry && (!err.response || err.code === "ECONNABORTED")) {
+          setError("Connection slow. Retrying automatically in 3s...");
+          setTimeout(() => attemptLogin(true), 3000);
+          return;
+        }
+
+        setError(err?.response?.data?.message || "Unable to sign in. Please check your connection and try again.");
+        setLoading(false);
       }
-      else if (role === "admin") navigate("/admin/dashboard");
-      else if (role === "super_admin") navigate("/admin/dashboard");
-    } catch (err) {
-      clearTimeout(warmupTimer);
-      clearInterval(warmupIntervalRef.current);
-      setWarmupSeconds(0);
-      setError(err?.response?.data?.message || "Unable to sign in. Please try again.");
-    } finally {
-      setLoading(false);
-    }
+    };
+
+    attemptLogin();
   };
 
   return (
