@@ -38,7 +38,10 @@ def create_app():
                 print("[DB] Starting background initialization...")
                 db.create_all()
                 run_startup_migrations()
-                print("[DB] Background initialization complete.")
+                # Pre-warm DB connection pool
+                db.session.execute(text("SELECT 1"))
+                db.session.commit()
+                print("[DB] Background initialization complete (DB Pre-warmed).")
                 
                 print("[SCHEDULER] Starting background scheduler...")
                 start_scheduler(app)
