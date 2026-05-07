@@ -33,23 +33,21 @@ const Login = () => {
     let checkCount = 0;
     const checkServer = async () => {
       try {
-        await axios.get('/api/modules/config', { timeout: 8000 });
-        setServerStatus('online');
-      } catch (err) {
-        if (err.code === 'ECONNABORTED' || !err.response) {
-          setServerStatus('warming-up');
-        } else {
+        const res = await axios.get('/api/health', { timeout: 12000 });
+        if (res.status === 200) {
           setServerStatus('online');
         }
+      } catch (err) {
+        setServerStatus('warming-up');
       }
     };
     checkServer();
     const interval = setInterval(() => {
-      if (serverStatus !== 'online' && checkCount < 10) {
+      if (serverStatus !== 'online' && checkCount < 15) {
         checkCount++;
         checkServer();
       }
-    }, 15000);
+    }, 10000);
     return () => clearInterval(interval);
   }, [serverStatus]);
 

@@ -7,10 +7,11 @@ def register_core_routes(app):
         return {
             "status": "NeuroNest-V17-STABLE-LIVE",
             "commit": os.getenv("RENDER_GIT_COMMIT") or os.getenv("GIT_COMMIT") or "local",
-            "feedback_routes_registered": any(
-                str(rule).startswith("/api/feedback") for rule in app.url_map.iter_rules()
-            ),
         }
+
+    @app.route("/api/health")
+    def health():
+        return {"status": "ok", "message": "Backend is alive and initialized"}, 200
 
     @app.after_request
     def add_ngrok_header(response):

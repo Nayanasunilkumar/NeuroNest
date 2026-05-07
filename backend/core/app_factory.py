@@ -35,8 +35,23 @@ def create_app():
     register_socket_handlers()
     register_core_routes(app)
     
-    # Start the non-blocking background scheduler
-    start_scheduler(app)
+    # Lazy Initialization Trigger
+    _is_initialized = False
+    
+    @app.before_request
+    def lazy_init():
+        nonlocal _is_initialized
+        if not _is_initialized and request.path == "/api/health":
+            try:
+                print("[INIT] Starting lazy database initialization...")
+                db.create_all()
+                run_startup_migrations()
+                print("[INIT] ✓ Lazy initialization complete.")
+                start_scheduler(app)
+                _is_initialized = True
+            except Exception as e:
+                print(f"[INIT] ❌ Initialization error: {e}")
+                # We don't set _is_initialized to True so it retries next health check
 
     @app.before_request
     def enforce_account_status():
