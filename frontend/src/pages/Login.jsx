@@ -74,7 +74,7 @@ const Login = () => {
 
     while (attempt < maxRetries) {
       try {
-        const response = await axios.post('/api/shared/auth/login', {
+        const response = await axios.post('/api/auth/login', {
           email: formEmail,
           password,
         }, {
