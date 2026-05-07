@@ -12,14 +12,13 @@ def hash_password(password: str) -> str:
     return pwd_context.hash(password)
 
 
-
 def verify_password(password: str, hashed_password: str) -> bool:
+    if not password or not hashed_password:
+        return False
     try:
-        # Standard bcrypt verify is extremely fast in C
-        return bcrypt.checkpw(password.encode('utf-8'), hashed_password.encode('utf-8'))
-    except Exception:
-        # Fallback to passlib if direct bcrypt fails (e.g. legacy hashes)
         return pwd_context.verify(password, hashed_password)
+    except Exception:
+        return False
 
 def generate_token(user_id: int, role: str) -> str:
     return create_access_token(
