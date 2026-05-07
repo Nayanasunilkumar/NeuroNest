@@ -1,4 +1,5 @@
 import re
+from sqlalchemy import func
 
 from database.models import Appointment, User, db
 
@@ -71,7 +72,7 @@ def get_related_patient_ids_for_doctor(doctor_id: int):
         db.session.query(Appointment.patient_id)
         .filter(
             Appointment.doctor_id.in_(doctor_ids),
-            Appointment.status.notin_(DOCTOR_PATIENT_RELATIONSHIP_EXCLUDED_STATUSES),
+            func.lower(Appointment.status).notin_(DOCTOR_PATIENT_RELATIONSHIP_EXCLUDED_STATUSES),
         )
         .distinct()
         .all()
@@ -87,7 +88,7 @@ def get_related_doctor_ids_for_patient(patient_id: int):
         db.session.query(Appointment.doctor_id)
         .filter(
             Appointment.patient_id == patient_id,
-            Appointment.status.notin_(DOCTOR_PATIENT_RELATIONSHIP_EXCLUDED_STATUSES),
+            func.lower(Appointment.status).notin_(DOCTOR_PATIENT_RELATIONSHIP_EXCLUDED_STATUSES),
         )
         .distinct()
         .all()
@@ -104,7 +105,7 @@ def doctor_has_patient_relationship(doctor_id: int, patient_id: int) -> bool:
         Appointment.query.filter(
             Appointment.doctor_id.in_(doctor_ids),
             Appointment.patient_id == patient_id,
-            Appointment.status.notin_(DOCTOR_PATIENT_RELATIONSHIP_EXCLUDED_STATUSES),
+            func.lower(Appointment.status).notin_(DOCTOR_PATIENT_RELATIONSHIP_EXCLUDED_STATUSES),
         )
         .first()
     )
