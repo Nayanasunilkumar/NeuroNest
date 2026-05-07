@@ -3,13 +3,13 @@ import re
 from database.models import Appointment, User, db
 
 
-DOCTOR_PATIENT_RELATIONSHIP_EXCLUDED_STATUSES = (
+DOCTOR_PATIENT_RELATIONSHIP_EXCLUDED_STATUSES = ("rejected",)
+DOCTOR_PATIENT_TERMINAL_STATUSES = (
     "rejected",
     "cancelled",
     "cancelled_by_doctor",
     "cancelled_by_patient",
 )
-DOCTOR_PATIENT_TERMINAL_STATUSES = DOCTOR_PATIENT_RELATIONSHIP_EXCLUDED_STATUSES
 
 CANONICAL_DR_NAINA_EMAIL = "nayanasunilkumar8@gmail.com"
 
