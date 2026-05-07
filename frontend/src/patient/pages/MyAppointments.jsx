@@ -169,7 +169,7 @@ const MyAppointments = () => {
     setCurrentPage(1);
   }, [searchTerm, filterDate, filterStatus]);
 
-  const upcomingCount  = appointments.filter(a => ['pending', 'approved', 'rescheduled'].includes(String(a.status).toLowerCase())).length;
+  const upcomingCount  = appointments.filter(a => ['pending', 'approved', 'confirmed', 'rescheduled'].includes(String(a.status).toLowerCase())).length;
   const completedCount = appointments.filter(a => String(a.status).toLowerCase() === 'completed').length;
   const cancelledCount = appointments.filter(a => String(a.status).toLowerCase() === 'cancelled' || String(a.status).toLowerCase() === 'cancelled_by_patient').length;
   const pendingFeedback = appointments.filter(a => String(a.status).toLowerCase() === 'completed' && !a.feedback_given).length;
@@ -280,6 +280,7 @@ const MyAppointments = () => {
                 <option value="All">All Status</option>
                 <option value="Pending">Pending</option>
                 <option value="Approved">Approved</option>
+                <option value="Confirmed">Confirmed</option>
                 <option value="Rescheduled">Action Required</option>
                 <option value="Rejected">Rejected</option>
                 <option value="Completed">Completed</option>
@@ -328,7 +329,7 @@ const MyAppointments = () => {
                 <tbody>
                     {currentAppointments.map((appt) => {
                       const status = String(appt.status).toLowerCase();
-                      const isUpcoming = ['pending', 'approved', 'rescheduled'].includes(status);
+                      const isUpcoming = ['pending', 'approved', 'confirmed', 'rescheduled'].includes(status);
                       const isRescheduled = status === 'rescheduled';
                       const isOnline = (appt.consultation_type || "in_person") === "online";
                       const callData = callStateById[appt.id];
