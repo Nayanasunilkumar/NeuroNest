@@ -76,6 +76,10 @@ def get_conversations():
     
     user_participations = Participant.query.filter_by(user_id=current_user_id).all()
     
+    related_doctor_ids = get_related_doctor_ids_for_patient(current_user_id) if current_user.role == "patient" else []
+    related_patient_ids = get_related_patient_ids_for_doctor(current_user_id) if current_user.role == "doctor" else []
+    related_ids = set(related_doctor_ids) | set(related_patient_ids)
+
     results = []
     for p in user_participations:
         conv = Conversation.query.get(p.conversation_id)
@@ -90,6 +94,12 @@ def get_conversations():
         if not other_participant: continue
 
         last_message = conv.messages.order_by(Message.created_at.desc()).first()
+        
+        # Logic: Only show conversations that either have a message history 
+        # OR involve a doctor/patient with an active clinical relationship.
+        # This hides "phantom" empty chats from cancelled or unrelated doctors.
+        if not last_message and other_participant.user_id not in related_ids:
+            continue
         
         # Calculate unread count (messages where current user is NOT the sender and is_read is false)
         unread_count = Message.query.filter_by(
