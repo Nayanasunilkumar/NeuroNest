@@ -907,13 +907,26 @@ def get_doctor_stats():
     doctor_scope_ids = get_doctor_scope_ids(current_user_id)
     today = date.today()
     
-    # 1. Total Patients (Unique)
-    total_patients = len(get_related_patient_ids_for_doctor(current_user_id))
+    # 1. Total Patients (Unique from appointments + chat)
+    related_patient_ids = set(get_related_patient_ids_for_doctor(current_user_id))
+    
+    # Also include patients from chat conversations
+    from database.models import Participant
+    chat_participations = Participant.query.filter_by(user_id=current_user_id).all()
+    for p in chat_participations:
+        other = Participant.query.filter(
+            Participant.conversation_id == p.conversation_id,
+            Participant.user_id != current_user_id
+        ).first()
+        if other:
+            related_patient_ids.add(other.user_id)
+            
+    total_patients = len(related_patient_ids)
         
     # 2. Today's Appointments
     today_count = Appointment.query.filter(
         Appointment.doctor_id.in_(doctor_scope_ids),
-        Appointment.status.in_(["approved"]),
+        Appointment.status.in_(["approved", "rescheduled"]),
         Appointment.appointment_date == today
     ).count()
     
@@ -922,12 +935,19 @@ def get_doctor_stats():
         Appointment.doctor_id.in_(doctor_scope_ids),
         Appointment.status.in_(["pending"])
     ).count()
+
+    # 4. Active Assessments (Assigned to this doctor or their patients)
+    from database.models import PatientAssessment
+    active_assessments = PatientAssessment.query.filter(
+        PatientAssessment.doctor_id.in_(doctor_scope_ids),
+        PatientAssessment.status.in_(["pending", "in_progress"])
+    ).count()
     
     return jsonify({
-        "total_patients": total_patients or 0,
+        "total_patients": total_patients,
         "today_appointments": today_count,
         "pending_requests": pending_requests,
-        "active_assessments": 0 # Placeholder for now
+        "active_assessments": active_assessments
     }), 200
 
 @doctor_bp.route("/patients", methods=["GET"])
@@ -939,11 +959,24 @@ def get_doctor_patients():
     current_user_id = int(get_jwt_identity())
     doctor_scope_ids = get_doctor_scope_ids(current_user_id)
     
-    # A patient belongs to a doctor if they have a real clinical booking history.
-    patient_ids = get_related_patient_ids_for_doctor(current_user_id)
+    # 1. Start with clinical relationship IDs
+    related_ids = set(get_related_patient_ids_for_doctor(current_user_id))
     
-    if not patient_ids:
+    # 2. Add chat-connected IDs
+    from database.models import Participant
+    chat_participations = Participant.query.filter_by(user_id=current_user_id).all()
+    for p in chat_participations:
+        other = Participant.query.filter(
+            Participant.conversation_id == p.conversation_id,
+            Participant.user_id != current_user_id
+        ).first()
+        if other:
+            related_ids.add(other.user_id)
+    
+    if not related_ids:
         return jsonify([]), 200
+
+    patient_ids = sorted(list(related_ids))
 
     patients_data = []
     now = datetime.now()
