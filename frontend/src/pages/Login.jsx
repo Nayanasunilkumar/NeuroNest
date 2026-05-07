@@ -44,6 +44,8 @@ const Login = () => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const [isWarmingUp, setIsWarmingUp] = useState(false);
+
   // Wake up the Render backend immediately on page load to eliminate cold-start delay
   useEffect(() => {
     fetch(`${API_BASE_URL}/`, { method: "GET", cache: "no-store" }).catch(() => {});
@@ -58,9 +60,14 @@ const Login = () => {
     setEmail(formEmail);
     setPassword(formPassword);
 
+    // Show "warming up" hint after 5s if still loading
+    let warmupTimer;
     try {
       setLoading(true);
+      warmupTimer = setTimeout(() => setIsWarmingUp(true), 5000);
       const { data } = await loginUser({ email: formEmail, password: formPassword });
+      clearTimeout(warmupTimer);
+      setIsWarmingUp(false);
       saveAuth(data.token, data.user);
       const role = data.user.role;
       if (role === "patient") navigate("/patient/dashboard");
@@ -79,6 +86,8 @@ const Login = () => {
       else if (role === "admin") navigate("/admin/dashboard");
       else if (role === "super_admin") navigate("/admin/dashboard");
     } catch (err) {
+      clearTimeout(warmupTimer);
+      setIsWarmingUp(false);
       setError(err?.response?.data?.message || "Unable to sign in. Please try again.");
     } finally {
       setLoading(false);
@@ -321,6 +330,15 @@ const Login = () => {
                 )}
                 {loading ? "Signing in…" : "Sign In"}
               </button>
+
+              {isWarmingUp && (
+                <div
+                  className="text-center py-2 px-3 rounded-3 mb-2"
+                  style={{ background: "#FFF7ED", border: "1px solid #FED7AA", fontSize: "0.82rem", color: "#92400E" }}
+                >
+                  ⏳ Server is waking up — this may take up to 30 seconds on first login. Please wait…
+                </div>
+              )}
 
               {/* Encryption note */}
               <div
