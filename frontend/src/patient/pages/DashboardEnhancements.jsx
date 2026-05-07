@@ -60,10 +60,7 @@ const getISTDayOffset = (offsetDays = 0) => {
   return getISTDayKey(dt);
 };
 
-const FALLBACK_APPOINTMENTS = [
-  { id: "fallback-1", doctor_name: "Dr. Priya Raman", specialization: "Neurology", appointment_date: getISTDayOffset(1), appointment_time: "15:00:00", consultation_type: "online", status: "approved" },
-  { id: "fallback-2", doctor_name: "Dr. Arjun Mehta", specialization: "Cardiology", appointment_date: getISTDayOffset(3), appointment_time: "10:30:00", consultation_type: "in_person", status: "pending" },
-];
+const FALLBACK_APPOINTMENTS = [];
 
 const todayKey = getISTDayKey(new Date());
 
@@ -373,7 +370,7 @@ export default function DashboardEnhancements({ consolidatedData = null }) {
         const data = await getConsolidatedDashboard();
 
         setNotifications(data.notifications || []);
-        setAppointments(Array.isArray(data.appointments) && data.appointments.length ? data.appointments : FALLBACK_APPOINTMENTS);
+        setAppointments(Array.isArray(data.appointments) ? data.appointments : []);
         setClinicalData(data.clinical || null);
         setEmergencyContacts(data.emergency_contacts || []);
         setTrendSeries(buildTrendSeries(data.vitals?.history || [], data.vitals?.latest));
@@ -390,7 +387,7 @@ export default function DashboardEnhancements({ consolidatedData = null }) {
   useEffect(() => {
     if (consolidatedData) {
       setNotifications(consolidatedData.notifications || []);
-      setAppointments(Array.isArray(consolidatedData.appointments) && consolidatedData.appointments.length ? consolidatedData.appointments : FALLBACK_APPOINTMENTS);
+      setAppointments(Array.isArray(consolidatedData.appointments) ? consolidatedData.appointments : []);
       setClinicalData(consolidatedData.clinical || null);
       setEmergencyContacts(consolidatedData.emergency_contacts || []);
       setTrendSeries(buildTrendSeries(consolidatedData.vitals?.history || [], consolidatedData.vitals?.latest));
