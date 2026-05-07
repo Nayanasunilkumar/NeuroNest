@@ -68,12 +68,12 @@ const MedicalRecordTable = ({ records, onView, onDelete, onDownload, loading, is
 
     if (!records || records.length === 0) {
         return (
-            <div className="empty-records">
-                <div className="empty-icon">
-                    <FileText size={32} />
+            <div className="vault-empty-state-prm">
+                <div className="empty-icon-ring">
+                    <FileText size={42} strokeWidth={1.5} />
                 </div>
-                <h3>No Medical Records Found</h3>
-                <p>Upload a prescription or report to get started.</p>
+                <h3 className="empty-headline-prm">No Medical Records Found</h3>
+                <p className="empty-subline-prm">Upload a prescription or report to get started with your clinical history.</p>
             </div>
         );
     }
