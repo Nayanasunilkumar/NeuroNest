@@ -572,8 +572,7 @@ def get_appointments():
 
         current_user_id = int(get_jwt_identity())
         appointments = (
-            Appointment.query.options(joinedload(Appointment.doctor))
-            .filter_by(patient_id=current_user_id)
+            Appointment.query.filter_by(patient_id=current_user_id)
             .order_by(Appointment.appointment_date.desc(), Appointment.appointment_time.desc())
             .all()
         )

@@ -16,9 +16,9 @@ def get_consolidated_dashboard():
     user_id = int(get_jwt_identity())
     
     # 1. Fetch User and Profile in one go
-    user = User.query.options(joinedload(User.patient_profile)).get(user_id)
+    user = User.query.options(joinedload("patient_profile")).get(user_id)
     if not user:
-        return jsonify({"message": "User not found"}), 404
+        return jsonify({"error": "User not found"}), 404
         
     profile = user.patient_profile
     
@@ -82,7 +82,7 @@ def get_consolidated_dashboard():
             history = list(_history_by_patient.get(user_id, []))
             vitals_data["history"] = history
     except Exception as e:
-        current_app.logger.error(f"Failed to fetch vitals for consolidated dashboard: {e}")
+        current_app.logger.error(f"Failed to fetch vitals for consolidated dashboard: {str(e)}")
 
     # 5. Build Response
     response = {
