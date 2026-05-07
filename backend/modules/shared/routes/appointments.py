@@ -71,7 +71,7 @@ def test_email_appointments():
 
 
 def _is_patient():
-    return get_jwt().get("role") == "patient"
+    return (get_jwt().get("role") or "").lower() == "patient"
 
 
 def _utc_now():
