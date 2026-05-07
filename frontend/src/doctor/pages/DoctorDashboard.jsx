@@ -19,18 +19,26 @@ import { formatClockTimeIST, formatDateFromISTDate, formatTimeIST, getISTDayKey,
 import '../../shared/styles/dashboard.css';
 
 const StatCard = ({ label, value, hint, icon, tone = 'primary' }) => (
-  <div className={`nn-metric-card nn-tone-${tone} nn-metric-card-accent`}>
-    <div className="nn-metric-accent" aria-hidden="true" />
-    <div className="d-flex justify-content-between align-items-start mb-2">
-      <div className="nn-stat-label">{label}</div>
-      <div className="nn-stat-icon">
-        {React.createElement(icon, { size: 16 })}
+  <div className={`nn-metric-card nn-tone-${tone} nn-metric-card-premium`}>
+    <div className="nn-metric-glass" aria-hidden="true" />
+    <div className="d-flex justify-content-between align-items-start mb-3">
+      <div className="nn-stat-icon-wrapper">
+        {React.createElement(icon, { size: 20 })}
       </div>
+      <div className="nn-stat-badge">{tone.toUpperCase()}</div>
     </div>
     <div>
       <div className="nn-stat-value">{value}</div>
+      <div className="nn-stat-label">{label}</div>
       <div className="nn-stat-hint">{hint}</div>
     </div>
+  </div>
+);
+
+const ClinicalPulse = () => (
+  <div className="nn-pulse-banner mb-4">
+    <div className="nn-pulse-dot" />
+    <span className="nn-pulse-text">LIVE CLINICAL PULSE: System operating at optimal latency. All health modules synced.</span>
   </div>
 );
 
@@ -356,6 +364,8 @@ const DoctorDashboard = () => {
           <span>System Active</span>
         </div>
       </section>
+
+      <ClinicalPulse />
 
       <section className="row g-4">
         <div className="col-12">

@@ -583,45 +583,97 @@ body.dark .theme-toggle-btn::before {
   overflow: hidden;
 }
 
-.nn-dashboard-wrap .nn-metric-card:hover {
-  box-shadow: var(--nn-shadow-sm);
+.nn-metric-card-premium {
+  border: 1px solid var(--nn-border);
+  background: linear-gradient(145deg, #ffffff 0%, #f9fafb 100%);
+  border-radius: 20px;
+  padding: 24px;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
 }
 
-.nn-metric-card-accent .nn-metric-accent {
+.nn-metric-card-premium:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.02);
+  border-color: var(--nn-primary);
+}
+
+.nn-metric-glass {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 4px;
-  border-radius: 16px 16px 0 0;
-  background: color-mix(in srgb, var(--nn-primary) 80%, white);
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.8) 0%, transparent 60%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
 }
 
-.nn-tone-primary.nn-metric-card-accent .nn-metric-accent {
-  background: #2b6eea;
+.nn-metric-card-premium:hover .nn-metric-glass {
+  opacity: 1;
 }
 
-.nn-tone-info.nn-metric-card-accent .nn-metric-accent {
-  background: #11b7c7;
+.nn-stat-icon-wrapper {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  border: 1px solid var(--nn-border);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.02);
 }
 
-.nn-tone-warning.nn-metric-card-accent .nn-metric-accent {
-  background: #f4b740;
+.nn-tone-primary .nn-stat-icon-wrapper { color: #2b6eea; border-color: rgba(43, 110, 234, 0.2); }
+.nn-tone-info .nn-stat-icon-wrapper { color: #11b7c7; border-color: rgba(17, 183, 199, 0.2); }
+.nn-tone-warning .nn-stat-icon-wrapper { color: #f4b740; border-color: rgba(244, 183, 64, 0.2); }
+.nn-tone-success .nn-stat-icon-wrapper { color: #2fb879; border-color: rgba(47, 184, 121, 0.2); }
+
+.nn-stat-badge {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  padding: 4px 10px;
+  border-radius: 99px;
+  background: #f1f5f9;
+  color: #64748b;
 }
 
-.nn-tone-success.nn-metric-card-accent .nn-metric-accent {
-  background: #2fb879;
-}
-
-.nn-dashboard-wrap .nn-stat-icon {
-  width: 34px;
-  height: 34px;
+/* Clinical Pulse */
+.nn-pulse-banner {
+  background: #0f172a;
   border-radius: 12px;
-  border: 1px solid color-mix(in srgb, var(--nn-border) 70%, transparent);
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
 }
 
-.nn-dashboard-wrap .nn-stat-label {
-  font-size: 0.7rem;
+.nn-pulse-dot {
+  width: 8px;
+  height: 8px;
+  background: #22c55e;
+  border-radius: 50%;
+  box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.2);
+  animation: pulse-ring 2s infinite;
+}
+
+@keyframes pulse-ring {
+  0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4); }
+  70% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+}
+
+.nn-pulse-text {
+  color: #f8fafc;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
 }
 
 /* Custom scrollbar for dashboard */
@@ -749,11 +801,24 @@ body.dark .theme-toggle-btn::before {
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  padding: 1.35rem 1.6rem;
-  border-radius: 22px;
-  background: linear-gradient(135deg, var(--nn-doctor-hero-start) 0%, var(--nn-doctor-hero-mid) 55%, var(--nn-doctor-hero-end) 100%);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  box-shadow: 0 18px 40px rgba(11, 58, 121, 0.18);
+  padding: 1.8rem 2rem;
+  border-radius: 28px;
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  position: relative;
+  overflow: hidden;
+}
+
+.nn-overview-hero-card::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle at center, rgba(99, 102, 241, 0.15) 0%, transparent 70%);
+  pointer-events: none;
 }
 
 .nn-clickable {
