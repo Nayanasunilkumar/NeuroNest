@@ -76,7 +76,9 @@ def get_conversations():
     
     user_participations = Participant.query.filter_by(user_id=current_user_id).all()
     
-    related_doctor_ids = get_related_doctor_ids_for_patient(current_user_id) if current_user.role == "patient" else []
+    # For patients, we include ALL historical doctors (even cancelled appts) 
+    # to ensure they can see their chat history.
+    related_doctor_ids = get_related_doctor_ids_for_patient(current_user_id, include_all=True) if current_user.role == "patient" else []
     related_patient_ids = get_related_patient_ids_for_doctor(current_user_id) if current_user.role == "doctor" else []
     related_ids = set(related_doctor_ids) | set(related_patient_ids)
 

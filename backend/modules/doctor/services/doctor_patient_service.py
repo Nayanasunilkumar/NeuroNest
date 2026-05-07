@@ -80,19 +80,16 @@ def get_related_patient_ids_for_doctor(doctor_id: int):
     return [row[0] for row in rows if row and row[0]]
 
 
-def get_related_doctor_ids_for_patient(patient_id: int):
+def get_related_doctor_ids_for_patient(patient_id: int, include_all=True):
     if not patient_id:
         return []
 
-    rows = (
-        db.session.query(Appointment.doctor_id)
-        .filter(
-            Appointment.patient_id == patient_id,
-            func.lower(Appointment.status).notin_(DOCTOR_PATIENT_RELATIONSHIP_EXCLUDED_STATUSES),
-        )
-        .distinct()
-        .all()
-    )
+    query = db.session.query(Appointment.doctor_id).filter(Appointment.patient_id == patient_id)
+    
+    if not include_all:
+        query = query.filter(func.lower(Appointment.status).notin_(DOCTOR_PATIENT_RELATIONSHIP_EXCLUDED_STATUSES))
+        
+    rows = query.distinct().all()
     return [row[0] for row in rows if row and row[0]]
 
 
