@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { loginUser } from "../shared/services/api/auth";
 import { saveAuth } from "../shared/utils/auth";
@@ -44,7 +44,8 @@ const Login = () => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const [isWarmingUp, setIsWarmingUp] = useState(false);
+  const [warmupSeconds, setWarmupSeconds] = useState(0);
+  const warmupIntervalRef = useRef(null);
 
   // Wake up the Render backend immediately on page load to eliminate cold-start delay
   useEffect(() => {
@@ -60,14 +61,22 @@ const Login = () => {
     setEmail(formEmail);
     setPassword(formPassword);
 
-    // Show "warming up" hint after 5s if still loading
+    // Show live countdown after 4s if still loading
     let warmupTimer;
+    const startCountdown = () => {
+      setWarmupSeconds(1);
+      warmupIntervalRef.current = setInterval(() => {
+        setWarmupSeconds(prev => prev + 1);
+      }, 1000);
+    };
+
     try {
       setLoading(true);
-      warmupTimer = setTimeout(() => setIsWarmingUp(true), 5000);
+      warmupTimer = setTimeout(startCountdown, 4000);
       const { data } = await loginUser({ email: formEmail, password: formPassword });
       clearTimeout(warmupTimer);
-      setIsWarmingUp(false);
+      clearInterval(warmupIntervalRef.current);
+      setWarmupSeconds(0);
       saveAuth(data.token, data.user);
       const role = data.user.role;
       if (role === "patient") navigate("/patient/dashboard");
@@ -87,7 +96,8 @@ const Login = () => {
       else if (role === "super_admin") navigate("/admin/dashboard");
     } catch (err) {
       clearTimeout(warmupTimer);
-      setIsWarmingUp(false);
+      clearInterval(warmupIntervalRef.current);
+      setWarmupSeconds(0);
       setError(err?.response?.data?.message || "Unable to sign in. Please try again.");
     } finally {
       setLoading(false);
@@ -331,12 +341,12 @@ const Login = () => {
                 {loading ? "Signing in…" : "Sign In"}
               </button>
 
-              {isWarmingUp && (
+              {warmupSeconds > 0 && (
                 <div
                   className="text-center py-2 px-3 rounded-3 mb-2"
                   style={{ background: "#FFF7ED", border: "1px solid #FED7AA", fontSize: "0.82rem", color: "#92400E" }}
                 >
-                  ⏳ Server is waking up — this may take up to 30 seconds on first login. Please wait…
+                  ⏳ Server is waking up ({warmupSeconds}s)… This is normal on first daily login. Please keep waiting.
                 </div>
               )}
 
