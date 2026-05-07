@@ -102,10 +102,10 @@ const TempSparkline = memo(({ history, color, height = 56 }) => {
   );
 });
 
-function VitalsSection() {
-  const [data, setData] = React.useState(null);
-  const [history, setHistory] = React.useState([]);
-  const [online, setOnline] = React.useState(false);
+function VitalsSection({ initialData = null }) {
+  const [data, setData] = React.useState(initialData?.latest || null);
+  const [history, setHistory] = React.useState(initialData?.history || []);
+  const [online, setOnline] = React.useState(!!initialData?.latest);
   const [isStale, setIsStale] = React.useState(true);
   const lastUpdateRef = useRef(0);
   const socketRef = useRef(null);
@@ -114,7 +114,9 @@ function VitalsSection() {
 
   useEffect(() => {
     if (!patientId) return undefined;
+    
     const fetchVitals = async () => {
+      if (initialData) return;
       try {
         const [latestResponse, historyResponse] = await Promise.all([
           fetch(`${BACKEND_API}/api/vitals/latest`, { headers: { Authorization: `Bearer ${localStorage.getItem("neuronest_token")}` } }),
@@ -245,6 +247,23 @@ function VitalsSection() {
 
 const DashboardHome = () => {
   const user = getUser();
+  const [consolidatedData, setConsolidatedData] = React.useState(null);
+  const [loading, setLoading] = React.useState(true);
+
+  useEffect(() => {
+    const fetchAll = async () => {
+      try {
+        const { getConsolidatedDashboard } = await import("../../shared/services/api/profileApi");
+        const data = await getConsolidatedDashboard();
+        setConsolidatedData(data);
+      } catch (err) {
+        console.error("Failed to fetch dashboard data", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchAll();
+  }, []);
 
   return (
     <div className="py-2 nn-dashboard-shell">
@@ -258,8 +277,19 @@ const DashboardHome = () => {
           <div className="position-absolute top-0 end-0 opacity-10 p-5 d-none d-lg-block"><Activity size={200} strokeWidth={1} /></div>
         </div>
       </div>
-      <VitalsSection />
-      <DashboardEnhancements />
+      
+      {loading ? (
+        <div className="d-flex justify-content-center py-5">
+          <div className="spinner-border text-primary" role="status">
+            <span className="visually-hidden">Loading Dashboard...</span>
+          </div>
+        </div>
+      ) : (
+        <>
+          <VitalsSection initialData={consolidatedData?.vitals} />
+          <DashboardEnhancements consolidatedData={consolidatedData} />
+        </>
+      )}
     </div>
   );
 };

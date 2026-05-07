@@ -338,13 +338,13 @@ function EmergencySOSModal({ contacts, onClose }) {
   );
 }
 
-export default function DashboardEnhancements() {
+export default function DashboardEnhancements({ consolidatedData = null }) {
   const navigate = useNavigate();
-  const [notifications, setNotifications] = useState([]);
-  const [appointments, setAppointments] = useState([]);
-  const [clinicalData, setClinicalData] = useState(null);
-  const [emergencyContacts, setEmergencyContacts] = useState([]);
-  const [trendSeries, setTrendSeries] = useState(() => buildTrendSeries());
+  const [notifications, setNotifications] = useState(consolidatedData?.notifications || []);
+  const [appointments, setAppointments] = useState(consolidatedData?.appointments || []);
+  const [clinicalData, setClinicalData] = useState(consolidatedData?.clinical || null);
+  const [emergencyContacts, setEmergencyContacts] = useState(consolidatedData?.emergency_contacts || []);
+  const [trendSeries, setTrendSeries] = useState(() => buildTrendSeries(consolidatedData?.vitals?.history || [], consolidatedData?.vitals?.latest));
   const [selectedMetric, setSelectedMetric] = useState("hr");
   const [dismissingAlerts, setDismissingAlerts] = useState([]);
   const [showSosConfirm, setShowSosConfirm] = useState(false);
@@ -361,22 +361,18 @@ export default function DashboardEnhancements() {
   });
 
   useEffect(() => {
+    if (consolidatedData) return;
+    
     const loadData = async () => {
       try {
-        const [notificationData, appointmentData, clinicalSummary, contactData, latest, history] = await Promise.all([
-          getMyNotifications(true).catch(() => []),
-          getAppointments().catch(() => []),
-          getClinicalSummary().catch(() => null),
-          api.get("/profile/emergency-contact/me").catch(() => ({ data: [] })),
-          fetch(`${API_BASE_URL}/api/vitals/latest`, { headers: { Authorization: `Bearer ${localStorage.getItem("neuronest_token")}` } }).then((res) => res.json()).catch(() => null),
-          fetch(`${API_BASE_URL}/api/vitals/history`, { headers: { Authorization: `Bearer ${localStorage.getItem("neuronest_token")}` } }).then((res) => res.json()).catch(() => []),
-        ]);
+        const { getConsolidatedDashboard } = await import("../../shared/services/api/profileApi");
+        const data = await getConsolidatedDashboard();
 
-        setNotifications(Array.isArray(notificationData) ? notificationData : []);
-        setAppointments(Array.isArray(appointmentData) && appointmentData.length ? appointmentData : FALLBACK_APPOINTMENTS);
-        setClinicalData(clinicalSummary);
-        setEmergencyContacts(Array.isArray(contactData?.data) ? contactData.data : []);
-        setTrendSeries(buildTrendSeries(Array.isArray(history) ? history : [], latest));
+        setNotifications(data.notifications || []);
+        setAppointments(Array.isArray(data.appointments) && data.appointments.length ? data.appointments : FALLBACK_APPOINTMENTS);
+        setClinicalData(data.clinical || null);
+        setEmergencyContacts(data.emergency_contacts || []);
+        setTrendSeries(buildTrendSeries(data.vitals?.history || [], data.vitals?.latest));
       } catch (error) {
         console.error("Dashboard enhancements failed to load", error);
         setAppointments(FALLBACK_APPOINTMENTS);
@@ -384,7 +380,18 @@ export default function DashboardEnhancements() {
     };
 
     loadData();
-  }, []);
+  }, [consolidatedData]);
+
+  // Sync state if consolidatedData changes
+  useEffect(() => {
+    if (consolidatedData) {
+      setNotifications(consolidatedData.notifications || []);
+      setAppointments(Array.isArray(consolidatedData.appointments) && consolidatedData.appointments.length ? consolidatedData.appointments : FALLBACK_APPOINTMENTS);
+      setClinicalData(consolidatedData.clinical || null);
+      setEmergencyContacts(consolidatedData.emergency_contacts || []);
+      setTrendSeries(buildTrendSeries(consolidatedData.vitals?.history || [], consolidatedData.vitals?.latest));
+    }
+  }, [consolidatedData]);
 
   useEffect(() => {
     const onlineUpcoming = appointments.filter((appt) => {

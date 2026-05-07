@@ -4,6 +4,7 @@ from datetime import datetime
 from flask import Blueprint, jsonify, request, redirect
 from flask_jwt_extended import get_jwt, get_jwt_identity, jwt_required
 from sqlalchemy import func
+from sqlalchemy.orm import joinedload
 from werkzeug.utils import secure_filename
 
 from database.models import (
@@ -101,7 +102,7 @@ def _parse_tags(raw_tags):
 
 def _get_prescription_medications(patient_id, active_only=True):
     today = datetime.utcnow().date()
-    query = Prescription.query.filter(
+    query = Prescription.query.options(joinedload(Prescription.items)).filter(
         Prescription.patient_id == patient_id,
         Prescription.is_deleted.is_(False)
     )

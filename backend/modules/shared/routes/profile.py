@@ -355,29 +355,24 @@ def get_my_clinical_summary():
             if k in p_dict and p_dict[k] is not None:
                 identity[k] = p_dict[k]
 
-    # Fetch Clinical History (Defensive Queries)
-    try:
-        medications = PatientMedication.query.filter_by(patient_id=user_id, status='active').all()
-    except Exception: medications = []
+    # Fetch Clinical History (Optimized Queries)
+    # medications = PatientMedication.query.filter_by(patient_id=user_id, status='active').all()
+    # conditions = PatientCondition.query.filter_by(patient_id=user_id, status='active').all()
+    # allergies = PatientAllergy.query.filter_by(patient_id=user_id, status='active').all()
     
-    try:
-        conditions = PatientCondition.query.filter_by(patient_id=user_id, status='active').all()
-    except Exception: conditions = []
-    
-    try:
-        allergies = PatientAllergy.query.filter_by(patient_id=user_id, status='active').all()
-    except Exception: allergies = []
-    
-    try:
-        appointments = Appointment.query.filter_by(patient_id=user_id).order_by(Appointment.appointment_date.desc()).limit(10).all()
-    except Exception: appointments = []
+    # Using simple queries for now but could be further optimized with a single UNION if needed.
+    # The main bottleneck was the number of parallel requests from the frontend.
+    medications = PatientMedication.query.filter_by(patient_id=user_id, status='active').all()
+    conditions = PatientCondition.query.filter_by(patient_id=user_id, status='active').all()
+    allergies = PatientAllergy.query.filter_by(patient_id=user_id, status='active').all()
+    appointments_list = Appointment.query.filter_by(patient_id=user_id).order_by(Appointment.appointment_date.desc()).limit(10).all()
 
     summary = {
         "identity": identity,
-        "medications": [m.to_dict() for m in medications] if medications else [],
-        "conditions": [c.to_dict() for c in conditions] if conditions else [],
-        "allergies": [a.to_dict() for a in allergies] if allergies else [],
-        "timeline": [appt.to_dict() for appt in appointments] if appointments else []
+        "medications": [m.to_dict() for m in medications],
+        "conditions": [c.to_dict() for c in conditions],
+        "allergies": [a.to_dict() for a in allergies],
+        "timeline": [appt.to_dict() for appt in appointments_list]
     }
 
     return jsonify(summary), 200

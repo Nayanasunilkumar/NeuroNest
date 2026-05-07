@@ -34,3 +34,8 @@ export const getClinicalSummary = async () => {
     const response = await axios.get("/profile/clinical-summary");
     return response.data;
 };
+
+export const getConsolidatedDashboard = async () => {
+    const response = await axios.get("/api/patient/dashboard/consolidated");
+    return response.data;
+};
