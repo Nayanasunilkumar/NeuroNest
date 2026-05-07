@@ -34,26 +34,9 @@ def create_app():
     register_feature_modules(app)
     register_socket_handlers()
     register_core_routes(app)
-
-    # Start heavy background tasks AFTER all routes are registered
-    def background_startup(app_context):
-        import time
-        time.sleep(2) # 🛑 Safety delay to let main thread settle
-        with app_context:
-            try:
-                print("[DB] Starting background initialization...")
-                db.create_all()
-                run_startup_migrations()
-                print("[DB] Background initialization complete.")
-                
-                print("[SCHEDULER] Starting background scheduler...")
-                start_scheduler(app)
-                print("[SCHEDULER] Background scheduler complete.")
-            except Exception as e:
-                print(f"[STARTUP] ❌ Background initialization failed: {e}")
-
-    import threading
-    threading.Thread(target=background_startup, args=(app.app_context(),), daemon=True).start()
+    
+    # Start the non-blocking background scheduler
+    start_scheduler(app)
 
     @app.before_request
     def enforce_account_status():
