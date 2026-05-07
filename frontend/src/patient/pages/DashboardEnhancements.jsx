@@ -317,17 +317,21 @@ function EmergencySOSModal({ contacts, onClose }) {
                 ))}
               </div>
             ) : (
-              <div className="nn-empty-sos-state">
-                <p>No emergency contacts added. Go to Profile -&gt; Emergency Support to add them.</p>
+              <div className="nn-empty-sos-state-premium">
+                <div className="nn-empty-sos-icon-ring">
+                   <ShieldAlert size={32} />
+                </div>
+                <h3>Secure your support network</h3>
+                <p>No emergency contacts have been added yet. Adding trusted contacts ensures they can be reached immediately in critical situations.</p>
                 <button
                   type="button"
-                  className="btn btn-outline-light rounded-pill"
+                  className="btn btn-premium-white rounded-pill"
                   onClick={() => {
                     onClose();
                     navigate("/patient/profile");
                   }}
                 >
-                  Open Profile
+                  Configure Emergency Contacts
                 </button>
               </div>
             )}

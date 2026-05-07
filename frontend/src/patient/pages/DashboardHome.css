@@ -541,20 +541,47 @@
 }
 
 .nn-confirm-modal {
-  width: min(92vw, 460px);
-  border-radius: 28px;
+  width: min(92vw, 440px);
+  border-radius: 32px;
   background: white;
-  padding: 1.6rem;
-  box-shadow: 0 30px 80px rgba(15, 23, 42, 0.22);
+  padding: 2.2rem 1.8rem;
+  box-shadow: 0 40px 100px rgba(15, 23, 42, 0.28);
   text-align: center;
+  position: relative;
+  overflow: hidden;
+  animation: nnFadeUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.nn-confirm-modal::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 6px;
+  background: linear-gradient(90deg, #dc2626 0%, #ef4444 100%);
 }
 
 .nn-confirm-icon {
-  width: 58px;
-  height: 58px;
-  margin: 0 auto 1rem;
-  background: rgba(220, 38, 38, 0.12);
-  color: #c81e1e;
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 1.4rem;
+  background: rgba(220, 38, 38, 0.08);
+  color: #dc2626;
+  border-radius: 20px;
+  border: 1px solid rgba(220, 38, 38, 0.12);
+}
+
+.nn-confirm-modal h3 {
+  font-size: 1.4rem;
+  font-weight: 900;
+  color: #0f172a;
+  margin-bottom: 0.8rem;
+}
+
+.nn-confirm-modal p {
+  color: #64748b;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  margin-bottom: 1.8rem;
 }
 
 .nn-confirm-actions {
@@ -594,12 +621,20 @@
 }
 
 .nn-sos-close {
-  width: 44px;
-  height: 44px;
+  width: 42px;
+  height: 42px;
   border-radius: 50%;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.08);
   color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+.nn-sos-close:hover {
+  background: rgba(255, 255, 255, 0.15);
+  transform: rotate(90deg);
 }
 
 .nn-sos-grid,
@@ -663,10 +698,58 @@
   color: rgba(255, 255, 255, 0.78);
 }
 
-.nn-empty-sos-state {
-  border-radius: 22px;
-  padding: 1.2rem;
-  background: rgba(255, 255, 255, 0.06);
+.nn-empty-sos-state-premium {
+  border-radius: 28px;
+  padding: 2.5rem 1.5rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  text-align: center;
+}
+
+.nn-empty-sos-icon-ring {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.2rem;
+  color: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.nn-empty-sos-state-premium h3 {
+  color: white;
+  font-size: 1.15rem;
+  font-weight: 800;
+  margin-bottom: 0.5rem;
+}
+
+.nn-empty-sos-state-premium p {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.9rem;
+  line-height: 1.5;
+  margin-bottom: 1.5rem;
+  max-width: 320px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.btn-premium-white {
+  background: white;
+  color: #0c2340;
+  font-weight: 800;
+  padding: 0.7rem 1.5rem;
+  border: none;
+  box-shadow: 0 10px 25px rgba(255, 255, 255, 0.15);
+  transition: all 0.2s ease;
+}
+
+.btn-premium-white:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 15px 30px rgba(255, 255, 255, 0.2);
+  background: #f8f9fa;
 }
 
 @media (max-width: 1199px) {
