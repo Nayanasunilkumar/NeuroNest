@@ -81,6 +81,29 @@ def get_consolidated_dashboard():
                 vitals_data["latest"] = dict(latest)
             history = list(_history_by_patient.get(user_id, []))
             vitals_data["history"] = history
+
+        # Feature Control: Only Nezrin has an active monitor for this demo
+        is_nezrin = user.full_name and "nezrin" in user.full_name.lower()
+        if is_nezrin:
+            if not vitals_data["latest"]:
+                # Provide simulation for Nezrin if no real hardware is streaming
+                vitals_data["latest"] = {
+                    "patient_id": user_id,
+                    "hr": 75.0,
+                    "spo2": 98.0,
+                    "temp": 36.8,
+                    "signal": "ok",
+                    "ts": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+                }
+                vitals_data["history"] = [
+                    {"temp": 36.7, "hr": 74, "spo2": 98, "ts": (datetime.now(timezone.utc) - timedelta(minutes=2)).isoformat()},
+                    {"temp": 36.8, "hr": 75, "spo2": 98, "ts": (datetime.now(timezone.utc)).isoformat()}
+                ]
+        else:
+            # For all other patients, ensure they see the "No Monitoring Device" state
+            if not vitals_data["latest"]:
+                vitals_data["latest"] = {"signal": "no_device"}
+                
     except Exception as e:
         current_app.logger.error(f"Failed to fetch vitals for consolidated dashboard: {str(e)}")
 
