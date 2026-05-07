@@ -31,24 +31,27 @@ def create_app():
     JWTManager(app)
     socketio.init_app(app)
 
-    # Run heavy DB initialization in background to allow Port Binding to succeed immediately
-    def background_db_init(app_context):
+    # Run heavy initialization (DB and Scheduler) in background to allow Port Binding to succeed immediately
+    def background_startup(app_context):
         with app_context:
             try:
                 print("[DB] Starting background initialization...")
                 db.create_all()
                 run_startup_migrations()
                 print("[DB] Background initialization complete.")
+                
+                print("[SCHEDULER] Starting background scheduler...")
+                start_scheduler(app)
+                print("[SCHEDULER] Background scheduler complete.")
             except Exception as e:
-                print(f"[DB] ❌ Background initialization failed: {e}")
+                print(f"[STARTUP] ❌ Background initialization failed: {e}")
 
     import threading
-    threading.Thread(target=background_db_init, args=(app.app_context(),), daemon=True).start()
+    threading.Thread(target=background_startup, args=(app.app_context(),), daemon=True).start()
 
     register_feature_modules(app)
     register_socket_handlers()
     register_core_routes(app)
-    start_scheduler(app)
 
     @app.before_request
     def enforce_account_status():
