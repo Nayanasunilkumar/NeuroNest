@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { loginUser } from "../shared/services/api/auth";
 import { saveAuth } from "../shared/utils/auth";
 import { useSystemConfig } from "../shared/context/SystemConfigContext";
+import { API_BASE_URL } from "../config/env";
 import "../shared/styles/auth.css";
 
 const EyeIcon = ({ open }) =>
@@ -42,6 +43,11 @@ const Login = () => {
   const [showPw, setShowPw] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // Wake up the Render backend immediately on page load to eliminate cold-start delay
+  useEffect(() => {
+    fetch(`${API_BASE_URL}/`, { method: "GET", cache: "no-store" }).catch(() => {});
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
