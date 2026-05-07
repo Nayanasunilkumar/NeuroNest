@@ -140,12 +140,6 @@ function VitalsSection({ initialData = null }) {
     fetchVitals();
 
     const staleTimer = setInterval(() => {
-      // Force "Connected" state for Nezrin demo
-      if (user?.full_name?.toLowerCase().includes("nezrin")) {
-        setIsStale(false);
-        setOnline(true);
-        return;
-      }
       if (lastUpdateRef.current > 0) setIsStale(Date.now() - lastUpdateRef.current > 15000);
     }, 5000);
 

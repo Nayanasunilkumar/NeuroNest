@@ -316,22 +316,8 @@ def get_latest():
 
     latest = _latest_snapshot(target_patient_id)
     
-    # Feature Control: Simulate Nezrin's device connection
-    target_user = User.query.get(target_patient_id)
-    is_nezrin = target_user and target_user.full_name and "nezrin" in target_user.full_name.lower()
-
     if latest:
         return jsonify(latest), 200
-
-    if is_nezrin:
-        return jsonify({
-            "patient_id": target_patient_id,
-            "hr": 75.0,
-            "spo2": 98.0,
-            "temp": 36.8,
-            "signal": "ok",
-            "ts": _serialize_timestamp(_utc_now())
-        }), 200
 
     if target_patient_id in _known_device_patient_ids():
         return jsonify({"patient_id": target_patient_id, "signal": "disconnected"}), 200
@@ -355,16 +341,6 @@ def get_history():
         return jsonify([]), 200
 
     history = _history_snapshot(target_patient_id)
-    if not history:
-        target_user = User.query.get(target_patient_id)
-        if target_user and target_user.full_name and "nezrin" in target_user.full_name.lower():
-            # Provide mock history for Nezrin
-            now = _utc_now()
-            return jsonify([
-                {"temp": 36.7, "hr": 74, "spo2": 98, "ts": _serialize_timestamp(now - timedelta(minutes=2))},
-                {"temp": 36.8, "hr": 75, "spo2": 98, "ts": _serialize_timestamp(now)}
-            ]), 200
-
     return jsonify(history), 200
 
 
