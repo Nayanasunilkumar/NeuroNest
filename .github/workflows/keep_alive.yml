@@ -1,0 +1,15 @@
+name: Backend Keep-Alive
+
+on:
+  schedule:
+    # Run every 10 minutes
+    - cron: '*/10 * * * *'
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping NeuroNest Backend
+        run: |
+          curl -s -f https://neuronest-backend-2rn0.onrender.com/api/health || echo "Ping failed, but that's okay (server might be waking up)"

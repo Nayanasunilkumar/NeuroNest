@@ -141,10 +141,12 @@ const Login = () => {
           <p className="nn-auth-subtitle">Sign in to your account</p>
         </header>
 
-        {serverStatus === 'warming-up' && !error && (
+        {(serverStatus === 'warming-up' || loading) && !error && (
             <div className="nn-auth-info">
                 <div className="spinner-border spinner-border-sm" role="status" />
-                <span>Backend is waking up (Free Tier)...</span>
+                <div style={{ lineHeight: '1.4' }}>
+                    <strong>First visit today?</strong> Hang tight — the server is waking up. This usually takes about 30 seconds on the free tier.
+                </div>
             </div>
         )}
 
