@@ -19,6 +19,7 @@ from extensions.socket import socketio
 
 def create_app():
     app = Flask(__name__)
+    app.url_map.strict_slashes = False
     app.config.from_object(Config)
 
     CORS(
@@ -91,12 +92,17 @@ def create_app():
     @app.errorhandler(Exception)
     def handle_exception(e):
         import traceback
+        import sys
+        # Print to stderr for Gunicorn/Render logs
+        print(f"[CRITICAL ERROR] {str(e)}", file=sys.stderr)
+        traceback.print_exc(file=sys.stderr)
+        
         error_info = {
             "error": "Global Exception Caught",
             "message": str(e),
-            "traceback": traceback.format_exc()
+            "traceback": traceback.format_exc(),
+            "type": str(type(e).__name__)
         }
-        app.logger.error(f"[GLOBAL ERROR] {str(e)}\n{traceback.format_exc()}")
         return jsonify(error_info), 500
 
     return app
