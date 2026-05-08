@@ -429,8 +429,15 @@ def get_record_view_url(record_id, patient_id=None):
     if not record:
         return jsonify({"message": "Record not found"}), 404
 
+    def _make_inline_url(url):
+        """Inject Cloudinary fl_inline flag so the browser renders the file
+        inline instead of downloading it (fixes blank PDF iframe)."""
+        if url and 'cloudinary.com' in url and '/upload/' in url:
+            return url.replace('/upload/', '/upload/fl_inline/', 1)
+        return url
+
     return jsonify({
-        "file_url": record.file_path,
+        "file_url": _make_inline_url(record.file_path),
         "file_type": record.file_type,
         "title": record.title,
     }), 200
