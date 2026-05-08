@@ -218,7 +218,7 @@ const DoctorDashboard = () => {
     return [...appointments]
       .filter((item) => {
         const status = String(item.status || '').toLowerCase();
-        return status !== 'cancelled' && status !== 'completed' && status !== 'no-show';
+        return status !== 'cancelled' && status !== 'completed' && status !== 'no-show' && status !== 'cancelled_by_doctor' && status !== 'cancelled_by_patient';
       })
       .sort((a, b) => {
         const timeA = parseISTDateTime(a.appointment_date, a.appointment_time || "00:00:00");
