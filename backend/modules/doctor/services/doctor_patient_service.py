@@ -37,12 +37,21 @@ def get_doctor_scope_ids(doctor_id: int):
     if not doctor_id:
         return []
 
+    print(f"[SCOPE] Fetching scope for doctor_id: {doctor_id}")
     current_user = User.query.get(doctor_id)
+    if not current_user:
+        print(f"[SCOPE] ⚠️ User {doctor_id} not found in database!")
+        return [doctor_id]
+
     if is_dr_naina_user(current_user):
+        print(f"[SCOPE] 👑 Dr. Naina detected (ID: {doctor_id}). Expanding scope...")
         scoped_ids = set(get_dr_naina_scope_ids())
         scoped_ids.add(doctor_id)
-        return sorted(scoped_ids)
+        result = sorted(scoped_ids)
+        print(f"[SCOPE] Scoped IDs: {result}")
+        return result
 
+    print(f"[SCOPE] Standard doctor detected. Scope: {[doctor_id]}")
     return [doctor_id]
 
 

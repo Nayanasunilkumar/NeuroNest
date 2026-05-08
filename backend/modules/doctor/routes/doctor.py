@@ -947,7 +947,12 @@ def get_doctor_stats():
         "total_patients": total_patients,
         "today_appointments": today_count,
         "pending_requests": pending_requests,
-        "active_assessments": active_assessments
+        "active_assessments": active_assessments,
+        "debug_info": {
+            "doctor_id": current_user_id,
+            "scope_ids": doctor_scope_ids,
+            "patient_ids": list(related_patient_ids)
+        }
     }), 200
 
 @doctor_bp.route("/patients", methods=["GET"])
