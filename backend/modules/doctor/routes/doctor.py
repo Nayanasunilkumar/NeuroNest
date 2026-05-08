@@ -911,7 +911,7 @@ def get_doctor_stats():
     related_patient_ids = set(get_related_patient_ids_for_doctor(current_user_id))
     
     # Also include patients from chat conversations
-    from database.models import Participant
+    from models.chat_models import Participant
     chat_participations = Participant.query.filter_by(user_id=current_user_id).all()
     for p in chat_participations:
         other = Participant.query.filter(
@@ -968,7 +968,7 @@ def get_doctor_patients():
     related_ids = set(get_related_patient_ids_for_doctor(current_user_id))
     
     # 2. Add chat-connected IDs
-    from database.models import Participant
+    from models.chat_models import Participant
     chat_participations = Participant.query.filter_by(user_id=current_user_id).all()
     for p in chat_participations:
         other = Participant.query.filter(
