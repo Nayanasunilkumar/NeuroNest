@@ -99,7 +99,7 @@ const getCurrentHourIST = () => getISTHour();
 const getAppointmentType = (appt) => String(appt?.consultation_type || "in_person").toLowerCase() === "online" ? "Video" : "In-person";
 const getStatusMeta = (status) => {
   const value = String(status || "pending").toLowerCase();
-  if (value === "approved" || value === "confirmed") return { label: "Confirmed", className: "confirmed" };
+  if (value === "approved") return { label: "Confirmed", className: "confirmed" };
   if (value === "rescheduled") return { label: "Action Needed", className: "pending" };
   return { label: "Pending", className: "pending" };
 };
@@ -397,7 +397,7 @@ export default function DashboardEnhancements({ consolidatedData = null }) {
   useEffect(() => {
     const onlineUpcoming = appointments.filter((appt) => {
       const status = String(appt.status || "").toLowerCase();
-      return String(appt.consultation_type || "in_person").toLowerCase() === "online" && ["pending", "approved", "rescheduled", "confirmed"].includes(status);
+      return String(appt.consultation_type || "in_person").toLowerCase() === "online" && ["pending", "approved", "rescheduled"].includes(status);
     });
     if (!onlineUpcoming.length) {
       setCallStateById({});
@@ -435,7 +435,7 @@ export default function DashboardEnhancements({ consolidatedData = null }) {
   }, [medicationChecks]);
 
   const upcomingAppointments = useMemo(() => appointments
-    .filter((appt) => ["pending", "approved", "rescheduled", "confirmed"].includes(String(appt.status || "").toLowerCase()))
+    .filter((appt) => ["pending", "approved", "rescheduled"].includes(String(appt.status || "").toLowerCase()))
     .filter((appt) => parseAppointmentDateTime(appt) >= new Date(Date.now() - 60 * 60 * 1000))
     .sort((a, b) => parseAppointmentDateTime(a) - parseAppointmentDateTime(b))
     .slice(0, 3), [appointments]);
