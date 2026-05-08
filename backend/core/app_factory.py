@@ -91,24 +91,34 @@ def create_app():
 
     @app.route("/api/debug/error-log")
     def get_error_log():
+        log_content = "Log Start\n"
         try:
             with open("/tmp/flask_error.log", "r") as f:
-                return f.read(), 200, {'Content-Type': 'text/plain'}
+                log_content += f.read()
         except Exception as e:
-            return f"No log found or error: {str(e)}", 200
+            log_content += f"Error reading log: {str(e)}\n"
+        
+        try:
+            from models.chat_models import Participant
+            log_content += f"Import Participant: OK (Table: {Participant.__tablename__})\n"
+        except Exception as e:
+            log_content += f"Import Participant: FAILED - {str(e)}\n"
+
+        return log_content, 200, {'Content-Type': 'text/plain'}
 
     @app.errorhandler(Exception)
     def handle_exception(e):
         import traceback
         import sys
+        from datetime import datetime
         tb = traceback.format_exc()
-        # Save to /tmp for retrieval
-        with open("/tmp/flask_error.log", "a") as f:
-            f.write(f"\n\n--- ERROR {datetime.now()} ---\n{tb}\n")
-        
-        return jsonify({
-            "error": str(e),
-            "traceback": tb
-        }), 500
+        msg = f"\n\n--- ERROR {datetime.now()} ---\n{tb}\n"
+        print(msg, file=sys.stderr)
+        try:
+            with open("/tmp/flask_error.log", "a") as f:
+                f.write(msg)
+        except:
+            pass
+        return jsonify({"error": str(e), "traceback": tb}), 500
 
     return app
