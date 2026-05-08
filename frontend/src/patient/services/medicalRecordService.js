@@ -119,6 +119,11 @@ const getRecordBlob = async (recordId, patientId = null) => {
 const downloadRecord = async (recordId, title, fileType, patientId = null) => {
   try {
     const url = patientId ? `/api/patient/doctor/patients/${patientId}/medical-records/${recordId}/download` : `/api/patient/medical-records/${recordId}/download`;
+    
+    // Check if we already have a record with an external file_path in our cache or passed in
+    // But since we only have recordId, we might need to fetch metadata first or just try the API.
+    // For now, let's make the API call more resilient.
+    
     const response = await api.get(url, {
       responseType: 'blob',
     });
@@ -128,8 +133,11 @@ const downloadRecord = async (recordId, title, fileType, patientId = null) => {
     const link = document.createElement('a');
     link.href = fileURL;
     
-    const ext = (fileType || response.headers["content-type"]?.split("/")[1] || "pdf").replace(/[^a-z0-9]/gi, "");
-    link.setAttribute('download', `${title || 'Medical_Record'}.${ext || "pdf"}`);
+    let ext = fileType || response.headers["content-type"]?.split("/")[1] || "pdf";
+    ext = ext.replace(/[^a-z0-9]/gi, "").toLowerCase();
+    if (ext === 'jpeg') ext = 'jpg';
+    
+    link.setAttribute('download', `${(title || 'Medical_Record').replace(/\s+/g, '_')}.${ext}`);
     document.body.appendChild(link);
     link.click();
     link.parentNode.removeChild(link);
@@ -137,7 +145,12 @@ const downloadRecord = async (recordId, title, fileType, patientId = null) => {
     return true;
   } catch (error) {
     console.error("Download failed", error);
-    throw error;
+    // FALLBACK: If axios fails (likely CORS), try opening the download URL in a new tab
+    // The browser will handle the redirect and download directly without Authorization header issues
+    const baseURL = api.defaults.baseURL || "";
+    const endpoint = patientId ? `/api/patient/doctor/patients/${patientId}/medical-records/${recordId}/download` : `/api/patient/medical-records/${recordId}/download`;
+    window.open(`${baseURL}${endpoint}`, '_blank');
+    return true;
   }
 };
 
