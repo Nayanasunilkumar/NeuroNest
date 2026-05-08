@@ -77,16 +77,17 @@ def get_related_patient_ids_for_doctor(doctor_id: int):
         return []
 
     doctor_ids = get_doctor_scope_ids(doctor_id)
-    rows = (
-        db.session.query(Appointment.patient_id)
-        .filter(
-            Appointment.doctor_id.in_(doctor_ids),
-            Appointment.status.notin_(DOCTOR_PATIENT_RELATIONSHIP_EXCLUDED_STATUSES),
-        )
-        .distinct()
-        .all()
-    )
-    return [row[0] for row in rows if row and row[0]]
+    print(f"[QUERY] Fetching patients for Doctor IDs: {doctor_ids}")
+    
+    query = db.session.query(Appointment.patient_id).filter(
+        Appointment.doctor_id.in_(doctor_ids),
+        Appointment.status.notin_(DOCTOR_PATIENT_RELATIONSHIP_EXCLUDED_STATUSES),
+    ).distinct()
+    
+    rows = query.all()
+    patient_ids = [row[0] for row in rows if row and row[0]]
+    print(f"[QUERY] Found {len(patient_ids)} unique patients: {patient_ids}")
+    return patient_ids
 
 
 def get_related_doctor_ids_for_patient(patient_id: int, include_all=True):
