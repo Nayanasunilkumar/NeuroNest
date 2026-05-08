@@ -79,11 +79,8 @@ const ViewMedicalRecordModal = ({ isOpen, onClose, record, patientId = null }) =
     const isPDF = fileType === 'pdf';
     const isDICOM = fileType === 'dcm';
 
-    // For PDFs from external sources (Cloudinary), Google Docs Viewer is the
-    // most reliable cross-browser renderer. It handles CORS, PDF.js workers, etc.
-    const googleDocsViewerUrl = fileUrl
-        ? `https://docs.google.com/viewer?url=${encodeURIComponent(fileUrl)}&embedded=true`
-        : null;
+    // Cloudinary URLs are public CDN links — load them directly in an iframe.
+    // Google Docs Viewer fails because it cannot proxy Cloudinary CDN URLs.
 
     const handleDownload = () => {
         medicalRecordService.downloadRecord(record.id, record.title, record.file_type, patientId);
@@ -235,11 +232,11 @@ const ViewMedicalRecordModal = ({ isOpen, onClose, record, patientId = null }) =
                     {!error && fileUrl && (
                         <>
                             {isPDF ? (
-                                // Google Docs Viewer: works reliably for all external PDF URLs
-                                // regardless of CORS, Content-Disposition, or pdf.js worker issues
+                                // Direct Cloudinary URL — loaded natively by the browser's PDF renderer.
+                                // No third-party proxy (e.g. Google Docs Viewer) needed or wanted.
                                 <iframe
                                     key={refreshKey}
-                                    src={googleDocsViewerUrl}
+                                    src={fileUrl}
                                     title="PDF Preview"
                                     onLoad={handleContentLoad}
                                     onError={handleContentError}
@@ -249,7 +246,6 @@ const ViewMedicalRecordModal = ({ isOpen, onClose, record, patientId = null }) =
                                         backgroundColor: 'white',
                                         display: loading ? 'none' : 'block',
                                     }}
-                                    sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
                                 />
                             ) : isImage ? (
                                 <div style={{
