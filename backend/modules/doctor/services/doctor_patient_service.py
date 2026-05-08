@@ -78,16 +78,17 @@ def get_related_patient_ids_for_doctor(doctor_id: int):
     doctor_ids = get_doctor_scope_ids(doctor_id)
     print(f"[QUERY] Fetching patients for Doctor IDs: {doctor_ids}")
     
-    query = db.session.query(Appointment.patient_id).filter(
+    query = db.session.query(Appointment.patient_id).join(User, Appointment.patient_id == User.id).filter(
         Appointment.doctor_id.in_(doctor_ids),
         Appointment.status.notin_(DOCTOR_PATIENT_RELATIONSHIP_EXCLUDED_STATUSES),
+        User.is_deleted == False
     ).distinct()
     
     print(f"[QUERY] Executing: {query}")
     
     rows = query.all()
     patient_ids = [row[0] for row in rows if row and row[0]]
-    print(f"[QUERY] Found {len(patient_ids)} unique patients: {patient_ids}")
+    print(f"[QUERY] Found {len(patient_ids)} unique active patients: {patient_ids}")
     return patient_ids
 
 
@@ -110,10 +111,11 @@ def doctor_has_patient_relationship(doctor_id: int, patient_id: int) -> bool:
 
     doctor_ids = get_doctor_scope_ids(doctor_id)
     exists = (
-        Appointment.query.filter(
+        Appointment.query.join(User, Appointment.patient_id == User.id).filter(
             Appointment.doctor_id.in_(doctor_ids),
             Appointment.patient_id == patient_id,
             Appointment.status.notin_(DOCTOR_PATIENT_RELATIONSHIP_EXCLUDED_STATUSES),
+            User.is_deleted == False
         )
         .first()
     )

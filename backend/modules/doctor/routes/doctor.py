@@ -919,7 +919,9 @@ def get_doctor_stats():
                 Participant.user_id != current_user_id
             ).first()
             if other:
-                related_patient_ids.add(other.user_id)
+                other_user = User.query.get(other.user_id)
+                if other_user and not getattr(other_user, "is_deleted", False):
+                    related_patient_ids.add(other.user_id)
         
         total_patients = len(related_patient_ids)
         
@@ -979,7 +981,9 @@ def get_doctor_patients():
             Participant.user_id != current_user_id
         ).first()
         if other:
-            related_ids.add(other.user_id)
+            other_user = User.query.get(other.user_id)
+            if other_user and not getattr(other_user, "is_deleted", False):
+                related_ids.add(other.user_id)
     
     if not related_ids:
         return jsonify([]), 200
