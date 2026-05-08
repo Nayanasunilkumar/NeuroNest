@@ -36,29 +36,34 @@ def create_app():
     register_socket_handlers()
     register_core_routes(app)
     
-    # Lazy Initialization Trigger
-    _is_initialized = False
+    # Thread-Safe Background Initialization
+    _init_started = False
     _init_lock = threading.Lock()
     
+    def _background_init(app_instance):
+        with app_instance.app_context():
+            try:
+                print("[BOOT] Starting background initialization...")
+                from database.models import db
+                from core.migrations import run_startup_migrations
+                from core.scheduler import start_scheduler
+                
+                db.create_all()
+                run_startup_migrations()
+                start_scheduler(app_instance)
+                print("[BOOT] ✓ Background initialization complete.")
+            except Exception as e:
+                print(f"[BOOT] ❌ Background initialization error: {e}")
+
     @app.before_request
-    def lazy_init():
-        nonlocal _is_initialized
-        if not _is_initialized and request.path == "/api/health":
+    def trigger_lazy_init():
+        nonlocal _init_started
+        if not _init_started:
             with _init_lock:
-                # Double-check after acquiring lock
-                if _is_initialized:
-                    return
-                    
-                try:
-                    print("[INIT] Starting lazy database initialization...")
-                    db.create_all()
-                    run_startup_migrations()
-                    print("[INIT] ✓ Lazy initialization complete.")
-                    start_scheduler(app)
-                    _is_initialized = True
-                except Exception as e:
-                    print(f"[INIT] ❌ Initialization error: {e}")
-                    # We don't set _is_initialized to True so it retries next health check
+                if not _init_started:
+                    _init_started = True
+                    # Launch initialization in a separate thread so health checks don't block
+                    threading.Thread(target=_background_init, args=(app,)).start()
 
     @app.before_request
     def enforce_account_status():

@@ -9,9 +9,9 @@ def register_core_routes(app):
             "commit": os.getenv("RENDER_GIT_COMMIT") or os.getenv("GIT_COMMIT") or "local",
         }
 
-    @app.route("/api/health")
+    @app.route("/api/health", methods=["GET", "HEAD"])
     def health():
-        return {"status": "ok", "message": "Backend is alive and initialized"}, 200
+        return {"status": "ok", "message": "NeuroNest Clinical Backend is alive"}, 200
 
     @app.after_request
     def add_ngrok_header(response):
