@@ -91,6 +91,8 @@ export const formatDateIST = (value, options = {}) => {
   });
 };
 
+export const formatDate = formatDateIST;
+
 export const formatDateTimeIST = (value, options = {}) => {
   const dt = parseServerDate(value);
   if (!dt) return "";

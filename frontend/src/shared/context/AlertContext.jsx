@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
-import { fetchAlerts, acknowledgeAlert } from "../services/api/alertsApi";
+import { fetchAlerts, acknowledgeAlert } from "../services/api/alerts";
 import { getSocket, initSocket } from "../services/socket";
 import { AUTH_CHANGED_EVENT, isAuthenticated } from "../utils/auth";
 

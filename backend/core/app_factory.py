@@ -1,3 +1,4 @@
+import threading
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager, verify_jwt_in_request, get_jwt_identity
@@ -37,21 +38,27 @@ def create_app():
     
     # Lazy Initialization Trigger
     _is_initialized = False
+    _init_lock = threading.Lock()
     
     @app.before_request
     def lazy_init():
         nonlocal _is_initialized
         if not _is_initialized and request.path == "/api/health":
-            try:
-                print("[INIT] Starting lazy database initialization...")
-                db.create_all()
-                run_startup_migrations()
-                print("[INIT] ✓ Lazy initialization complete.")
-                start_scheduler(app)
-                _is_initialized = True
-            except Exception as e:
-                print(f"[INIT] ❌ Initialization error: {e}")
-                # We don't set _is_initialized to True so it retries next health check
+            with _init_lock:
+                # Double-check after acquiring lock
+                if _is_initialized:
+                    return
+                    
+                try:
+                    print("[INIT] Starting lazy database initialization...")
+                    db.create_all()
+                    run_startup_migrations()
+                    print("[INIT] ✓ Lazy initialization complete.")
+                    start_scheduler(app)
+                    _is_initialized = True
+                except Exception as e:
+                    print(f"[INIT] ❌ Initialization error: {e}")
+                    # We don't set _is_initialized to True so it retries next health check
 
     @app.before_request
     def enforce_account_status():

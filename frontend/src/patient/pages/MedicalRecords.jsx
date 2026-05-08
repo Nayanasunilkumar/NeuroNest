@@ -6,7 +6,7 @@ import { getPatientDossier } from "../../shared/services/api/doctor";
 import { getUser } from "../../shared/utils/auth";
 import { getDoctorProfile } from "../../doctor/services/doctorProfileService";
 import { getClinicalSummary } from "../../shared/services/api/profileApi";
-import { formatDateIST, calculateAgeIST as calculateAgeHelper } from "../../shared/utils/time";
+import { formatDate, calculateAgeIST as calculateAgeHelper } from "../../shared/utils/time";
 
 // Components
 import MedicalRecordTable from "../../patient/components/medicalRecords/MedicalRecordTable";
@@ -42,7 +42,7 @@ const MedicalRecords = ({ patientId: propPatientId = null }) => {
   const canManageClinical = !patientId || isDoctor;
   const [doctorDefaults, setDoctorDefaults] = useState({ name: '', hospital: '' });
 
-  const formatDate = (value) => formatDateIST(value, { month: "short", day: "numeric", year: "numeric" });
+  const formatDateLocal = (value) => formatDate(value, { month: "short", day: "numeric", year: "numeric" });
   const calculateAge = (dobString) => calculateAgeHelper(dobString);
 
   const calculateBMI = (weight, height) => {
@@ -510,7 +510,7 @@ const MedicalRecords = ({ patientId: propPatientId = null }) => {
                            </div>
                            <div className="meta-cell">
                              <span className="meta-label">Last Review</span>
-                             <span className="meta-value">{formatDate(item.last_reviewed)}</span>
+                             <span className="meta-value">{formatDateLocal(item.last_reviewed)}</span>
                            </div>
                         </div>
                       </div>

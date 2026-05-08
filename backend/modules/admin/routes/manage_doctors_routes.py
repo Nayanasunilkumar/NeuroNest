@@ -25,6 +25,8 @@ from models.prescription_models import Prescription
 from datetime import datetime
 import os
 import re
+import secrets
+import string
 from utils.security import hash_password
 from sqlalchemy import or_
 from modules.shared.services.notification_service import NotificationService
@@ -39,6 +41,19 @@ def _doctor_salutation_name(full_name: str) -> str:
 
 def _is_doctor_role(role: str) -> bool:
     return (role or "").strip().lower() in ("doctor", "specialist")
+
+def _generate_temporary_password(length: int = 14) -> str:
+    alphabet = string.ascii_letters + string.digits + "!@#$%^&*"
+    required_chars = [
+        secrets.choice(string.ascii_lowercase),
+        secrets.choice(string.ascii_uppercase),
+        secrets.choice(string.digits),
+        secrets.choice("!@#$%^&*"),
+    ]
+    remaining_chars = [secrets.choice(alphabet) for _ in range(length - len(required_chars))]
+    password_chars = required_chars + remaining_chars
+    secrets.SystemRandom().shuffle(password_chars)
+    return "".join(password_chars)
 
 def admin_required(fn):
     @jwt_required()
@@ -164,8 +179,7 @@ def add_doctor():
     data = request.json or {}
     email = data.get("email")
     full_name = data.get("full_name")
-    # Enforced default for newly provisioned doctors.
-    password = "Doctor@123"
+    password = _generate_temporary_password()
     specialization = data.get("specialization")
     license_number = data.get("license_number")
     sector = data.get("sector", "North Sector")

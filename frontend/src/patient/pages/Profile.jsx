@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { formatDateIST, calculateAgeIST } from "../../shared/utils/time";
+import { formatDate, calculateAgeIST } from "../../shared/utils/time";
 import api from "../../shared/services/api/axios";
 import axios from "axios";
 import { toAssetUrl } from "../../shared/utils/media";
@@ -217,7 +217,7 @@ const Profile = () => {
       );
   }
 
-  const formatDate = (value) => formatDateIST(value, { month: "short", day: "numeric", year: "numeric" });
+  // Using shared formatDate from utils/time
 
   const calculateAge = (dob) => {
     if (!dob) return "N/A";

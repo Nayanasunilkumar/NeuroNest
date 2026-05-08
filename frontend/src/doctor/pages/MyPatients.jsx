@@ -9,6 +9,7 @@ import { useTheme } from "../../shared/context/ThemeContext";
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { FileJson, FileText, ChevronDown } from 'lucide-react';
+import { formatDate } from '../../shared/utils/time';
 
 const buildRosterFallbackFromConversations = (conversations = []) => {
     const byPatientId = new Map();
@@ -82,14 +83,7 @@ const MyPatients = () => {
         }
     };
 
-    const formatDate = (value) => {
-        if (!value) return 'N/A';
-        return new Date(value).toLocaleDateString('en-US', {
-            month: 'short',
-            day: '2-digit',
-            year: 'numeric'
-        });
-    };
+    const formatDateLocal = (value) => formatDate(value, { month: 'short', day: '2-digit', year: 'numeric' });
 
     const formatTime = (timeStr) => {
         if (!timeStr) return '';
@@ -424,7 +418,7 @@ const MyPatients = () => {
                                         <td>
                                             <div className="roster-visit-cell">
                                                 <span className="roster-visit-label">History</span>
-                                                <span className="roster-visit-val">{formatDate(patient.last_visit)}</span>
+                                                <span className="roster-visit-val">{formatDateLocal(patient.last_visit)}</span>
                                             </div>
                                         </td>
                                         <td>
@@ -436,7 +430,7 @@ const MyPatients = () => {
                                                             <div className="fw-bold text-dark mb-0" style={{ fontSize: '0.9rem' }}>
                                                                 {patient.next_appointment_status === 'pending' && <span className="text-warning small fw-bold me-1">Requested:</span>}
                                                                 {patient.next_appointment_status === 'rescheduled' && <span className="text-info small fw-bold me-1">Rescheduled:</span>}
-                                                                {formatDate(patient.next_appointment)}
+                                                                {formatDateLocal(patient.next_appointment)}
                                                             </div>
                                                             {patient.next_appointment_time && (
                                                                 <div className="text-muted extra-small d-flex align-items-center gap-1" style={{ fontSize: '0.75rem' }}>

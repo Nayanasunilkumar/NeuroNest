@@ -32,7 +32,7 @@ import api from "../../shared/services/api/axios";
 import { getAppointmentCallState, getAppointments, joinAppointmentCall } from "../../shared/services/api/appointments";
 import { getClinicalSummary, getMyNotifications, markNotificationRead } from "../../shared/services/api/profileApi";
 import { API_BASE_URL } from "../../config/env";
-import { formatClockTimeIST, formatDateFromISTDate, formatTimeIST, parseISTDateTime, getISTDayKey, getISTHour, formatDateIST } from "../../shared/utils/time";
+import { formatClockTimeIST, formatDateFromISTDate, formatTimeIST, parseISTDateTime, getISTDayKey, getISTHour, formatDate } from "../../shared/utils/time";
 
 const METRIC_CONFIG = {
   hr: { label: "Heart Rate", unit: "BPM", normal: [60, 100], border: [50, 120], colors: { normal: "#129c7d", borderline: "#f59e0b", critical: "#dc2626" } },
@@ -65,7 +65,7 @@ const FALLBACK_APPOINTMENTS = [];
 const todayKey = getISTDayKey(new Date());
 
 const parseAppointmentDateTime = (appt) => parseISTDateTime(appt?.appointment_date, appt?.appointment_time || "00:00:00");
-const formatDate = (value) => formatDateIST(value, { weekday: "short", month: "short", day: "numeric" });
+const formatDateLocal = (value) => formatDate(value, { weekday: "short", month: "short", day: "numeric" });
 const formatTime = (time) => formatClockTimeIST(time);
 const formatTimeFromISO = (value) => {
   if (!value) return "N/A";
@@ -567,7 +567,7 @@ export default function DashboardEnhancements({ consolidatedData = null }) {
               <h3 style={{ margin: 0, fontSize: 28, color: "#0f172a", fontWeight: 800 }}>{popupAppointment.doctor_name || "Doctor"}</h3>
               <p style={{ margin: "4px 0 16px", color: "#64748b", fontWeight: 600 }}>{popupAppointment.specialization || "Specialist"}</p>
               <div style={{ color: "#1e293b", fontWeight: 700, marginBottom: 4 }}>
-                {formatDate(parseAppointmentDateTime(popupAppointment))} • {formatTime(popupAppointment.appointment_time)}
+                {formatDateLocal(parseAppointmentDateTime(popupAppointment))} • {formatTime(popupAppointment.appointment_time)}
               </div>
               <div style={{ color: "#475569", fontWeight: 600, marginBottom: 16 }}>Video Consultation</div>
               <div style={{ background: "#f1f5f9", borderRadius: 12, padding: "10px 12px", color: "#0f172a", fontWeight: 800, marginBottom: 18 }}>
@@ -636,7 +636,7 @@ export default function DashboardEnhancements({ consolidatedData = null }) {
                       <span className={`nn-status-badge ${status.className}`}>{status.label}</span>
                     </div>
                     <div className="nn-appointment-meta">
-                      <span><Calendar size={14} /> {formatDate(parseAppointmentDateTime(appointment))}</span>
+                      <span><Calendar size={14} /> {formatDateLocal(parseAppointmentDateTime(appointment))}</span>
                       <span><Clock size={14} /> {formatTime(appointment.appointment_time)}</span>
                       <span>{type === "Video" ? <Video size={14} /> : <MapPin size={14} />} {type}</span>
                     </div>

@@ -9,7 +9,6 @@ import {
   PolarAngleAxis, PolarRadiusAxis, XAxis, YAxis, CartesianGrid,
   Tooltip, Legend, ResponsiveContainer, ComposedChart, Line
 } from 'recharts';
-import AppointmentCharts from './components/AppointmentCharts';
 import DoctorPerformanceTable from './components/DoctorPerformanceTable';
 import GovernancePanel from './components/GovernancePanel';
 import { generateEnterpriseReport, downloadReport } from './utils/pdfReportGenerator';

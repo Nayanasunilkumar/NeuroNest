@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required, get_jwt, get_jwt_identity
@@ -53,7 +53,7 @@ def acknowledge_alert(alert_id):
 
     alert.is_acknowledged = True
     alert.acknowledged_by = user_id
-    alert.acknowledged_at = datetime.utcnow()
+    alert.acknowledged_at = datetime.now(timezone.utc)
     db.session.commit()
 
     # Broadcast ack event so UIs can update

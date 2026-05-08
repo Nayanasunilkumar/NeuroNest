@@ -1,19 +1,12 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { X, Printer, Activity, QrCode, ShieldCheck, Mail, Phone, MapPin } from 'lucide-react';
+import { formatDate } from '../../../shared/utils/time';
 import '../../../patient/styles/patient-prescriptions.css';
 
 const PrescriptionModal = ({ isOpen, onClose, prescription }) => {
     if (!isOpen || !prescription) return null;
     
-    // Format Helper
-    const formatDate = (dateString) => {
-        if (!dateString) return 'N/A';
-        return new Date(dateString).toLocaleDateString('en-GB', { 
-            day: '2-digit', month: 'short', year: 'numeric' 
-        });
-    }
-
     // Doctor Name
     const formatDoctorName = (name) => {
         if (!name) return 'Consultant';

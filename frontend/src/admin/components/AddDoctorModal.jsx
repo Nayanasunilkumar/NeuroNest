@@ -8,8 +8,7 @@ const AddDoctorModal = ({ isOpen, onClose, onAdd }) => {
     email: '',
     specialization: 'Neurologist',
     license_number: '',
-    sector: 'North Sector',
-    password: 'Doctor@123'
+    sector: 'North Sector'
   });
   const [specialties, setSpecialties] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -73,7 +72,7 @@ const AddDoctorModal = ({ isOpen, onClose, onAdd }) => {
               <div className="alert alert-info border-0 rounded-3 d-flex align-items-center gap-2 mb-3 bg-primary bg-opacity-10 text-primary border border-primary border-opacity-10 py-2 px-3">
                 <Shield size={20} className="flex-shrink-0" />
                 <div className="small fw-bold">
-                    Default access key will be set to <span className="badge bg-primary text-white font-monospace">Doctor@123</span>. User will be prompted for mandatory reset on first uplink.
+                    A temporary access key will be generated and sent by email. User will be prompted for mandatory reset on first uplink.
                 </div>
               </div>
 

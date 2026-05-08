@@ -33,11 +33,11 @@ const Login = () => {
     let checkCount = 0;
     const checkServer = async () => {
       try {
-        const res = await axios.get('/api/health', { timeout: 12000 });
+        const res = await axios.get('/api/health', { timeout: 30000 });
         if (res.status === 200) {
           setServerStatus('online');
         }
-      } catch (err) {
+      } catch {
         setServerStatus('warming-up');
       }
     };
@@ -159,11 +159,12 @@ const Login = () => {
           </div>
         )}
 
-        <form onSubmit={handleLogin} className="nn-auth-form">
+        <form onSubmit={handleLogin} className="nn-auth-form" autoComplete="off">
           <div className="nn-auth-field">
             <label className="nn-auth-label">Email Address</label>
             <input
               type="email"
+              name="neuronest-login-email"
               className="nn-auth-input"
               placeholder="name@company.com"
               required
@@ -171,6 +172,7 @@ const Login = () => {
               onChange={(e) => setEmail(e.target.value)}
               disabled={loading}
               autoFocus
+              autoComplete="off"
             />
           </div>
 
@@ -184,11 +186,13 @@ const Login = () => {
             <div className="nn-auth-input-wrap">
               <input
                 type={showPw ? "text" : "password"}
+                name="neuronest-login-password"
                 className="nn-auth-input"
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 disabled={loading}
+                autoComplete="new-password"
               />
               <button
                 type="button"
