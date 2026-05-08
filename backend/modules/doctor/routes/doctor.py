@@ -899,14 +899,64 @@ def get_appointment_history():
     return jsonify([appt.to_dict() for appt in appointments]), 200
 
 @doctor_bp.route("/stats", methods=["GET"])
+@jwt_required()
 def get_doctor_stats():
-    return jsonify({
-        "total_patients": 5,
-        "today_appointments": 2,
-        "pending_requests": 1,
-        "active_assessments": 0,
-        "is_hardcoded": True
-    }), 200
+    try:
+        if not check_doctor_role():
+            return jsonify({"message": "Doctor access required"}), 403
+        
+        current_user_id = int(get_jwt_identity())
+        doctor_scope_ids = get_doctor_scope_ids(current_user_id)
+        
+        # 1. Related patient IDs (clinical relationships)
+        related_patient_ids = set(get_related_patient_ids_for_doctor(current_user_id))
+        
+        # Also include patients from chat conversations
+        chat_participations = Participant.query.filter_by(user_id=current_user_id).all()
+        for p in chat_participations:
+            other = Participant.query.filter(
+                Participant.conversation_id == p.conversation_id,
+                Participant.user_id != current_user_id
+            ).first()
+            if other:
+                related_patient_ids.add(other.user_id)
+        
+        total_patients = len(related_patient_ids)
+        
+        # 2. Today's appointments
+        now = datetime.now()
+        today_appointments = Appointment.query.filter(
+            Appointment.doctor_id.in_(doctor_scope_ids),
+            Appointment.appointment_date == now.date(),
+            Appointment.status.notin_(DOCTOR_PATIENT_TERMINAL_STATUSES)
+        ).count()
+        
+        # 3. Pending requests
+        pending_requests = Appointment.query.filter(
+            Appointment.doctor_id.in_(doctor_scope_ids),
+            Appointment.status == "pending"
+        ).count()
+        
+        # 4. Active assessments (Placeholder for now)
+        active_assessments = 0 
+        
+        return jsonify({
+            "total_patients": total_patients,
+            "today_appointments": today_appointments,
+            "pending_requests": pending_requests,
+            "active_assessments": active_assessments,
+            "debug_info": {
+                "doctor_id": current_user_id,
+                "scope_ids": doctor_scope_ids,
+                "patient_ids": list(related_patient_ids)
+            }
+        }), 200
+    except Exception as e:
+        import traceback
+        return jsonify({
+            "error": str(e),
+            "traceback": traceback.format_exc()
+        }), 500
 
 @doctor_bp.route("/patients", methods=["GET"])
 @jwt_required()

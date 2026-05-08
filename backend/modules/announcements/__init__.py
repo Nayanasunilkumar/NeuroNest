@@ -1,4 +1,4 @@
-from routes.announcements import announcements_bp
+from modules.admin.routes.announcements import announcements_bp
 
 
 def register(app):

@@ -62,11 +62,11 @@ def create_app():
         if not _init_started:
             with _init_lock:
                 if not _init_started:
-                    # threading.Thread(target=_background_init, args=(app,)).start()
-        pass
+                    _init_started = True
+                    threading.Thread(target=_background_init, args=(app,)).start()
 
-    # @app.before_request
-    # def enforce_account_status():
+    @app.before_request
+    def enforce_account_status():
         if request.method == "OPTIONS":
             return
             
@@ -85,7 +85,9 @@ def create_app():
                         return jsonify({"message": "Account deactivated."}), 403
                     if getattr(user, "account_status", "") == "suspended":
                         return jsonify({"message": "Account suspended. Please contact administration."}), 403
-            except Exception:
+            except Exception as e:
+                # Log but don't crash the request
+                app.logger.warning(f"Account status check failed: {e}")
                 pass
 
     @app.route("/api/debug/error-log")
