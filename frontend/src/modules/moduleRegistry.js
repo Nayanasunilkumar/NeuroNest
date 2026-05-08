@@ -22,7 +22,6 @@ import patientChatModule from "./patient-chat";
 import patientDoctorProfileModule from "./patient-doctor-profile";
 import patientRecordsModule from "./patient-records";
 import patientTimelineModule from "./patient-timeline";
-import performanceAnalyticsModule from "./performance-analytics";
 import prescriptionsModule from "./prescriptions";
 import profileModule from "./profile";
 import settingsModule from "./settings";
@@ -57,7 +56,6 @@ export const moduleRegistry = uniqueModules([
   feedbackReviewsModule,
   writePrescriptionModule,
   assessmentReportsModule,
-  performanceAnalyticsModule,
   clinicalArchivesModule,
   patientTimelineModule,
   patientRecordsModule,
