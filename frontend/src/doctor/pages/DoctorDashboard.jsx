@@ -156,7 +156,12 @@ const DoctorDashboard = () => {
           setDoctorProfile(profileResult.value || null);
         }
         if (statsResult.status === 'fulfilled') {
-          setStats(statsResult.value || {});
+          const statsData = statsResult.value || {};
+          setStats(statsData);
+          if (statsData.debug_info) {
+             console.log("[DEBUG] Stats Metadata:", statsData.debug_info);
+             window.__DEBUG_STATS__ = statsData.debug_info;
+          }
         }
         if (patientsResult.status === 'fulfilled') {
           const rosterPatients = Array.isArray(patientsResult.value) ? patientsResult.value : [];
@@ -546,6 +551,28 @@ const DoctorDashboard = () => {
         </div>
 
       </section>
+      {stats.debug_info && (
+        <div style={{ 
+          position: 'fixed', 
+          bottom: '20px', 
+          right: '20px', 
+          background: 'rgba(15, 23, 42, 0.95)', 
+          color: '#38bdf8', 
+          padding: '12px 20px', 
+          borderRadius: '12px', 
+          fontSize: '11px', 
+          zIndex: 9999,
+          border: '1px solid rgba(56, 189, 248, 0.2)',
+          boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.3)',
+          fontFamily: 'monospace',
+          backdropFilter: 'blur(8px)'
+        }}>
+          <div style={{ fontWeight: 'bold', marginBottom: '4px', color: '#f8fafc' }}>DEBUG CONSOLE</div>
+          <div>Doctor ID: {stats.debug_info.doctor_id}</div>
+          <div>Scope IDs: {JSON.stringify(stats.debug_info.scope_ids)}</div>
+          <div>Patients Found: {stats.debug_info.patient_ids?.length || 0}</div>
+        </div>
+      )}
     </div>
   );
 };
