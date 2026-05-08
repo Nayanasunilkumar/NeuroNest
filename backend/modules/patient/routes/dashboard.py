@@ -62,7 +62,7 @@ def get_consolidated_dashboard():
     appointments = Appointment.query.filter(
         Appointment.patient_id == user_id,
         Appointment.appointment_date >= one_hour_ago,
-        Appointment.status.in_(["pending", "approved", "confirmed", "rescheduled"])
+        Appointment.status.in_(["pending", "approved", "rescheduled"])
     ).order_by(Appointment.appointment_date.asc(), Appointment.appointment_time.asc()).limit(5).all()
 
     # Recent Notifications (Top 5 unread)

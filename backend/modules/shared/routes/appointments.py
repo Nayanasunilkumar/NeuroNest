@@ -141,7 +141,7 @@ def _book_slot_atomic(*, current_user_id: int, doctor_id: int, slot_id: int, rea
         Appointment.doctor_id == doctor_id,
         Appointment.appointment_date == slot_start_utc.date(),
         Appointment.appointment_time == slot_start_utc.time().replace(microsecond=0),
-        Appointment.status.in_(["pending", "approved", "confirmed", "completed", "no_show", "rescheduled"]),
+        Appointment.status.in_(["pending", "approved", "completed", "no_show", "rescheduled"]),
     ).first()
 
     if existing_timing_conflict:
@@ -522,7 +522,7 @@ def book_appointment():
             Appointment.doctor_id == doctor_id,
             Appointment.appointment_date == appointment_date,
             Appointment.appointment_time == appointment_time,
-            Appointment.status.in_(["pending", "approved", "confirmed", "completed", "no_show", "rescheduled"]),
+            Appointment.status.in_(["pending", "approved", "completed", "no_show", "rescheduled"]),
         ).first()
 
         if existing:
@@ -736,7 +736,7 @@ def reschedule_appointment(id):
              Appointment.appointment_date == target_date,
              Appointment.appointment_time == target_time,
              Appointment.id != appointment.id,
-             Appointment.status.in_(["pending", "approved", "confirmed", "completed", "no_show", "rescheduled"]),
+             Appointment.status.in_(["pending", "approved", "completed", "no_show", "rescheduled"]),
         ).first()
 
         if existing:
