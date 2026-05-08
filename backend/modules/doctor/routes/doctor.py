@@ -899,7 +899,6 @@ def get_appointment_history():
     return jsonify([appt.to_dict() for appt in appointments]), 200
 
 @doctor_bp.route("/stats", methods=["GET"])
-@jwt_required()
 def get_doctor_stats():
     return jsonify({
         "total_patients": 5,
