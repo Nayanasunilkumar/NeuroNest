@@ -88,4 +88,15 @@ def create_app():
             except Exception:
                 pass
 
+    @app.errorhandler(Exception)
+    def handle_exception(e):
+        import traceback
+        error_info = {
+            "error": "Global Exception Caught",
+            "message": str(e),
+            "traceback": traceback.format_exc()
+        }
+        app.logger.error(f"[GLOBAL ERROR] {str(e)}\n{traceback.format_exc()}")
+        return jsonify(error_info), 500
+
     return app
