@@ -62,12 +62,11 @@ def create_app():
         if not _init_started:
             with _init_lock:
                 if not _init_started:
-                    _init_started = True
-                    # Launch initialization in a separate thread so health checks don't block
-                    threading.Thread(target=_background_init, args=(app,)).start()
+                    # threading.Thread(target=_background_init, args=(app,)).start()
+        pass
 
-    @app.before_request
-    def enforce_account_status():
+    # @app.before_request
+    # def enforce_account_status():
         if request.method == "OPTIONS":
             return
             
