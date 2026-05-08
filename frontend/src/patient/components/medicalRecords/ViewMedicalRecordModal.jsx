@@ -5,6 +5,7 @@ import medicalRecordService from '../../services/medicalRecordService';
 
 const ViewMedicalRecordModal = ({ isOpen, onClose, record, patientId = null }) => {
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
     const [content, setContent] = useState(null);
     const [fileType, setFileType] = useState(null);
 
@@ -13,29 +14,56 @@ const ViewMedicalRecordModal = ({ isOpen, onClose, record, patientId = null }) =
             const fetchBlob = async () => {
                 try {
                     setLoading(true);
+                    setError(null);
+                    
+                    // If it's already a full external URL, we might be able to use it directly
+                    // but we try fetching first to get the correct mime-type for decided rendering.
                     const blobData = await medicalRecordService.getRecordBlob(record.id, patientId);
                     setContent(blobData.url);
                     setFileType(blobData.type);
                 } catch (err) {
-                    console.error("Failed to load record content", err);
+                    console.error("Failed to load record content via secure blob fetch, falling back to direct URL", err);
+                    
+                    // FALLBACK: Use the direct file path if fetching the blob failed
+                    // This often happens due to CORS redirects with Authorization headers
+                    if (record.file_path) {
+                        const directUrl = record.file_path.startsWith('http') 
+                            ? record.file_path 
+                            : `${window.location.origin}${record.file_path}`;
+                        
+                        setContent(directUrl);
+                        // Infer file type from extension if mime-type fetch failed
+                        const ext = record.file_type || record.file_path.split('.').pop().toLowerCase();
+                        if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) {
+                            setFileType(`image/${ext === 'jpg' ? 'jpeg' : ext}`);
+                        } else if (ext === 'pdf') {
+                            setFileType('application/pdf');
+                        } else {
+                            setFileType(null);
+                        }
+                    } else {
+                        setError("Could not retrieve file path.");
+                    }
                 } finally {
                     setLoading(false);
                 }
             };
             fetchBlob();
         }
-    }, [isOpen, record]);
+    }, [isOpen, record, patientId]);
 
     useEffect(() => {
         return () => {
-            if (content) URL.revokeObjectURL(content);
+            if (content && typeof content === 'string' && content.startsWith('blob:')) {
+                URL.revokeObjectURL(content);
+            }
         };
     }, [content]);
 
     if (!isOpen || !record) return null;
 
-    const isImage = fileType?.startsWith('image/');
-    const isPDF = fileType === 'application/pdf';
+    const isImage = fileType?.startsWith('image/') || ['jpg', 'jpeg', 'png', 'webp'].includes(record.file_type?.toLowerCase());
+    const isPDF = fileType === 'application/pdf' || record.file_type?.toLowerCase() === 'pdf';
 
     return ReactDOM.createPortal(
         <div 
@@ -214,8 +242,12 @@ const ViewMedicalRecordModal = ({ isOpen, onClose, record, patientId = null }) =
                             </div>
                         )
                     ) : (
-                        <div style={{ color: '#f87171', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <X size={20} /> Failed to load content
+                        <div style={{ color: '#f87171', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', padding: '40px', textAlign: 'center' }}>
+                            <X size={40} />
+                            <span style={{ fontSize: '16px', fontWeight: '600' }}>{error || "Failed to load content"}</span>
+                            <p style={{ fontSize: '14px', opacity: 0.8, maxWidth: '300px' }}>
+                                Try downloading the file instead if the preview continues to fail.
+                            </p>
                         </div>
                     )}
                 </div>
