@@ -84,6 +84,8 @@ def get_related_patient_ids_for_doctor(doctor_id: int):
         Appointment.status.notin_(DOCTOR_PATIENT_RELATIONSHIP_EXCLUDED_STATUSES),
     ).distinct()
     
+    print(f"[QUERY] Executing: {query}")
+    
     rows = query.all()
     patient_ids = [row[0] for row in rows if row and row[0]]
     print(f"[QUERY] Found {len(patient_ids)} unique patients: {patient_ids}")

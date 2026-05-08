@@ -5,6 +5,7 @@ from modules.feedback import register as register_feedback
 from modules.patient import register as register_patient
 from modules.shared import register as register_shared
 from modules.vitals import register as register_vitals
+from modules.announcements import register as register_announcements
 
 
 FEATURE_MODULES = [
@@ -15,6 +16,7 @@ FEATURE_MODULES = [
     register_feedback,
     register_alerts,
     register_vitals,
+    register_announcements,
 ]
 
 
