@@ -6,7 +6,6 @@ from database.models import Appointment, User, db
 
 DOCTOR_PATIENT_RELATIONSHIP_EXCLUDED_STATUSES = (
     "rejected",
-    "cancelled",
     "cancelled_by_doctor",
     "cancelled_by_patient",
 )

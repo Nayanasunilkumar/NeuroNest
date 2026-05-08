@@ -100,7 +100,7 @@ def get_patient_detail(patient_id):
     recent_logs = PatientAuditLog.query.filter_by(patient_id=patient_id).order_by(PatientAuditLog.created_at.desc()).limit(10).all()
     completed_statuses = {"completed"}
     pending_statuses = {"pending", "approved", "rescheduled"}
-    cancelled_statuses = {"cancelled", "cancelled_by_patient", "cancelled_by_doctor", "rejected", "no_show"}
+    cancelled_statuses = {"cancelled_by_patient", "cancelled_by_doctor", "rejected", "no_show"}
     appointment_summary = {
         "completed": sum(1 for appt in appointments if (appt.status or "").lower() in completed_statuses),
         "upcoming": sum(1 for appt in appointments if (appt.status or "").lower() in pending_statuses),
