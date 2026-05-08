@@ -1030,7 +1030,14 @@ def get_doctor_patients():
             "status": "Active" if is_active else "Inactive"
         })
 
-    return jsonify(patients_data), 200
+    return jsonify({
+        "patients": patients_data,
+        "debug_info": {
+            "doctor_id": current_user_id,
+            "scope_ids": doctor_scope_ids,
+            "related_ids": list(related_ids)
+        }
+    }), 200
 
 @doctor_bp.route("/patients/<int:patient_id>/records", methods=["GET"])
 @jwt_required()

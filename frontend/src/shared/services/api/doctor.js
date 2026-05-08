@@ -134,7 +134,12 @@ export const getDoctorStats = async () => {
 
 export const getPatients = async () => {
   const response = await axios.get(`${DOCTOR_API}/patients`);
-  return response.data;
+  const data = response.data;
+  if (data && typeof data === 'object' && !Array.isArray(data) && data.debug_info) {
+    window.__DEBUG_PATIENTS__ = data.debug_info;
+    return data.patients || [];
+  }
+  return data;
 };
 
 export const getPatientRecords = async (patientId) => {
