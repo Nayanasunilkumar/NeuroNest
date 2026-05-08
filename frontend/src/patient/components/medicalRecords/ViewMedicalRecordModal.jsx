@@ -1,487 +1,350 @@
-import React, { useEffect, useState, useRef, useCallback, useMemo } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import ReactDOM from 'react-dom';
-import { 
-    X, Loader2, Download, Calendar, User, FileText, Tag, 
-    ZoomIn, ZoomOut, Maximize2, Minimize2, RotateCw, 
-    RefreshCw, AlertCircle, Maximize, MousePointer2,
-    Eye, Scale, History, Shield, Info
+import {
+    X, Download, Calendar, User, FileText, Tag,
+    ZoomIn, ZoomOut, Maximize2, Minimize2, RotateCw,
+    RefreshCw, AlertCircle, Loader2, Info, ExternalLink
 } from 'lucide-react';
 import medicalRecordService from '../../services/medicalRecordService';
 
 const ViewMedicalRecordModal = ({ isOpen, onClose, record, patientId = null }) => {
-    // UI State
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [content, setContent] = useState(null);
+    const [fileUrl, setFileUrl] = useState(null);
     const [fileType, setFileType] = useState(null);
     const [refreshKey, setRefreshKey] = useState(0);
-    
-    // Viewport State
     const [zoom, setZoom] = useState(1);
     const [rotation, setRotation] = useState(0);
     const [isFullscreen, setIsFullscreen] = useState(false);
-    const [isDragging, setIsDragging] = useState(false);
-    const [position, setPosition] = useState({ x: 0, y: 0 });
-    const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
-    
-    const containerRef = useRef(null);
-    const contentRef = useRef(null);
 
     const resetView = useCallback(() => {
         setZoom(1);
         setRotation(0);
-        setPosition({ x: 0, y: 0 });
     }, []);
 
-    const fetchDocument = useCallback(async () => {
+    useEffect(() => {
         if (!isOpen || !record) return;
-        
-        try {
-            setLoading(true);
-            setError(null);
-            resetView();
-            
-            console.log(`[Viewer] Initializing preview for record ID: ${record.id}, type: ${record.file_type}`);
-            
-            // Cleanup previous blob if any
-            if (content && typeof content === 'string' && content.startsWith('blob:')) {
-                URL.revokeObjectURL(content);
-            }
 
-            // Attempt secure fetch
+        let cancelled = false;
+        setLoading(true);
+        setError(null);
+        setFileUrl(null);
+        resetView();
+
+        const load = async () => {
             try {
-                const blobData = await medicalRecordService.getRecordBlob(record.id, patientId);
-                console.log(`[Viewer] Secure blob fetched. MIME: ${blobData.type}`);
-                setContent(blobData.url);
-                setFileType(blobData.type);
+                // Use the new /view-url endpoint — returns Cloudinary URL as JSON, no CORS issue
+                const data = await medicalRecordService.getRecordViewUrl(record.id, patientId);
+                if (cancelled) return;
+
+                const ext = (data.file_type || data.file_url?.split('.').pop() || '').toLowerCase();
+                setFileUrl(data.file_url);
+                setFileType(ext);
+                console.log('[Viewer] Got direct URL. ext:', ext, 'url:', data.file_url);
             } catch (err) {
-                console.warn("[Viewer] Secure fetch blocked (likely CORS redirect). Using high-reliability fallback.");
-                
+                if (cancelled) return;
+                console.error('[Viewer] Failed to get view URL:', err);
+                // Final fallback: use file_path from the record object if API is down
                 if (record.file_path) {
-                    const directUrl = record.file_path.startsWith('http') 
-                        ? record.file_path 
-                        : `${window.location.origin}${record.file_path}`;
-                    
-                    setContent(directUrl);
-                    
-                    // Infer type from extension
                     const ext = (record.file_type || record.file_path.split('.').pop()).toLowerCase();
-                    if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) {
-                        setFileType(`image/${ext === 'jpg' ? 'jpeg' : ext}`);
-                    } else if (ext === 'pdf') {
-                        setFileType('application/pdf');
-                    } else if (ext === 'dcm') {
-                        setFileType('application/dicom');
-                    } else {
-                        setFileType(null);
-                    }
+                    setFileUrl(record.file_path);
+                    setFileType(ext);
                 } else {
-                    throw new Error("No file path available for this record.");
+                    setError('Could not load this document. The file may have been removed.');
+                    setLoading(false);
                 }
             }
-        } catch (err) {
-            console.error("[Viewer] Critical load error:", err);
-            setError(err.message || "We encountered a problem loading this document. Please check your connection.");
-            setLoading(false);
-        }
-    }, [isOpen, record, patientId, resetView, content]);
-
-    useEffect(() => {
-        fetchDocument();
-    }, [isOpen, record, refreshKey]); // Re-fetch on manual refresh
-
-    useEffect(() => {
-        return () => {
-            if (content && typeof content === 'string' && content.startsWith('blob:')) {
-                URL.revokeObjectURL(content);
-            }
         };
-    }, [content]);
 
-    // Page Interaction Handlers
+        load();
+        return () => { cancelled = true; };
+    }, [isOpen, record, patientId, refreshKey, resetView]);
+
+    // Keyboard shortcuts
     useEffect(() => {
-        const handleKeyDown = (e) => {
-            if (e.key === 'Escape') {
-                if (isFullscreen) setIsFullscreen(false);
-                else onClose();
-            }
-            if (e.key === '+' || e.key === '=') handleZoomIn();
-            if (e.key === '-') handleZoomOut();
+        if (!isOpen) return;
+        const handler = (e) => {
+            if (e.key === 'Escape') { if (isFullscreen) setIsFullscreen(false); else onClose(); }
+            if (e.key === '+' || e.key === '=') setZoom(z => Math.min(z + 0.25, 4));
+            if (e.key === '-') setZoom(z => Math.max(z - 0.25, 0.5));
             if (e.key === '0') resetView();
-            if (e.key === 'r' && e.ctrlKey) handleRefresh();
         };
-        window.addEventListener('keydown', handleKeyDown);
-        return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [onClose, isFullscreen, resetView]);
-
-    const handleZoomIn = () => setZoom(prev => Math.min(prev + 0.25, 4));
-    const handleZoomOut = () => setZoom(prev => Math.max(prev - 0.25, 0.5));
-    const handleRotate = () => setRotation(prev => (prev + 90) % 360);
-    const toggleFullscreen = () => setIsFullscreen(prev => !prev);
-    const handleRefresh = () => setRefreshKey(prev => prev + 1);
-
-    const handleMouseDown = (e) => {
-        if (zoom <= 1) return;
-        setIsDragging(true);
-        setDragStart({ x: e.clientX - position.x, y: e.clientY - position.y });
-    };
-
-    const handleMouseMove = (e) => {
-        if (!isDragging || zoom <= 1) return;
-        setPosition({
-            x: e.clientX - dragStart.x,
-            y: e.clientY - dragStart.y
-        });
-    };
-
-    const handleMouseUp = () => setIsDragging(false);
+        window.addEventListener('keydown', handler);
+        return () => window.removeEventListener('keydown', handler);
+    }, [isOpen, isFullscreen, onClose, resetView]);
 
     if (!isOpen || !record) return null;
 
-    const isImage = fileType?.startsWith('image/') || ['jpg', 'jpeg', 'png', 'webp'].includes(record.file_type?.toLowerCase());
-    const isPDF = fileType === 'application/pdf' || record.file_type?.toLowerCase() === 'pdf';
-    const isDICOM = fileType === 'application/dicom' || record.file_type?.toLowerCase() === 'dcm';
+    const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(fileType);
+    const isPDF = fileType === 'pdf';
+    const isDICOM = fileType === 'dcm';
 
-    const handleContentLoad = () => {
-        console.log("[Viewer] Content rendered in DOM");
-        setLoading(false);
+    // For PDFs from external sources (Cloudinary), Google Docs Viewer is the
+    // most reliable cross-browser renderer. It handles CORS, PDF.js workers, etc.
+    const googleDocsViewerUrl = fileUrl
+        ? `https://docs.google.com/viewer?url=${encodeURIComponent(fileUrl)}&embedded=true`
+        : null;
+
+    const handleDownload = () => {
+        medicalRecordService.downloadRecord(record.id, record.title, record.file_type, patientId);
     };
 
+    const handleContentLoad = () => setLoading(false);
     const handleContentError = () => {
-        console.error("[Viewer] Content rendering failed");
-        setError("This file type cannot be displayed in the browser. Please download it for viewing.");
+        setError('Your browser could not render this file. Please download it instead.');
         setLoading(false);
     };
 
     return ReactDOM.createPortal(
-        <div 
-            className="neuro-viewer-overlay"
+        <div
             style={{
-                position: 'fixed',
-                inset: 0,
-                backgroundColor: 'rgba(2, 6, 23, 0.95)',
+                position: 'fixed', inset: 0,
+                backgroundColor: 'rgba(2, 6, 23, 0.92)',
                 zIndex: 100000,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
                 backdropFilter: 'blur(12px)',
-                transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)'
             }}
             onClick={onClose}
         >
-            <div 
-                className={`neuro-viewer-card ${isFullscreen ? 'fullscreen' : ''}`}
+            <div
                 style={{
                     width: isFullscreen ? '100%' : '92%',
-                    maxWidth: isFullscreen ? '100%' : '1400px',
+                    maxWidth: isFullscreen ? '100%' : '1300px',
                     height: isFullscreen ? '100%' : '88vh',
                     backgroundColor: '#0f172a',
-                    borderRadius: isFullscreen ? '0' : '24px',
+                    borderRadius: isFullscreen ? '0' : '20px',
                     overflow: 'hidden',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    border: '1px solid rgba(255, 255, 255, 0.08)',
-                    boxShadow: '0 50px 100px -20px rgba(0, 0, 0, 0.5)',
-                    position: 'relative'
+                    display: 'flex', flexDirection: 'column',
+                    border: '1px solid rgba(255,255,255,0.07)',
+                    boxShadow: '0 40px 80px rgba(0,0,0,0.6)',
                 }}
-                onClick={(e) => e.stopPropagation()}
+                onClick={e => e.stopPropagation()}
             >
-                {/* Header Bar */}
+                {/* ── Header ── */}
                 <div style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    padding: '16px 24px',
-                    backgroundColor: '#1e293b',
-                    borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
-                    zIndex: 20
+                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                    padding: '14px 22px',
+                    background: '#1e293b',
+                    borderBottom: '1px solid rgba(255,255,255,0.06)',
+                    flexShrink: 0,
                 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                        <div style={{
-                            padding: '10px',
-                            borderRadius: '12px',
-                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                            color: '#60a5fa'
-                        }}>
+                    {/* Left: metadata */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '14px', overflow: 'hidden' }}>
+                        <div style={{ padding: '10px', borderRadius: '12px', backgroundColor: 'rgba(59,130,246,0.1)', color: '#60a5fa', flexShrink: 0 }}>
                             <FileText size={20} />
                         </div>
-                        <div>
-                            <h2 style={{ fontSize: '16px', fontWeight: '700', color: '#f8fafc', margin: 0 }}>{record.title}</h2>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '4px' }}>
-                                <span style={{ fontSize: '11px', color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                    <Calendar size={12} /> {new Date(record.record_date || record.created_at).toLocaleDateString()}
+                        <div style={{ overflow: 'hidden' }}>
+                            <h2 style={{ fontSize: '15px', fontWeight: 700, color: '#f1f5f9', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                {record.title}
+                            </h2>
+                            <div style={{ display: 'flex', gap: '12px', marginTop: '3px' }}>
+                                <span style={{ fontSize: '11px', color: '#64748b', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                    <Calendar size={11} />
+                                    {new Date(record.record_date || record.created_at).toLocaleDateString()}
                                 </span>
-                                <span style={{ width: '3px', height: '3px', backgroundColor: '#334155', borderRadius: '50%' }}></span>
-                                <span style={{ fontSize: '11px', color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                    <Tag size={12} /> {record.category}
+                                <span style={{ fontSize: '11px', color: '#64748b', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                    <Tag size={11} /> {record.category}
                                 </span>
+                                {record.doctor_name && (
+                                    <span style={{ fontSize: '11px', color: '#64748b', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                        <User size={11} /> {record.doctor_name}
+                                    </span>
+                                )}
                             </div>
                         </div>
                     </div>
 
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <div style={{ display: 'flex', backgroundColor: 'rgba(255,255,255,0.03)', padding: '4px', borderRadius: '10px', marginRight: '8px' }}>
-                           <button onClick={handleZoomOut} style={headerIconStyle} title="Zoom Out"><ZoomOut size={18}/></button>
-                           <button onClick={resetView} style={{ ...headerIconStyle, fontSize: '12px', fontWeight: 'bold', width: 'auto', padding: '0 10px' }}>{Math.round(zoom * 100)}%</button>
-                           <button onClick={handleZoomIn} style={headerIconStyle} title="Zoom In"><ZoomIn size={18}/></button>
-                        </div>
-                        <button onClick={handleRefresh} style={headerIconStyle} title="Refresh Preview"><RefreshCw size={18}/></button>
-                        <button onClick={toggleFullscreen} style={headerIconStyle} title="Toggle Fullscreen">
-                            {isFullscreen ? <Minimize2 size={18}/> : <Maximize2 size={18}/>}
+                    {/* Right: controls */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0, marginLeft: '16px' }}>
+                        {/* Zoom strip — only meaningful for images */}
+                        {isImage && (
+                            <div style={{ display: 'flex', gap: '2px', background: 'rgba(255,255,255,0.04)', padding: '4px', borderRadius: '10px', marginRight: '6px' }}>
+                                <IconBtn onClick={() => setZoom(z => Math.max(z - 0.25, 0.5))} title="Zoom Out"><ZoomOut size={17}/></IconBtn>
+                                <button
+                                    onClick={resetView}
+                                    style={{ ...iconBtnBase, fontSize: '11px', fontWeight: 700, width: 'auto', padding: '0 10px', color: '#94a3b8' }}
+                                >
+                                    {Math.round(zoom * 100)}%
+                                </button>
+                                <IconBtn onClick={() => setZoom(z => Math.min(z + 0.25, 4))} title="Zoom In"><ZoomIn size={17}/></IconBtn>
+                            </div>
+                        )}
+
+                        <IconBtn onClick={() => setRefreshKey(k => k + 1)} title="Refresh Preview"><RefreshCw size={17}/></IconBtn>
+                        <IconBtn onClick={() => setIsFullscreen(f => !f)} title="Toggle Fullscreen">
+                            {isFullscreen ? <Minimize2 size={17}/> : <Maximize2 size={17}/>}
+                        </IconBtn>
+
+                        {/* Open in new tab — reliable fallback */}
+                        {fileUrl && (
+                            <IconBtn onClick={() => window.open(fileUrl, '_blank')} title="Open in new tab">
+                                <ExternalLink size={17}/>
+                            </IconBtn>
+                        )}
+
+                        <button onClick={handleDownload} style={{
+                            padding: '8px 16px', backgroundColor: '#3b82f6', color: 'white',
+                            border: 'none', borderRadius: '10px', fontSize: '13px', fontWeight: 600,
+                            cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px',
+                            marginLeft: '8px'
+                        }}>
+                            <Download size={15}/> Download
                         </button>
-                        <button 
-                            className="download-btn-premium"
-                            style={{
-                                marginLeft: '8px',
-                                padding: '8px 16px',
-                                backgroundColor: '#3b82f6',
-                                color: 'white',
-                                borderRadius: '10px',
-                                border: 'none',
-                                fontSize: '13px',
-                                fontWeight: '600',
-                                cursor: 'pointer',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '8px'
-                            }}
-                            onClick={() => medicalRecordService.downloadRecord(record.id, record.title, record.file_type, patientId)}
-                        >
-                            <Download size={16} /> Download
-                        </button>
-                        <button onClick={onClose} style={{ ...headerIconStyle, color: '#94a3b8' }}><X size={22}/></button>
+                        <IconBtn onClick={onClose} style={{ color: '#64748b', marginLeft: '4px' }}><X size={22}/></IconBtn>
                     </div>
                 </div>
 
-                {/* Viewport Area */}
-                <div 
-                    className="neuro-viewport"
-                    style={{
-                        flex: 1,
-                        position: 'relative',
-                        backgroundColor: '#020617',
-                        overflow: 'hidden',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        cursor: zoom > 1 ? (isDragging ? 'grabbing' : 'grab') : 'default'
-                    }}
-                    onMouseDown={handleMouseDown}
-                    onMouseMove={handleMouseMove}
-                    onMouseUp={handleMouseUp}
-                    onMouseLeave={handleMouseUp}
-                >
-                    {/* Status Indicators */}
-                    <div style={{ position: 'absolute', top: '20px', left: '20px', zIndex: 10, display: 'flex', gap: '8px' }}>
-                        <div style={pillStyle}><Shield size={12}/> Secure</div>
-                        {isPDF && <div style={{ ...pillStyle, backgroundColor: 'rgba(239, 68, 68, 0.1)', color: '#f87171' }}>PDF</div>}
-                        {isImage && <div style={{ ...pillStyle, backgroundColor: 'rgba(34, 197, 94, 0.1)', color: '#4ade80' }}>Image</div>}
-                    </div>
-
+                {/* ── Viewport ── */}
+                <div style={{
+                    flex: 1, position: 'relative', overflow: 'hidden',
+                    backgroundColor: '#020617',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>
+                    {/* Loading overlay */}
                     {loading && (
-                        <div style={{ position: 'absolute', inset: 0, zIndex: 30, backgroundColor: '#020617', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                            <div className="skeleton-doc-loader">
-                                <div className="skeleton-header"></div>
-                                <div className="skeleton-line"></div>
-                                <div className="skeleton-line"></div>
-                                <div className="skeleton-line w-75"></div>
-                                <div className="skeleton-pulse"></div>
-                            </div>
-                            <div style={{ marginTop: '24px', textAlign: 'center' }}>
-                                <Loader2 size={32} className="animate-spin" color="#3b82f6" />
-                                <p style={{ color: '#94a3b8', fontSize: '13px', marginTop: '12px', fontWeight: '500' }}>Initializing Medical Record Viewer...</p>
+                        <div style={{
+                            position: 'absolute', inset: 0, zIndex: 20,
+                            backgroundColor: '#020617',
+                            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '16px'
+                        }}>
+                            <Loader2 size={40} color="#3b82f6" style={{ animation: 'spin 1s linear infinite' }} />
+                            <p style={{ color: '#64748b', fontSize: '13px', fontWeight: 500, margin: 0 }}>
+                                Loading document…
+                            </p>
+                        </div>
+                    )}
+
+                    {/* Error state */}
+                    {error && !loading && (
+                        <div style={{
+                            zIndex: 30, textAlign: 'center', maxWidth: '440px', padding: '48px',
+                            background: 'rgba(239,68,68,0.05)', borderRadius: '28px',
+                            border: '1px solid rgba(239,68,68,0.1)'
+                        }}>
+                            <AlertCircle size={48} color="#ef4444" style={{ marginBottom: '20px' }} />
+                            <h3 style={{ color: 'white', fontWeight: 700, marginBottom: '10px' }}>Preview Unavailable</h3>
+                            <p style={{ color: '#94a3b8', fontSize: '14px', lineHeight: 1.6, marginBottom: '28px' }}>{error}</p>
+                            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+                                <button onClick={() => setRefreshKey(k => k + 1)} style={outlineBtn}><RefreshCw size={16}/> Retry</button>
+                                <button onClick={handleDownload} style={{ ...outlineBtn, background: '#3b82f6', border: 'none' }}><Download size={16}/> Download</button>
                             </div>
                         </div>
                     )}
 
-                    {error ? (
-                        <div style={{ zIndex: 40, textAlign: 'center', padding: '48px', backgroundColor: 'rgba(15, 23, 42, 0.8)', borderRadius: '32px', border: '1px solid rgba(255,255,255,0.05)', maxWidth: '500px' }}>
-                            <div style={{ width: '80px', height: '80px', borderRadius: '50%', backgroundColor: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px' }}>
-                                <AlertCircle size={40} />
-                            </div>
-                            <h3 style={{ color: 'white', fontSize: '20px', fontWeight: '700', marginBottom: '12px' }}>Unable to Preview File</h3>
-                            <p style={{ color: '#94a3b8', fontSize: '14px', lineHeight: 1.6, marginBottom: '32px' }}>{error}</p>
-                            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
-                                <button onClick={handleRefresh} style={errorBtnStyle}><RefreshCw size={18}/> Retry</button>
-                                <button onClick={() => medicalRecordService.downloadRecord(record.id, record.title, record.file_type, patientId)} style={{ ...errorBtnStyle, backgroundColor: '#3b82f6', border: 'none' }}><Download size={18}/> Download</button>
-                            </div>
-                        </div>
-                    ) : isDICOM ? (
-                        <div style={{ textAlign: 'center', color: 'white', maxWidth: '400px' }}>
-                            <Info size={48} color="#60a5fa" style={{ marginBottom: '20px' }} />
-                            <h3>DICOM Medical Scan</h3>
-                            <p style={{ color: '#94a3b8', fontSize: '14px' }}>This is a high-resolution DICOM file. Due to HIPAA compliance and rendering complexity, these scans should be viewed using specialized medical imaging software.</p>
-                            <button 
-                                onClick={() => medicalRecordService.downloadRecord(record.id, record.title, record.file_type, patientId)}
-                                style={{ marginTop: '20px', padding: '12px 24px', backgroundColor: '#3b82f6', borderRadius: '12px', border: 'none', color: 'white', fontWeight: 'bold', cursor: 'pointer' }}
-                            >
-                                Download DICOM Scan
-                            </button>
-                        </div>
-                    ) : content && (
-                        <div 
-                            style={{
-                                width: '100%',
-                                height: '100%',
-                                transition: isDragging ? 'none' : 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                                transform: `translate(${position.x}px, ${position.y}px) scale(${zoom}) rotate(${rotation}deg)`,
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center'
-                            }}
-                        >
-                            {isImage ? (
-                                <img 
+                    {/* Actual content */}
+                    {!error && fileUrl && (
+                        <>
+                            {isPDF ? (
+                                // Google Docs Viewer: works reliably for all external PDF URLs
+                                // regardless of CORS, Content-Disposition, or pdf.js worker issues
+                                <iframe
                                     key={refreshKey}
-                                    src={content} 
-                                    alt="Medical Record"
+                                    src={googleDocsViewerUrl}
+                                    title="PDF Preview"
                                     onLoad={handleContentLoad}
                                     onError={handleContentError}
-                                    style={{ 
-                                        maxWidth: '90%', 
-                                        maxHeight: '90%', 
-                                        objectFit: 'contain',
-                                        boxShadow: '0 30px 60px rgba(0,0,0,0.5)',
-                                        userSelect: 'none',
-                                        pointerEvents: 'none'
+                                    style={{
+                                        width: '100%', height: '100%',
+                                        border: 'none',
+                                        backgroundColor: 'white',
+                                        display: loading ? 'none' : 'block',
                                     }}
+                                    sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
                                 />
-                            ) : isPDF ? (
-                                <div style={{ width: '100%', height: '100%', display: 'flex', justifyContent: 'center' }}>
-                                    <object
+                            ) : isImage ? (
+                                <div style={{
+                                    transform: `scale(${zoom}) rotate(${rotation}deg)`,
+                                    transition: 'transform 0.25s ease',
+                                    maxWidth: '100%', maxHeight: '100%',
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                }}>
+                                    <img
                                         key={refreshKey}
-                                        data={`${content}#toolbar=0&navpanes=0&scrollbar=0`}
-                                        type="application/pdf"
+                                        src={fileUrl}
+                                        alt="Medical Record"
                                         onLoad={handleContentLoad}
-                                        style={{ 
-                                            width: isFullscreen ? '100%' : '85%', 
-                                            height: '100%',
-                                            backgroundColor: 'white',
-                                            boxShadow: '0 0 100px rgba(0,0,0,0.8)',
-                                            pointerEvents: zoom > 1 ? 'none' : 'auto'
+                                        onError={handleContentError}
+                                        style={{
+                                            maxWidth: '90vw', maxHeight: '80vh',
+                                            objectFit: 'contain',
+                                            boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
+                                            borderRadius: '4px',
+                                            display: loading ? 'none' : 'block',
                                         }}
-                                    >
-                                        <div style={{ color: 'white', padding: '40px', textAlign: 'center' }}>
-                                            <p>Your browser doesn't support PDF previews.</p>
-                                            <button onClick={() => medicalRecordService.downloadRecord(record.id, record.title, record.file_type, patientId)} style={errorBtnStyle}>Download PDF</button>
-                                        </div>
-                                    </object>
-                                    {/* Transparent overlay to detect completion if object onLoad is unreliable */}
-                                    <iframe 
-                                        src={content} 
-                                        onLoad={handleContentLoad} 
-                                        style={{ position: 'absolute', opacity: 0, pointerEvents: 'none', width: 1, height: 1 }} 
-                                        title="PDF Loader"
                                     />
                                 </div>
+                            ) : isDICOM ? (
+                                <div style={{ textAlign: 'center', color: 'white', maxWidth: '400px', padding: '40px' }}>
+                                    <Info size={56} color="#60a5fa" style={{ marginBottom: '20px' }} />
+                                    <h3 style={{ fontWeight: 700, marginBottom: '12px' }}>DICOM Medical Scan</h3>
+                                    <p style={{ color: '#94a3b8', fontSize: '14px', lineHeight: 1.6, marginBottom: '24px' }}>
+                                        DICOM files require specialized medical imaging software. Please download to view.
+                                    </p>
+                                    <button onClick={handleDownload} style={{ ...outlineBtn, background: '#3b82f6', border: 'none' }}>
+                                        <Download size={16}/> Download DICOM File
+                                    </button>
+                                </div>
                             ) : (
-                                <div style={{ textAlign: 'center', color: 'white' }}>
-                                    <FileText size={64} style={{ marginBottom: '24px', opacity: 0.5 }} />
-                                    <h3>Format Not Supported for Preview</h3>
-                                    <p style={{ color: '#94a3b8' }}>Please download the file to view its contents.</p>
-                                    <button onClick={() => medicalRecordService.downloadRecord(record.id, record.title, record.file_type, patientId)} style={{ ...errorBtnStyle, marginTop: '20px' }}>Download File</button>
+                                // Unknown type — show a download prompt
+                                <div style={{ textAlign: 'center', color: 'white', maxWidth: '400px', padding: '40px' }}>
+                                    <FileText size={56} color="#64748b" style={{ marginBottom: '20px', opacity: 0.5 }} />
+                                    <h3 style={{ fontWeight: 700, marginBottom: '12px' }}>Preview Not Available</h3>
+                                    <p style={{ color: '#94a3b8', fontSize: '14px', marginBottom: '24px' }}>
+                                        {`Files of type ".${fileType || 'unknown'}" cannot be previewed. Download to view the contents.`}
+                                    </p>
+                                    <button onClick={handleDownload} style={{ ...outlineBtn, background: '#3b82f6', border: 'none' }}>
+                                        <Download size={16}/> Download File
+                                    </button>
                                 </div>
                             )}
-                        </div>
+                        </>
                     )}
                 </div>
 
-                {/* Footer Status Bar */}
-                {!isFullscreen && (
-                    <div style={{
-                        padding: '10px 24px',
-                        backgroundColor: '#0f172a',
-                        borderTop: '1px solid rgba(255,255,255,0.05)',
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        fontSize: '11px',
-                        color: '#64748b'
-                    }}>
-                        <div style={{ display: 'flex', gap: '20px' }}>
-                            <span>SIZE: {record.file_size_bytes ? `${(record.file_size_bytes / 1024).toFixed(1)} KB` : 'N/A'}</span>
-                            <span>FORMAT: {record.file_type?.toUpperCase() || 'UNKNOWN'}</span>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                            <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#22c55e' }}></div>
-                            ENCRYPTED CONNECTION
-                        </div>
-                    </div>
-                )}
+                {/* ── Footer status bar ── */}
+                <div style={{
+                    padding: '8px 22px', background: '#0f172a',
+                    borderTop: '1px solid rgba(255,255,255,0.04)',
+                    display: 'flex', justifyContent: 'space-between',
+                    fontSize: '11px', color: '#334155', flexShrink: 0,
+                }}>
+                    <span>
+                        {record.file_type?.toUpperCase() || 'UNKNOWN'}
+                        {record.file_size_bytes ? ` · ${(record.file_size_bytes / 1024).toFixed(1)} KB` : ''}
+                    </span>
+                    <span style={{ color: '#22c55e', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                        <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: '#22c55e', display: 'inline-block' }}></span>
+                        Encrypted Connection
+                    </span>
+                </div>
             </div>
 
             <style>{`
-                .skeleton-doc-loader {
-                    width: 240px;
-                    height: 320px;
-                    background: #1e293b;
-                    border-radius: 12px;
-                    padding: 24px;
-                    position: relative;
-                    overflow: hidden;
-                }
-                .skeleton-header { height: 20px; background: #334155; border-radius: 4px; margin-bottom: 24px; }
-                .skeleton-line { height: 12px; background: #334155; border-radius: 4px; margin-bottom: 12px; }
-                .w-75 { width: 75%; }
-                .skeleton-pulse {
-                    position: absolute;
-                    inset: 0;
-                    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.03), transparent);
-                    animation: skeleton-shimmer 1.5s infinite;
-                }
-                @keyframes skeleton-shimmer {
-                    0% { transform: translateX(-100%); }
-                    100% { transform: translateX(100%); }
-                }
-                .animate-spin { animation: spin 1s linear infinite; }
-                @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+                @keyframes spin { to { transform: rotate(360deg); } }
             `}</style>
         </div>,
         document.body
     );
 };
 
-const headerIconStyle = {
-    width: '36px',
-    height: '36px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    color: '#cbd5e1',
-    backgroundColor: 'transparent',
-    border: 'none',
-    borderRadius: '8px',
-    cursor: 'pointer',
-    transition: 'all 0.2s ease'
+const iconBtnBase = {
+    width: '34px', height: '34px',
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    color: '#94a3b8', backgroundColor: 'transparent',
+    border: 'none', borderRadius: '8px', cursor: 'pointer',
 };
 
-const pillStyle = {
-    padding: '4px 10px',
-    backgroundColor: 'rgba(59, 130, 246, 0.1)',
-    color: '#60a5fa',
-    borderRadius: '100px',
-    fontSize: '10px',
-    fontWeight: '700',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '6px',
-    letterSpacing: '0.05em',
-    textTransform: 'uppercase'
-};
+const IconBtn = ({ onClick, title, children, style = {} }) => (
+    <button onClick={onClick} title={title} style={{ ...iconBtnBase, ...style }}>
+        {children}
+    </button>
+);
 
-const errorBtnStyle = {
-    padding: '10px 20px',
-    backgroundColor: 'transparent',
-    border: '1px solid rgba(255,255,255,0.1)',
-    color: 'white',
-    borderRadius: '12px',
-    fontSize: '14px',
-    fontWeight: '600',
-    cursor: 'pointer',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-    transition: 'all 0.2s'
+const outlineBtn = {
+    padding: '10px 20px', backgroundColor: 'transparent',
+    border: '1px solid rgba(255,255,255,0.1)', color: 'white',
+    borderRadius: '12px', fontSize: '14px', fontWeight: 600,
+    cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px',
 };
 
 export default ViewMedicalRecordModal;

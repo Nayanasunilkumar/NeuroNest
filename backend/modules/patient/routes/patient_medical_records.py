@@ -409,6 +409,33 @@ def download_medical_record(record_id, patient_id=None):
     return jsonify({"message": "File not available"}), 404
 
 
+@patient_medical_bp.route("/medical-records/<int:record_id>/view-url", methods=["GET"])
+@patient_medical_bp.route("/doctor/patients/<int:patient_id>/medical-records/<int:record_id>/view-url", methods=["GET"])
+@jwt_required()
+def get_record_view_url(record_id, patient_id=None):
+    """Returns the direct file URL as JSON so the frontend can render it
+    without triggering CORS issues from the blob/redirect approach."""
+    if patient_id is None:
+        record_tmp = MedicalRecord.query.get(record_id)
+        if not record_tmp:
+            return jsonify({"message": "Record not found"}), 404
+        patient_id = record_tmp.patient_id
+
+    is_allowed, msg = _verify_patient_access(patient_id)
+    if not is_allowed:
+        return jsonify({"message": msg}), 403
+
+    record = MedicalRecord.query.filter_by(id=record_id, patient_id=patient_id).first()
+    if not record:
+        return jsonify({"message": "Record not found"}), 404
+
+    return jsonify({
+        "file_url": record.file_path,
+        "file_type": record.file_type,
+        "title": record.title,
+    }), 200
+
+
 @patient_medical_bp.route("/allergies", methods=["GET"])
 @patient_medical_bp.route("/doctor/patients/<int:patient_id>/allergies", methods=["GET"])
 @jwt_required()

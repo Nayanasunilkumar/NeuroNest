@@ -115,6 +115,16 @@ const getRecordBlob = async (recordId, patientId = null) => {
     }
 };
 
+// Get the direct Cloudinary file URL as JSON (no CORS redirect issues)
+const getRecordViewUrl = async (recordId, patientId = null) => {
+    const url = patientId
+        ? `/api/patient/doctor/patients/${patientId}/medical-records/${recordId}/view-url`
+        : `/api/patient/medical-records/${recordId}/view-url`;
+    const response = await api.get(url);
+    return response.data; // { file_url, file_type, title }
+};
+
+
 // Download Record
 const downloadRecord = async (recordId, title, fileType, patientId = null) => {
   try {
@@ -169,7 +179,8 @@ const medicalRecordService = {
   deleteMedication,
   deleteRecord,
   downloadRecord,
-  getRecordBlob
+  getRecordBlob,
+  getRecordViewUrl
 };
 
 export default medicalRecordService;
