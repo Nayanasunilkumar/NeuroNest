@@ -409,6 +409,70 @@ def download_medical_record(record_id, patient_id=None):
     return jsonify({"message": "File not available"}), 404
 
 
+@patient_medical_bp.route("/medical-records/<int:record_id>/preview", methods=["GET"])
+@patient_medical_bp.route("/doctor/patients/<int:patient_id>/medical-records/<int:record_id>/preview", methods=["GET"])
+def preview_medical_record(record_id, patient_id=None):
+    """
+    Proxy the Cloudinary file through our backend, serving it with
+    Content-Disposition: inline so the browser renders it in an iframe.
+    Accepts JWT via `?token=` query param because iframes cannot send
+    custom Authorization headers.
+    """
+    import requests as http_requests
+    from flask import Response, stream_with_context
+    from flask_jwt_extended import decode_token
+
+    # -- Auth via query param token (iframe-compatible) --
+    raw_token = request.args.get("token", "").strip()
+    if not raw_token:
+        return jsonify({"message": "Authentication required"}), 401
+    try:
+        decoded = decode_token(raw_token)
+        actor_id = int(decoded["sub"])
+        actor_role = decoded.get("role", "patient")
+    except Exception:
+        return jsonify({"message": "Invalid or expired token"}), 401
+
+    # -- Resolve patient_id --
+    if patient_id is None:
+        record_tmp = MedicalRecord.query.get(record_id)
+        if not record_tmp:
+            return jsonify({"message": "Record not found"}), 404
+        patient_id = record_tmp.patient_id
+
+    # -- Access check --
+    if actor_role == "patient" and actor_id != patient_id:
+        return jsonify({"message": "Access denied"}), 403
+
+    record = MedicalRecord.query.filter_by(id=record_id, patient_id=patient_id).first()
+    if not record:
+        return jsonify({"message": "Record not found"}), 404
+
+    if not record.file_path or not record.file_path.startswith("http"):
+        return jsonify({"message": "File not stored externally"}), 404
+
+    # -- Proxy from Cloudinary with inline disposition --
+    try:
+        resp = http_requests.get(record.file_path, stream=True, timeout=30)
+        content_type = resp.headers.get("content-type", "application/pdf")
+
+        def generate():
+            for chunk in resp.iter_content(chunk_size=8192):
+                yield chunk
+
+        return Response(
+            stream_with_context(generate()),
+            status=resp.status_code,
+            content_type=content_type,
+            headers={
+                "Content-Disposition": "inline",
+                "Cache-Control": "private, max-age=300",
+            },
+        )
+    except Exception as e:
+        return jsonify({"message": f"Preview proxy failed: {str(e)}"}), 500
+
+
 @patient_medical_bp.route("/medical-records/<int:record_id>/view-url", methods=["GET"])
 @patient_medical_bp.route("/doctor/patients/<int:patient_id>/medical-records/<int:record_id>/view-url", methods=["GET"])
 @jwt_required()

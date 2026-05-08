@@ -6,6 +6,7 @@ import {
     RefreshCw, AlertCircle, Loader2, Info, ExternalLink
 } from 'lucide-react';
 import medicalRecordService from '../../services/medicalRecordService';
+import { API_BASE_URL } from '../../../config/env';
 
 const ViewMedicalRecordModal = ({ isOpen, onClose, record, patientId = null }) => {
     const [loading, setLoading] = useState(true);
@@ -81,6 +82,13 @@ const ViewMedicalRecordModal = ({ isOpen, onClose, record, patientId = null }) =
 
     // Cloudinary URLs are public CDN links — load them directly in an iframe.
     // Google Docs Viewer fails because it cannot proxy Cloudinary CDN URLs.
+
+    // For PDFs: use backend proxy with JWT so we bypass Cloudinary's X-Frame-Options.
+    const jwtToken = localStorage.getItem('neuronest_token') || '';
+    const previewBase = patientId
+        ? `${API_BASE_URL}/api/patient/doctor/patients/${patientId}/medical-records/${record.id}/preview`
+        : `${API_BASE_URL}/api/patient/medical-records/${record.id}/preview`;
+    const proxyPreviewUrl = `${previewBase}?token=${encodeURIComponent(jwtToken)}`;
 
     const handleDownload = () => {
         medicalRecordService.downloadRecord(record.id, record.title, record.file_type, patientId);
@@ -232,11 +240,11 @@ const ViewMedicalRecordModal = ({ isOpen, onClose, record, patientId = null }) =
                     {!error && fileUrl && (
                         <>
                             {isPDF ? (
-                                // Direct Cloudinary URL — loaded natively by the browser's PDF renderer.
-                                // No third-party proxy (e.g. Google Docs Viewer) needed or wanted.
+                                // Backend proxy: fetches from Cloudinary and serves with
+                                // Content-Disposition: inline — avoids X-Frame-Options block.
                                 <iframe
                                     key={refreshKey}
-                                    src={fileUrl}
+                                    src={proxyPreviewUrl}
                                     title="PDF Preview"
                                     onLoad={handleContentLoad}
                                     onError={handleContentError}
