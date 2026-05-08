@@ -17,6 +17,22 @@ from database.models import db, User
 from extensions.socket import socketio
 
 
+_init_lock = threading.Lock()
+_init_started = False
+
+def _background_init(app_instance):
+    with app_instance.app_context():
+        try:
+            print("[BOOT] Starting background initialization...")
+            from core.migrations import run_startup_migrations
+            from core.scheduler import start_scheduler
+            db.create_all()
+            run_startup_migrations()
+            start_scheduler(app_instance)
+            print("[BOOT] ✓ Background initialization complete.")
+        except Exception as e:
+            print(f"[BOOT] ❌ Background initialization error: {e}")
+
 def create_app():
     app = Flask(__name__)
     app.url_map.strict_slashes = False
@@ -37,28 +53,9 @@ def create_app():
     register_socket_handlers()
     register_core_routes(app)
     
-    # Thread-Safe Background Initialization
-    _init_started = False
-    _init_lock = threading.Lock()
-    
-    def _background_init(app_instance):
-        with app_instance.app_context():
-            try:
-                print("[BOOT] Starting background initialization...")
-                from database.models import db
-                from core.migrations import run_startup_migrations
-                from core.scheduler import start_scheduler
-                
-                db.create_all()
-                run_startup_migrations()
-                start_scheduler(app_instance)
-                print("[BOOT] ✓ Background initialization complete.")
-            except Exception as e:
-                print(f"[BOOT] ❌ Background initialization error: {e}")
-
     @app.before_request
     def trigger_lazy_init():
-        nonlocal _init_started
+        global _init_started
         if not _init_started:
             with _init_lock:
                 if not _init_started:
