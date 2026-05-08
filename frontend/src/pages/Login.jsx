@@ -141,7 +141,7 @@ const Login = () => {
           <p className="nn-auth-subtitle">Sign in to your account</p>
         </header>
 
-        {(serverStatus === 'warming-up' || loading) && !error && (
+        {(serverStatus === 'warming-up' || loading) && (
             <div className="nn-auth-info">
                 <div className="spinner-border spinner-border-sm" role="status" />
                 <div style={{ lineHeight: '1.4' }}>
