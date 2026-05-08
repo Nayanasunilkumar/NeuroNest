@@ -89,20 +89,26 @@ def create_app():
             except Exception:
                 pass
 
+    @app.route("/api/debug/error-log")
+    def get_error_log():
+        try:
+            with open("/tmp/flask_error.log", "r") as f:
+                return f.read(), 200, {'Content-Type': 'text/plain'}
+        except Exception as e:
+            return f"No log found or error: {str(e)}", 200
+
     @app.errorhandler(Exception)
     def handle_exception(e):
         import traceback
         import sys
-        # Print to stderr for Gunicorn/Render logs
-        print(f"[CRITICAL ERROR] {str(e)}", file=sys.stderr)
-        traceback.print_exc(file=sys.stderr)
+        tb = traceback.format_exc()
+        # Save to /tmp for retrieval
+        with open("/tmp/flask_error.log", "a") as f:
+            f.write(f"\n\n--- ERROR {datetime.now()} ---\n{tb}\n")
         
-        error_info = {
-            "error": "Global Exception Caught",
-            "message": str(e),
-            "traceback": traceback.format_exc(),
-            "type": str(type(e).__name__)
-        }
-        return jsonify(error_info), 500
+        return jsonify({
+            "error": str(e),
+            "traceback": tb
+        }), 500
 
     return app
