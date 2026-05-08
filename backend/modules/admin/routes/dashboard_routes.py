@@ -81,7 +81,7 @@ def _build_chart_data():
         outflow = _safe_count(
             f"appointments outflow {day}",
             Appointment.query.filter(
-                func.lower(Appointment.status) == "completed",
+                Appointment.status == "completed",
                 Appointment.updated_at >= day,
                 Appointment.updated_at < next_day,
             ),
@@ -108,7 +108,7 @@ def _build_tasks():
     pending_appointments = _safe_count(
         "pending appointments",
         Appointment.query.filter(
-            func.lower(Appointment.status).in_(["pending", "rescheduled"])
+            Appointment.status.in_(["pending", "rescheduled"])
         ),
     )
     if pending_appointments:
@@ -123,7 +123,7 @@ def _build_tasks():
     pending_reviews = _safe_count(
         "pending reviews",
         Review.query.filter(
-            func.lower(Review.status).in_(["pending", "flagged", "escalated"])
+            Review.status.in_(["pending", "flagged", "escalated"])
         ),
     )
     if pending_reviews:
@@ -138,7 +138,7 @@ def _build_tasks():
     open_escalations = _safe_count(
         "open escalations",
         DoctorEscalation.query.filter(
-            func.lower(DoctorEscalation.status).in_(["open", "investigating"])
+            DoctorEscalation.status.in_(["open", "investigating"])
         ),
     )
     if open_escalations:
@@ -153,7 +153,7 @@ def _build_tasks():
     scheduled_announcements = _safe_count(
         "scheduled announcements",
         Announcement.query.filter(
-            func.lower(Announcement.status) == "scheduled"
+            Announcement.status == "scheduled"
         ),
     )
     if scheduled_announcements:

@@ -185,20 +185,20 @@ def medical_summary(patient_id=None):
     # Use case-insensitive filters for better reliability across different entry sources
     severe_allergies = (
         PatientAllergy.query.filter(PatientAllergy.patient_id == patient_id)
-        .filter(func.lower(PatientAllergy.severity) == "severe")
-        .filter(func.lower(PatientAllergy.status) == "active")
+        .filter(PatientAllergy.severity == "severe")
+        .filter(PatientAllergy.status == "active")
         .count()
     )
     
     active_conditions = (
         PatientCondition.query.filter(PatientCondition.patient_id == patient_id)
-        .filter(func.lower(PatientCondition.status) == "active")
+        .filter(PatientCondition.status == "active")
         .count()
     )
     
     manual_active_medications = (
         PatientMedication.query.filter(PatientMedication.patient_id == patient_id)
-        .filter(func.lower(PatientMedication.status) == "active")
+        .filter(PatientMedication.status == "active")
         .count()
     )
     # Important: prescription_medications can have different internal logic, but we count them for consistency
@@ -471,7 +471,7 @@ def create_allergy(patient_id=None):
 
     existing = (
         PatientAllergy.query.filter(PatientAllergy.patient_id == patient_id)
-        .filter(func.lower(PatientAllergy.allergy_name) == allergy_name.lower())
+        .filter(PatientAllergy.allergy_name.ilike(allergy_name))
         .first()
     )
     if existing and existing.status == "active":
@@ -615,7 +615,7 @@ def create_condition(patient_id=None):
 
     existing = (
         PatientCondition.query.filter(PatientCondition.patient_id == patient_id)
-        .filter(func.lower(PatientCondition.condition_name) == condition_name.lower())
+        .filter(PatientCondition.condition_name.ilike(condition_name))
         .first()
     )
     if existing and existing.status == "active":
@@ -709,7 +709,7 @@ def get_medications(patient_id=None):
     
     query = PatientMedication.query.filter_by(patient_id=patient_id)
     if not include_inactive:
-        query = query.filter(func.lower(PatientMedication.status) == "active")
+        query = query.filter(PatientMedication.status == "active")
         # Relaxing end_date filter for the summary view to avoid zeroing out records too early
         # query = query.filter((PatientMedication.end_date.is_(None)) | (PatientMedication.end_date >= datetime.utcnow().date()))
     rows = [row.to_dict() for row in query.order_by(PatientMedication.created_at.desc()).all()]
@@ -750,7 +750,7 @@ def create_medication(patient_id=None):
         return jsonify({"message": "Invalid medication_origin"}), 400
     existing = (
         PatientMedication.query.filter(PatientMedication.patient_id == patient_id)
-        .filter(func.lower(PatientMedication.drug_name) == drug_name.lower())
+        .filter(PatientMedication.drug_name.ilike(drug_name))
         .filter(PatientMedication.status == "active")
         .first()
     )
