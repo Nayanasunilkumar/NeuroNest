@@ -22,7 +22,7 @@ def get_consolidated_dashboard():
         
     profile = user.patient_profile
     
-    # 2. Identify and Profile Mapping (Robust)
+    # 2. Identity mapping
     identity = {
         "id": user.id,
         "full_name": user.full_name or "Patient",
@@ -37,33 +37,65 @@ def get_consolidated_dashboard():
         "weight_kg": profile.weight_kg if profile else None,
     }
 
-    # 3. Parallel-ish fetching using SQLAlchemy (sequentially but optimized)
-    # We use user_id directly as patient_id for clinical tables as per models.py
-    
-    # Medications
-    medications = PatientMedication.query.filter_by(patient_id=user_id, status='active').all()
-    
+    # 3. Manual medications
+    manual_medications = PatientMedication.query.filter_by(patient_id=user_id, status='active').all()
+    all_medications = [m.to_dict() for m in manual_medications]
+
+    # ── Doctor-issued prescription items (NEW) ──
+    # Merge active prescription medications so they appear in the Prescription Reminder widget.
+    try:
+        from models.prescription_models import Prescription
+        today = datetime.utcnow().date()
+        active_prescriptions = Prescription.query.filter(
+            Prescription.patient_id == user_id,
+            Prescription.is_deleted.is_(False),
+            Prescription.status == "active",
+            db.or_(
+                Prescription.valid_until.is_(None),
+                Prescription.valid_until >= today
+            )
+        ).all()
+
+        for rx in active_prescriptions:
+            for item in rx.items:
+                all_medications.append({
+                    "id": f"rx-{rx.id}-{item.id}",
+                    "patient_id": user_id,
+                    "drug_name": item.medicine_name,
+                    "dosage": item.dosage or "As directed",
+                    "frequency": item.frequency or "",
+                    "instructions": item.instructions or "",
+                    "status": "active",
+                    "created_by_role": "doctor",
+                    "start_date": str(rx.created_at.date()) if rx.created_at else None,
+                    "end_date": str(rx.valid_until) if rx.valid_until else None,
+                })
+    except Exception as e:
+        current_app.logger.warning(f"Could not load prescription meds for dashboard: {e}")
+
     # Conditions
     conditions = PatientCondition.query.filter_by(patient_id=user_id, status='active').all()
     
     # Allergies
     allergies = PatientAllergy.query.filter_by(patient_id=user_id, status='active').all()
     
-    # Emergency Contacts (Links to profile.id)
+    # Emergency Contacts
     contacts = []
     if profile:
         contacts = EmergencyContact.query.filter_by(patient_id=profile.id).all()
 
-    # Upcoming Appointments (Top 3)
-    now = datetime.utcnow()
-    # Fetch appointments from 1 hour ago onwards to catch ongoing ones
-    one_hour_ago = (now - timedelta(hours=1)).date()
-    
+    # Upcoming Appointments — today onwards with 1-hour look-back for ongoing sessions
+    now_utc = datetime.now(timezone.utc)
+    cutoff_date = (now_utc - timedelta(hours=1)).date()
+
     appointments = Appointment.query.filter(
         Appointment.patient_id == user_id,
-        Appointment.appointment_date >= one_hour_ago,
+        Appointment.appointment_date >= cutoff_date,
         Appointment.status.in_(["pending", "approved", "rescheduled"])
-    ).order_by(Appointment.appointment_date.asc(), Appointment.appointment_time.asc()).limit(5).all()
+    ).order_by(
+        Appointment.appointment_date.asc(),
+        Appointment.appointment_time.asc()
+    ).limit(5).all()
 
     # Recent Notifications (Top 5 unread)
     notifications = InAppNotification.query.filter_by(
@@ -82,7 +114,6 @@ def get_consolidated_dashboard():
             history = list(_history_by_patient.get(user_id, []))
             vitals_data["history"] = history
 
-        # Default signal to 'no_device' if no live data is found in cache
         if not vitals_data["latest"]:
             vitals_data["latest"] = {"signal": "no_device"}
                 
@@ -93,7 +124,7 @@ def get_consolidated_dashboard():
     response = {
         "identity": identity,
         "clinical": {
-            "medications": [m.to_dict() for m in medications],
+            "medications": all_medications,
             "conditions": [c.to_dict() for c in conditions],
             "allergies": [a.to_dict() for a in allergies],
         },
