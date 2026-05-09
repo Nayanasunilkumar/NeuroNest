@@ -172,12 +172,29 @@ export default function VideoConsultation() {
     const returnToChat = useCallback(() => {
         if (hasReturnedToChatRef.current) return;
         hasReturnedToChatRef.current = true;
-        const target = getChatReturnTarget();
-        navigate(`${target.pathname}${target.search || ''}`, {
-            replace: true,
-            state: target.state,
+        
+        logVideoEvent('navigation start', { 
+            context: 'returnToChat',
+            hasActiveCall: Boolean(activeCall),
+            roomId: routeRoomId
         });
-    }, [getChatReturnTarget, navigate]);
+
+        const target = getChatReturnTarget();
+        // Ensure path is always defined
+        const path = target?.pathname || (user?.role === 'doctor' ? '/doctor/chat' : '/messages');
+        const search = target?.search || '';
+        const fullPath = `${path}${search}`;
+        
+        logVideoEvent('navigation executing', { 
+            path: fullPath,
+            targetPath: path
+        });
+
+        navigate(fullPath, {
+            replace: true,
+            state: target?.state,
+        });
+    }, [getChatReturnTarget, logVideoEvent, navigate, routeRoomId, activeCall, user?.role]);
 
     const leaveAppointmentSession = useCallback(async () => {
         if (!Number.isInteger(parsedAppointmentId) || hasSentLeaveCallRef.current) return;
@@ -614,17 +631,17 @@ export default function VideoConsultation() {
                 socket.current.on("video_room_state", async ({ participants }) => {
                     if (!Array.isArray(participants) || !selfSidRef.current) return;
                     const remoteParticipants = participants.filter((sid) => sid !== selfSidRef.current);
-                    remoteSidRef.current = remoteParticipants[0] || null;
+                    const newRemoteSid = remoteParticipants[0] || null;
+                    
+                    if (newRemoteSid !== remoteSidRef.current) {
+                        remoteSidRef.current = newRemoteSid;
+                        logVideoEvent('remote sid updated (state)', { 
+                            remoteSid: newRemoteSid,
+                            debug: { remoteSid: newRemoteSid || '' }
+                        });
+                    }
+                    
                     politeRef.current = participants[0] !== selfSidRef.current;
-                    logVideoEvent('video_room_state received', {
-                        participants,
-                        remoteSid: remoteSidRef.current,
-                        isPolite: politeRef.current,
-                        debug: {
-                            remoteSid: remoteSidRef.current || '',
-                            peerRole: politeRef.current ? 'polite' : 'impolite',
-                        },
-                    });
                     if (!remoteSidRef.current) {
                         setIsRemoteConnected(false);
                         hasSentInitialOfferRef.current = false;
@@ -669,8 +686,11 @@ export default function VideoConsultation() {
                     }
                 });
 
-                socket.current.on("user_left", () => {
-                    logVideoEvent('user_left received');
+                socket.current.on("user_left", (data) => {
+                    const sid = data?.sid;
+                    logVideoEvent('user_left received', { sid });
+                    if (sid && sid !== remoteSidRef.current) return;
+                    
                     remoteSidRef.current = null;
                     setIsRemoteConnected(false);
                     hasSentInitialOfferRef.current = false;
@@ -823,39 +843,60 @@ export default function VideoConsultation() {
 
         const remoteVideoEl = remoteVideo.current;
         return () => {
+            if (isDisposed) return;
             isDisposed = true;
-            logVideoEvent('consultation cleanup', {
-                room,
-            });
+            
+            logVideoEvent('consultation cleanup executing');
+            
             void leaveAppointmentSession();
             void notifyCallEnded();
+            
             if (socket.current) {
+                logVideoEvent('socket disconnect');
                 socket.current.emit("leave_video_room", { room });
                 socket.current.disconnect();
                 socket.current = null;
             }
+            
             if (peerConnection.current) {
+                logVideoEvent('peerConnection close');
+                try {
+                    peerConnection.current.getSenders().forEach(sender => {
+                        if (sender.track) sender.track.stop();
+                    });
+                } catch (e) { console.warn('cleanup tracks failed', e); }
+                
                 peerConnection.current.close();
                 peerConnection.current = null;
             }
+            
             if (localStreamRef.current) {
+                logVideoEvent('localStream stop');
                 localStreamRef.current.getTracks().forEach((track) => track.stop());
                 localStreamRef.current = null;
             }
+            
             if (remoteVideoEl) {
                 remoteVideoEl.srcObject = null;
             }
+            
             remoteStreamRef.current = null;
             iceCandidateQueue.current = [];
             pendingLocalIceRef.current = [];
             reconnectAttemptsRef.current = 0;
             hasSentInitialOfferRef.current = false;
+            
             if (restartDebounceRef.current) {
                 clearTimeout(restartDebounceRef.current);
                 restartDebounceRef.current = null;
             }
             if (joinRetryTimer) clearInterval(joinRetryTimer);
-            if (restartTimer) clearTimeout(restartTimer);
+            if (restartTimer) {
+                clearTimeout(restartTimer);
+                restartTimer = null;
+            }
+            
+            logVideoEvent('consultation cleanup complete');
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [activeCall?.caller_id, isResolvingRoom, leaveAppointmentSession, logVideoEvent, returnToChat, roomId, socketRoom, user?.id, user?.role]);
