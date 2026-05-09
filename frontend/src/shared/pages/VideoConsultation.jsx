@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Video, Mic, MicOff, VideoOff, PhoneOff } from 'lucide-react';
 import { getUser } from '../utils/auth';
@@ -7,11 +7,11 @@ import { sendMessage } from '../services/api/chat';
 import { getIceConfig } from '../services/api/rtc';
 import { useCall } from '../context/CallContext';
 import { API_BASE_URL } from '../../config/env';
-import { leaveAppointmentCall } from '../services/api/appointments';
-import { leaveDoctorAppointmentCall } from '../services/api/doctor';
+import { getAppointmentCallState, leaveAppointmentCall } from '../services/api/appointments';
+import { getDoctorAppointmentCallState, leaveDoctorAppointmentCall } from '../services/api/doctor';
 
 export default function VideoConsultation() {
-    const { roomId } = useParams();
+    const { roomId: routeRoomId } = useParams();
     const navigate = useNavigate();
     const location = useLocation();
     const user = getUser();
@@ -42,6 +42,21 @@ export default function VideoConsultation() {
     const [isRemoteConnected, setIsRemoteConnected] = useState(false);
     const [needsAudioResume, setNeedsAudioResume] = useState(false);
     const [mediaError, setMediaError] = useState('');
+    const [resolvedRoomId, setResolvedRoomId] = useState(null);
+    const [isResolvingRoom, setIsResolvingRoom] = useState(true);
+    const [debugInfo, setDebugInfo] = useState({
+        socketStatus: 'idle',
+        peerRole: 'unknown',
+        connectionState: 'new',
+        iceConnectionState: 'new',
+        signalingState: 'new',
+        remoteStreamStatus: 'none',
+        localTracks: 0,
+        remoteTracks: 0,
+        selfSid: '',
+        remoteSid: '',
+        lastEvent: 'initialising',
+    });
 
     const getAppointmentIdFromRoom = (roomValue) => {
         if (!roomValue) return null;
@@ -55,14 +70,79 @@ export default function VideoConsultation() {
     };
 
     const stateAppointmentId = Number(location?.state?.appointmentId);
-    const parsedAppointmentId = Number.isInteger(stateAppointmentId)
+    const parsedAppointmentId = Number.isInteger(stateAppointmentId) && stateAppointmentId > 0
         ? stateAppointmentId
-        : getAppointmentIdFromRoom(roomId);
+        : getAppointmentIdFromRoom(routeRoomId);
     const hasReturnedToChatRef = useRef(false);
+
+    const roomId = resolvedRoomId || routeRoomId;
+    const socketRoom = useMemo(() => (roomId ? `consult_${roomId}` : ''), [roomId]);
+
+    const logVideoEvent = useCallback((event, details = {}) => {
+        console.log(`[VideoConsultation] ${event}`, {
+            routeRoomId,
+            resolvedRoomId: resolvedRoomId || routeRoomId,
+            socketRoom: (resolvedRoomId || routeRoomId) ? `consult_${resolvedRoomId || routeRoomId}` : null,
+            appointmentId: parsedAppointmentId,
+            role: user?.role,
+            ...details,
+        });
+        setDebugInfo((prev) => ({
+            ...prev,
+            lastEvent: event,
+            ...details.debug,
+        }));
+    }, [parsedAppointmentId, resolvedRoomId, routeRoomId, user?.role]);
+
+    useEffect(() => {
+        let cancelled = false;
+
+        const resolveAppointmentRoom = async () => {
+            if (!parsedAppointmentId) {
+                setResolvedRoomId(routeRoomId || null);
+                setIsResolvingRoom(false);
+                return;
+            }
+
+            setIsResolvingRoom(true);
+            try {
+                const payload = user?.role === 'doctor'
+                    ? await getDoctorAppointmentCallState(parsedAppointmentId)
+                    : await getAppointmentCallState(parsedAppointmentId);
+                if (cancelled) return;
+                const canonicalRoomId = payload?.room_id || routeRoomId;
+                setResolvedRoomId(canonicalRoomId);
+                console.log('[VideoConsultation] appointment room resolved', {
+                    routeRoomId,
+                    canonicalRoomId,
+                    appointmentId: parsedAppointmentId,
+                    role: user?.role,
+                });
+                setDebugInfo((prev) => ({ ...prev, lastEvent: 'appointment room resolved' }));
+            } catch (err) {
+                if (cancelled) return;
+                console.warn('[VideoConsultation] Failed to resolve appointment room, using route room id', err);
+                setResolvedRoomId(routeRoomId || null);
+                console.log('[VideoConsultation] appointment room resolve failed', {
+                    routeRoomId,
+                    appointmentId: parsedAppointmentId,
+                    error: err?.response?.data || err?.message,
+                });
+                setDebugInfo((prev) => ({ ...prev, lastEvent: 'appointment room resolve failed' }));
+            } finally {
+                if (!cancelled) setIsResolvingRoom(false);
+            }
+        };
+
+        resolveAppointmentRoom();
+        return () => {
+            cancelled = true;
+        };
+    }, [parsedAppointmentId, routeRoomId, user?.role]);
 
     const getChatReturnTarget = useCallback(() => {
         const currentUserId = user?.id;
-        const activeConversationId = activeCall?.conversation_id || Number(roomId);
+        const activeConversationId = activeCall?.conversation_id || Number(routeRoomId);
         const callerId = activeCall?.caller_id;
         const receiverId = activeCall?.receiver_id;
         const otherUserId = String(callerId) === String(currentUserId) ? receiverId : callerId;
@@ -85,7 +165,7 @@ export default function VideoConsultation() {
                 otherUserId: otherUserId || null,
             },
         };
-    }, [activeCall?.caller_id, activeCall?.conversation_id, activeCall?.receiver_id, roomId, user?.id, user?.role]);
+    }, [activeCall?.caller_id, activeCall?.conversation_id, activeCall?.receiver_id, routeRoomId, user?.id, user?.role]);
 
     const returnToChat = useCallback(() => {
         if (hasReturnedToChatRef.current) return;
@@ -118,10 +198,18 @@ export default function VideoConsultation() {
     }, [activeCall?.call_id]);
 
     useEffect(() => {
-        const room = `consult_${roomId}`;
+        if (isResolvingRoom || !roomId || !socketRoom) return undefined;
+
+        const room = socketRoom;
         let isDisposed = false;
         let joinRetryTimer = null;
         let restartTimer = null;
+
+        logVideoEvent('consultation effect start', {
+            roomId,
+            socketRoom: room,
+            routeRoomId,
+        });
 
         const ensureRemotePlayback = async () => {
             if (!remoteVideo.current) return;
@@ -138,14 +226,25 @@ export default function VideoConsultation() {
 
         const flushQueuedIceCandidates = async () => {
             if (!peerConnection.current) return;
+            logVideoEvent('queued ICE flush start', {
+                count: iceCandidateQueue.current.length,
+            });
             while (iceCandidateQueue.current.length > 0) {
                 const candidate = iceCandidateQueue.current.shift();
                 await peerConnection.current.addIceCandidate(candidate);
+                logVideoEvent('queued ICE candidate added', {
+                    candidateType: candidate?.type,
+                    candidateProtocol: candidate?.protocol,
+                });
             }
         };
 
         const flushPendingLocalIce = () => {
             if (!socket.current || !remoteSidRef.current) return;
+            logVideoEvent('pending local ICE flush start', {
+                count: pendingLocalIceRef.current.length,
+                to: remoteSidRef.current,
+            });
             while (pendingLocalIceRef.current.length > 0) {
                 const candidate = pendingLocalIceRef.current.shift();
                 socket.current.emit("ice_candidate", {
@@ -153,19 +252,54 @@ export default function VideoConsultation() {
                     to: remoteSidRef.current,
                     candidate,
                 });
+                logVideoEvent('pending local ICE candidate sent', {
+                    to: remoteSidRef.current,
+                    candidateType: candidate?.type,
+                    candidateProtocol: candidate?.protocol,
+                });
             }
         };
 
         const createAndSendOffer = async () => {
-            if (!peerConnection.current || !socket.current || !remoteSidRef.current) return;
-            if (makingOfferRef.current) return;
-            if (peerConnection.current.signalingState !== "stable") return;
+            if (!peerConnection.current || !socket.current || !remoteSidRef.current) {
+                logVideoEvent('offer skipped: missing peer/socket', {
+                    hasPeerConnection: Boolean(peerConnection.current),
+                    hasSocket: Boolean(socket.current),
+                    remoteSid: remoteSidRef.current,
+                });
+                return;
+            }
+            if (makingOfferRef.current) {
+                logVideoEvent('offer skipped: already making offer');
+                return;
+            }
+            if (peerConnection.current.signalingState !== "stable") {
+                logVideoEvent('offer skipped: signaling not stable', {
+                    signalingState: peerConnection.current.signalingState,
+                });
+                return;
+            }
             // Prevent repeated offer churn that can freeze media after initial connect.
-            if (hasSentInitialOfferRef.current && peerConnection.current.remoteDescription?.type) return;
+            if (hasSentInitialOfferRef.current && peerConnection.current.remoteDescription?.type) {
+                logVideoEvent('offer skipped: initial offer already completed', {
+                    remoteDescriptionType: peerConnection.current.remoteDescription.type,
+                });
+                return;
+            }
             try {
                 makingOfferRef.current = true;
+                logVideoEvent('createOffer start', {
+                    to: remoteSidRef.current,
+                    signalingState: peerConnection.current.signalingState,
+                });
                 const offer = await peerConnection.current.createOffer();
+                logVideoEvent('createOffer success', {
+                    sdpType: offer?.type,
+                });
                 await peerConnection.current.setLocalDescription(offer);
+                logVideoEvent('setLocalDescription offer success', {
+                    signalingState: peerConnection.current.signalingState,
+                });
                 socket.current.emit("webrtc_offer", {
                     room,
                     to: remoteSidRef.current,
@@ -173,9 +307,15 @@ export default function VideoConsultation() {
                 });
                 hasSentInitialOfferRef.current = true;
                 flushPendingLocalIce();
-                console.log("WebRTC: offer sent", { room, to: remoteSidRef.current });
+                logVideoEvent('webrtc_offer sent', {
+                    room,
+                    to: remoteSidRef.current,
+                });
             } catch (err) {
                 console.error("Error creating/sending offer:", err);
+                logVideoEvent('createOffer failed', {
+                    error: err?.message || String(err),
+                });
             } finally {
                 makingOfferRef.current = false;
             }
@@ -194,8 +334,15 @@ export default function VideoConsultation() {
                     offer: peerConnection.current.localDescription,
                 });
                 flushPendingLocalIce();
+                logVideoEvent('ICE restart offer sent', {
+                    attempt: reconnectAttemptsRef.current,
+                    to: remoteSidRef.current,
+                });
             } catch (err) {
                 console.error("ICE restart renegotiation failed:", err);
+                logVideoEvent('ICE restart failed', {
+                    error: err?.message || String(err),
+                });
             }
         };
 
@@ -203,10 +350,20 @@ export default function VideoConsultation() {
             try {
                 const data = await getIceConfig();
                 if (Array.isArray(data?.iceServers) && data.iceServers.length > 0) {
+                    logVideoEvent('ICE config loaded', {
+                        iceServerCount: data.iceServers.length,
+                        hasTurn: data.iceServers.some((server) => {
+                            const urls = Array.isArray(server.urls) ? server.urls : [server.urls];
+                            return urls.some((url) => String(url || '').startsWith('turn'));
+                        }),
+                    });
                     return data.iceServers;
                 }
             } catch (err) {
                 console.warn("Failed to fetch ICE config, using fallback STUN.", err);
+                logVideoEvent('ICE config fallback', {
+                    error: err?.message || String(err),
+                });
             }
             return [{ urls: "stun:stun.l.google.com:19302" }];
         };
@@ -252,10 +409,23 @@ export default function VideoConsultation() {
                 if (localVideo.current) {
                     localVideo.current.srcObject = stream;
                 }
+                logVideoEvent('local media ready', {
+                    videoTracks: stream.getVideoTracks().length,
+                    audioTracks: stream.getAudioTracks().length,
+                    debug: { localTracks: stream.getTracks().length },
+                });
 
                 const iceServers = await getIceServers();
                 peerConnection.current = new RTCPeerConnection({
                     iceServers,
+                });
+                logVideoEvent('RTCPeerConnection created', {
+                    iceServerCount: iceServers.length,
+                    debug: {
+                        connectionState: peerConnection.current.connectionState,
+                        iceConnectionState: peerConnection.current.iceConnectionState,
+                        signalingState: peerConnection.current.signalingState,
+                    },
                 });
                 remoteStreamRef.current = new MediaStream();
                 if (remoteVideo.current) {
@@ -270,6 +440,14 @@ export default function VideoConsultation() {
 
                 peerConnection.current.ontrack = (event) => {
                     if (!remoteVideo.current) return;
+                    logVideoEvent('ontrack fired', {
+                        trackKind: event.track?.kind,
+                        trackId: event.track?.id,
+                        streamCount: event.streams?.length || 0,
+                        debug: {
+                            remoteStreamStatus: 'ontrack',
+                        },
+                    });
                     // Safari/Brave mobile may deliver track events with empty event.streams.
                     // Build/maintain the remote MediaStream manually for maximum compatibility.
                     if (event.streams && event.streams[0]) {
@@ -285,6 +463,17 @@ export default function VideoConsultation() {
                         }
                         remoteVideo.current.srcObject = remoteStreamRef.current;
                     }
+                    const tracks = remoteVideo.current.srcObject?.getTracks?.() || [];
+                    logVideoEvent('remote stream attached', {
+                        trackCount: tracks.length,
+                        videoTracks: remoteVideo.current.srcObject?.getVideoTracks?.().length || 0,
+                        audioTracks: remoteVideo.current.srcObject?.getAudioTracks?.().length || 0,
+                        muted: remoteVideo.current.muted,
+                        debug: {
+                            remoteStreamStatus: tracks.length ? 'attached' : 'empty',
+                            remoteTracks: tracks.length,
+                        },
+                    });
                     void ensureRemotePlayback();
                     setIsRemoteConnected(true);
                 };
@@ -292,6 +481,10 @@ export default function VideoConsultation() {
                 peerConnection.current.onconnectionstatechange = () => {
                     const state = peerConnection.current?.connectionState;
                     console.log("WebRTC connectionState:", state);
+                    logVideoEvent('connectionState changed', {
+                        state,
+                        debug: { connectionState: state || 'unknown' },
+                    });
                     if (state === "connected") {
                         reconnectAttemptsRef.current = 0;
                         if (restartDebounceRef.current) {
@@ -324,6 +517,16 @@ export default function VideoConsultation() {
                 // to prevent glare/duplicate offers that can cause one-way/frozen video.
                 peerConnection.current.oniceconnectionstatechange = () => {
                     console.log("WebRTC iceConnectionState:", peerConnection.current?.iceConnectionState);
+                    logVideoEvent('iceConnectionState changed', {
+                        state: peerConnection.current?.iceConnectionState,
+                        debug: { iceConnectionState: peerConnection.current?.iceConnectionState || 'unknown' },
+                    });
+                };
+                peerConnection.current.onsignalingstatechange = () => {
+                    logVideoEvent('signalingState changed', {
+                        state: peerConnection.current?.signalingState,
+                        debug: { signalingState: peerConnection.current?.signalingState || 'unknown' },
+                    });
                 };
                 
                 const token = localStorage.getItem("neuronest_token");
@@ -339,9 +542,21 @@ export default function VideoConsultation() {
                 });
 
                 peerConnection.current.onicecandidate = (event) => {
-                    if (!event.candidate || !socket.current) return;
+                    if (!event.candidate) {
+                        logVideoEvent('local ICE gathering complete');
+                        return;
+                    }
+                    if (!socket.current) {
+                        logVideoEvent('local ICE candidate skipped: socket missing');
+                        return;
+                    }
                     if (!remoteSidRef.current) {
                         pendingLocalIceRef.current.push(event.candidate);
+                        logVideoEvent('local ICE candidate queued', {
+                            candidateType: event.candidate?.type,
+                            candidateProtocol: event.candidate?.protocol,
+                            queueLength: pendingLocalIceRef.current.length,
+                        });
                         return;
                     }
                     socket.current.emit("ice_candidate", {
@@ -349,20 +564,44 @@ export default function VideoConsultation() {
                         to: remoteSidRef.current,
                         candidate: event.candidate,
                     });
+                    logVideoEvent('ice_candidate sent', {
+                        to: remoteSidRef.current,
+                        candidateType: event.candidate?.type,
+                        candidateProtocol: event.candidate?.protocol,
+                    });
                 };
 
                 socket.current.on("connect_error", (err) => {
                     console.error("Video socket connect_error:", err?.message || err);
+                    logVideoEvent('socket connect_error', {
+                        error: err?.message || String(err),
+                        debug: { socketStatus: 'connect_error' },
+                    });
                 });
 
                 socket.current.on("connect", () => {
                     selfSidRef.current = socket.current?.id || null;
                     hasSentInitialOfferRef.current = false;
+                    logVideoEvent('socket connected; join room', {
+                        sid: selfSidRef.current,
+                        room,
+                        debug: {
+                            socketStatus: 'connected',
+                            selfSid: selfSidRef.current || '',
+                        },
+                    });
                     socket.current?.emit("join_video_room", { room });
                 });
 
                 socket.current.on("room_joined", (payload) => {
                     console.log("Video room joined:", payload);
+                    logVideoEvent('room_joined received', {
+                        payload,
+                        debug: {
+                            socketStatus: 'room_joined',
+                            selfSid: payload?.sid || selfSidRef.current || '',
+                        },
+                    });
                 });
 
                 socket.current.on("video_room_state", async ({ participants }) => {
@@ -370,6 +609,15 @@ export default function VideoConsultation() {
                     const remoteParticipants = participants.filter((sid) => sid !== selfSidRef.current);
                     remoteSidRef.current = remoteParticipants[0] || null;
                     politeRef.current = participants[0] !== selfSidRef.current;
+                    logVideoEvent('video_room_state received', {
+                        participants,
+                        remoteSid: remoteSidRef.current,
+                        isPolite: politeRef.current,
+                        debug: {
+                            remoteSid: remoteSidRef.current || '',
+                            peerRole: politeRef.current ? 'polite' : 'impolite',
+                        },
+                    });
                     if (!remoteSidRef.current) {
                         setIsRemoteConnected(false);
                         hasSentInitialOfferRef.current = false;
@@ -379,6 +627,15 @@ export default function VideoConsultation() {
                 socket.current.on("video_peer", async ({ peerSid, isPolite, shouldOffer }) => {
                     remoteSidRef.current = peerSid || null;
                     politeRef.current = Boolean(isPolite);
+                    logVideoEvent('video_peer received', {
+                        peerSid,
+                        isPolite,
+                        shouldOffer,
+                        debug: {
+                            remoteSid: peerSid || '',
+                            peerRole: isPolite ? 'polite' : 'impolite',
+                        },
+                    });
                     flushPendingLocalIce();
                     if (shouldOffer && remoteSidRef.current) {
                         console.log("WebRTC: peer role says shouldOffer", { peerSid, isPolite });
@@ -393,6 +650,11 @@ export default function VideoConsultation() {
 
                 socket.current.on("user_joined", ({ sid }) => {
                     remoteSidRef.current = sid || remoteSidRef.current;
+                    logVideoEvent('user_joined received', {
+                        sid,
+                        remoteSid: remoteSidRef.current,
+                        debug: { remoteSid: remoteSidRef.current || '' },
+                    });
                     flushPendingLocalIce();
                     // Fallback: if role event is delayed, caller can still issue one initial offer.
                     if (!politeRef.current && remoteSidRef.current && !hasSentInitialOfferRef.current) {
@@ -401,6 +663,7 @@ export default function VideoConsultation() {
                 });
 
                 socket.current.on("user_left", () => {
+                    logVideoEvent('user_left received');
                     remoteSidRef.current = null;
                     setIsRemoteConnected(false);
                     hasSentInitialOfferRef.current = false;
@@ -417,31 +680,49 @@ export default function VideoConsultation() {
                         const offer = data?.offer;
                         if (!offer) return;
                         if (data?.from) remoteSidRef.current = data.from;
+                        logVideoEvent('webrtc_offer received', {
+                            from: data?.from,
+                            offerType: offer?.type,
+                            signalingState: peerConnection.current.signalingState,
+                            debug: { remoteSid: remoteSidRef.current || '' },
+                        });
                         const offerCollision = makingOfferRef.current || peerConnection.current.signalingState !== "stable";
                         if (offerCollision) {
                             if (!politeRef.current) {
                                 console.log("WebRTC: dropping colliding offer (impolite peer)");
+                                logVideoEvent('webrtc_offer dropped: collision impolite');
                                 return;
                             }
                             await peerConnection.current.setLocalDescription({ type: "rollback" });
+                            logVideoEvent('local description rollback success');
                         }
                         await peerConnection.current.setRemoteDescription(
                             new RTCSessionDescription(offer),
                         );
                         await flushQueuedIceCandidates();
-                        console.log("WebRTC: remote offer set");
+                        logVideoEvent('setRemoteDescription offer success', {
+                            signalingState: peerConnection.current.signalingState,
+                        });
 
                         const answer = await peerConnection.current.createAnswer();
+                        logVideoEvent('createAnswer success', {
+                            sdpType: answer?.type,
+                        });
                         await peerConnection.current.setLocalDescription(answer);
                         socket.current.emit("webrtc_answer", {
                             room,
                             to: data?.from || remoteSidRef.current,
                             answer: peerConnection.current.localDescription,
                         });
-                        console.log("WebRTC: answer sent");
+                        logVideoEvent('webrtc_answer sent', {
+                            to: data?.from || remoteSidRef.current,
+                        });
                         flushPendingLocalIce();
                     } catch (error) {
                         console.error("Error handling offer:", error);
+                        logVideoEvent('webrtc_offer handling failed', {
+                            error: error?.message || String(error),
+                        });
                     }
                 });
 
@@ -449,13 +730,23 @@ export default function VideoConsultation() {
                     if (!peerConnection.current) return;
                     try {
                         if (!data?.answer) return;
+                        logVideoEvent('webrtc_answer received', {
+                            from: data?.from,
+                            answerType: data.answer?.type,
+                            signalingState: peerConnection.current.signalingState,
+                        });
                         await peerConnection.current.setRemoteDescription(
                             new RTCSessionDescription(data.answer),
                         );
                         await flushQueuedIceCandidates();
-                        console.log("WebRTC: answer received and remote description set");
+                        logVideoEvent('setRemoteDescription answer success', {
+                            signalingState: peerConnection.current.signalingState,
+                        });
                     } catch (error) {
                         console.error("Error handling answer:", error);
+                        logVideoEvent('webrtc_answer handling failed', {
+                            error: error?.message || String(error),
+                        });
                     }
                 });
 
@@ -463,20 +754,39 @@ export default function VideoConsultation() {
                     if (!peerConnection.current || !data?.candidate) return;
                     try {
                         const candidate = new RTCIceCandidate(data.candidate);
+                        logVideoEvent('ice_candidate received', {
+                            from: data?.from,
+                            candidateType: candidate?.type,
+                            candidateProtocol: candidate?.protocol,
+                            hasRemoteDescription: Boolean(peerConnection.current.remoteDescription?.type),
+                        });
                         if (peerConnection.current.remoteDescription?.type) {
                             await peerConnection.current.addIceCandidate(candidate);
-                            console.log("WebRTC: ICE candidate added");
+                            logVideoEvent('addIceCandidate success', {
+                                candidateType: candidate?.type,
+                                candidateProtocol: candidate?.protocol,
+                            });
                         } else {
                             iceCandidateQueue.current.push(candidate);
+                            logVideoEvent('remote ICE candidate queued', {
+                                queueLength: iceCandidateQueue.current.length,
+                            });
                         }
                     } catch (error) {
                         console.error("Error adding ice candidate:", error);
+                        logVideoEvent('addIceCandidate failed', {
+                            error: error?.message || String(error),
+                        });
                     }
                 });
 
                 joinRetryTimer = setInterval(() => {
                     if (!socket.current?.connected) return;
                     if (isRemoteConnected) return;
+                    logVideoEvent('join_video_room retry', {
+                        room,
+                        remoteSid: remoteSidRef.current,
+                    });
                     socket.current.emit("join_video_room", { room });
                     if (!politeRef.current && remoteSidRef.current && !hasSentInitialOfferRef.current && peerConnection.current?.signalingState === "stable") {
                         void createAndSendOffer();
@@ -507,6 +817,9 @@ export default function VideoConsultation() {
         const remoteVideoEl = remoteVideo.current;
         return () => {
             isDisposed = true;
+            logVideoEvent('consultation cleanup', {
+                room,
+            });
             void leaveAppointmentSession();
             void notifyCallEnded();
             if (socket.current) {
@@ -538,7 +851,7 @@ export default function VideoConsultation() {
             if (restartTimer) clearTimeout(restartTimer);
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [activeCall?.caller_id, leaveAppointmentSession, returnToChat, roomId, user?.id, user?.role]);
+    }, [activeCall?.caller_id, isResolvingRoom, leaveAppointmentSession, logVideoEvent, returnToChat, roomId, socketRoom, user?.id, user?.role]);
 
     useEffect(() => {
         if (hasSeenActiveCallRef.current && !hasReturnedToChatRef.current && !activeCall?.call_id) {
@@ -632,6 +945,7 @@ export default function VideoConsultation() {
                             </div>
                             <p className="video-waiting-title">Waiting for the other participant...</p>
                             <p className="video-waiting-room">Room ID: {roomId}</p>
+                            {isResolvingRoom && <p className="video-waiting-room">Resolving consultation room...</p>}
                         </div>
                     )}
                 </div>
@@ -646,6 +960,22 @@ export default function VideoConsultation() {
                         style={{ transform: 'scaleX(-1)' }}
                     />
                     <div className="video-local-label">You</div>
+                </div>
+
+                <div className="video-debug-overlay">
+                    <div><strong>Route:</strong> {routeRoomId || 'none'}</div>
+                    <div><strong>Resolved:</strong> {roomId || 'none'}</div>
+                    <div><strong>Socket room:</strong> {socketRoom || 'none'}</div>
+                    <div><strong>Socket:</strong> {debugInfo.socketStatus}</div>
+                    <div><strong>Role:</strong> {debugInfo.peerRole}</div>
+                    <div><strong>Self SID:</strong> {debugInfo.selfSid || 'pending'}</div>
+                    <div><strong>Remote SID:</strong> {debugInfo.remoteSid || 'pending'}</div>
+                    <div><strong>ICE:</strong> {debugInfo.iceConnectionState}</div>
+                    <div><strong>Signaling:</strong> {debugInfo.signalingState}</div>
+                    <div><strong>PC:</strong> {debugInfo.connectionState}</div>
+                    <div><strong>Local tracks:</strong> {debugInfo.localTracks}</div>
+                    <div><strong>Remote:</strong> {debugInfo.remoteStreamStatus} ({debugInfo.remoteTracks})</div>
+                    <div><strong>Last:</strong> {debugInfo.lastEvent}</div>
                 </div>
             </div>
 
@@ -774,6 +1104,7 @@ export default function VideoConsultation() {
                 /* Video Stage */
                 .video-stage {
                     flex: 1;
+                    position: relative;
                     display: grid;
                     gap: 12px;
                     padding: 12px;
@@ -790,6 +1121,31 @@ export default function VideoConsultation() {
                         grid-template-columns: 1fr 1fr;
                         align-items: center;
                     }
+                }
+
+                .video-debug-overlay {
+                    position: absolute;
+                    left: 18px;
+                    bottom: 18px;
+                    z-index: 6;
+                    max-width: min(440px, calc(100vw - 36px));
+                    display: grid;
+                    grid-template-columns: repeat(2, minmax(0, 1fr));
+                    gap: 4px 12px;
+                    padding: 10px 12px;
+                    border: 1px solid rgba(148, 163, 184, 0.35);
+                    border-radius: 8px;
+                    background: rgba(15, 23, 42, 0.82);
+                    color: #cbd5e1;
+                    font-size: 0.72rem;
+                    line-height: 1.3;
+                    backdrop-filter: blur(8px);
+                    pointer-events: none;
+                }
+
+                .video-debug-overlay strong {
+                    color: #f8fafc;
+                    font-weight: 700;
                 }
 
                 .video-remote-container,
