@@ -79,72 +79,75 @@ def update_my_profile():
     if not data:
         data = {}
 
-    if "full_name" in data:
-        profile.full_name = data.get("full_name")
-        if profile.user:
-            profile.user.full_name = data.get("full_name")
+    try:
+        if "full_name" in data:
+            profile.full_name = data.get("full_name")
+            if profile.user:
+                profile.user.full_name = data.get("full_name")
 
-    if "phone" in data:
-        profile.phone = data.get("phone")
+        if "phone" in data:
+            profile.phone = data.get("phone")
 
-    if "date_of_birth" in data:
-        dob = data.get("date_of_birth")
-        if dob:
-            try:
-                profile.date_of_birth = datetime.strptime(dob, "%Y-%m-%d").date()
-            except ValueError:
-                return jsonify({"message": "Invalid date_of_birth format. Use YYYY-MM-DD"}), 400
-        else:
-            profile.date_of_birth = None
+        if "date_of_birth" in data:
+            dob = data.get("date_of_birth")
+            if dob:
+                try:
+                    profile.date_of_birth = datetime.strptime(dob, "%Y-%m-%d").date()
+                except ValueError:
+                    return jsonify({"message": "Invalid date_of_birth format. Use YYYY-MM-DD"}), 400
+            else:
+                profile.date_of_birth = None
 
-    if "gender" in data:
-        profile.gender = data.get("gender")
+        if "gender" in data:
+            profile.gender = data.get("gender")
 
-    if "blood_group" in data:
-        profile.blood_group = data.get("blood_group")
+        if "blood_group" in data:
+            profile.blood_group = data.get("blood_group")
 
-    if "height_cm" in data:
-        value = data.get("height_cm")
-        profile.height_cm = int(value) if value not in (None, "", "null") else None
+        if "height_cm" in data:
+            value = data.get("height_cm")
+            profile.height_cm = int(value) if value not in (None, "", "null") else None
 
-    if "weight_kg" in data:
-        value = data.get("weight_kg")
-        profile.weight_kg = int(value) if value not in (None, "", "null") else None
+        if "weight_kg" in data:
+            value = data.get("weight_kg")
+            profile.weight_kg = int(value) if value not in (None, "", "null") else None
 
-    if "address" in data:
-        profile.address = data.get("address")
+        if "address" in data:
+            profile.address = data.get("address")
 
-    if "city" in data:
-        profile.city = data.get("city")
+        if "city" in data:
+            profile.city = data.get("city")
 
-    if "state" in data:
-        profile.state = data.get("state")
+        if "state" in data:
+            profile.state = data.get("state")
 
-    if "country" in data:
-        profile.country = data.get("country")
+        if "country" in data:
+            profile.country = data.get("country")
 
-    if "pincode" in data:
-        profile.pincode = data.get("pincode")
+        if "pincode" in data:
+            profile.pincode = data.get("pincode")
 
-    if "allergies" in data:
-        profile.allergies = data.get("allergies")
+        if "allergies" in data:
+            profile.allergies = data.get("allergies")
 
-    if "chronic_conditions" in data:
-        profile.chronic_conditions = data.get("chronic_conditions")
+        if "chronic_conditions" in data:
+            profile.chronic_conditions = data.get("chronic_conditions")
 
-    if "profile_image" in request.files:
-        file = request.files["profile_image"]
-        if file and file.filename != "" and allowed_file(file.filename):
-            public_id = f"neuronest/profiles/patient_{user_id}"
-            try:
-                result = cld_upload(file.stream, public_id=public_id, folder="neuronest/profiles", resource_type="image")
-                profile.profile_image = result["secure_url"]
-            except Exception as e:
-                return jsonify({"message": f"Image upload failed: {str(e)}"}), 500
+        if "profile_image" in request.files:
+            file = request.files["profile_image"]
+            if file and file.filename != "" and allowed_file(file.filename):
+                public_id = f"neuronest/profiles/patient_{user_id}"
+                try:
+                    result = cld_upload(file.stream, public_id=public_id, folder="neuronest/profiles", resource_type="image")
+                    profile.profile_image = result["secure_url"]
+                except Exception as e:
+                    return jsonify({"message": f"Image upload failed: {str(e)}"}), 500
 
-    db.session.commit()
-
-    return jsonify(profile.to_dict()), 200
+        db.session.commit()
+        return jsonify(profile.to_dict()), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"message": f"Profile update failed: {str(e)}"}), 500
 
 
 # ============================
@@ -227,9 +230,9 @@ def update_my_emergency_contacts():
 
         return jsonify([c.to_dict() for c in new_contacts]), 200
     
-    except Exception:
+    except Exception as e:
         db.session.rollback()
-        return jsonify({"message": "Server error while saving emergency contacts"}), 500
+        return jsonify({"message": f"Emergency contact save failed: {str(e)}"}), 500
 
 @profile_bp.route("/notifications", methods=["GET"])
 @jwt_required()
