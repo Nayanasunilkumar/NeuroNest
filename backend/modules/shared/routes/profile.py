@@ -1,5 +1,6 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
+from sqlalchemy import inspect, text
 from database.models import (
     db, PatientProfile, User, EmergencyContact, 
     PatientMedication, PatientCondition, PatientAllergy, Appointment
@@ -13,6 +14,42 @@ ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "webp"}
 
 def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+def _table_columns(table_name):
+    return {column["name"] for column in inspect(db.engine).get_columns(table_name)}
+
+
+def _serialize_emergency_contact(row, columns=None):
+    columns = columns or _table_columns("emergency_contacts")
+    getter = row.get if hasattr(row, "get") else lambda key, default=None: getattr(row, key, default)
+    return {
+        "id": getter("id"),
+        "patient_id": getter("patient_id"),
+        "contact_name": getter("contact_name") or "",
+        "relationship": getter("relationship") or "",
+        "phone": getter("phone") or "",
+        "alternate_phone": getter("alternate_phone") if "alternate_phone" in columns else "",
+        "email": getter("email") or "",
+        "is_primary": bool(getter("is_primary")),
+        "created_at": str(getter("created_at")) if "created_at" in columns and getter("created_at") else None,
+        "updated_at": str(getter("updated_at")) if "updated_at" in columns and getter("updated_at") else None,
+    }
+
+
+def _ensure_patient_profile(user_id):
+    profile = PatientProfile.query.filter_by(user_id=user_id).first()
+    if profile:
+        return profile
+
+    user = User.query.get(user_id)
+    if not user:
+        return None
+
+    profile = PatientProfile(user_id=user_id, full_name=user.full_name)
+    db.session.add(profile)
+    db.session.flush()
+    return profile
 
 
 # ============================
@@ -166,8 +203,32 @@ def get_my_emergency_contacts():
     if not profile:
         return jsonify([]), 200  # Return empty list if no profile
 
-    contacts = EmergencyContact.query.filter_by(patient_id=profile.id).all()
-    return jsonify([c.to_dict() for c in contacts]), 200
+    columns = _table_columns("emergency_contacts")
+    select_columns = [
+        column for column in (
+            "id",
+            "patient_id",
+            "contact_name",
+            "relationship",
+            "phone",
+            "alternate_phone",
+            "email",
+            "is_primary",
+            "created_at",
+            "updated_at",
+        )
+        if column in columns
+    ]
+    order_clause = "COALESCE(is_primary, FALSE) DESC, id ASC" if "is_primary" in columns else "id ASC"
+    rows = db.session.execute(
+        text(
+            f"SELECT {', '.join(select_columns)} "
+            "FROM emergency_contacts WHERE patient_id = :patient_id "
+            f"ORDER BY {order_clause}"
+        ),
+        {"patient_id": profile.id},
+    ).mappings().all()
+    return jsonify([_serialize_emergency_contact(row, columns) for row in rows]), 200
 
 
 # ============================
@@ -181,54 +242,110 @@ def update_my_emergency_contacts():
         return jsonify({"message": "Patient access required"}), 403
 
     user_id = int(get_jwt_identity())
-    data = request.get_json()
+    data = request.get_json(silent=True)
 
     if not isinstance(data, list):
         return jsonify({"message": "Expected a list of contacts"}), 400
 
-    profile = PatientProfile.query.filter_by(user_id=user_id).first()
+    profile = _ensure_patient_profile(user_id)
     if not profile:
-        return jsonify({"message": "Profile not found"}), 404
+        return jsonify({"message": "User not found"}), 404
 
     try:
-        # strategy: delete old contacts, add new ones (simple sync)
-        db.session.query(EmergencyContact).filter(EmergencyContact.patient_id == profile.id).delete(synchronize_session=False)
-
-        new_contacts = []
-        primary_set = False # Track if a primary contact is already set
-
-        for index, contact_data in enumerate(data):
-            # Basic validation
-            if not contact_data.get("contact_name"):
-                 return jsonify({"message": f"Contact {index + 1} name is required"}), 400
-            
-            if not contact_data.get("phone"):
-                 return jsonify({"message": f"Contact {index + 1} phone is required"}), 400
-
-            is_primary = contact_data.get("is_primary", False)
-            
-            # Enforce single primary contact
-            if is_primary:
-                if primary_set:
-                    is_primary = False # Demote subsequent primary contacts
-                else:
-                    primary_set = True
-
-            new_contact = EmergencyContact(
-                patient_id=profile.id,
-                contact_name=contact_data.get("contact_name"),
-                relationship=contact_data.get("relationship"),
-                phone=contact_data.get("phone"),
-                alternate_phone=contact_data.get("alternate_phone"),
-                email=contact_data.get("email"),
-                is_primary=is_primary
+        columns = _table_columns("emergency_contacts")
+        writable_columns = [
+            column for column in (
+                "patient_id",
+                "contact_name",
+                "relationship",
+                "phone",
+                "alternate_phone",
+                "email",
+                "is_primary",
             )
-            db.session.add(new_contact)
-            new_contacts.append(new_contact)
+            if column in columns
+        ]
+        cleaned_contacts = []
+        primary_set = False
+
+        for contact_data in data:
+            if not isinstance(contact_data, dict):
+                continue
+
+            contact = {
+                "patient_id": profile.id,
+                "contact_name": str(contact_data.get("contact_name") or "").strip(),
+                "relationship": str(contact_data.get("relationship") or "").strip(),
+                "phone": str(contact_data.get("phone") or "").strip(),
+                "alternate_phone": str(contact_data.get("alternate_phone") or "").strip(),
+                "email": str(contact_data.get("email") or "").strip(),
+                "is_primary": bool(contact_data.get("is_primary")),
+            }
+
+            if not any(contact.get(key) for key in ("contact_name", "relationship", "phone", "alternate_phone", "email")):
+                continue
+
+            if not contact["contact_name"]:
+                contact["contact_name"] = "Emergency Contact"
+            if not contact["phone"]:
+                contact["phone"] = contact["alternate_phone"] or "Not provided"
+
+            if contact["is_primary"] and not primary_set:
+                primary_set = True
+            else:
+                contact["is_primary"] = False
+
+            cleaned_contacts.append(contact)
+
+        if cleaned_contacts and not primary_set:
+            cleaned_contacts[0]["is_primary"] = True
+
+        db.session.execute(
+            text("DELETE FROM emergency_contacts WHERE patient_id = :patient_id"),
+            {"patient_id": profile.id},
+        )
+
+        for contact in cleaned_contacts:
+            payload = {column: contact[column] for column in writable_columns}
+            column_names = ", ".join(payload.keys())
+            bind_names = ", ".join(f":{column}" for column in payload.keys())
+            db.session.execute(
+                text(
+                    f"INSERT INTO emergency_contacts ({column_names}) "
+                    f"VALUES ({bind_names})"
+                ),
+                payload,
+            )
 
         db.session.commit()
 
-        return jsonify([c.to_dict() for c in new_contacts]), 200
+        select_columns = [
+            column for column in (
+                "id",
+                "patient_id",
+                "contact_name",
+                "relationship",
+                "phone",
+                "alternate_phone",
+                "email",
+                "is_primary",
+                "created_at",
+                "updated_at",
+            )
+            if column in columns
+        ]
+        order_clause = "COALESCE(is_primary, FALSE) DESC, id ASC" if "is_primary" in columns else "id ASC"
+        rows = db.session.execute(
+            text(
+                f"SELECT {', '.join(select_columns)} "
+                "FROM emergency_contacts WHERE patient_id = :patient_id "
+                f"ORDER BY {order_clause}"
+            ),
+            {"patient_id": profile.id},
+        ).mappings().all()
+        inserted_contacts = [_serialize_emergency_contact(row, columns) for row in rows]
+
+        return jsonify(inserted_contacts), 200
     
     except Exception as e:
         db.session.rollback()

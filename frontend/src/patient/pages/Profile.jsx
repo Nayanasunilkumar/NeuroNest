@@ -40,6 +40,7 @@ const normalizeProfile = (data = {}) =>
 
 const normalizeEmergencyContacts = (contacts = []) =>
   (contacts || []).map((contact) => ({
+    id: contact.id ?? null,
     contact_name: contact.contact_name ?? "",
     relationship: contact.relationship ?? "",
     phone: contact.phone ?? "",
@@ -154,6 +155,32 @@ const Profile = () => {
   const addNewContact = () => setEmergencyContacts([...emergencyContacts, { contact_name: "", relationship: "", phone: "", alternate_phone: "", email: "", is_primary: false }]);
   const removeContact = (index) => setEmergencyContacts(emergencyContacts.filter((_, i) => i !== index));
 
+  const buildEmergencyContactPayload = () => {
+    const cleanedContacts = normalizeEmergencyContacts(emergencyContacts)
+      .map((contact) => ({
+        ...contact,
+        contact_name: String(contact.contact_name || "").trim(),
+        relationship: String(contact.relationship || "").trim(),
+        phone: String(contact.phone || "").trim(),
+        alternate_phone: String(contact.alternate_phone || "").trim(),
+        email: String(contact.email || "").trim(),
+      }))
+      .filter((contact) => (
+        contact.contact_name ||
+        contact.relationship ||
+        contact.phone ||
+        contact.alternate_phone ||
+        contact.email
+      ));
+
+    return cleanedContacts.map((contact, index) => ({
+      ...contact,
+      is_primary: cleanedContacts.some((item) => item.is_primary)
+        ? Boolean(contact.is_primary)
+        : index === 0,
+    }));
+  };
+
   const startEditing = () => {
     fetchCountries(); // Lazy load countries on edit click
     setInitialProfileSnapshot(normalizeProfile(profile));
@@ -174,7 +201,7 @@ const Profile = () => {
       if (profileImage) formData.append("profile_image", profileImage);
 
       await api.put("/profile/me", formData, { headers: { "Content-Type": "multipart/form-data" } });
-      await api.put("/profile/emergency-contact/me", emergencyContacts);
+      await api.put("/profile/emergency-contact/me", buildEmergencyContactPayload());
 
       const userStr = localStorage.getItem("neuronest_user");
       if (userStr && profile.full_name) {
