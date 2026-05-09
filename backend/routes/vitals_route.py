@@ -21,6 +21,10 @@ _history_by_patient = defaultdict(lambda: deque(maxlen=60))
 _last_alert_time = {}
 ALERT_COOLDOWN_MINUTES = 5
 STALE_READING_SECONDS = 30
+MONITORED_PATIENT_EMAILS = (
+    "nezrin@gmail.com",
+    "nezrinnoushad20@gmail.com",
+)
 
 
 def _utc_now():
@@ -49,6 +53,24 @@ def _coerce_patient_id(raw_value):
         return None
 
 
+def _fallback_device_patient_id():
+    patient = User.query.filter(
+        User.role == "patient",
+        User.email.in_(MONITORED_PATIENT_EMAILS),
+    ).first()
+    if patient:
+        return int(patient.id)
+
+    patient = User.query.filter(
+        User.role == "patient",
+        db.func.lower(User.full_name) == "nezrin",
+    ).first()
+    if patient:
+        return int(patient.id)
+
+    return None
+
+
 def _configured_device_patient_id():
     configured_patient_id = current_app.config.get("VITALS_DEVICE_PATIENT_ID")
     if configured_patient_id:
@@ -60,7 +82,7 @@ def _configured_device_patient_id():
         if patient and patient.role == "patient":
             return int(patient.id)
 
-    return None
+    return _fallback_device_patient_id()
 
 
 def _require_device_auth(data):
@@ -276,9 +298,9 @@ def receive_vitals():
     now = _utc_now()
     payload = {
         "patient_id": patient_id,
-        "hr": data.get("hr"),
+        "hr": data.get("hr", data.get("heart_rate")),
         "spo2": data.get("spo2"),
-        "temp": data.get("temp"),
+        "temp": data.get("temp", data.get("temperature")),
         "signal": (data.get("signal") or "na"),
         "hr_alert": int(data.get("hr_alert", 0)),
         "spo2_alert": int(data.get("spo2_alert", 0)),
