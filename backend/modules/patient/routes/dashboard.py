@@ -16,7 +16,7 @@ def get_consolidated_dashboard():
     user_id = int(get_jwt_identity())
     
     # 1. Fetch User and Profile in one go
-    user = User.query.options(joinedload("patient_profile")).get(user_id)
+    user = User.query.options(joinedload(User.patient_profile)).get(user_id)
     if not user:
         return jsonify({"error": "User not found"}), 404
         
