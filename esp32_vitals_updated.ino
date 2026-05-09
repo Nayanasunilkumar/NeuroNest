@@ -16,8 +16,8 @@ DallasTemperature tempSensor(&oneWire);
 MAX30105 particleSensor;
 
 // ---------------- Wi-Fi ----------------
-const char* ssid      = "Aradhana Broadband #12090";
-const char* password  = "Sunil2418";
+const char* ssid      = "PPC-3205";
+const char* password  = "00210020";
 const char* serverHost = "neuronest-backend-2rn0.onrender.com";
 const char* serverUrl = "https://neuronest-backend-2rn0.onrender.com/api/vitals/update";
 // Must match Render env VITALS_DEVICE_TOKEN when VITALS_REQUIRE_DEVICE_AUTH=true.
@@ -81,62 +81,11 @@ bool spo2Alert     = false;
 bool tempAlert     = false;
 
 // ---------------- Helpers ----------------
-void logWiFiDiagnostics(const char* label) {
-  Serial.print(label);
-  Serial.print(F(" WiFi status: "));
-  Serial.println(WiFi.status());
-  Serial.print(label);
-  Serial.print(F(" IP: "));
-  Serial.println(WiFi.localIP());
-  Serial.print(label);
-  Serial.print(F(" RSSI: "));
-  Serial.print(WiFi.RSSI());
-  Serial.println(F(" dBm"));
-  Serial.print(label);
-  Serial.print(F(" Free heap: "));
-  Serial.println(ESP.getFreeHeap());
-}
-
-bool resolveServerHost() {
-  IPAddress serverIp;
-  unsigned long dnsStart = millis();
-  Serial.print(F("[VITALS] Resolving host: "));
-  Serial.println(serverHost);
-
-  bool resolved = WiFi.hostByName(serverHost, serverIp);
-  unsigned long dnsDuration = millis() - dnsStart;
-
-  Serial.print(F("[VITALS] DNS resolved: "));
-  Serial.print(resolved ? F("yes") : F("no"));
-  Serial.print(F(" in "));
-  Serial.print(dnsDuration);
-  Serial.println(F(" ms"));
-
-  if (resolved) {
-    Serial.print(F("[VITALS] Render IP: "));
-    Serial.println(serverIp);
-  }
-
-  return resolved;
-}
-
-bool hasConfiguredDeviceToken() {
-  if (strlen(deviceToken) == 0) return false;
-  return strcmp(deviceToken, "replace-with-device-shared-secret") != 0;
-}
-
-bool hasConfiguredDeviceId() {
-  if (strlen(deviceId) == 0) return false;
-  return strcmp(deviceId, "replace-with-device-id") != 0;
-}
-
 void ensureWiFi() {
   if (millis() - lastWiFiCheck < wifiCheckInterval) return;
-
   lastWiFiCheck = millis();
   if (WiFi.status() != WL_CONNECTED) {
     Serial.println("WiFi lost. Reconnecting...");
-    logWiFiDiagnostics("[WIFI]");
     WiFi.disconnect();
     WiFi.reconnect();
   }
@@ -170,7 +119,6 @@ void postVitals(int hr, int s, float temp,
 
   if (WiFi.status() != WL_CONNECTED) {
     Serial.println("WiFi not connected");
-    logWiFiDiagnostics("[VITALS]");
     return;
   }
 
@@ -181,109 +129,47 @@ void postVitals(int hr, int s, float temp,
                 ",\"hr_alert\":"   + String(hrAlertFlag ? 1 : 0) +
                 ",\"spo2_alert\":" + String(spo2AlertFlag ? 1 : 0) +
                 ",\"temp_alert\":" + String(tempAlertFlag ? 1 : 0);
-  if (hasConfiguredDeviceId()) {
+  if (strlen(deviceId) > 0) {
     body += ",\"device_id\":\"" + String(deviceId) + "\"";
   }
-  if (hasConfiguredDeviceToken()) {
+  if (strlen(deviceToken) > 0) {
     body += ",\"device_token\":\"" + String(deviceToken) + "\"";
   }
   body += "}";
 
-  logWiFiDiagnostics("[VITALS]");
-  if (!resolveServerHost()) {
-    Serial.println(F("[VITALS] DNS failed before HTTPS attempt"));
+  WiFiClientSecure client;
+  client.setInsecure();
+  client.setHandshakeTimeout(30);
+
+  HTTPClient http;
+  if (!http.begin(client, serverUrl)) {
+    Serial.println("HTTP begin failed");
+    return;
   }
 
-  const int maxAttempts = 3;
-  for (int attempt = 1; attempt <= maxAttempts; attempt++) {
-    unsigned long attemptStart = millis();
-    Serial.print(F("[VITALS] POST attempt "));
-    Serial.print(attempt);
-    Serial.print(F("/"));
-    Serial.println(maxAttempts);
-
-    WiFiClientSecure client;
-    client.setInsecure(); // Skip certificate validation (ok for testing)
-    client.setHandshakeTimeout(30);
-
-    HTTPClient http;
-    const char* headerKeys[] = {"Location"};
-    http.collectHeaders(headerKeys, 1);
-
-    Serial.print(F("[VITALS] HTTPS begin: "));
-    Serial.println(serverUrl);
-    unsigned long beginStart = millis();
-    bool began = http.begin(client, serverUrl);
-    Serial.print(F("[VITALS] HTTPS begin result: "));
-    Serial.print(began ? F("ok") : F("failed"));
-    Serial.print(F(" in "));
-    Serial.print(millis() - beginStart);
-    Serial.println(F(" ms"));
-
-    if (!began) {
-      http.end();
-      if (attempt < maxAttempts) {
-        Serial.println(F("[VITALS] Retrying after HTTPS begin failure..."));
-        delay(1500);
-      }
-      continue;
-    }
-
-    http.setTimeout(30000);
-    http.addHeader("Content-Type", "application/json");
-    if (hasConfiguredDeviceToken()) {
-      http.addHeader("X-Device-Token", deviceToken);
-      Serial.println(F("[VITALS] X-Device-Token header attached"));
-    } else {
-      Serial.println(F("[VITALS] Device token not configured; set it if Render VITALS_REQUIRE_DEVICE_AUTH=true"));
-    }
-    if (hasConfiguredDeviceId()) {
-      http.addHeader("X-Device-Id", deviceId);
-      Serial.println(F("[VITALS] X-Device-Id header attached"));
-    }
-
-    Serial.print(F("[VITALS] POST URL: "));
-    Serial.println(serverUrl);
-    Serial.print(F("[VITALS] POST BODY: "));
-    Serial.println(body);
-    Serial.println(F("[VITALS] POST start"));
-
-    int code = http.POST(body);
-    unsigned long duration = millis() - attemptStart;
-    Serial.print(F("[VITALS] POST code: "));
-    Serial.println(code);
-    Serial.print(F("[VITALS] Connection duration: "));
-    Serial.print(duration);
-    Serial.println(F(" ms"));
-
-    if (code < 0) {
-      Serial.print(F("[VITALS] HTTP error: "));
-      Serial.println(http.errorToString(code));
-    }
-
-    if (code >= 300 && code < 400) {
-      Serial.print(F("[VITALS] Redirect Location: "));
-      Serial.println(http.header("Location"));
-    }
-
-    String response = http.getString();
-    Serial.print(F("[VITALS] Response body: "));
-    Serial.println(response);
-
-    http.end();
-
-    if (code >= 200 && code < 300) {
-      Serial.println(F("[VITALS] POST succeeded"));
-      return;
-    }
-
-    if (attempt < maxAttempts) {
-      Serial.println(F("[VITALS] POST failed, retrying after delay..."));
-      delay(1500);
-    }
+  http.setTimeout(15000);
+  http.addHeader("Content-Type", "application/json");
+  if (strlen(deviceToken) > 0) {
+    http.addHeader("X-Device-Token", deviceToken);
+  }
+  if (strlen(deviceId) > 0) {
+    http.addHeader("X-Device-Id", deviceId);
   }
 
-  Serial.println(F("[VITALS] POST failed after all retry attempts"));
+  Serial.print("POST URL: ");
+  Serial.println(serverUrl);
+  Serial.print("POST BODY: ");
+  Serial.println(body);
+
+  int code = http.POST(body);
+  Serial.print("POST code: ");
+  Serial.println(code);
+
+  String response = http.getString();
+  Serial.print("Response: ");
+  Serial.println(response);
+
+  http.end();
 }
 
 void resetAlertState() {
@@ -313,7 +199,7 @@ void updateAlertCounters(int hr, int s) {
     spo2DropCount++;
     if (spo2DropCount >= DROP_COUNT_MAX) {
       spo2Alert = true;
-      Serial.print(F("⚠ SpO2 ALERT: sustained low oxygen!"));
+      Serial.println(F("⚠ SpO2 ALERT: sustained low oxygen!"));
     }
   } else {
     spo2DropCount = 0;
@@ -333,8 +219,7 @@ void setup() {
   // WiFi
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
-  Serial.print("Connecting WiFi to SSID: ");
-  Serial.println(ssid);
+  Serial.print("Connecting WiFi");
   unsigned long startAttempt = millis();
   while (WiFi.status() != WL_CONNECTED && millis() - startAttempt < 15000) {
     delay(500);
@@ -346,13 +231,8 @@ void setup() {
     Serial.println("WiFi connected!");
     Serial.print("ESP32 IP: ");
     Serial.println(WiFi.localIP());
-    Serial.print("WiFi connect duration: ");
-    Serial.print(millis() - startAttempt);
-    Serial.println(" ms");
-    logWiFiDiagnostics("[WIFI]");
   } else {
     Serial.println("WiFi FAILED.");
-    logWiFiDiagnostics("[WIFI]");
   }
 
   // MAX30102 init
@@ -367,12 +247,13 @@ void setup() {
 
 // ================================================================
 void loop() {
+
   // Always keep reading temperature in background
   updateTemperature();
 
   // PHASE 1 — Wait for finger
   while (!isFingerOn()) {
-    Serial.print(F("IR Value: "));
+    Serial.print(F("IR Value: "));        
     Serial.println(particleSensor.getIR());
     Serial.println(F("No finger detected. Waiting..."));
     updateTemperature(); // keep updating temp even without finger
@@ -400,6 +281,7 @@ void loop() {
 
   // PHASE 3 — Continuous measurement
   while (true) {
+
     updateTemperature(); // non-blocking temp update
 
     uint32_t currentIR = particleSensor.getIR();
@@ -416,7 +298,7 @@ void loop() {
     if (!fingerPresent) {
       Serial.println(F("Finger removed. Resetting..."));
       lastGoodHR   = 0;
-      lastGoodSpO2  = 0;
+      lastGoodSpO2 = 0;
       resetAlertState();
 
       if (millis() - lastPost >= postInterval) {
