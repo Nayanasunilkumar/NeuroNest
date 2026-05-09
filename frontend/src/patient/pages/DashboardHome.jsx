@@ -116,7 +116,6 @@ function VitalsSection({ initialData = null }) {
     if (!patientId) return undefined;
     
     const fetchVitals = async () => {
-      if (initialData) return;
       try {
         const [latestResponse, historyResponse] = await Promise.all([
           fetch(`${BACKEND_API}/api/vitals/latest`, { headers: { Authorization: `Bearer ${localStorage.getItem("neuronest_token")}` } }),
@@ -126,10 +125,13 @@ function VitalsSection({ initialData = null }) {
         const historyJson = await historyResponse.json();
         setData(latestJson);
         setHistory(historyJson);
-        if (latestJson.signal !== "na") {
+        if (latestJson.signal === "ok" || latestJson.signal === "weak") {
           lastUpdateRef.current = Date.now();
           setOnline(true);
           setIsStale(false);
+        } else if (latestJson.signal === "no_device") {
+          setOnline(false);
+          setIsStale(true);
         } else {
           setOnline(true);
         }
