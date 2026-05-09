@@ -103,21 +103,11 @@ def get_consolidated_dashboard():
         is_read=False
     ).order_by(InAppNotification.created_at.desc()).limit(5).all()
 
-    # 4. Vitals
-    vitals_data = {"latest": None, "history": []}
+    # 4. Vitals (assignment-aware cache snapshot)
+    vitals_data = {"latest": None, "history": [], "deviceAssigned": False}
     try:
-        from routes.vitals_route import (
-            _history_snapshot,
-            _known_device_patient_ids,
-            _latest_snapshot,
-        )
-
-        vitals_data["latest"] = _latest_snapshot(user_id)
-        vitals_data["history"] = _history_snapshot(user_id)
-
-        if not vitals_data["latest"]:
-            signal = "disconnected" if user_id in _known_device_patient_ids() else "no_device"
-            vitals_data["latest"] = {"patient_id": user_id, "signal": signal}
+        from routes.vitals_route import get_vitals_snapshot_for_patient
+        vitals_data = get_vitals_snapshot_for_patient(user_id)
                 
     except Exception as e:
         current_app.logger.error(f"Failed to fetch vitals for consolidated dashboard: {str(e)}")

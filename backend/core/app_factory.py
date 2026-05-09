@@ -37,6 +37,15 @@ def create_app():
     app = Flask(__name__)
     app.url_map.strict_slashes = False
     app.config.from_object(Config)
+    app.logger.info(
+        "[VITALS_CONFIG] env loaded VITALS_DEVICE_PATIENT_ID=%s "
+        "VITALS_DEVICE_PATIENT_EMAIL=%s VITALS_REQUIRE_DEVICE_AUTH=%s "
+        "VITALS_DEVICE_TOKEN_PRESENT=%s",
+        app.config.get("VITALS_DEVICE_PATIENT_ID"),
+        app.config.get("VITALS_DEVICE_PATIENT_EMAIL"),
+        app.config.get("VITALS_REQUIRE_DEVICE_AUTH"),
+        bool(app.config.get("VITALS_DEVICE_TOKEN")),
+    )
 
     CORS(
         app,
@@ -48,9 +57,11 @@ def create_app():
     db.init_app(app)
     JWTManager(app)
     socketio.init_app(app)
+    app.logger.info("[VITALS_CONFIG] SocketIO initialized id=%s async_mode=%s", id(socketio), socketio.async_mode)
 
     register_feature_modules(app)
     register_socket_handlers()
+    app.logger.info("[VITALS_CONFIG] Feature modules and socket handlers registered")
     register_core_routes(app)
     
     @app.before_request

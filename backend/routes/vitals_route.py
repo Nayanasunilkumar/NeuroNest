@@ -21,6 +21,7 @@ _history_by_patient = defaultdict(lambda: deque(maxlen=60))
 _last_alert_time = {}
 ALERT_COOLDOWN_MINUTES = 5
 STALE_READING_SECONDS = 30
+VITALS_LOG_PREFIX = "[VITALS]"
 MONITORED_PATIENT_EMAILS = (
     "nezrin@gmail.com",
     "nezrinnoushad20@gmail.com",
@@ -74,6 +75,11 @@ def _fallback_device_patient_id():
 def _configured_device_patient_id():
     configured_patient_id = current_app.config.get("VITALS_DEVICE_PATIENT_ID")
     if configured_patient_id:
+        current_app.logger.info(
+            "%s configured VITALS_DEVICE_PATIENT_ID=%s",
+            VITALS_LOG_PREFIX,
+            configured_patient_id,
+        )
         return int(configured_patient_id)
 
     configured_email = current_app.config.get("VITALS_DEVICE_PATIENT_EMAIL")
@@ -83,6 +89,19 @@ def _configured_device_patient_id():
             return int(patient.id)
 
     return _fallback_device_patient_id()
+
+
+def _is_device_assigned_to_patient(patient_id):
+    configured_patient_id = _configured_device_patient_id()
+    assigned = bool(configured_patient_id and int(configured_patient_id) == int(patient_id))
+    current_app.logger.info(
+        "%s assignment check patient_id=%s configured_patient_id=%s assigned=%s",
+        VITALS_LOG_PREFIX,
+        patient_id,
+        configured_patient_id,
+        assigned,
+    )
+    return assigned
 
 
 def _require_device_auth(data):
@@ -108,8 +127,11 @@ def _require_device_auth(data):
 def _resolve_ingest_patient_id(data):
     explicit_patient_id = _coerce_patient_id((data or {}).get("patient_id"))
     if explicit_patient_id:
+        current_app.logger.info("%s ingest patient resolved from payload patient_id=%s", VITALS_LOG_PREFIX, explicit_patient_id)
         return explicit_patient_id
-    return _configured_device_patient_id()
+    configured_patient_id = _configured_device_patient_id()
+    current_app.logger.info("%s ingest patient resolved from env patient_id=%s", VITALS_LOG_PREFIX, configured_patient_id)
+    return configured_patient_id
 
 
 def _user_can_access_patient(user: User, patient_id: int) -> bool:
@@ -163,6 +185,30 @@ def _latest_snapshot(patient_id: int):
         latest["signal"] = "disconnected"
 
     return latest
+
+
+def get_vitals_snapshot_for_patient(patient_id: int):
+    """Return assignment-aware vitals for dashboards without changing architecture."""
+    patient_id = int(patient_id)
+    latest = _latest_snapshot(patient_id)
+    history = _history_snapshot(patient_id)
+    device_assigned = _is_device_assigned_to_patient(patient_id) or patient_id in _known_device_patient_ids()
+
+    if not latest:
+        latest = {
+            "patient_id": patient_id,
+            "signal": "initialising" if device_assigned else "no_device",
+            "deviceAssigned": device_assigned,
+        }
+    else:
+        latest["deviceAssigned"] = device_assigned
+
+    return {
+        "latest": latest,
+        "history": history,
+        "deviceAssigned": device_assigned,
+        "assignedPatientId": patient_id if device_assigned else None,
+    }
 
 
 def _most_recent_accessible_patient_id(user: User):
@@ -283,16 +329,35 @@ def receive_vitals():
             current_app.logger.warning("Invalid vitals payload received")
             return jsonify({"error": "No data"}), 400
 
+    current_app.logger.info(
+        "%s /api/vitals/update received keys=%s hr=%s spo2=%s temp=%s signal=%s payload_patient_id=%s",
+        VITALS_LOG_PREFIX,
+        sorted((data or {}).keys()),
+        (data or {}).get("hr"),
+        (data or {}).get("spo2"),
+        (data or {}).get("temp"),
+        (data or {}).get("signal"),
+        (data or {}).get("patient_id"),
+    )
+
     auth_error = _require_device_auth(data)
     if auth_error:
         return auth_error
 
     patient_id = _resolve_ingest_patient_id(data)
     if not patient_id:
+        current_app.logger.error("%s ingest failed: no patient_id from payload/env", VITALS_LOG_PREFIX)
         return jsonify({"error": "patient_id is required"}), 400
 
     patient = User.query.get(patient_id)
     if not patient or patient.role != "patient":
+        current_app.logger.error(
+            "%s ingest failed: resolved patient_id=%s user_exists=%s role=%s",
+            VITALS_LOG_PREFIX,
+            patient_id,
+            bool(patient),
+            getattr(patient, "role", None),
+        )
         return jsonify({"error": "Target patient not found"}), 404
 
     now = _utc_now()
@@ -313,12 +378,23 @@ def receive_vitals():
         if payload["signal"] in ("ok", "weak"):
             _history_by_patient[patient_id].append(dict(payload))
 
-    socketio.emit("vitals_update", payload, room=f"patient_vitals_{patient_id}")
+    room = f"patient_vitals_{patient_id}"
+    current_app.logger.info(
+        "%s emitting vitals_update room=%s patient_id=%s hr=%s spo2=%s temp=%s signal=%s",
+        VITALS_LOG_PREFIX,
+        room,
+        patient_id,
+        payload.get("hr"),
+        payload.get("spo2"),
+        payload.get("temp"),
+        payload.get("signal"),
+    )
+    socketio.emit("vitals_update", payload, room=room)
 
     if patient_id > 0:
         check_and_trigger_alerts(patient_id, data)
 
-    return jsonify({"status": "ok"}), 200
+    return jsonify({"status": "ok", "patient_id": patient_id, "room": room}), 200
 
 
 @vitals_bp.route("/api/vitals/latest", methods=["GET"])
@@ -338,13 +414,22 @@ def get_latest():
 
     latest = _latest_snapshot(target_patient_id)
     
+    device_assigned = _is_device_assigned_to_patient(target_patient_id) or target_patient_id in _known_device_patient_ids()
+
     if latest:
+        latest["deviceAssigned"] = device_assigned
+        latest["assignedPatientId"] = target_patient_id if device_assigned else None
         return jsonify(latest), 200
 
-    if target_patient_id in _known_device_patient_ids():
-        return jsonify({"patient_id": target_patient_id, "signal": "disconnected"}), 200
+    if device_assigned:
+        return jsonify({
+            "patient_id": target_patient_id,
+            "signal": "initialising",
+            "deviceAssigned": True,
+            "assignedPatientId": target_patient_id,
+        }), 200
 
-    return jsonify({"patient_id": target_patient_id, "signal": "no_device"}), 200
+    return jsonify({"patient_id": target_patient_id, "signal": "no_device", "deviceAssigned": False}), 200
 
 
 @vitals_bp.route("/api/vitals/history", methods=["GET"])

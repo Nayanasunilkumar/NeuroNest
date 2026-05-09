@@ -1,12 +1,15 @@
 from flask import request, session
 from flask_socketio import emit, join_room, leave_room
+from flask_jwt_extended import decode_token
 
 from database.models import Appointment, User
 from extensions.socket import socketio
-from flask_jwt_extended import decode_token
 
 
-def _get_socket_user_id():
+VITALS_SOCKET_LOG_PREFIX = "[VITALS_SOCKET]"
+
+
+def _socket_user_id():
     user_id = session.get("user_id")
     if user_id:
         return user_id
@@ -15,11 +18,13 @@ def _get_socket_user_id():
     if token:
         try:
             decoded = decode_token(token)
-            user_id = str(decoded["sub"])
-            session["user_id"] = user_id
-            return user_id
-        except Exception:
-            return None
+            user_id = decoded.get("sub")
+            if user_id:
+                session["user_id"] = str(user_id)
+                print(f"{VITALS_SOCKET_LOG_PREFIX} restored user_id={user_id} from socket token")
+                return str(user_id)
+        except Exception as error:
+            print(f"{VITALS_SOCKET_LOG_PREFIX} token decode failed: {error}")
 
     return None
 
@@ -43,23 +48,33 @@ def _can_access_patient_vitals(user_id, role, patient_id):
 
 @socketio.on("join_vitals_room")
 def join_vitals_room(data):
-    user_id = _get_socket_user_id()
+    user_id = _socket_user_id()
     if not user_id:
+        print(f"{VITALS_SOCKET_LOG_PREFIX} join denied: missing auth data={data}")
         emit("vitals_error", {"message": "Authentication required"})
         return
 
     patient_id = (data or {}).get("patient_id")
     if not patient_id:
+        print(f"{VITALS_SOCKET_LOG_PREFIX} join denied: patient_id missing data={data}")
         emit("vitals_error", {"message": "patient_id is required"})
         return
 
     user = User.query.get(int(user_id))
     if not user or not _can_access_patient_vitals(user.id, user.role, patient_id):
+        print(
+            f"{VITALS_SOCKET_LOG_PREFIX} join denied: user_id={user_id} "
+            f"role={getattr(user, 'role', None)} requested_patient_id={patient_id}"
+        )
         emit("vitals_error", {"message": "Access denied"})
         return
 
     room = f"patient_vitals_{int(patient_id)}"
     join_room(room)
+    print(
+        f"{VITALS_SOCKET_LOG_PREFIX} joined room={room} "
+        f"user_id={user_id} role={user.role} patient_id={int(patient_id)}"
+    )
     emit("vitals_room_joined", {"patient_id": int(patient_id), "room": room})
 
 

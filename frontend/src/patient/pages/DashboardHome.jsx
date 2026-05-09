@@ -105,15 +105,30 @@ const TempSparkline = memo(({ history, color, height = 56 }) => {
 function VitalsSection({ initialData = null }) {
   const [data, setData] = React.useState(initialData?.latest || null);
   const [history, setHistory] = React.useState(initialData?.history || []);
-  const [online, setOnline] = React.useState(!!initialData?.latest);
+  const [deviceAssigned, setDeviceAssigned] = React.useState(Boolean(initialData?.deviceAssigned || initialData?.latest?.deviceAssigned));
+  const [online, setOnline] = React.useState(Boolean(initialData?.deviceAssigned || initialData?.latest));
+  const [socketConnected, setSocketConnected] = React.useState(false);
   const [isStale, setIsStale] = React.useState(true);
   const lastUpdateRef = useRef(0);
   const socketRef = useRef(null);
   const user = getUser();
-  const patientId = user?.id;
+  const userId = user?.id;
+  const userPatientId = user?.patient_id;
+  const nestedPatientId = user?.patient?.id;
+  const profileUserId = user?.profile?.user_id;
+  const profileId = user?.profile?.id;
+  const patientId = userId || userPatientId || nestedPatientId || profileUserId;
 
   useEffect(() => {
     if (!patientId) return undefined;
+    console.info("[VITALS_FRONTEND] resolved patient id for vitals", {
+      patientId,
+      userId,
+      patientIdField: userPatientId,
+      nestedPatientId,
+      profileUserId,
+      profileId,
+    });
     
     const fetchVitals = async () => {
       try {
@@ -123,9 +138,15 @@ function VitalsSection({ initialData = null }) {
         ]);
         const latestJson = await latestResponse.json();
         const historyJson = await historyResponse.json();
+        console.info("[VITALS_FRONTEND] latest/history response", {
+          patientId,
+          latest: latestJson,
+          historyCount: Array.isArray(historyJson) ? historyJson.length : "non-array",
+        });
         setData(latestJson);
-        setHistory(historyJson);
-        if (latestJson.signal === "ok" || latestJson.signal === "weak") {
+        setHistory(Array.isArray(historyJson) ? historyJson : []);
+        setDeviceAssigned(Boolean(latestJson.deviceAssigned || latestJson.signal !== "no_device"));
+        if (latestJson.signal === "ok" || latestJson.signal === "weak" || latestJson.signal === "no_finger") {
           lastUpdateRef.current = Date.now();
           setOnline(true);
           setIsStale(false);
@@ -133,9 +154,11 @@ function VitalsSection({ initialData = null }) {
           setOnline(false);
           setIsStale(true);
         } else {
-          setOnline(true);
+          setOnline(Boolean(latestJson.deviceAssigned));
+          setIsStale(true);
         }
       } catch {
+        console.error("[VITALS_FRONTEND] failed to fetch latest/history");
         setOnline(false);
       }
     };
@@ -147,26 +170,49 @@ function VitalsSection({ initialData = null }) {
 
     const token = localStorage.getItem("neuronest_token");
     socketRef.current = io(BACKEND_API, { query: { token }, transports: ["websocket", "polling"], withCredentials: true });
-    socketRef.current.on("connect", () => socketRef.current.emit("join_vitals_room", { patient_id: patientId }));
+    socketRef.current.on("connect", () => {
+      setSocketConnected(true);
+      const room = `patient_vitals_${patientId}`;
+      console.info("[VITALS_FRONTEND] socket connected, joining vitals room", { patientId, room, socketId: socketRef.current.id });
+      socketRef.current.emit("join_vitals_room", { patient_id: patientId });
+    });
+    socketRef.current.on("vitals_room_joined", (payload) => {
+      console.info("[VITALS_FRONTEND] vitals room joined", payload);
+      setDeviceAssigned(true);
+    });
+    socketRef.current.on("vitals_error", (payload) => {
+      console.error("[VITALS_FRONTEND] vitals socket error", payload);
+    });
     socketRef.current.on("vitals_update", (update) => {
+      console.info("[VITALS_FRONTEND] vitals_update received", {
+        joinedPatientId: patientId,
+        updatePatientId: update?.patient_id,
+        expectedRoom: `patient_vitals_${patientId}`,
+        signal: update?.signal,
+      });
       setData(update);
+      setDeviceAssigned(Boolean(update.deviceAssigned || update.patient_id));
       lastUpdateRef.current = Date.now();
       setIsStale(false);
       if (update.signal === "ok" || update.signal === "weak") setHistory((prev) => [...prev, update].slice(-60));
       setOnline(true);
     });
-    socketRef.current.on("disconnect", () => setOnline(false));
+    socketRef.current.on("disconnect", () => {
+      setSocketConnected(false);
+      setOnline(false);
+    });
 
     return () => {
       clearInterval(staleTimer);
       if (socketRef.current) socketRef.current.disconnect();
     };
-  }, [patientId]);
+  }, [patientId, userId, userPatientId, nestedPatientId, profileUserId, profileId]);
 
   const tempHistory = useMemo(() => history.map((item) => item.temp).filter(Boolean), [history]);
-  const signal = data?.signal || "na";
+  const signal = data?.signal || (deviceAssigned ? "initialising" : "no_device");
   const isLive = signal === "ok";
   const isWeak = signal === "weak";
+  const isConnected = socketConnected || (online && signal !== "na" && !isStale);
   const anyAlert = data && !!(data.hr_alert || data.spo2_alert || data.temp_alert);
   const vitals = useMemo(() => [
     { label: "Heart Rate", sub: "ELECTROCARDIOGRAM", value: data?.hr ?? null, unit: "BPM", normal: "60-100 BPM", alert: !!data?.hr_alert, color: "#dc3545", bsColor: "danger", icon: <Heart size={18} />, wave: "ecg", decimals: 0 },
@@ -179,11 +225,11 @@ function VitalsSection({ initialData = null }) {
       <div className="d-flex justify-content-between align-items-center mb-3">
         <div><h2 className="h5 fw-black text-dark mb-0">Live Vitals Monitor</h2><p className="small text-secondary mb-0">Real-time readings from your ESP32 device</p></div>
         <div className="d-flex align-items-center gap-2">
-          {signal === "no_device" ? (
+          {!deviceAssigned || signal === "no_device" ? (
             <span className="badge rounded-pill d-flex align-items-center gap-1" style={{ background: "#f1f5f9", color: "#64748b", fontSize: "0.7rem", border: "1px solid #e2e8f0" }}><WifiOff size={10} /> NO DEVICE ASSIGNED</span>
           ) : (
             <>
-              {online && signal !== "na" && !isStale ? <span className="badge rounded-pill d-flex align-items-center gap-1" style={{ background: "#d1fae5", color: "#065f46", fontSize: "0.7rem" }}><Wifi size={10} /> CONNECTED</span> : <span className="badge rounded-pill d-flex align-items-center gap-1" style={{ background: "#fee2e2", color: "#991b1b", fontSize: "0.7rem" }}><WifiOff size={10} /> DISCONNECTED</span>}
+              {isConnected ? <span className="badge rounded-pill d-flex align-items-center gap-1" style={{ background: "#d1fae5", color: "#065f46", fontSize: "0.7rem" }}><Wifi size={10} /> CONNECTED</span> : <span className="badge rounded-pill d-flex align-items-center gap-1" style={{ background: "#fee2e2", color: "#991b1b", fontSize: "0.7rem" }}><WifiOff size={10} /> DISCONNECTED</span>}
               {isLive && <span className="badge rounded-pill bg-success" style={{ fontSize: "0.7rem" }}>LIVE</span>}
               {isWeak && <span className="badge rounded-pill bg-warning text-dark" style={{ fontSize: "0.7rem" }}>WEAK SIGNAL</span>}
               {signal === "no_finger" && <span className="badge rounded-pill bg-danger" style={{ fontSize: "0.58rem" }}>NO FINGER</span>}
@@ -192,7 +238,7 @@ function VitalsSection({ initialData = null }) {
           )}
         </div>
       </div>
-      {signal === "no_device" && (
+      {(!deviceAssigned || signal === "no_device") && (
         <div className="card border-0 shadow-sm rounded-4 p-5 text-center bg-light border border-dashed mb-4">
           <div className="bg-white p-3 rounded-circle shadow-sm d-inline-block mb-3"><WifiOff size={32} className="text-secondary opacity-50" /></div>
           <h3 className="h6 fw-bold mb-1">No monitoring device connected</h3>
@@ -200,14 +246,14 @@ function VitalsSection({ initialData = null }) {
         </div>
       )}
 
-      {anyAlert && signal !== "no_device" && (
+      {anyAlert && deviceAssigned && signal !== "no_device" && (
         <div className="alert alert-danger d-flex align-items-center gap-2 rounded-4 mb-3 py-2 px-3 border-0" style={{ background: "#fff1f2", color: "#be123c" }}>
           <span style={{ fontSize: "1rem" }}>!</span>
           <span className="fw-bold small">Abnormal vitals detected - please consult your doctor immediately.</span>
         </div>
       )}
 
-      {signal !== "no_device" && (
+      {deviceAssigned && signal !== "no_device" && (
         <div className="row g-4">
           {vitals.map((vital, index) => {
             const formatted = vital.value != null ? vital.value.toFixed(vital.decimals) : "--";
