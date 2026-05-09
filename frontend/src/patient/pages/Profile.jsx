@@ -194,7 +194,8 @@ const Profile = () => {
         window.location.reload();
       }, 500);
     } catch (err) {
-      alert(err.response?.data?.message || "Update failed");
+      console.error("Profile update failed:", err);
+      alert(err.response?.data?.message || "Update failed. Check console for details.");
     }
   };
 

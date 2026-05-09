@@ -189,7 +189,7 @@ def update_my_emergency_contacts():
 
     try:
         # strategy: delete old contacts, add new ones (simple sync)
-        EmergencyContact.query.filter_by(patient_id=profile.id).delete()
+        db.session.query(EmergencyContact).filter(EmergencyContact.patient_id == profile.id).delete(synchronize_session=False)
 
         new_contacts = []
         primary_set = False # Track if a primary contact is already set
