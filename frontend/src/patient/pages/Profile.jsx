@@ -78,7 +78,7 @@ const Profile = () => {
 
   const fetchEmergencyContact = async () => {
     try {
-      const res = await api.get("/profile/emergency-contact/me");
+      const res = await api.get("/api/profile/emergency-contact/me");
       if (Array.isArray(res.data)) {
         const normalizedContacts = normalizeEmergencyContacts(res.data);
         setEmergencyContacts(normalizedContacts);
@@ -200,8 +200,8 @@ const Profile = () => {
       Object.keys(profile).forEach((key) => { formData.append(key, profile[key] ?? ""); });
       if (profileImage) formData.append("profile_image", profileImage);
 
-      await api.put("/profile/me", formData, { headers: { "Content-Type": "multipart/form-data" } });
-      await api.put("/profile/emergency-contact/me", buildEmergencyContactPayload());
+      await api.put("/api/profile/me", formData, { headers: { "Content-Type": "multipart/form-data" } });
+      await api.put("/api/profile/emergency-contact/me", buildEmergencyContactPayload());
 
       const userStr = localStorage.getItem("neuronest_user");
       if (userStr && profile.full_name) {

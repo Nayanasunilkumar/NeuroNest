@@ -10,4 +10,5 @@ def register(app):
     app.register_blueprint(chat_bp, url_prefix="/api/chat")
     app.register_blueprint(chat_bp, url_prefix="/chat", name="chat_legacy")
     app.register_blueprint(profile_bp, url_prefix="/api/profile")
+    app.register_blueprint(profile_bp, url_prefix="/profile", name="profile_legacy")
     app.register_blueprint(config_bp, url_prefix="/api")
