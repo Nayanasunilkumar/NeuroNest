@@ -19,6 +19,7 @@ MAX30105 particleSensor;
 const char* ssid      = "PPC-3205";
 const char* password  = "00210020";
 const char* serverHost = "neuronest-backend-2rn0.onrender.com";
+const char* serverPath = "/api/vitals/update";
 const char* serverUrl = "https://neuronest-backend-2rn0.onrender.com/api/vitals/update";
 // Must match Render env VITALS_DEVICE_TOKEN when VITALS_REQUIRE_DEVICE_AUTH=true.
 const char* deviceToken = "db29167b9bda4459ac0f84c0dfcf3fdd551b4f6322304283baee2d56dc10d197";
@@ -142,7 +143,7 @@ void postVitals(int hr, int s, float temp,
   client.setHandshakeTimeout(30);
 
   HTTPClient http;
-  if (!http.begin(client, serverUrl)) {
+  if (!http.begin(client, serverHost, 443, serverPath, true)) {
     Serial.println("HTTP begin failed");
     return;
   }
@@ -151,9 +152,11 @@ void postVitals(int hr, int s, float temp,
   http.addHeader("Content-Type", "application/json");
   if (strlen(deviceToken) > 0) {
     http.addHeader("X-Device-Token", deviceToken);
+    Serial.println(F("[VITALS] X-Device-Token header attached"));
   }
   if (strlen(deviceId) > 0) {
     http.addHeader("X-Device-Id", deviceId);
+    Serial.println(F("[VITALS] X-Device-Id header attached"));
   }
 
   Serial.print("POST URL: ");
@@ -164,6 +167,10 @@ void postVitals(int hr, int s, float temp,
   int code = http.POST(body);
   Serial.print("POST code: ");
   Serial.println(code);
+  if (code < 0) {
+    Serial.print(F("HTTP error string: "));
+    Serial.println(http.errorToString(code));
+  }
 
   String response = http.getString();
   Serial.print("Response: ");
