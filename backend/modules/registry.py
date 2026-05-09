@@ -1,5 +1,6 @@
 from modules.admin import register as register_admin
 from modules.alerts import register as register_alerts
+from modules.calls import register as register_calls
 from modules.doctor import register as register_doctor
 from modules.feedback import register as register_feedback
 from modules.patient import register as register_patient
@@ -15,6 +16,7 @@ FEATURE_MODULES = [
     register_doctor,
     register_feedback,
     register_alerts,
+    register_calls,
     register_vitals,
     register_announcements,
 ]

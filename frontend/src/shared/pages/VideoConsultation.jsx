@@ -53,6 +53,8 @@ export default function VideoConsultation() {
         remoteStreamStatus: 'none',
         localTracks: 0,
         remoteTracks: 0,
+        iceServerCount: 0,
+        hasTurn: false,
         selfSid: '',
         remoteSid: '',
         lastEvent: 'initialising',
@@ -350,12 +352,17 @@ export default function VideoConsultation() {
             try {
                 const data = await getIceConfig();
                 if (Array.isArray(data?.iceServers) && data.iceServers.length > 0) {
+                    const hasTurn = data.iceServers.some((server) => {
+                        const urls = Array.isArray(server.urls) ? server.urls : [server.urls];
+                        return urls.some((url) => String(url || '').startsWith('turn'));
+                    });
                     logVideoEvent('ICE config loaded', {
                         iceServerCount: data.iceServers.length,
-                        hasTurn: data.iceServers.some((server) => {
-                            const urls = Array.isArray(server.urls) ? server.urls : [server.urls];
-                            return urls.some((url) => String(url || '').startsWith('turn'));
-                        }),
+                        hasTurn,
+                        debug: {
+                            iceServerCount: data.iceServers.length,
+                            hasTurn,
+                        },
                     });
                     return data.iceServers;
                 }
@@ -973,6 +980,7 @@ export default function VideoConsultation() {
                     <div><strong>ICE:</strong> {debugInfo.iceConnectionState}</div>
                     <div><strong>Signaling:</strong> {debugInfo.signalingState}</div>
                     <div><strong>PC:</strong> {debugInfo.connectionState}</div>
+                    <div><strong>ICE cfg:</strong> {debugInfo.iceServerCount} ({debugInfo.hasTurn ? 'TURN+STUN' : 'STUN only'})</div>
                     <div><strong>Local tracks:</strong> {debugInfo.localTracks}</div>
                     <div><strong>Remote:</strong> {debugInfo.remoteStreamStatus} ({debugInfo.remoteTracks})</div>
                     <div><strong>Last:</strong> {debugInfo.lastEvent}</div>

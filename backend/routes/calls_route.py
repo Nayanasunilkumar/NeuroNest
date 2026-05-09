@@ -3,6 +3,7 @@ from threading import Lock, Timer
 from uuid import uuid4
 
 from flask import Blueprint, jsonify, request
+from flask import current_app
 from flask_jwt_extended import get_jwt, get_jwt_identity, jwt_required
 
 from database.models import User
@@ -42,6 +43,15 @@ def _cancel_call_timer(call_id):
 
 
 def _emit_call_event(event_name, payload, call):
+    current_app.logger.info(
+        "[CALL_SIGNAL] emit event=%s call_id=%s room_id=%s caller=%s receiver=%s conversation=%s",
+        event_name,
+        call.get("call_id"),
+        call.get("room_id"),
+        call.get("caller_id"),
+        call.get("receiver_id"),
+        call.get("conversation_id"),
+    )
     socketio.emit(event_name, payload, room=f"user_{call['caller_id']}")
     socketio.emit(event_name, payload, room=f"user_{call['receiver_id']}")
     if call.get("conversation_id"):
@@ -105,12 +115,33 @@ def start_call():
         except (TypeError, ValueError):
             return jsonify({"message": "conversation_id must be numeric"}), 400
 
+    current_app.logger.info(
+        "[CALL_SIGNAL] start requested caller=%s receiver=%s conversation=%s type=%s",
+        caller_id,
+        receiver_id,
+        conversation_id,
+        call_type,
+    )
+
     if not _require_participant(conversation_id, caller_id, receiver_id):
+        current_app.logger.warning(
+            "[CALL_SIGNAL] start denied conversation access caller=%s receiver=%s conversation=%s",
+            caller_id,
+            receiver_id,
+            conversation_id,
+        )
         return jsonify({"message": "Conversation access denied"}), 403
 
     caller = User.query.get(caller_id)
     receiver = User.query.get(receiver_id)
     if not caller or not receiver:
+        current_app.logger.warning(
+            "[CALL_SIGNAL] start denied missing user caller_exists=%s receiver_exists=%s caller=%s receiver=%s",
+            bool(caller),
+            bool(receiver),
+            caller_id,
+            receiver_id,
+        )
         return jsonify({"message": "User not found"}), 404
 
     call_id = str(uuid4())
@@ -137,6 +168,13 @@ def start_call():
         _schedule_missed_call(call_id)
 
     payload = _serialize_call(call)
+    current_app.logger.info(
+        "[CALL_SIGNAL] start created call_id=%s room_id=%s caller_sid_room=user_%s receiver_sid_room=user_%s",
+        call_id,
+        room_id,
+        caller_id,
+        receiver_id,
+    )
     _emit_call_event("incoming_call", payload, call)
     _emit_call_event("outgoing_call", payload, call)
     _emit_call_event("call_initiated", payload, call)
