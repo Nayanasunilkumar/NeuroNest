@@ -8,19 +8,24 @@ import { applyTheme, getTheme } from "./shared/utils/theme";
 
 applyTheme(getTheme()); // 👈 prevents flicker
 
-const BUILD_ID = import.meta.env.VITE_APP_BUILD_ID || "dev";
+const getLoadedEntryScript = () => {
+  const scripts = [...document.querySelectorAll('script[type="module"][src*="/assets/index-"]')];
+  return scripts.at(-1)?.getAttribute("src") || "";
+};
+
+const CURRENT_ENTRY_SCRIPT = getLoadedEntryScript();
 
 const checkForNewBuild = async () => {
-  if (BUILD_ID === "dev" || document.visibilityState === "hidden") return;
+  if (!CURRENT_ENTRY_SCRIPT || document.visibilityState === "hidden") return;
 
   try {
     const response = await fetch(`/?_build_check=${Date.now()}`, { cache: "no-store" });
     const html = await response.text();
-    const match = html.match(/<meta\s+name="neuronest-build"\s+content="([^"]+)"/i);
-    const latestBuildId = match?.[1];
-    const reloadKey = `neuronest-reloaded-${latestBuildId}`;
+    const match = html.match(/<script[^>]+type="module"[^>]+src="([^"]*\/assets\/index-[^"]+\.js)"/i);
+    const latestEntryScript = match?.[1];
+    const reloadKey = `neuronest-reloaded-${latestEntryScript}`;
 
-    if (latestBuildId && latestBuildId !== BUILD_ID && sessionStorage.getItem(reloadKey) !== "1") {
+    if (latestEntryScript && latestEntryScript !== CURRENT_ENTRY_SCRIPT && sessionStorage.getItem(reloadKey) !== "1") {
       sessionStorage.setItem(reloadKey, "1");
       window.location.reload();
     }
