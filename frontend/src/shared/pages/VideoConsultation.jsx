@@ -10,6 +10,86 @@ import { API_BASE_URL } from '../../config/env';
 import { getAppointmentCallState, leaveAppointmentCall } from '../services/api/appointments';
 import { getDoctorAppointmentCallState, leaveDoctorAppointmentCall } from '../services/api/doctor';
 
+const toIceUrlList = (urls) => (Array.isArray(urls) ? urls : [urls]).filter(Boolean);
+
+const hasTurnServer = (iceServers = []) => iceServers.some((server) => (
+    toIceUrlList(server.urls).some((url) => String(url).toLowerCase().startsWith('turn'))
+));
+
+const getCandidateType = (candidate) => {
+    if (!candidate) return 'unknown';
+    if (candidate.type) return candidate.type;
+    const raw = candidate.candidate || '';
+    const typMatch = String(raw).match(/\styp\s(host|srflx|prflx|relay)\b/i);
+    return typMatch?.[1]?.toLowerCase() || 'unknown';
+};
+
+const getCandidateProtocol = (candidate) => {
+    if (!candidate) return 'unknown';
+    if (candidate.protocol) return candidate.protocol;
+    const raw = String(candidate.candidate || '').split(/\s+/);
+    return raw[2]?.toLowerCase() || 'unknown';
+};
+
+const incrementCandidateDiagnostics = (setDebugInfo, direction, candidate) => {
+    const type = getCandidateType(candidate);
+    const protocol = getCandidateProtocol(candidate);
+    const isLocal = direction === 'local';
+    const isRelay = type === 'relay';
+    const isSrflx = type === 'srflx';
+
+    setDebugInfo((prev) => ({
+        ...prev,
+        localIceCandidates: prev.localIceCandidates + (isLocal ? 1 : 0),
+        remoteIceCandidates: prev.remoteIceCandidates + (!isLocal ? 1 : 0),
+        localRelayCandidates: prev.localRelayCandidates + (isLocal && isRelay ? 1 : 0),
+        remoteRelayCandidates: prev.remoteRelayCandidates + (!isLocal && isRelay ? 1 : 0),
+        localSrflxCandidates: prev.localSrflxCandidates + (isLocal && isSrflx ? 1 : 0),
+        remoteSrflxCandidates: prev.remoteSrflxCandidates + (!isLocal && isSrflx ? 1 : 0),
+        lastCandidateType: `${direction}:${type}/${protocol}`,
+        relayCandidateSeen: prev.relayCandidateSeen || isRelay,
+    }));
+};
+
+const describeSelectedCandidatePair = async (pc) => {
+    if (!pc?.getStats) return null;
+    const stats = await pc.getStats();
+    let selectedPair = null;
+    const candidateById = new Map();
+
+    stats.forEach((report) => {
+        if (report.type === 'local-candidate' || report.type === 'remote-candidate') {
+            candidateById.set(report.id, report);
+        }
+        if (report.type === 'transport' && report.selectedCandidatePairId) {
+            selectedPair = stats.get(report.selectedCandidatePairId) || selectedPair;
+        }
+        if (
+            report.type === 'candidate-pair'
+            && (report.selected || (report.nominated && report.state === 'succeeded'))
+        ) {
+            selectedPair = report;
+        }
+    });
+
+    if (!selectedPair) return null;
+
+    const local = candidateById.get(selectedPair.localCandidateId);
+    const remote = candidateById.get(selectedPair.remoteCandidateId);
+    const localType = local?.candidateType || 'unknown';
+    const remoteType = remote?.candidateType || 'unknown';
+    const localProtocol = local?.protocol || 'unknown';
+    const remoteProtocol = remote?.protocol || 'unknown';
+
+    return {
+        label: `${localType}/${localProtocol} -> ${remoteType}/${remoteProtocol}`,
+        localType,
+        remoteType,
+        usesRelay: localType === 'relay' || remoteType === 'relay',
+        state: selectedPair.state || 'unknown',
+    };
+};
+
 export default function VideoConsultation() {
     const { roomId: routeRoomId } = useParams();
     const navigate = useNavigate();
@@ -49,12 +129,23 @@ export default function VideoConsultation() {
         peerRole: 'unknown',
         connectionState: 'new',
         iceConnectionState: 'new',
+        iceGatheringState: 'new',
         signalingState: 'new',
         remoteStreamStatus: 'none',
         localTracks: 0,
         remoteTracks: 0,
         iceServerCount: 0,
         hasTurn: false,
+        relayCandidateSeen: false,
+        turnUsageConfirmed: false,
+        localIceCandidates: 0,
+        remoteIceCandidates: 0,
+        localRelayCandidates: 0,
+        remoteRelayCandidates: 0,
+        localSrflxCandidates: 0,
+        remoteSrflxCandidates: 0,
+        selectedCandidatePair: 'pending',
+        lastCandidateType: 'none',
         selfSid: '',
         remoteSid: '',
         lastEvent: 'initialising',
@@ -223,6 +314,7 @@ export default function VideoConsultation() {
         let isDisposed = false;
         let joinRetryTimer = null;
         let restartTimer = null;
+        let selectedPairTimer = null;
 
         logVideoEvent('consultation effect start', {
             roomId,
@@ -252,8 +344,8 @@ export default function VideoConsultation() {
                 const candidate = iceCandidateQueue.current.shift();
                 await peerConnection.current.addIceCandidate(candidate);
                 logVideoEvent('queued ICE candidate added', {
-                    candidateType: candidate?.type,
-                    candidateProtocol: candidate?.protocol,
+                    candidateType: getCandidateType(candidate),
+                    candidateProtocol: getCandidateProtocol(candidate),
                 });
             }
         };
@@ -273,8 +365,29 @@ export default function VideoConsultation() {
                 });
                 logVideoEvent('pending local ICE candidate sent', {
                     to: remoteSidRef.current,
-                    candidateType: candidate?.type,
-                    candidateProtocol: candidate?.protocol,
+                    candidateType: getCandidateType(candidate),
+                    candidateProtocol: getCandidateProtocol(candidate),
+                });
+            }
+        };
+
+        const refreshSelectedCandidatePair = async (reason = 'poll') => {
+            if (!peerConnection.current) return;
+            try {
+                const selectedPair = await describeSelectedCandidatePair(peerConnection.current);
+                if (!selectedPair) return;
+                logVideoEvent('selected ICE candidate pair', {
+                    reason,
+                    selectedPair,
+                    debug: {
+                        selectedCandidatePair: selectedPair.label,
+                        turnUsageConfirmed: selectedPair.usesRelay,
+                    },
+                });
+            } catch (err) {
+                logVideoEvent('selected ICE candidate pair unavailable', {
+                    reason,
+                    error: err?.message || String(err),
                 });
             }
         };
@@ -369,13 +482,11 @@ export default function VideoConsultation() {
             try {
                 const data = await getIceConfig();
                 if (Array.isArray(data?.iceServers) && data.iceServers.length > 0) {
-                    const hasTurn = data.iceServers.some((server) => {
-                        const urls = Array.isArray(server.urls) ? server.urls : [server.urls];
-                        return urls.some((url) => String(url || '').startsWith('turn'));
-                    });
+                    const hasTurn = hasTurnServer(data.iceServers);
                     logVideoEvent('ICE config loaded', {
                         iceServerCount: data.iceServers.length,
                         hasTurn,
+                        diagnostics: data?.diagnostics || null,
                         debug: {
                             iceServerCount: data.iceServers.length,
                             hasTurn,
@@ -440,15 +551,21 @@ export default function VideoConsultation() {
                 });
 
                 const iceServers = await getIceServers();
+                const hasTurn = hasTurnServer(iceServers);
                 peerConnection.current = new RTCPeerConnection({
                     iceServers,
+                    iceTransportPolicy: 'all',
                 });
                 logVideoEvent('RTCPeerConnection created', {
                     iceServerCount: iceServers.length,
+                    hasTurn,
                     debug: {
                         connectionState: peerConnection.current.connectionState,
                         iceConnectionState: peerConnection.current.iceConnectionState,
+                        iceGatheringState: peerConnection.current.iceGatheringState,
                         signalingState: peerConnection.current.signalingState,
+                        iceServerCount: iceServers.length,
+                        hasTurn,
                     },
                 });
                 remoteStreamRef.current = new MediaStream();
@@ -516,6 +633,7 @@ export default function VideoConsultation() {
                             restartDebounceRef.current = null;
                         }
                         setIsRemoteConnected(true);
+                        void refreshSelectedCandidatePair('connectionState connected');
                         return;
                     }
 
@@ -540,10 +658,21 @@ export default function VideoConsultation() {
                 // Offers are driven by explicit signaling roles (video_peer.shouldOffer)
                 // to prevent glare/duplicate offers that can cause one-way/frozen video.
                 peerConnection.current.oniceconnectionstatechange = () => {
-                    console.log("WebRTC iceConnectionState:", peerConnection.current?.iceConnectionState);
+                    const state = peerConnection.current?.iceConnectionState;
+                    console.log("WebRTC iceConnectionState:", state);
                     logVideoEvent('iceConnectionState changed', {
-                        state: peerConnection.current?.iceConnectionState,
-                        debug: { iceConnectionState: peerConnection.current?.iceConnectionState || 'unknown' },
+                        state,
+                        debug: { iceConnectionState: state || 'unknown' },
+                    });
+                    if (state === 'connected' || state === 'completed') {
+                        void refreshSelectedCandidatePair(`ICE ${state}`);
+                    }
+                };
+                peerConnection.current.onicegatheringstatechange = () => {
+                    const state = peerConnection.current?.iceGatheringState;
+                    logVideoEvent('iceGatheringState changed', {
+                        state,
+                        debug: { iceGatheringState: state || 'unknown' },
                     });
                 };
                 peerConnection.current.onsignalingstatechange = () => {
@@ -570,6 +699,7 @@ export default function VideoConsultation() {
                         logVideoEvent('local ICE gathering complete');
                         return;
                     }
+                    incrementCandidateDiagnostics(setDebugInfo, 'local', event.candidate);
                     if (!socket.current) {
                         logVideoEvent('local ICE candidate skipped: socket missing');
                         return;
@@ -577,8 +707,8 @@ export default function VideoConsultation() {
                     if (!remoteSidRef.current) {
                         pendingLocalIceRef.current.push(event.candidate);
                         logVideoEvent('local ICE candidate queued', {
-                            candidateType: event.candidate?.type,
-                            candidateProtocol: event.candidate?.protocol,
+                            candidateType: getCandidateType(event.candidate),
+                            candidateProtocol: getCandidateProtocol(event.candidate),
                             queueLength: pendingLocalIceRef.current.length,
                         });
                         return;
@@ -590,8 +720,8 @@ export default function VideoConsultation() {
                     });
                     logVideoEvent('ice_candidate sent', {
                         to: remoteSidRef.current,
-                        candidateType: event.candidate?.type,
-                        candidateProtocol: event.candidate?.protocol,
+                        candidateType: getCandidateType(event.candidate),
+                        candidateProtocol: getCandidateProtocol(event.candidate),
                     });
                 };
 
@@ -781,17 +911,18 @@ export default function VideoConsultation() {
                     if (!peerConnection.current || !data?.candidate) return;
                     try {
                         const candidate = new RTCIceCandidate(data.candidate);
+                        incrementCandidateDiagnostics(setDebugInfo, 'remote', candidate);
                         logVideoEvent('ice_candidate received', {
                             from: data?.from,
-                            candidateType: candidate?.type,
-                            candidateProtocol: candidate?.protocol,
+                            candidateType: getCandidateType(candidate),
+                            candidateProtocol: getCandidateProtocol(candidate),
                             hasRemoteDescription: Boolean(peerConnection.current.remoteDescription?.type),
                         });
                         if (peerConnection.current.remoteDescription?.type) {
                             await peerConnection.current.addIceCandidate(candidate);
                             logVideoEvent('addIceCandidate success', {
-                                candidateType: candidate?.type,
-                                candidateProtocol: candidate?.protocol,
+                                candidateType: getCandidateType(candidate),
+                                candidateProtocol: getCandidateProtocol(candidate),
                             });
                         } else {
                             iceCandidateQueue.current.push(candidate);
@@ -825,6 +956,13 @@ export default function VideoConsultation() {
                         void restartIceAndRenegotiate();
                     }
                 }, 8000);
+
+                selectedPairTimer = setInterval(() => {
+                    const iceState = peerConnection.current?.iceConnectionState;
+                    if (iceState === 'connected' || iceState === 'completed') {
+                        void refreshSelectedCandidatePair('connected poll');
+                    }
+                }, 2500);
 
             } catch (err) {
                 console.error("Error accessing media devices.", err);
@@ -894,6 +1032,10 @@ export default function VideoConsultation() {
             if (restartTimer) {
                 clearTimeout(restartTimer);
                 restartTimer = null;
+            }
+            if (selectedPairTimer) {
+                clearInterval(selectedPairTimer);
+                selectedPairTimer = null;
             }
             
             logVideoEvent('consultation cleanup complete');
@@ -1019,11 +1161,18 @@ export default function VideoConsultation() {
                     <div><strong>Self SID:</strong> {debugInfo.selfSid || 'pending'}</div>
                     <div><strong>Remote SID:</strong> {debugInfo.remoteSid || 'pending'}</div>
                     <div><strong>ICE:</strong> {debugInfo.iceConnectionState}</div>
+                    <div><strong>Gather:</strong> {debugInfo.iceGatheringState}</div>
                     <div><strong>Signaling:</strong> {debugInfo.signalingState}</div>
                     <div><strong>PC:</strong> {debugInfo.connectionState}</div>
                     <div><strong>ICE cfg:</strong> {debugInfo.iceServerCount} ({debugInfo.hasTurn ? 'TURN+STUN' : 'STUN only'})</div>
+                    <div><strong>Local ICE:</strong> {debugInfo.localIceCandidates} rly:{debugInfo.localRelayCandidates} srflx:{debugInfo.localSrflxCandidates}</div>
+                    <div><strong>Remote ICE:</strong> {debugInfo.remoteIceCandidates} rly:{debugInfo.remoteRelayCandidates} srflx:{debugInfo.remoteSrflxCandidates}</div>
+                    <div><strong>Pair:</strong> {debugInfo.selectedCandidatePair}</div>
+                    <div><strong>Relay seen:</strong> {debugInfo.relayCandidateSeen ? 'yes' : 'pending'}</div>
+                    <div><strong>TURN used:</strong> {debugInfo.turnUsageConfirmed ? 'yes' : 'pending'}</div>
                     <div><strong>Local tracks:</strong> {debugInfo.localTracks}</div>
                     <div><strong>Remote:</strong> {debugInfo.remoteStreamStatus} ({debugInfo.remoteTracks})</div>
+                    <div><strong>Candidate:</strong> {debugInfo.lastCandidateType}</div>
                     <div><strong>Last:</strong> {debugInfo.lastEvent}</div>
                 </div>
             </div>

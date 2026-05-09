@@ -32,3 +32,15 @@ The shared role middleware lives at:
 ## Refactoring Notes
 
 Legacy feature files remain in place where moving them would require broad import churn. New work should enter through the role modules first, then migrate individual pages, components, controllers, services, models, and validators into the matching role folder as features are touched.
+
+## WebRTC TURN Configuration
+
+Video consultations load ICE servers from `GET /api/rtc/ice-config`. STUN is always returned, but production calls across NATs require TURN relay credentials from a provider such as Metered.ca or Twilio Network Traversal.
+
+Set these Render backend environment variables together:
+
+- `TURN_URLS`: comma-separated TURN URLs, for example `turn:your-domain.metered.live:80,turn:your-domain.metered.live:443,turns:your-domain.metered.live:443`
+- `TURN_USERNAME`: provider-issued TURN username
+- `TURN_CREDENTIAL`: provider-issued TURN password/credential
+
+After deployment, call `/api/rtc/ice-config` with a valid JWT and confirm the response includes the default STUN entries plus a TURN entry with `urls`, `username`, and `credential`. During a consultation, the debug overlay should show `ICE cfg: ... (TURN+STUN)`, relay candidate counts, and the selected candidate pair once ICE reaches `connected` or `completed`.
