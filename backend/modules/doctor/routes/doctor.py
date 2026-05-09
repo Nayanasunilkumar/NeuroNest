@@ -1148,7 +1148,8 @@ def get_patient_clinical_dossier(patient_id):
         return jsonify({"message": "Doctor access required"}), 403
     
     current_user_id = int(get_jwt_identity())
-    
+    doctor_scope_ids = get_doctor_scope_ids(current_user_id)
+
     # 1. Fetch Patient Identity
     patient_user = User.query.get(patient_id)
     if not patient_user:
