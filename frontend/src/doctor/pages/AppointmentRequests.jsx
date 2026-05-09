@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { 
   getAppointmentRequests, 
   approveAppointment, 
@@ -97,6 +98,7 @@ function StatusBadge({ status }) {
 }
 
 function TriageRow({ req, onAction, actionLoading, onRescheduleClick, isHistory }) {
+  const navigate = useNavigate();
   const isHighPriority = useMemo(() => isUrgentRequest(req, true), [req]);
 
   return (
@@ -107,7 +109,14 @@ function TriageRow({ req, onAction, actionLoading, onRescheduleClick, isHistory 
              <div className="ar-risk-indicator" style={{ backgroundColor: isHighPriority ? 'var(--nn-danger)' : 'var(--nn-success)' }}></div>
           </div>
           <div className="ar-details">
-             <span className="ar-p-name">{req.patient_name}</span>
+             <span
+                className="ar-p-name"
+                onClick={() => navigate(`/doctor/patient-hub?patientId=${req.patient_id}`)}
+                style={{ cursor: 'pointer', textDecoration: 'none', transition: 'color 0.15s' }}
+                onMouseEnter={e => e.currentTarget.style.textDecoration = 'underline'}
+                onMouseLeave={e => e.currentTarget.style.textDecoration = 'none'}
+                title="View Clinical Dossier"
+             >{req.patient_name}</span>
              <span className="ar-p-meta">
                 ID: #{req.id.toString().substring(0, 6)} • {req.gender || "NA"} {req.dob ? `• ${calculateAge(req.dob)}` : ""}
              </span>
