@@ -10,6 +10,8 @@ import { API_BASE_URL } from '../../config/env';
 import { getAppointmentCallState, leaveAppointmentCall } from '../services/api/appointments';
 import { getDoctorAppointmentCallState, leaveDoctorAppointmentCall } from '../services/api/doctor';
 
+const CHAT_RETURN_KEY = 'neuronest_consultation_return_context';
+
 const toIceUrlList = (urls) => (Array.isArray(urls) ? urls : [urls]).filter(Boolean);
 
 const hasTurnServer = (iceServers = []) => iceServers.some((server) => (
@@ -90,6 +92,24 @@ const describeSelectedCandidatePair = async (pc) => {
     };
 };
 
+const readStoredChatReturnContext = () => {
+    try {
+        const raw = sessionStorage.getItem(CHAT_RETURN_KEY);
+        return raw ? JSON.parse(raw) : null;
+    } catch (error) {
+        console.warn('Unable to read consultation return context:', error);
+        return null;
+    }
+};
+
+const writeStoredChatReturnContext = (context) => {
+    try {
+        sessionStorage.setItem(CHAT_RETURN_KEY, JSON.stringify(context));
+    } catch (error) {
+        console.warn('Unable to store consultation return context:', error);
+    }
+};
+
 export default function VideoConsultation() {
     const { roomId: routeRoomId } = useParams();
     const navigate = useNavigate();
@@ -115,6 +135,7 @@ export default function VideoConsultation() {
     const restartDebounceRef = useRef(null);
     const hasSentInitialOfferRef = useRef(false);
     const hasSeenActiveCallRef = useRef(false);
+    const returnTargetRef = useRef(null);
     const { endActiveCall, activeCall } = useCall();
     
     const [isMuted, setIsMuted] = useState(false);
@@ -124,7 +145,7 @@ export default function VideoConsultation() {
     const [mediaError, setMediaError] = useState('');
     const [resolvedRoomId, setResolvedRoomId] = useState(null);
     const [isResolvingRoom, setIsResolvingRoom] = useState(true);
-    const [debugInfo, setDebugInfo] = useState({
+    const [, setDebugInfo] = useState({
         socketStatus: 'idle',
         peerRole: 'unknown',
         connectionState: 'new',
@@ -233,34 +254,73 @@ export default function VideoConsultation() {
         };
     }, [parsedAppointmentId, routeRoomId, user?.role]);
 
-    const getChatReturnTarget = useCallback(() => {
+    const buildChatReturnContext = useCallback(() => {
         const currentUserId = user?.id;
-        const activeConversationId = activeCall?.conversation_id || Number(routeRoomId);
+        const stored = readStoredChatReturnContext();
+        const routeState = location?.state || {};
+        const activeConversationId = activeCall?.conversation_id
+            || routeState.conversationId
+            || stored?.conversationId
+            || Number(routeRoomId);
         const callerId = activeCall?.caller_id;
         const receiverId = activeCall?.receiver_id;
-        const otherUserId = String(callerId) === String(currentUserId) ? receiverId : callerId;
-
-        if (user?.role === 'doctor') {
-            if (otherUserId) {
-                return {
-                    pathname: '/doctor/chat',
-                    search: `?patientId=${otherUserId}`,
-                };
-            }
-            return { pathname: '/doctor/chat', search: '' };
-        }
+        const inferredOtherUserId = String(callerId) === String(currentUserId) ? receiverId : callerId;
+        const otherUserId = routeState.otherUserId || stored?.otherUserId || inferredOtherUserId;
+        const patientId = routeState.patientId || stored?.patientId || (user?.role === 'doctor' ? otherUserId : currentUserId);
+        const doctorId = routeState.doctorId || stored?.doctorId || (user?.role === 'patient' ? otherUserId : currentUserId);
 
         return {
-            pathname: '/messages',
-            search: '',
-            state: {
-                conversationId: activeConversationId || null,
-                otherUserId: otherUserId || null,
-            },
+            conversationId: activeConversationId || null,
+            patientId: patientId || null,
+            doctorId: doctorId || null,
+            otherUserId: otherUserId || null,
+            threadId: activeConversationId || null,
+            role: user?.role || null,
         };
-    }, [activeCall?.caller_id, activeCall?.conversation_id, activeCall?.receiver_id, routeRoomId, user?.id, user?.role]);
+    }, [
+        activeCall?.caller_id,
+        activeCall?.conversation_id,
+        activeCall?.receiver_id,
+        location?.state,
+        routeRoomId,
+        user?.id,
+        user?.role,
+    ]);
 
-    const returnToChat = useCallback(() => {
+    const getChatReturnTarget = useCallback(() => {
+        const context = buildChatReturnContext();
+        writeStoredChatReturnContext(context);
+
+        if (user?.role === 'doctor') {
+            const params = new URLSearchParams();
+            if (context.patientId) params.set('patientId', context.patientId);
+            if (context.conversationId) params.set('conversationId', context.conversationId);
+            return {
+                pathname: '/doctor/chat',
+                search: params.toString() ? `?${params.toString()}` : '',
+                state: context,
+            };
+        }
+
+        const params = new URLSearchParams();
+        if (context.doctorId) params.set('doctorId', context.doctorId);
+        if (context.conversationId) params.set('conversationId', context.conversationId);
+        return {
+            pathname: '/messages',
+            search: params.toString() ? `?${params.toString()}` : '',
+            state: context,
+        };
+    }, [buildChatReturnContext, user?.role]);
+
+    useEffect(() => {
+        const context = buildChatReturnContext();
+        if (context.conversationId || context.patientId || context.doctorId || context.otherUserId) {
+            writeStoredChatReturnContext(context);
+            returnTargetRef.current = getChatReturnTarget();
+        }
+    }, [buildChatReturnContext, getChatReturnTarget]);
+
+    const returnToChat = useCallback((targetOverride = null) => {
         if (hasReturnedToChatRef.current) return;
         hasReturnedToChatRef.current = true;
         
@@ -270,7 +330,7 @@ export default function VideoConsultation() {
             roomId: routeRoomId
         });
 
-        const target = getChatReturnTarget();
+        const target = targetOverride || returnTargetRef.current || getChatReturnTarget();
         // Ensure path is always defined
         const path = target?.pathname || (user?.role === 'doctor' ? '/doctor/chat' : '/messages');
         const search = target?.search || '';
@@ -829,6 +889,7 @@ export default function VideoConsultation() {
                         remoteVideo.current.srcObject = null;
                     }
                     remoteStreamRef.current = new MediaStream();
+                    returnToChat();
                 });
 
                 socket.current.on("webrtc_offer", async (data) => {
@@ -1050,7 +1111,11 @@ export default function VideoConsultation() {
     }, [activeCall?.call_id, returnToChat]);
 
     const handleHangup = async () => {
+        const target = getChatReturnTarget();
         try {
+            if (socket.current && socketRoom) {
+                socket.current.emit("leave_video_room", { room: socketRoom });
+            }
             await leaveAppointmentSession();
             if (activeCall?.call_id) {
                 await endActiveCall();
@@ -1058,7 +1123,7 @@ export default function VideoConsultation() {
         } catch (err) {
             console.error("Failed to end active call cleanly:", err);
         } finally {
-            returnToChat();
+            returnToChat(target);
         }
     };
 
@@ -1150,30 +1215,6 @@ export default function VideoConsultation() {
                         style={{ transform: 'scaleX(-1)' }}
                     />
                     <div className="video-local-label">You</div>
-                </div>
-
-                <div className="video-debug-overlay">
-                    <div><strong>Route:</strong> {routeRoomId || 'none'}</div>
-                    <div><strong>Resolved:</strong> {roomId || 'none'}</div>
-                    <div><strong>Socket room:</strong> {socketRoom || 'none'}</div>
-                    <div><strong>Socket:</strong> {debugInfo.socketStatus}</div>
-                    <div><strong>Role:</strong> {debugInfo.peerRole}</div>
-                    <div><strong>Self SID:</strong> {debugInfo.selfSid || 'pending'}</div>
-                    <div><strong>Remote SID:</strong> {debugInfo.remoteSid || 'pending'}</div>
-                    <div><strong>ICE:</strong> {debugInfo.iceConnectionState}</div>
-                    <div><strong>Gather:</strong> {debugInfo.iceGatheringState}</div>
-                    <div><strong>Signaling:</strong> {debugInfo.signalingState}</div>
-                    <div><strong>PC:</strong> {debugInfo.connectionState}</div>
-                    <div><strong>ICE cfg:</strong> {debugInfo.iceServerCount} ({debugInfo.hasTurn ? 'TURN+STUN' : 'STUN only'})</div>
-                    <div><strong>Local ICE:</strong> {debugInfo.localIceCandidates} rly:{debugInfo.localRelayCandidates} srflx:{debugInfo.localSrflxCandidates}</div>
-                    <div><strong>Remote ICE:</strong> {debugInfo.remoteIceCandidates} rly:{debugInfo.remoteRelayCandidates} srflx:{debugInfo.remoteSrflxCandidates}</div>
-                    <div><strong>Pair:</strong> {debugInfo.selectedCandidatePair}</div>
-                    <div><strong>Relay seen:</strong> {debugInfo.relayCandidateSeen ? 'yes' : 'pending'}</div>
-                    <div><strong>TURN used:</strong> {debugInfo.turnUsageConfirmed ? 'yes' : 'pending'}</div>
-                    <div><strong>Local tracks:</strong> {debugInfo.localTracks}</div>
-                    <div><strong>Remote:</strong> {debugInfo.remoteStreamStatus} ({debugInfo.remoteTracks})</div>
-                    <div><strong>Candidate:</strong> {debugInfo.lastCandidateType}</div>
-                    <div><strong>Last:</strong> {debugInfo.lastEvent}</div>
                 </div>
             </div>
 
@@ -1319,31 +1360,6 @@ export default function VideoConsultation() {
                         grid-template-columns: 1fr 1fr;
                         align-items: center;
                     }
-                }
-
-                .video-debug-overlay {
-                    position: absolute;
-                    left: 18px;
-                    bottom: 18px;
-                    z-index: 6;
-                    max-width: min(440px, calc(100vw - 36px));
-                    display: grid;
-                    grid-template-columns: repeat(2, minmax(0, 1fr));
-                    gap: 4px 12px;
-                    padding: 10px 12px;
-                    border: 1px solid rgba(148, 163, 184, 0.35);
-                    border-radius: 8px;
-                    background: rgba(15, 23, 42, 0.82);
-                    color: #cbd5e1;
-                    font-size: 0.72rem;
-                    line-height: 1.3;
-                    backdrop-filter: blur(8px);
-                    pointer-events: none;
-                }
-
-                .video-debug-overlay strong {
-                    color: #f8fafc;
-                    font-weight: 700;
                 }
 
                 .video-remote-container,

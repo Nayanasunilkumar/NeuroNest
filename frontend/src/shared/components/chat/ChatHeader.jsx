@@ -62,7 +62,12 @@ const ChatHeader = ({ otherUser, context, isDoctor, onToggleSidebar, showSidebar
             const response = await api.post(endpoint);
             const { room_id } = response.data;
             navigate(`/consultation/${room_id || nextAppt.video_room_id || `appointment-${nextAppt.id}`}`, {
-                state: { appointmentId: nextAppt.id },
+                state: {
+                    appointmentId: nextAppt.id,
+                    patientId: isDoctor ? otherUser?.id : undefined,
+                    doctorId: isDoctor ? undefined : otherUser?.id,
+                    otherUserId: otherUser?.id || null,
+                },
             });
         } catch (error) {
             console.error("Clinical join failed:", error);

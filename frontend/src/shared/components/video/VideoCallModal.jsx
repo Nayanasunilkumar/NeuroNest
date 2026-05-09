@@ -60,7 +60,13 @@ const VideoCallModal = ({ isOpen, call, callStatus, onClose, onEndCall }) => {
 
   const joinCall = () => {
     if (!call?.room_id) return;
-    navigate(`/consultation/${call.room_id}`);
+    navigate(`/consultation/${call.room_id}`, {
+      state: {
+        conversationId: call.conversation_id || null,
+        otherUserId: call.receiver_id || call.caller_id || null,
+        threadId: call.conversation_id || null,
+      },
+    });
     onClose?.();
   };
 
@@ -122,4 +128,3 @@ const VideoCallModal = ({ isOpen, call, callStatus, onClose, onEndCall }) => {
 };
 
 export default VideoCallModal;
-

@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { initSocket, getSocket } from '../../shared/services/socket';
 import chatAPI from '../../shared/services/chatAPI';
 import ConversationList from '../../shared/components/chat/ConversationList';
@@ -9,9 +9,40 @@ import { getUser } from '../../shared/utils/auth';
 import { formatDateTimeIST, toEpochMs } from '../../shared/utils/time';
 import { useCall } from '../../shared/context/CallContext';
 
+const CHAT_RETURN_KEY = 'neuronest_consultation_return_context';
+
+const readChatReturnContext = () => {
+    try {
+        const raw = sessionStorage.getItem(CHAT_RETURN_KEY);
+        return raw ? JSON.parse(raw) : null;
+    } catch (error) {
+        console.warn("Unable to read consultation return context:", error);
+        return null;
+    }
+};
+
+const writeChatReturnContext = (context) => {
+    try {
+        sessionStorage.setItem(CHAT_RETURN_KEY, JSON.stringify(context));
+    } catch (error) {
+        console.warn("Unable to store consultation return context:", error);
+    }
+};
+
+const clearChatReturnContext = () => {
+    try {
+        sessionStorage.removeItem(CHAT_RETURN_KEY);
+    } catch (error) {
+        console.warn("Unable to clear consultation return context:", error);
+    }
+};
+
 const Chat = () => {
     const navigate = useNavigate();
     const location = useLocation();
+    const [searchParams] = useSearchParams();
+    const doctorIdParam = searchParams.get('doctorId');
+    const conversationIdParam = searchParams.get('conversationId');
     const [conversations, setConversations] = useState([]);
     const [selectedConv, setSelectedConv] = useState(null);
     const [messages, setMessages] = useState([]);
@@ -24,7 +55,7 @@ const Chat = () => {
     const messagesRef = React.useRef([]);
     const selectedConvRef = React.useRef(selectedConv);
     const syncInFlightRef = React.useRef(false);
-    const pendingFocusRef = React.useRef(location.state || null);
+    const pendingFocusRef = React.useRef(location.state || readChatReturnContext());
 
     const joinConversationRooms = useCallback((socketClient, convs) => {
         if (!socketClient || !Array.isArray(convs) || convs.length === 0) return;
@@ -41,14 +72,16 @@ const Chat = () => {
             setConversations(data);
             const socket = getSocket();
             joinConversationRooms(socket, data);
+            return data;
         } catch (err) {
             console.error("Failed to load conversations", err);
+            return [];
         }
     }, [joinConversationRooms]);
 
     const [context, setContext] = useState(null); // Added context state
 
-    const handleSelectConversation = async (conv) => {
+    const handleSelectConversation = useCallback(async (conv) => {
         if (selectedConv?.id === conv.id) return;
         
         setSelectedConv(conv);
@@ -108,7 +141,7 @@ const Chat = () => {
         } finally {
             setLoadingMessages(false);
         }
-    };
+    }, [selectedConv?.id]);
 
     // USE REFS FOR STABLE VALUES IN SOCKET LISTENERS
     const currentUserRef = React.useRef(currentUser);
@@ -130,8 +163,8 @@ const Chat = () => {
     }, [messages]);
 
     useEffect(() => {
-        pendingFocusRef.current = location.state || null;
-    }, [location.state]);
+        pendingFocusRef.current = location.state || readChatReturnContext();
+    }, [location.state, doctorIdParam, conversationIdParam]);
 
     const handleNewMessage = useCallback((msg) => {
         if (!msg) return;
@@ -233,16 +266,29 @@ const Chat = () => {
         if (!conversations.length) return;
 
         const pendingFocus = pendingFocusRef.current;
-        if (pendingFocus?.conversationId || pendingFocus?.otherUserId) {
+        const targetConversationId = conversationIdParam || pendingFocus?.conversationId || pendingFocus?.threadId;
+        const targetDoctorId = doctorIdParam || pendingFocus?.doctorId || pendingFocus?.otherUserId;
+
+        if (targetConversationId || targetDoctorId) {
             const targetConversation = conversations.find((conversation) => (
-                (pendingFocus.conversationId && String(conversation.id) === String(pendingFocus.conversationId)) ||
-                (pendingFocus.otherUserId && String(conversation.other_user?.id) === String(pendingFocus.otherUserId))
+                (targetConversationId && String(conversation.id) === String(targetConversationId)) ||
+                (targetDoctorId && String(conversation.other_user?.id) === String(targetDoctorId))
             ));
 
             if (targetConversation) {
                 handleSelectConversation(targetConversation);
                 pendingFocusRef.current = null;
+                clearChatReturnContext();
                 navigate(location.pathname, { replace: true, state: null });
+                return;
+            }
+
+            if (targetDoctorId) {
+                chatAPI.startConversation(targetDoctorId)
+                    .then(() => fetchConversations())
+                    .catch((error) => {
+                        console.error("Failed to restore doctor conversation:", error);
+                    });
                 return;
             }
         }
@@ -250,7 +296,7 @@ const Chat = () => {
         if (!selectedConvRef.current && conversations[0]) {
             handleSelectConversation(conversations[0]);
         }
-    }, [conversations, handleSelectConversation, location.pathname, navigate]);
+    }, [conversationIdParam, conversations, doctorIdParam, fetchConversations, handleSelectConversation, location.pathname, navigate]);
 
     useEffect(() => {
         const user = getUser();
@@ -337,6 +383,13 @@ const Chat = () => {
 
     const handleVideoCall = async () => {
         if (!selectedConv) return;
+        writeChatReturnContext({
+            conversationId: selectedConv.id,
+            doctorId: selectedConv.other_user?.id || null,
+            otherUserId: selectedConv.other_user?.id || null,
+            threadId: selectedConv.id,
+            role: currentUser?.role || 'patient',
+        });
         try {
             const session = await startVideoCall({
                 receiverId: selectedConv.other_user?.id,

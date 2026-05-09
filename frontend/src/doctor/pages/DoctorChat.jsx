@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useSearchParams, useNavigate, useLocation } from 'react-router-dom';
 import { initSocket, getSocket } from '../../shared/services/socket';
 import { getConversations, getMessages, markAsRead, getChatContext, startConversation, sendMessage, deleteMessage } from '../../shared/services/api/chat';
 import ConversationList from '../../shared/components/chat/ConversationList';
@@ -20,6 +20,34 @@ const DOCTOR_TEMPLATES = [
     { label: "Imaging", text: "The MRI/CT scan results are pending. Please upload them once you receive the digital copy." }
 ];
 
+const CHAT_RETURN_KEY = 'neuronest_consultation_return_context';
+
+const readChatReturnContext = () => {
+    try {
+        const raw = sessionStorage.getItem(CHAT_RETURN_KEY);
+        return raw ? JSON.parse(raw) : null;
+    } catch (error) {
+        console.warn("Unable to read consultation return context:", error);
+        return null;
+    }
+};
+
+const writeChatReturnContext = (context) => {
+    try {
+        sessionStorage.setItem(CHAT_RETURN_KEY, JSON.stringify(context));
+    } catch (error) {
+        console.warn("Unable to store consultation return context:", error);
+    }
+};
+
+const clearChatReturnContext = () => {
+    try {
+        sessionStorage.removeItem(CHAT_RETURN_KEY);
+    } catch (error) {
+        console.warn("Unable to clear consultation return context:", error);
+    }
+};
+
 const DoctorChat = ({ isEmbedded = false }) => {
     const [conversations, setConversations] = useState([]);
     const [selectedConv, setSelectedConv] = useState(null);
@@ -30,8 +58,10 @@ const DoctorChat = ({ isEmbedded = false }) => {
     const [loadingContext, setLoadingContext] = useState(false);
     const [showSidebar, setShowSidebar] = useState(false);
     const navigate = useNavigate();
+    const location = useLocation();
     const [searchParams] = useSearchParams();
     const patientIdParam = searchParams.get('patientId');
+    const conversationIdParam = searchParams.get('conversationId');
     const startVideoParam = searchParams.get('startVideo') === '1';
     const isFocusedMode = Boolean(patientIdParam); // Single-patient focused view
     const hasAutoStartedVideoRef = useRef(false);
@@ -39,6 +69,7 @@ const DoctorChat = ({ isEmbedded = false }) => {
     const conversationsRef = useRef([]);
     const messagesRef = useRef([]);
     const syncInFlightRef = useRef(false);
+    const pendingFocusRef = useRef(location.state || readChatReturnContext());
 
     const joinConversationRooms = useCallback((socketClient, convs) => {
         if (!socketClient || !Array.isArray(convs) || convs.length === 0) return;
@@ -121,6 +152,10 @@ const DoctorChat = ({ isEmbedded = false }) => {
     useEffect(() => {
         messagesRef.current = messages;
     }, [messages]);
+
+    useEffect(() => {
+        pendingFocusRef.current = location.state || readChatReturnContext();
+    }, [location.state]);
 
     const handleIncomingMessage = useCallback((msg) => {
         if (!msg) return;
@@ -228,18 +263,26 @@ const DoctorChat = ({ isEmbedded = false }) => {
         
         const initChat = async () => {
             const currentConvs = await fetchConversations();
+            const pendingFocus = pendingFocusRef.current || {};
+            const targetConversationId = conversationIdParam || pendingFocus.conversationId || pendingFocus.threadId;
+            const targetPatientId = patientIdParam || pendingFocus.patientId || pendingFocus.otherUserId;
             
-            if (patientIdParam) {
-                const existing = currentConvs.find(c => c.other_user.id === parseInt(patientIdParam));
+            if (targetConversationId || targetPatientId) {
+                const existing = currentConvs.find(c => (
+                    (targetConversationId && String(c.id) === String(targetConversationId)) ||
+                    (targetPatientId && String(c.other_user?.id) === String(targetPatientId))
+                ));
                 if (existing) {
                     handleSelectConversation(existing);
-                } else {
+                    clearChatReturnContext();
+                } else if (targetPatientId) {
                     try {
-                        const newConvData = await startConversation(patientIdParam);
+                        const newConvData = await startConversation(targetPatientId);
                         const updatedConvs = await fetchConversations();
                         const newlyCreated = updatedConvs.find(c => c.id === newConvData.conversation_id);
                         if (newlyCreated) {
                             handleSelectConversation(newlyCreated);
+                            clearChatReturnContext();
                         }
                     } catch (err) {
                         console.error("Failed to bridge clinical thread:", err);
@@ -270,7 +313,7 @@ const DoctorChat = ({ isEmbedded = false }) => {
             initChat();
         }
 
-    }, [fetchConversations, handleIncomingMessage, handleSelectConversation, joinConversationRooms, patientIdParam]);
+    }, [conversationIdParam, fetchConversations, handleIncomingMessage, handleSelectConversation, joinConversationRooms, patientIdParam, location.state]);
 
     // Hard fallback polling: ensures chat updates arrive without refresh even under socket jitter.
     useEffect(() => {
@@ -328,6 +371,13 @@ const DoctorChat = ({ isEmbedded = false }) => {
     const handleVideoCall = useCallback(async () => {
         if (!selectedConv) return;
         const roleStr = currentUser?.role === 'doctor' ? 'Doctor' : 'Patient';
+        writeChatReturnContext({
+            conversationId: selectedConv.id,
+            patientId: selectedConv.other_user?.id || null,
+            otherUserId: selectedConv.other_user?.id || null,
+            threadId: selectedConv.id,
+            role: currentUser?.role || 'doctor',
+        });
         try {
             const session = await startVideoCall({
                 receiverId: selectedConv.other_user?.id,

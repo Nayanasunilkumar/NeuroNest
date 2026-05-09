@@ -10,6 +10,15 @@ import { getUser, isAuthenticated } from "../utils/auth";
 const CallContext = createContext(null);
 
 const DEFAULT_TIMEOUT = 30;
+const CHAT_RETURN_KEY = "neuronest_consultation_return_context";
+
+const storeChatReturnContext = (context) => {
+  try {
+    sessionStorage.setItem(CHAT_RETURN_KEY, JSON.stringify(context));
+  } catch (error) {
+    console.warn("Unable to store consultation return context:", error);
+  }
+};
 
 export const CallProvider = ({ children }) => {
   const navigate = useNavigate();
@@ -152,6 +161,15 @@ export const CallProvider = ({ children }) => {
       }
 
       setActiveCall(session);
+      const otherUserId = String(session.caller_id) === String(user.id) ? session.receiver_id : session.caller_id;
+      storeChatReturnContext({
+        conversationId: session.conversation_id || conversationId || null,
+        patientId: user.role === "doctor" ? otherUserId : user.id,
+        doctorId: user.role === "patient" ? otherUserId : user.id,
+        otherUserId,
+        threadId: session.conversation_id || conversationId || null,
+        role: user.role || null,
+      });
       setIncomingCall(null);
       setCallStatus("ringing");
       setIsModalOpen(true);
@@ -167,9 +185,10 @@ export const CallProvider = ({ children }) => {
   );
 
   const openConsultation = useCallback(
-    (roomId) => {
+    (roomId, context = null) => {
       if (!roomId) return;
-      navigate(`/consultation/${roomId}`);
+      if (context) storeChatReturnContext(context);
+      navigate(`/consultation/${roomId}`, { state: context || undefined });
       setIsModalOpen(false);
       setStatusCard(null);
     },
@@ -190,7 +209,16 @@ export const CallProvider = ({ children }) => {
         title: "Call connected",
         message: "Join the secure consultation room.",
       });
-      openConsultation(session.room_id);
+      const user = getUser();
+      const otherUserId = String(session.caller_id) === String(user?.id) ? session.receiver_id : session.caller_id;
+      openConsultation(session.room_id, {
+        conversationId: session.conversation_id || null,
+        patientId: user?.role === "doctor" ? otherUserId : user?.id,
+        doctorId: user?.role === "patient" ? otherUserId : user?.id,
+        otherUserId,
+        threadId: session.conversation_id || null,
+        role: user?.role || null,
+      });
       return session;
     },
     [clearIncomingCountdown, clearOutgoingTimer, openConsultation],
@@ -267,7 +295,15 @@ export const CallProvider = ({ children }) => {
         title: "Call accepted",
         message: `${payload.receiver_name || "Participant"} joined.`,
       });
-      openConsultation(payload.room_id);
+      const otherUserId = String(payload.caller_id) === String(currentUser?.id) ? payload.receiver_id : payload.caller_id;
+      openConsultation(payload.room_id, {
+        conversationId: payload.conversation_id || null,
+        patientId: currentUser?.role === "doctor" ? otherUserId : currentUser?.id,
+        doctorId: currentUser?.role === "patient" ? otherUserId : currentUser?.id,
+        otherUserId,
+        threadId: payload.conversation_id || null,
+        role: currentUser?.role || null,
+      });
     };
 
     const onCallDeclined = (payload) => {

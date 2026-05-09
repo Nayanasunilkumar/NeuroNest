@@ -84,7 +84,12 @@ const MessageBubble = ({ message, isMe, otherUserAvatar, isActiveCallRequest = f
                         {isActiveCallRequest ? (
                             <button 
                                 className={`btn btn-sm fw-bold w-100 rounded-pill shadow-sm transition-all hover-scale ${isMe ? 'btn-light text-primary' : 'btn-primary text-white'}`}
-                                onClick={() => navigate(`/consultation/${message.conversation_id}`)}
+                                onClick={() => navigate(`/consultation/${message.conversation_id}`, {
+                                    state: {
+                                        conversationId: message.conversation_id,
+                                        threadId: message.conversation_id,
+                                    },
+                                })}
                             >
                                 Join Consult
                             </button>
