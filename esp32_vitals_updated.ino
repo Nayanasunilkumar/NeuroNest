@@ -21,9 +21,8 @@ const char* password  = "Sunil2418";
 const char* serverHost = "neuronest-backend-2rn0.onrender.com";
 const char* serverUrl = "https://neuronest-backend-2rn0.onrender.com/api/vitals/update";
 // Must match Render env VITALS_DEVICE_TOKEN when VITALS_REQUIRE_DEVICE_AUTH=true.
-const char* deviceToken = "replace-with-device-shared-secret";
-// Optional device ID for backend device matching.
-const char* deviceId = "replace-with-device-id";
+const char* deviceToken = "db29167b9bda4459ac0f84c0dfcf3fdd551b4f6322304283baee2d56dc10d197";
+const char* deviceId = "cb0e1b46-3044-40df-98cd-1befafa26266";
 
 // ---------------- Buffers / Algo ----------------
 uint32_t irBuffer[100];
