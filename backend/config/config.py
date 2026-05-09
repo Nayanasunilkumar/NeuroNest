@@ -66,8 +66,20 @@ class Config:
     ALLOW_DEV_DOCTOR_BOOTSTRAP = _env_flag("ALLOW_DEV_DOCTOR_BOOTSTRAP", default=False) and not IS_PRODUCTION
     DEFAULT_DOCTOR_EMAIL = (os.getenv("DEFAULT_DOCTOR_EMAIL") or "").strip().lower()
     DEFAULT_DOCTOR_PASSWORD = os.getenv("DEFAULT_DOCTOR_PASSWORD") or ""
-    VITALS_REQUIRE_DEVICE_AUTH = IS_PRODUCTION or _env_flag("VITALS_REQUIRE_DEVICE_AUTH", default=False)
-    VITALS_DEVICE_TOKEN = (os.getenv("VITALS_DEVICE_TOKEN") or "").strip() or None
+    VITALS_REQUIRE_DEVICE_AUTH = _env_flag("VITALS_REQUIRE_DEVICE_AUTH", default=IS_PRODUCTION)
+    VITALS_DEVICE_ID = (
+        os.getenv("VITALS_DEVICE_ID")
+        or os.getenv("DEVICE_ID")
+        or os.getenv("NEURONEST_DEVICE_ID")
+        or ""
+    ).strip() or None
+    VITALS_DEVICE_TOKEN = (
+        os.getenv("VITALS_DEVICE_TOKEN")
+        or os.getenv("DEVICE_TOKEN")
+        or os.getenv("ESP32_SECRET")
+        or os.getenv("NEURONEST_DEVICE_TOKEN")
+        or ""
+    ).strip() or None
     VITALS_DEVICE_PATIENT_ID = _env_int("VITALS_DEVICE_PATIENT_ID", 0) or None
     VITALS_DEVICE_PATIENT_EMAIL = (os.getenv("VITALS_DEVICE_PATIENT_EMAIL") or "").strip().lower() or None
 
