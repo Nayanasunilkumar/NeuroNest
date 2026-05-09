@@ -90,7 +90,7 @@ def evaluate_call_state(appointment: Appointment, now=None):
     elif (patient_joined or doctor_joined) and status == "scheduled":
         status = "waiting"
 
-    if status in {"scheduled", "waiting"} and appt_dt and now >= (appt_dt + timedelta(minutes=10)) and not both_joined:
+    if status in {"scheduled", "waiting"} and appt_dt and now >= (appt_dt + timedelta(minutes=30)) and not both_joined:
         status = "missed"
 
     waiting_for = None
@@ -106,6 +106,8 @@ def evaluate_call_state(appointment: Appointment, now=None):
     doctor_profile = DoctorProfile.query.filter_by(user_id=appointment.doctor_id).first()
     doctor_status = doctor_profile.doctor_status if doctor_profile else "active"
     
+    # Keep join window open from the pre-open time until the appointment is formally missed.
+    # This prevents the Join button from silently vanishing between the pre-open window and the appointment time.
     doctor_can_join = bool(doctor_join_time and now >= doctor_join_time and join_allowed_status)
     patient_can_join = bool(patient_join_time and now >= patient_join_time and join_allowed_status)
 
