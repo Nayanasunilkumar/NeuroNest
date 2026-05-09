@@ -1,4 +1,4 @@
 #!/bin/bash
 git add .
-git commit -m "fix: chat visibility and relationship refinements"
+git commit -m "fix: remove seed medications and improve prescription frequency parsing"
 git push origin main

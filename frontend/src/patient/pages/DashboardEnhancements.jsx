@@ -179,15 +179,30 @@ const buildMedicationSchedule = (medications = []) => {
   const pickSlots = (frequency, index) => {
     const text = String(frequency || "").toLowerCase();
     
-    // Handle numeric patterns like "1-0-1" or "1-1-1-1"
-    if (/1-1-1-1/.test(text) || text.includes("4 times")) return ["morning", "afternoon", "evening", "night"];
-    if (/1-1-1/.test(text) || text.includes("3 times")) return ["morning", "afternoon", "night"];
-    if (/1-0-1/.test(text) || text.includes("2 times")) return ["morning", "night"];
-    if (/1-1-0/.test(text)) return ["morning", "afternoon"];
-    if (/0-1-1/.test(text)) return ["afternoon", "night"];
-    if (/1-0-0/.test(text)) return ["morning"];
-    if (/0-1-0/.test(text)) return ["afternoon"];
-    if (/0-0-1/.test(text)) return ["night"];
+    // Handle binary patterns like "1-0-1" or "1-0-0-1"
+    const binaryMatch = text.match(/([01])[-/\s]?([01])[-/\s]?([01])(?:[-/\s]?([01]))?/);
+    if (binaryMatch) {
+      const slots = [];
+      if (binaryMatch[1] === "1") slots.push("morning");
+      if (binaryMatch[2] === "1") slots.push("afternoon");
+      if (binaryMatch[3] === "1") slots.push("evening");
+      if (binaryMatch[4] === "1") slots.push("night");
+      // If it was a 3-digit pattern (1-0-1), mapping the 3rd to night is common
+      if (binaryMatch[4] === undefined && binaryMatch[3] === "1") {
+          // Replace evening with night for 3-slot patterns if that's the intent
+          // But 1-1-1 usually means M-A-N. Let's be smart.
+          const currentSlots = [];
+          if (binaryMatch[1] === "1") currentSlots.push("morning");
+          if (binaryMatch[2] === "1") currentSlots.push("afternoon");
+          if (binaryMatch[3] === "1") currentSlots.push("night");
+          return currentSlots;
+      }
+      if (slots.length > 0) return slots;
+    }
+
+    if (text.includes("4 times")) return ["morning", "afternoon", "evening", "night"];
+    if (text.includes("3 times")) return ["morning", "afternoon", "night"];
+    if (text.includes("2 times")) return ["morning", "night"];
 
     if (text.includes("4")) return ["morning", "afternoon", "evening", "night"];
     if (text.includes("3")) return ["morning", "afternoon", "night"];
@@ -196,7 +211,7 @@ const buildMedicationSchedule = (medications = []) => {
     if (text.includes("evening")) return ["evening"];
     if (text.includes("afternoon")) return ["afternoon"];
     if (text.includes("morning")) return ["morning"];
-    return [MEDICATION_SLOTS[index % MEDICATION_SLOTS.length].key];
+    return [];
   };
 
   medications.filter((med) => String(med?.status || "active").toLowerCase() === "active").forEach((med, index) => {
