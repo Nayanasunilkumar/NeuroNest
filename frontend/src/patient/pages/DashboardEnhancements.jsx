@@ -178,6 +178,17 @@ const buildMedicationSchedule = (medications = []) => {
   const slots = Object.fromEntries(MEDICATION_SLOTS.map((slot) => [slot.key, []]));
   const pickSlots = (frequency, index) => {
     const text = String(frequency || "").toLowerCase();
+    
+    // Handle numeric patterns like "1-0-1" or "1-1-1-1"
+    if (/1-1-1-1/.test(text) || text.includes("4 times")) return ["morning", "afternoon", "evening", "night"];
+    if (/1-1-1/.test(text) || text.includes("3 times")) return ["morning", "afternoon", "night"];
+    if (/1-0-1/.test(text) || text.includes("2 times")) return ["morning", "night"];
+    if (/1-1-0/.test(text)) return ["morning", "afternoon"];
+    if (/0-1-1/.test(text)) return ["afternoon", "night"];
+    if (/1-0-0/.test(text)) return ["morning"];
+    if (/0-1-0/.test(text)) return ["afternoon"];
+    if (/0-0-1/.test(text)) return ["night"];
+
     if (text.includes("4")) return ["morning", "afternoon", "evening", "night"];
     if (text.includes("3")) return ["morning", "afternoon", "night"];
     if (text.includes("2")) return ["morning", "evening"];
@@ -374,6 +385,11 @@ export default function DashboardEnhancements({ consolidatedData = null }) {
         setClinicalData(data.clinical || null);
         setEmergencyContacts(data.emergency_contacts || []);
         setTrendSeries(buildTrendSeries(data.vitals?.history || [], data.vitals?.latest));
+        console.log("[DASHBOARD] Loaded data:", {
+          meds: data.clinical?.medications?.length,
+          appts: data.appointments?.length,
+          vitals: !!data.vitals
+        });
       } catch (error) {
         console.error("Dashboard enhancements failed to load", error);
         setAppointments(FALLBACK_APPOINTMENTS);
@@ -391,6 +407,10 @@ export default function DashboardEnhancements({ consolidatedData = null }) {
       setClinicalData(consolidatedData.clinical || null);
       setEmergencyContacts(consolidatedData.emergency_contacts || []);
       setTrendSeries(buildTrendSeries(consolidatedData.vitals?.history || [], consolidatedData.vitals?.latest));
+      console.log("[DASHBOARD] Sync from props:", {
+        meds: consolidatedData.clinical?.medications?.length,
+        appts: consolidatedData.appointments?.length
+      });
     }
   }, [consolidatedData]);
 
@@ -436,7 +456,8 @@ export default function DashboardEnhancements({ consolidatedData = null }) {
 
   const upcomingAppointments = useMemo(() => appointments
     .filter((appt) => ["pending", "approved", "rescheduled"].includes(String(appt.status || "").toLowerCase()))
-    .filter((appt) => parseAppointmentDateTime(appt) >= new Date(Date.now() - 60 * 60 * 1000))
+    // Relaxed filter: Show all appointments from 3 hours ago onwards to catch today's sessions reliably
+    .filter((appt) => parseAppointmentDateTime(appt) >= new Date(Date.now() - 3 * 60 * 60 * 1000))
     .sort((a, b) => parseAppointmentDateTime(a) - parseAppointmentDateTime(b))
     .slice(0, 3), [appointments]);
 
