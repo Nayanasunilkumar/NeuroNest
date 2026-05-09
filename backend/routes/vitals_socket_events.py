@@ -1,8 +1,27 @@
-from flask import session
+from flask import request, session
 from flask_socketio import emit, join_room, leave_room
 
 from database.models import Appointment, User
 from extensions.socket import socketio
+from flask_jwt_extended import decode_token
+
+
+def _get_socket_user_id():
+    user_id = session.get("user_id")
+    if user_id:
+        return user_id
+
+    token = request.args.get("token")
+    if token:
+        try:
+            decoded = decode_token(token)
+            user_id = str(decoded["sub"])
+            session["user_id"] = user_id
+            return user_id
+        except Exception:
+            return None
+
+    return None
 
 
 def _can_access_patient_vitals(user_id, role, patient_id):
@@ -24,7 +43,7 @@ def _can_access_patient_vitals(user_id, role, patient_id):
 
 @socketio.on("join_vitals_room")
 def join_vitals_room(data):
-    user_id = session.get("user_id")
+    user_id = _get_socket_user_id()
     if not user_id:
         emit("vitals_error", {"message": "Authentication required"})
         return
