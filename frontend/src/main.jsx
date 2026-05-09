@@ -8,6 +8,31 @@ import { applyTheme, getTheme } from "./shared/utils/theme";
 
 applyTheme(getTheme()); // 👈 prevents flicker
 
+const BUILD_ID = import.meta.env.VITE_APP_BUILD_ID || "dev";
+
+const checkForNewBuild = async () => {
+  if (BUILD_ID === "dev" || document.visibilityState === "hidden") return;
+
+  try {
+    const response = await fetch(`/?_build_check=${Date.now()}`, { cache: "no-store" });
+    const html = await response.text();
+    const match = html.match(/<meta\s+name="neuronest-build"\s+content="([^"]+)"/i);
+    const latestBuildId = match?.[1];
+    const reloadKey = `neuronest-reloaded-${latestBuildId}`;
+
+    if (latestBuildId && latestBuildId !== BUILD_ID && sessionStorage.getItem(reloadKey) !== "1") {
+      sessionStorage.setItem(reloadKey, "1");
+      window.location.reload();
+    }
+  } catch {
+    // Build checks should never interrupt the app.
+  }
+};
+
+window.addEventListener("focus", checkForNewBuild);
+document.addEventListener("visibilitychange", checkForNewBuild);
+setTimeout(checkForNewBuild, 5000);
+
 // 🚀 Backend warm-up: fires immediately on app start to wake Render server
 // This runs in the background and does not block rendering.
 const BACKEND_URL = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || "https://neuronest-backend-2rn0.onrender.com";
