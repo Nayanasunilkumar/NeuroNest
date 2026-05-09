@@ -7,7 +7,7 @@ import {
 import { 
     Clock, Calendar, ChevronRight, FileText,
     ChevronLeft, Check, X, Filter, Bookmark, Plus, 
-    Zap, Headphones, CloudSun, UserCheck, Timer
+    Zap, Headphones, CloudSun, UserCheck, Timer, ClipboardList
 } from "lucide-react";
 import { toAssetUrl } from "../../shared/utils/media";
 import { useTheme } from "../../shared/context/ThemeContext";
@@ -379,6 +379,36 @@ const TodaySchedule = () => {
                                                             </button>
                                                         )}
                                                     </div>
+                                                )}
+                                                {appointment.status === 'completed' && (
+                                                    <button
+                                                        className="btn btn-sm rounded-pill fw-bold d-flex align-items-center gap-2"
+                                                        style={{
+                                                            background: 'color-mix(in srgb, #10b981 12%, transparent)',
+                                                            color: '#059669',
+                                                            border: '1.5px solid color-mix(in srgb, #10b981 30%, transparent)',
+                                                            fontSize: '0.75rem',
+                                                            padding: '5px 12px',
+                                                            transition: 'all 0.2s',
+                                                            whiteSpace: 'nowrap',
+                                                        }}
+                                                        title="Write Prescription"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            navigate(`/doctor/write-prescription?patientId=${appointment.patient_id}`);
+                                                        }}
+                                                        onMouseEnter={e => {
+                                                            e.currentTarget.style.background = '#10b981';
+                                                            e.currentTarget.style.color = '#fff';
+                                                        }}
+                                                        onMouseLeave={e => {
+                                                            e.currentTarget.style.background = 'color-mix(in srgb, #10b981 12%, transparent)';
+                                                            e.currentTarget.style.color = '#059669';
+                                                        }}
+                                                    >
+                                                        <ClipboardList size={14} strokeWidth={2.5} />
+                                                        Prescribe
+                                                    </button>
                                                 )}
                                             </div>
                                         </div>
