@@ -22,6 +22,8 @@ const char* serverHost = "neuronest-backend-2rn0.onrender.com";
 const char* serverUrl = "https://neuronest-backend-2rn0.onrender.com/api/vitals/update";
 // Must match Render env VITALS_DEVICE_TOKEN when VITALS_REQUIRE_DEVICE_AUTH=true.
 const char* deviceToken = "replace-with-device-shared-secret";
+// Optional device ID for backend device matching.
+const char* deviceId = "replace-with-device-id";
 
 // ---------------- Buffers / Algo ----------------
 uint32_t irBuffer[100];
@@ -124,6 +126,11 @@ bool hasConfiguredDeviceToken() {
   return strcmp(deviceToken, "replace-with-device-shared-secret") != 0;
 }
 
+bool hasConfiguredDeviceId() {
+  if (strlen(deviceId) == 0) return false;
+  return strcmp(deviceId, "replace-with-device-id") != 0;
+}
+
 void ensureWiFi() {
   if (millis() - lastWiFiCheck < wifiCheckInterval) return;
   lastWiFiCheck = millis();
@@ -173,8 +180,14 @@ void postVitals(int hr, int s, float temp,
                 ",\"signal\":\""   + String(signalLabel) + "\"" +
                 ",\"hr_alert\":"   + String(hrAlertFlag ? 1 : 0) +
                 ",\"spo2_alert\":" + String(spo2AlertFlag ? 1 : 0) +
-                ",\"temp_alert\":" + String(tempAlertFlag ? 1 : 0) +
-                "}";
+                ",\"temp_alert\":" + String(tempAlertFlag ? 1 : 0);
+  if (hasConfiguredDeviceId()) {
+    body += ",\"device_id\":\"" + String(deviceId) + "\"";
+  }
+  if (hasConfiguredDeviceToken()) {
+    body += ",\"device_token\":\"" + String(deviceToken) + "\"";
+  }
+  body += "}";
 
   logWiFiDiagnostics("[VITALS]");
   if (!resolveServerHost()) {
@@ -223,6 +236,10 @@ void postVitals(int hr, int s, float temp,
       Serial.println(F("[VITALS] X-Device-Token header attached"));
     } else {
       Serial.println(F("[VITALS] Device token not configured; set it if Render VITALS_REQUIRE_DEVICE_AUTH=true"));
+    }
+    if (hasConfiguredDeviceId()) {
+      http.addHeader("X-Device-Id", deviceId);
+      Serial.println(F("[VITALS] X-Device-Id header attached"));
     }
 
     Serial.print(F("[VITALS] POST URL: "));
