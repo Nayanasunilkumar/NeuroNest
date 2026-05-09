@@ -116,7 +116,14 @@ export const CallProvider = ({ children }) => {
   const startVideoCall = useCallback(
     async ({ receiverId, conversationId, callType = "video" }) => {
       const user = getUser();
-      if (!user?.id || !receiverId) return null;
+      if (!user?.id || !receiverId) {
+        setStatusCard({
+          tone: "danger",
+          title: "Call unavailable",
+          message: "Select a valid chat participant before starting a call.",
+        });
+        return null;
+      }
       if (callStatus === "connected" || callStatus === "incoming") {
         setStatusCard({
           tone: "danger",
@@ -126,12 +133,23 @@ export const CallProvider = ({ children }) => {
         return null;
       }
 
-      const session = await startCall({
-        caller_id: user.id,
-        receiver_id: receiverId,
-        conversation_id: conversationId,
-        call_type: callType,
-      });
+      let session;
+      try {
+        session = await startCall({
+          caller_id: user.id,
+          receiver_id: receiverId,
+          conversation_id: conversationId,
+          call_type: callType,
+        });
+      } catch (error) {
+        console.error("Failed to start video call:", error);
+        setStatusCard({
+          tone: "danger",
+          title: "Call failed",
+          message: error?.response?.data?.message || error?.response?.data?.error || "Unable to start the call.",
+        });
+        return null;
+      }
 
       setActiveCall(session);
       setIncomingCall(null);
@@ -217,9 +235,11 @@ export const CallProvider = ({ children }) => {
     if (!isAuthenticated()) return undefined;
     const socket = initSocket();
     if (!socket) return undefined;
+    const currentUser = getUser();
 
   const onIncomingCall = async (payload) => {
       if (!payload?.call_id) return;
+      if (String(payload.caller_id) === String(currentUser?.id)) return;
       if (incomingCallRef.current?.call_id === payload.call_id) return;
       if (callStatusRef.current === "connected" || incomingCallRef.current || activeCallRef.current?.status === "connected") {
         try {

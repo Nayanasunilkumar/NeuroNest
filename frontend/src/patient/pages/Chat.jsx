@@ -337,16 +337,23 @@ const Chat = () => {
 
     const handleVideoCall = async () => {
         if (!selectedConv) return;
-        const session = await startVideoCall({
-            receiverId: selectedConv.other_user?.id,
-            conversationId: selectedConv.id,
-            callType: 'video',
-        });
-        if (session) {
-            handleSendMessage(`${currentUser?.full_name || 'Patient'} is requesting a secure video consultation.`, 'call_request')
-                .catch((err) => {
-                    console.error("Failed to send call_request message:", err);
-                });
+        try {
+            const session = await startVideoCall({
+                receiverId: selectedConv.other_user?.id,
+                conversationId: selectedConv.id,
+                callType: 'video',
+            });
+            if (session) {
+                handleSendMessage(`${currentUser?.full_name || 'Patient'} is requesting a secure video consultation.`, 'call_request')
+                    .catch((err) => {
+                        console.error("Failed to send call_request message:", err);
+                    });
+            }
+            return session;
+        } catch (error) {
+            console.error("Failed to start patient video call:", error);
+            window.alert(error?.response?.data?.message || error?.response?.data?.error || "Unable to start video call.");
+            return null;
         }
     };
 

@@ -2,7 +2,6 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Calendar, Phone, Video, Info, Clock, AlertCircle } from 'lucide-react';
 import { formatDateIST, formatClockTimeIST, parseISTDateTime } from '../../utils/time';
 import { useNavigate } from 'react-router-dom';
-import { joinAppointmentCall } from '../../services/api/appointments'; // Fallback to doctor API if role = doctor?
 import api from '../../services/api/axios'; // Generic axios for joining
 
 const ChatHeader = ({ otherUser, context, isDoctor, onToggleSidebar, showSidebar, onVideoCall }) => {
@@ -68,6 +67,16 @@ const ChatHeader = ({ otherUser, context, isDoctor, onToggleSidebar, showSidebar
         } catch (error) {
             console.error("Clinical join failed:", error);
             alert(error.response?.data?.error || "Consultation room is not yet accessible.");
+        } finally {
+            setJoining(false);
+        }
+    };
+
+    const handleDirectVideoCall = async () => {
+        if (!otherUser?.id || joining) return;
+        setJoining(true);
+        try {
+            await onVideoCall?.();
         } finally {
             setJoining(false);
         }
@@ -140,10 +149,12 @@ const ChatHeader = ({ otherUser, context, isDoctor, onToggleSidebar, showSidebar
             {/* Actions */}
             <div className="d-flex align-items-center gap-2">
                 <button 
+                    type="button"
                     className="btn rounded-circle d-flex align-items-center justify-content-center border-0 transition-all text-secondary" 
-                    title="Start Direct Call"
-                    onClick={onVideoCall}
-                    style={{ width: '38px', height: '38px', backgroundColor: '#f8fafc' }}
+                    title={otherUser?.id ? "Start video call" : "Select a conversation first"}
+                    onClick={handleDirectVideoCall}
+                    disabled={!otherUser?.id || joining}
+                    style={{ width: '38px', height: '38px', backgroundColor: '#f8fafc', opacity: (!otherUser?.id || joining) ? 0.5 : 1 }}
                 >
                     <Video size={16} />
                 </button>
