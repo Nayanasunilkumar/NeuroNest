@@ -6,8 +6,9 @@ from datetime import datetime, timedelta, timezone
 
 from flask import Blueprint, current_app, jsonify, request, send_file
 from flask_jwt_extended import get_jwt, get_jwt_identity, jwt_required
+from werkzeug.security import check_password_hash
 
-from database.models import Alert, Appointment, User, db
+from database.models import Alert, Appointment, MedicalDevice, User, db
 from extensions.socket import socketio
 from modules.doctor.services.doctor_patient_service import get_doctor_scope_ids
 from modules.shared.services.notification_service import NotificationService
@@ -21,7 +22,6 @@ _history_by_patient = defaultdict(lambda: deque(maxlen=60))
 _last_alert_time = {}
 ALERT_COOLDOWN_MINUTES = 5
 STALE_READING_SECONDS = 30
-VITALS_LOG_PREFIX = "[VITALS]"
 MONITORED_PATIENT_EMAILS = (
     "nezrin@gmail.com",
     "nezrinnoushad20@gmail.com",
@@ -75,11 +75,6 @@ def _fallback_device_patient_id():
 def _configured_device_patient_id():
     configured_patient_id = current_app.config.get("VITALS_DEVICE_PATIENT_ID")
     if configured_patient_id:
-        current_app.logger.info(
-            "%s configured VITALS_DEVICE_PATIENT_ID=%s",
-            VITALS_LOG_PREFIX,
-            configured_patient_id,
-        )
         return int(configured_patient_id)
 
     configured_email = current_app.config.get("VITALS_DEVICE_PATIENT_EMAIL")
@@ -91,47 +86,139 @@ def _configured_device_patient_id():
     return _fallback_device_patient_id()
 
 
-def _is_device_assigned_to_patient(patient_id):
-    configured_patient_id = _configured_device_patient_id()
-    assigned = bool(configured_patient_id and int(configured_patient_id) == int(patient_id))
-    current_app.logger.info(
-        "%s assignment check patient_id=%s configured_patient_id=%s assigned=%s",
-        VITALS_LOG_PREFIX,
-        patient_id,
-        configured_patient_id,
-        assigned,
+def _resolve_presented_device_id(data):
+    return (
+        request.headers.get("X-Device-ID")
+        or request.headers.get("X-Device-Id")
+        or request.args.get("device_id")
+        or (data or {}).get("device_id")
+        or current_app.config.get("VITALS_DEVICE_ID")
     )
-    return assigned
 
 
-def _require_device_auth(data):
-    if not current_app.config.get("VITALS_REQUIRE_DEVICE_AUTH", False):
-        return None
+def _resolve_presented_device_token(data):
+    auth_header = (request.headers.get("Authorization") or "").strip()
+    bearer_token = ""
+    if auth_header.lower().startswith("bearer "):
+        bearer_token = auth_header[7:].strip()
 
-    expected_token = current_app.config.get("VITALS_DEVICE_TOKEN")
-    if not expected_token:
-        current_app.logger.error("Vitals device auth is enabled but VITALS_DEVICE_TOKEN is missing")
-        return jsonify({"error": "Vitals device is not configured"}), 503
-
-    presented_token = (
+    return (
         request.headers.get("X-Device-Token")
+        or request.headers.get("X-Device-Token".lower())
+        or bearer_token
         or request.args.get("device_token")
         or (data or {}).get("device_token")
     )
-    if not presented_token or not hmac.compare_digest(str(presented_token), str(expected_token)):
-        return jsonify({"error": "Unauthorized device"}), 401
 
-    return None
+
+def _find_registered_device(device_id):
+    if not device_id:
+        return None
+    return MedicalDevice.query.filter_by(device_id=str(device_id)).first()
+
+
+def _device_token_matches(device, presented_token):
+    if not device or not presented_token or not getattr(device, "device_token_hash", None):
+        return False
+
+    token_hash = str(device.device_token_hash)
+    token = str(presented_token)
+    try:
+        if check_password_hash(token_hash, token):
+            return True
+    except Exception:
+        pass
+
+    return hmac.compare_digest(token_hash, token)
+
+
+def _log_device_auth(status, **details):
+    serialized = " ".join(f"{key}={value}" for key, value in details.items())
+    current_app.logger.warning("[DEVICE AUTH] %s %s", status, serialized)
+
+
+def _require_device_auth(data):
+    auth_enabled = bool(current_app.config.get("VITALS_REQUIRE_DEVICE_AUTH", False))
+    presented_device_id = _resolve_presented_device_id(data)
+    presented_token = _resolve_presented_device_token(data)
+    configured_device_id = current_app.config.get("VITALS_DEVICE_ID")
+    configured_token = current_app.config.get("VITALS_DEVICE_TOKEN")
+    registered_device = _find_registered_device(presented_device_id)
+
+    if not auth_enabled:
+        _log_device_auth(
+            "bypass",
+            auth_enabled=auth_enabled,
+            device_id=presented_device_id or "none",
+            configured_device_id=configured_device_id or "none",
+        )
+        return None
+
+    if registered_device and _device_token_matches(registered_device, presented_token):
+        _log_device_auth(
+            "registry_accept",
+            auth_enabled=auth_enabled,
+            device_id=presented_device_id or "none",
+            registered=True,
+            patient_id=registered_device.patient_id,
+        )
+        return None
+
+    if configured_token:
+        if presented_token and hmac.compare_digest(str(presented_token), str(configured_token)):
+            configured_id_ok = not configured_device_id or not presented_device_id or str(configured_device_id) == str(presented_device_id)
+            if configured_id_ok:
+                _log_device_auth(
+                    "env_accept",
+                    auth_enabled=auth_enabled,
+                    device_id=presented_device_id or "none",
+                    configured_device_id=configured_device_id or "none",
+                )
+                return None
+
+    header_snapshot = {
+        "x_device_id": request.headers.get("X-Device-ID") or request.headers.get("X-Device-Id"),
+        "x_device_token_present": bool(request.headers.get("X-Device-Token")),
+        "authorization_present": bool(request.headers.get("Authorization")),
+        "content_type": request.headers.get("Content-Type"),
+    }
+
+    if not configured_token and not registered_device:
+        _log_device_auth(
+            "misconfigured",
+            auth_enabled=auth_enabled,
+            device_id=presented_device_id or "none",
+            configured_device_id=configured_device_id or "none",
+            configured=False,
+            device_found=False,
+            token_present=bool(presented_token),
+            headers=header_snapshot,
+        )
+        return jsonify({"error": "Vitals device is not configured"}), 503
+
+    _log_device_auth(
+        "reject",
+        auth_enabled=auth_enabled,
+        device_id=presented_device_id or "none",
+        configured_device_id=configured_device_id or "none",
+        configured=bool(configured_token),
+        device_found=bool(registered_device),
+        token_present=bool(presented_token),
+        headers=header_snapshot,
+    )
+
+    return jsonify({"error": "Unauthorized device"}), 401
 
 
 def _resolve_ingest_patient_id(data):
     explicit_patient_id = _coerce_patient_id((data or {}).get("patient_id"))
     if explicit_patient_id:
-        current_app.logger.info("%s ingest patient resolved from payload patient_id=%s", VITALS_LOG_PREFIX, explicit_patient_id)
         return explicit_patient_id
-    configured_patient_id = _configured_device_patient_id()
-    current_app.logger.info("%s ingest patient resolved from env patient_id=%s", VITALS_LOG_PREFIX, configured_patient_id)
-    return configured_patient_id
+    presented_device_id = _resolve_presented_device_id(data)
+    registered_device = _find_registered_device(presented_device_id)
+    if registered_device and registered_device.patient_id:
+        return int(registered_device.patient_id)
+    return _configured_device_patient_id()
 
 
 def _user_can_access_patient(user: User, patient_id: int) -> bool:
@@ -185,30 +272,6 @@ def _latest_snapshot(patient_id: int):
         latest["signal"] = "disconnected"
 
     return latest
-
-
-def get_vitals_snapshot_for_patient(patient_id: int):
-    """Return assignment-aware vitals for dashboards without changing architecture."""
-    patient_id = int(patient_id)
-    latest = _latest_snapshot(patient_id)
-    history = _history_snapshot(patient_id)
-    device_assigned = _is_device_assigned_to_patient(patient_id) or patient_id in _known_device_patient_ids()
-
-    if not latest:
-        latest = {
-            "patient_id": patient_id,
-            "signal": "initialising" if device_assigned else "no_device",
-            "deviceAssigned": device_assigned,
-        }
-    else:
-        latest["deviceAssigned"] = device_assigned
-
-    return {
-        "latest": latest,
-        "history": history,
-        "deviceAssigned": device_assigned,
-        "assignedPatientId": patient_id if device_assigned else None,
-    }
 
 
 def _most_recent_accessible_patient_id(user: User):
@@ -329,35 +392,16 @@ def receive_vitals():
             current_app.logger.warning("Invalid vitals payload received")
             return jsonify({"error": "No data"}), 400
 
-    current_app.logger.info(
-        "%s /api/vitals/update received keys=%s hr=%s spo2=%s temp=%s signal=%s payload_patient_id=%s",
-        VITALS_LOG_PREFIX,
-        sorted((data or {}).keys()),
-        (data or {}).get("hr"),
-        (data or {}).get("spo2"),
-        (data or {}).get("temp"),
-        (data or {}).get("signal"),
-        (data or {}).get("patient_id"),
-    )
-
     auth_error = _require_device_auth(data)
     if auth_error:
         return auth_error
 
     patient_id = _resolve_ingest_patient_id(data)
     if not patient_id:
-        current_app.logger.error("%s ingest failed: no patient_id from payload/env", VITALS_LOG_PREFIX)
         return jsonify({"error": "patient_id is required"}), 400
 
     patient = User.query.get(patient_id)
     if not patient or patient.role != "patient":
-        current_app.logger.error(
-            "%s ingest failed: resolved patient_id=%s user_exists=%s role=%s",
-            VITALS_LOG_PREFIX,
-            patient_id,
-            bool(patient),
-            getattr(patient, "role", None),
-        )
         return jsonify({"error": "Target patient not found"}), 404
 
     now = _utc_now()
@@ -378,23 +422,12 @@ def receive_vitals():
         if payload["signal"] in ("ok", "weak"):
             _history_by_patient[patient_id].append(dict(payload))
 
-    room = f"patient_vitals_{patient_id}"
-    current_app.logger.info(
-        "%s emitting vitals_update room=%s patient_id=%s hr=%s spo2=%s temp=%s signal=%s",
-        VITALS_LOG_PREFIX,
-        room,
-        patient_id,
-        payload.get("hr"),
-        payload.get("spo2"),
-        payload.get("temp"),
-        payload.get("signal"),
-    )
-    socketio.emit("vitals_update", payload, room=room)
+    socketio.emit("vitals_update", payload, room=f"patient_vitals_{patient_id}")
 
     if patient_id > 0:
         check_and_trigger_alerts(patient_id, data)
 
-    return jsonify({"status": "ok", "patient_id": patient_id, "room": room}), 200
+    return jsonify({"status": "ok"}), 200
 
 
 @vitals_bp.route("/api/vitals/latest", methods=["GET"])
@@ -414,22 +447,13 @@ def get_latest():
 
     latest = _latest_snapshot(target_patient_id)
     
-    device_assigned = _is_device_assigned_to_patient(target_patient_id) or target_patient_id in _known_device_patient_ids()
-
     if latest:
-        latest["deviceAssigned"] = device_assigned
-        latest["assignedPatientId"] = target_patient_id if device_assigned else None
         return jsonify(latest), 200
 
-    if device_assigned:
-        return jsonify({
-            "patient_id": target_patient_id,
-            "signal": "initialising",
-            "deviceAssigned": True,
-            "assignedPatientId": target_patient_id,
-        }), 200
+    if target_patient_id in _known_device_patient_ids():
+        return jsonify({"patient_id": target_patient_id, "signal": "disconnected"}), 200
 
-    return jsonify({"patient_id": target_patient_id, "signal": "no_device", "deviceAssigned": False}), 200
+    return jsonify({"patient_id": target_patient_id, "signal": "no_device"}), 200
 
 
 @vitals_bp.route("/api/vitals/history", methods=["GET"])
