@@ -139,33 +139,6 @@ class NotificationService:
             except Exception:
                 pass
 
-    @staticmethod
-    def send_admin_notification(title, message, notif_type="system", severity="info", payload=None):
-        """Broadcasts a notification to all administrative users."""
-        from database.models import db, User, InAppNotification
-        admins = User.query.filter(User.role.in_(["admin", "super_admin"])).all()
-        
-        full_payload = payload or {}
-        full_payload["severity"] = severity
-
-        for admin in admins:
-            notif = InAppNotification(
-                user_id=admin.id,
-                title=title,
-                message=message,
-                type=notif_type,
-                payload=full_payload
-            )
-            db.session.add(notif)
-            
-            try:
-                from extensions.socket import socketio
-                socketio.emit('new_in_app_notification', notif.to_dict(), room=f"user_{admin.id}")
-            except Exception:
-                pass
-        
-        db.session.commit()
-
         # ── 3. OPTIONAL EMAIL (Respecting Preferences) ──
         if email_subject and user.email:
             should_send_email = False
@@ -195,6 +168,33 @@ class NotificationService:
                     print(f"[NOTIFICATION] Auto-email failed for user {user_id}: {e}")
             else:
                 print(f"[NOTIF] ❌ E-mail Preference: False (type: {notif_type}). Skipping.")
+
+    @staticmethod
+    def send_admin_notification(title, message, notif_type="system", severity="info", payload=None):
+        """Broadcasts a notification to all administrative users."""
+        from database.models import db, User, InAppNotification
+        admins = User.query.filter(User.role.in_(["admin", "super_admin"])).all()
+        
+        full_payload = payload or {}
+        full_payload["severity"] = severity
+
+        for admin in admins:
+            notif = InAppNotification(
+                user_id=admin.id,
+                title=title,
+                message=message,
+                type=notif_type,
+                payload=full_payload
+            )
+            db.session.add(notif)
+            
+            try:
+                from extensions.socket import socketio
+                socketio.emit('new_in_app_notification', notif.to_dict(), room=f"user_{admin.id}")
+            except Exception:
+                pass
+        
+        db.session.commit()
 
     @staticmethod
     def notify_critical_vitals(patient_id, alert):
@@ -442,32 +442,12 @@ class NotificationService:
                     print(f"[EMAIL] Brevo HTML SUCCESS → {actual_recipient}")
                     return True
             except urllib.error.HTTPError as e:
-                print(f"[EMAIL ERROR] Brevo HTTP {e.code}: {e.read().decode('utf-8')}")
-            except Exception as e:
-                print(f"[EMAIL ERROR] Brevo: {type(e).__name__}: {e}")
-
-
-                req = urllib.request.Request(
-                    "https://api.brevo.com/v3/smtp/email",
-                    data=payload,
-                    headers={
-                        "api-key": brevo_api_key,
-                        "Content-Type": "application/json",
-                        "Accept": "application/json",
-                    },
-                    method="POST"
-                )
-                with urllib.request.urlopen(req, timeout=15) as resp:
-                    result = json.loads(resp.read())
-                    print(f"[EMAIL] Brevo SUCCESS → {actual_recipient} (intended: {recipient})")
-                    return True
-            except urllib.error.HTTPError as e:
                 error_body = e.read().decode("utf-8")
                 print(f"[EMAIL ERROR] Brevo HTTP {e.code}: {error_body}")
-                # Fall through to Resend below
+                # Fall through to Resend
             except Exception as e:
                 print(f"[EMAIL ERROR] Brevo failed: {type(e).__name__}: {e}")
-                # Fall through to Resend below
+                # Fall through to Resend
 
         # ---------------------------------------------------------------
         # FALLBACK: Resend API — free plan only sends to own email unless

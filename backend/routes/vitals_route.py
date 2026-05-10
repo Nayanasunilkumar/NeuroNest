@@ -392,7 +392,10 @@ def _resolve_target_patient_id(user: User, requested_patient_id):
 
 
 def check_and_trigger_alerts(patient_id, data):
-    if str(data.get("signal") or "na") not in ("ok", "weak"):
+    # Allow alerts for temperature even if finger is not present.
+    # HR/SpO2 alerts will naturally skip if their values are None.
+    signal = str(data.get("signal") or "na")
+    if signal not in ("ok", "weak", "no_finger"):
         return
 
     thresholds = [
