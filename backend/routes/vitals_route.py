@@ -489,6 +489,8 @@ def receive_vitals():
     }
     
     signal_str = str(payload.get("signal") or "na")
+    current_app.logger.warning(f"[VITALS_INGEST] Incoming raw patient_id={patient_id} signal={signal_str} hr={data.get('hr')} spo2={data.get('spo2')} temp={data.get('temp')}")
+    
     with _vitals_lock:
         if signal_str == "ok":
             if payload.get("hr") and payload.get("spo2"):
@@ -506,6 +508,7 @@ def receive_vitals():
             else:
                 payload["signal"] = "no_finger"
 
+    # Process decoupling and cleanup
     payload = _clean_payload_for_signal(payload)
 
     with _vitals_lock:
@@ -513,6 +516,8 @@ def receive_vitals():
         if payload["signal"] in ("ok", "weak", "no_finger"):
             _history_by_patient[patient_id].append(dict(payload))
 
+    current_app.logger.warning(f"[VITALS_INGEST] Cleaned payload for patient_id={patient_id}: signal={payload['signal']} hr={payload['hr']} temp={payload['temp']}")
+    
     if presented_device_id:
         device = _find_registered_device(presented_device_id)
         if device:
@@ -522,9 +527,10 @@ def receive_vitals():
                 db.session.commit()
             except Exception:
                 db.session.rollback()
-                current_app.logger.exception("Failed to update vitals device last_seen_timestamp for %s", presented_device_id)
 
-    socketio.emit("vitals_update", payload, room=f"patient_vitals_{patient_id}")
+    room = f"patient_vitals_{patient_id}"
+    socketio.emit("vitals_update", payload, room=room)
+    current_app.logger.warning(f"[VITALS_SOCKET] Emitted to room {room}")
 
     if patient_id > 0:
         check_and_trigger_alerts(patient_id, payload)
