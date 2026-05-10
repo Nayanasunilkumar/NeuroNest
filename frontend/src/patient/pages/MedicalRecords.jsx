@@ -584,7 +584,7 @@ const MedicalRecords = ({ patientId: propPatientId = null }) => {
         <div className="medical-records-archive-section">
           <div className="archive-header-row">
             <div className="header-title-stack">
-              <h2 className="archive-main-title">Medical Records</h2>
+              <h2 className="archive-main-title">Medical Records <span style={{fontSize: '10px', opacity: 0.5}}>v1.0.1</span></h2>
               <p className="archive-main-subtitle">Secure longitudinal patient documentation and diagnostic reports</p>
             </div>
             <button className="upload-record-btn shadow-sm" onClick={() => setIsUploadOpen(true)}>
