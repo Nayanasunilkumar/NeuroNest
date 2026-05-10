@@ -22,7 +22,7 @@ _history_by_patient = defaultdict(lambda: deque(maxlen=60))
 _last_alert_time = {}
 _last_good_vitals_by_patient = {}
 ALERT_COOLDOWN_MINUTES = 5
-STALE_READING_SECONDS = 10
+STALE_READING_SECONDS = 30
 MONITORED_PATIENT_EMAILS = (
     "nezrin@gmail.com",
     "nezrinnoushad20@gmail.com",
@@ -271,15 +271,17 @@ def _latest_snapshot(patient_id: int):
     parsed_ts = _parse_timestamp(latest.get("ts"))
     latest["last_seen_at"] = latest.get("last_seen_at") or latest.get("ts")
     if not parsed_ts or (_utc_now() - parsed_ts) > timedelta(seconds=STALE_READING_SECONDS):
+        # Device was recently alive but reading is stale (Render latency / brief dropout).
+        # Preserve temp and temp_alert — DS18B20 last known value remains valid.
+        # Use "no_finger" (not "disconnected") so the frontend knows the device existed.
         latest.update({
             "connected": False,
-            "signal": "disconnected",
+            "signal": "no_finger",
             "hr": None,
             "spo2": None,
-            "temp": None,
             "hr_alert": 0,
             "spo2_alert": 0,
-            "temp_alert": 0,
+            # temp and temp_alert intentionally NOT cleared here
         })
     else:
         latest["connected"] = True

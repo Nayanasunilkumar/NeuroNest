@@ -7,7 +7,7 @@ import DashboardEnhancements from "./DashboardEnhancements";
 import "./DashboardHome.css";
 
 const BACKEND_API = API_BASE_URL;
-const VITALS_TIMEOUT_MS = 10000;
+const VITALS_TIMEOUT_MS = 30000;
 // How long (ms) to show "Weak Signal" and retain last HR/SpO2 after finger removal
 const WEAK_SIGNAL_GRACE_MS = 12000;
 // Polling interval (ms) as a fallback alongside Socket.io
@@ -180,6 +180,8 @@ function VitalsSection({ initialData = null }) {
   const lastGoodHrSpo2Ref = useRef({ hr: null, spo2: null, ts: 0 });
   // FIX 2: derived "in grace period" state — triggers re-render
   const [inGracePeriod, setInGracePeriod] = React.useState(false);
+  // reconnecting: true when data is stale (>30s) but not yet dead (>90s)
+  const [reconnecting, setReconnecting] = React.useState(false);
 
   const lastUpdateRef = useRef(initialFresh ? Date.now() : 0);
   const socketRef = useRef(null);
@@ -201,22 +203,14 @@ function VitalsSection({ initialData = null }) {
   };
 
   const markDisconnected = React.useCallback(() => {
+    // Only flip online flags — do NOT clear data state.
+    // Last known temperature (and all vitals) remain visible until a new payload
+    // explicitly replaces them or signal === "no_device" is received.
     setOnline(false);
+    setReconnecting(false);
     setLastVitalsTimestamp(0);
-    setData((prev) => ({
-      ...(prev || EMPTY_VITALS),
-      hr: null,
-      spo2: null,
-      temp: null,
-      hr_alert: 0,
-      spo2_alert: 0,
-      temp_alert: 0,
-      signal: "disconnected",
-      connected: false,
-    }));
     setHistory([]);
-    lastGoodHrSpo2Ref.current = { hr: null, spo2: null, ts: 0 };
-    setInGracePeriod(false);
+    // Intentionally NOT calling setData here — preserve last known temp.
   }, []);
 
   // ── Apply last-known-good HR/SpO2 retention logic ────────────────────────
@@ -325,6 +319,7 @@ function VitalsSection({ initialData = null }) {
         lastUpdateRef.current = Date.now();
         setLastVitalsTimestamp(Date.now());
         setOnline(true);
+        setReconnecting(false);
       } else if (latestJson.signal === "no_device") {
         setOnline(false);
       } else {
@@ -332,7 +327,9 @@ function VitalsSection({ initialData = null }) {
       }
     } catch {
       console.error("[VITALS_FRONTEND] poll failed");
-      // Don't call markDisconnected on a single poll failure — socket may still be live
+      // Single poll failure: flag reconnecting but do NOT clear data or temp.
+      // markDisconnected() and the 90s stale timer will handle true disconnection.
+      setReconnecting(true);
     }
   }, [patientId, applyVitalsUpdate]);
 
@@ -370,11 +367,19 @@ function VitalsSection({ initialData = null }) {
     // and Socket.io fallback (Render cold starts can silently drop sockets)
     pollIntervalRef.current = setInterval(fetchVitals, POLL_INTERVAL_MS);
 
-    // Stale-data watchdog
+    // Stale-data watchdog — two-tier:
+    //   > 30s (VITALS_TIMEOUT_MS): set reconnecting, do NOT clear data or temp
+    //   > 90s: truly offline — call markDisconnected (still preserves data/temp)
     const staleTimer = setInterval(() => {
-      if (lastUpdateRef.current > 0 && Date.now() - lastUpdateRef.current > VITALS_TIMEOUT_MS) {
-        lastUpdateRef.current = 0;
-        markDisconnected();
+      if (lastUpdateRef.current > 0) {
+        const diff = Date.now() - lastUpdateRef.current;
+        if (diff > 90000) {
+          lastUpdateRef.current = 0;
+          markDisconnected();
+        } else if (diff > VITALS_TIMEOUT_MS) {
+          setReconnecting(true);
+          // DO NOT call markDisconnected or clear temp — device may still be alive
+        }
       }
     }, 1000);
 
@@ -415,6 +420,7 @@ function VitalsSection({ initialData = null }) {
       lastUpdateRef.current = Date.now();
       setLastVitalsTimestamp(Date.now());
       setOnline(true);
+      setReconnecting(false);
 
       if (update.signal === "ok" || update.signal === "weak" || update.signal === "no_finger") {
         setHistory((prev) => {
@@ -459,7 +465,9 @@ function VitalsSection({ initialData = null }) {
   // FIX 1 & 2: HR/SpO2 visible when live OR weak (which includes grace period)
   const canShowHeartVitals = isConnected && (isLive || isWeak);
   // FIX 1: Temp always visible when connected, regardless of finger state
-  const canShowTempVitals = isConnected && (isLive || isWeak || isNoFinger || signal === "initialising");
+  // Temp is shown whenever we have a non-null value AND device is not "no_device".
+  // This keeps the last known temperature visible through brief dropouts and reconnects.
+  const canShowTempVitals = (isConnected || data?.temp != null) && signal !== "no_device";
 
   const anyAlert =
     (canShowHeartVitals && !!(data?.hr_alert || data?.spo2_alert)) ||
@@ -536,9 +544,13 @@ function VitalsSection({ initialData = null }) {
             </span>
           ) : (
             <>
-              {isConnected ? (
+              {isConnected && !reconnecting ? (
                 <span className="badge rounded-pill d-flex align-items-center gap-1" style={{ background: "#d1fae5", color: "#065f46", fontSize: "0.7rem" }}>
                   <Wifi size={10} /> CONNECTED
+                </span>
+              ) : reconnecting ? (
+                <span className="badge rounded-pill d-flex align-items-center gap-1" style={{ background: "#fef3c7", color: "#92400e", fontSize: "0.7rem" }}>
+                  <Wifi size={10} /> RECONNECTING
                 </span>
               ) : (
                 <span className="badge rounded-pill d-flex align-items-center gap-1" style={{ background: "#fee2e2", color: "#991b1b", fontSize: "0.7rem" }}>
