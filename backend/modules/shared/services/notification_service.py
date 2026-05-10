@@ -231,7 +231,7 @@ class NotificationService:
         appointment = (
             Appointment.query
             .filter_by(patient_id=patient_id)
-            .filter(Appointment.status.in_(["approved", "pending", "confirmed"]))
+            .filter(Appointment.status.in_(["approved", "pending"]))
             .order_by(Appointment.appointment_date.desc())
             .first()
         )
