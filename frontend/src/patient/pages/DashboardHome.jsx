@@ -29,23 +29,32 @@ const clearClinicalVitals = (payload = {}) => ({
 const sanitizeVitalsPayload = (payload, connected = true) => {
   if (!payload) return null;
   const signal = payload.signal || "na";
-  if (signal === "no_device") return clearClinicalVitals({ ...payload, signal: "no_device", connected: false });
-  if (!connected || signal === "disconnected") return clearClinicalVitals({ ...payload, signal: "disconnected", connected: false });
-  if (signal === "no_finger") return clearClinicalVitals({ ...payload, connected: true });
-  if (signal !== "ok" && signal !== "weak") return clearClinicalVitals({ ...payload, connected });
+  
+  const rawTemp = Number(payload.temp);
+  const temp = Number.isFinite(rawTemp) ? rawTemp : null;
 
-  const hr = Number(payload.hr);
-  const spo2 = Number(payload.spo2);
-  const temp = Number(payload.temp);
-  return {
+  const basePayload = {
     ...payload,
     connected,
-    hr: Number.isFinite(hr) && hr > 0 ? hr : null,
-    spo2: Number.isFinite(spo2) && spo2 > 0 ? spo2 : null,
-    temp: Number.isFinite(temp) && temp >= 32 ? temp : null,
-    hr_alert: Number.isFinite(hr) && hr > 0 ? payload.hr_alert : 0,
-    spo2_alert: Number.isFinite(spo2) && spo2 > 0 ? payload.spo2_alert : 0,
-    temp_alert: Number.isFinite(temp) && temp >= 32 ? payload.temp_alert : 0,
+    temp,
+    temp_alert: payload.temp_alert || 0,
+  };
+
+  if (signal === "no_device") return clearClinicalVitals({ ...basePayload, signal: "no_device", connected: false });
+  if (!connected || signal === "disconnected") return clearClinicalVitals({ ...basePayload, signal: "disconnected", connected: false });
+  if (signal === "no_finger" || signal === "initialising" || (signal !== "ok" && signal !== "weak")) {
+    return clearClinicalVitals({ ...basePayload, connected: true });
+  }
+
+  const hrVal = Number(payload.hr);
+  const spo2Val = Number(payload.spo2);
+  return {
+    ...basePayload,
+    connected: true,
+    hr: Number.isFinite(hrVal) && hrVal > 0 ? hrVal : null,
+    spo2: Number.isFinite(spo2Val) && spo2Val > 0 ? spo2Val : null,
+    hr_alert: Number.isFinite(hrVal) && hrVal > 0 ? payload.hr_alert : 0,
+    spo2_alert: Number.isFinite(spo2Val) && spo2Val > 0 ? payload.spo2_alert : 0,
   };
 };
 
@@ -157,6 +166,10 @@ function VitalsSection({ initialData = null }) {
   const [deviceAssigned, setDeviceAssigned] = React.useState(Boolean(initialData?.deviceAssigned || initialData?.latest?.deviceAssigned));
   const [online, setOnline] = React.useState(initialFresh);
   const [lastVitalsTimestamp, setLastVitalsTimestamp] = React.useState(() => (initialFresh ? Date.now() : 0));
+  
+  const [graceVitals, setGraceVitals] = React.useState(null);
+  const [graceVitalsTime, setGraceVitalsTime] = React.useState(0);
+
   const lastUpdateRef = useRef(initialFresh ? Date.now() : 0);
   const socketRef = useRef(null);
   const user = getUser();
@@ -193,10 +206,21 @@ function VitalsSection({ initialData = null }) {
         });
         const connected = latestJson.connected === true || isFreshVitals(latestJson);
         const nextData = sanitizeVitalsPayload(latestJson, connected);
+        
+        if (connected && (latestJson.signal === "ok" || latestJson.signal === "weak")) {
+            setGraceVitals({
+                hr: nextData.hr,
+                spo2: nextData.spo2,
+                hr_alert: nextData.hr_alert,
+                spo2_alert: nextData.spo2_alert
+            });
+            setGraceVitalsTime(Date.now());
+        }
+        
         setData(nextData);
         setHistory(connected ? (Array.isArray(historyJson) ? historyJson : []) : []);
         setDeviceAssigned(Boolean(latestJson.deviceAssigned || latestJson.signal !== "no_device"));
-        if (connected && (latestJson.signal === "ok" || latestJson.signal === "weak" || latestJson.signal === "no_finger")) {
+        if (connected && (latestJson.signal === "ok" || latestJson.signal === "weak" || latestJson.signal === "no_finger" || latestJson.signal === "initialising")) {
           lastUpdateRef.current = Date.now();
           setLastVitalsTimestamp(Date.now());
           setOnline(true);
@@ -213,6 +237,7 @@ function VitalsSection({ initialData = null }) {
       }
     };
     fetchVitals();
+    const pollInterval = setInterval(fetchVitals, 2500);
 
     const markDisconnected = () => {
       setOnline(false);
@@ -250,11 +275,22 @@ function VitalsSection({ initialData = null }) {
         signal: update?.signal,
       });
       const nextUpdate = sanitizeVitalsPayload(update, true);
+      
+      if (update.signal === "ok" || update.signal === "weak") {
+          setGraceVitals({
+              hr: nextUpdate.hr,
+              spo2: nextUpdate.spo2,
+              hr_alert: nextUpdate.hr_alert,
+              spo2_alert: nextUpdate.spo2_alert
+          });
+          setGraceVitalsTime(Date.now());
+      }
+      
       setData(nextUpdate);
       setDeviceAssigned(Boolean(update.deviceAssigned || update.patient_id));
       lastUpdateRef.current = Date.now();
       setLastVitalsTimestamp(Date.now());
-      if ((update.signal === "ok" || update.signal === "weak" || update.signal === "no_finger")) {
+      if ((update.signal === "ok" || update.signal === "weak" || update.signal === "no_finger" || update.signal === "initialising")) {
         setHistory((prev) => [...prev, nextUpdate].slice(-60));
       } else {
         setHistory([]);
@@ -266,6 +302,7 @@ function VitalsSection({ initialData = null }) {
     });
 
     return () => {
+      clearInterval(pollInterval);
       clearInterval(staleTimer);
       if (socketRef.current) socketRef.current.disconnect();
     };
@@ -273,18 +310,27 @@ function VitalsSection({ initialData = null }) {
 
   const tempHistory = useMemo(() => history.map((item) => item.temp).filter(Boolean), [history]);
   const signal = data?.signal || (deviceAssigned ? "initialising" : "no_device");
+  const isGracePeriodActive = graceVitals && (Date.now() - graceVitalsTime <= 15000) && (signal === "no_finger" || signal === "initialising");
+
+  const displayHr = isGracePeriodActive ? graceVitals.hr : data?.hr;
+  const displaySpo2 = isGracePeriodActive ? graceVitals.spo2 : data?.spo2;
+  const displayHrAlert = isGracePeriodActive ? graceVitals.hr_alert : data?.hr_alert;
+  const displaySpo2Alert = isGracePeriodActive ? graceVitals.spo2_alert : data?.spo2_alert;
+
   const isLive = signal === "ok";
   const isWeak = signal === "weak";
   const isNoFinger = signal === "no_finger";
   const isConnected = online && lastVitalsTimestamp > 0 && signal !== "disconnected" && signal !== "na";
-  const canShowHeartVitals = isConnected && (isLive || isWeak);
-  const canShowTempVitals = isConnected && (isLive || isWeak || isNoFinger);
-  const anyAlert = (canShowHeartVitals && !!(data?.hr_alert || data?.spo2_alert)) || (canShowTempVitals && !!data?.temp_alert);
+  
+  const canShowHeartVitals = isConnected && (isLive || isWeak || isGracePeriodActive);
+  const canShowTempVitals = isConnected; // ALWAYS SHOW TEMPERATURE WHEN CONNECTED
+
+  const anyAlert = (canShowHeartVitals && !!(displayHrAlert || displaySpo2Alert)) || (canShowTempVitals && !!data?.temp_alert);
   const vitals = useMemo(() => [
-    { label: "Heart Rate", sub: "ELECTROCARDIOGRAM", value: canShowHeartVitals ? data?.hr ?? null : null, unit: "BPM", normal: "60-100 BPM", alert: canShowHeartVitals && !!data?.hr_alert, color: "#dc3545", bsColor: "danger", icon: <Heart size={18} />, wave: "ecg", decimals: 0 },
-    { label: "Oxygen Saturation", sub: "PHOTOPLETHYSMOGRAPHY", value: canShowHeartVitals ? data?.spo2 ?? null : null, unit: "%", normal: "95-100%", alert: canShowHeartVitals && !!data?.spo2_alert, color: "#0d6efd", bsColor: "primary", icon: <Droplets size={18} />, wave: "pleth", decimals: 0 },
+    { label: "Heart Rate", sub: "ELECTROCARDIOGRAM", value: canShowHeartVitals ? displayHr ?? null : null, unit: "BPM", normal: "60-100 BPM", alert: canShowHeartVitals && !!displayHrAlert, color: "#dc3545", bsColor: "danger", icon: <Heart size={18} />, wave: "ecg", decimals: 0 },
+    { label: "Oxygen Saturation", sub: "PHOTOPLETHYSMOGRAPHY", value: canShowHeartVitals ? displaySpo2 ?? null : null, unit: "%", normal: "95-100%", alert: canShowHeartVitals && !!displaySpo2Alert, color: "#0d6efd", bsColor: "primary", icon: <Droplets size={18} />, wave: "pleth", decimals: 0 },
     { label: "Body Temperature", sub: "DS18B20 PROBE", value: canShowTempVitals ? data?.temp ?? null : null, unit: "C", normal: "36.1-37.2 C", alert: canShowTempVitals && !!data?.temp_alert, color: "#198754", bsColor: "success", icon: <Thermometer size={18} />, wave: "temp", decimals: 2 },
-  ], [canShowHeartVitals, canShowTempVitals, data]);
+  ], [canShowHeartVitals, canShowTempVitals, data?.temp, data?.temp_alert, displayHr, displaySpo2, displayHrAlert, displaySpo2Alert]);
 
   return (
     <div className="mb-5">
@@ -297,9 +343,9 @@ function VitalsSection({ initialData = null }) {
             <>
               {isConnected ? <span className="badge rounded-pill d-flex align-items-center gap-1" style={{ background: "#d1fae5", color: "#065f46", fontSize: "0.7rem" }}><Wifi size={10} /> CONNECTED</span> : <span className="badge rounded-pill d-flex align-items-center gap-1" style={{ background: "#fee2e2", color: "#991b1b", fontSize: "0.7rem" }}><WifiOff size={10} /> DISCONNECTED</span>}
               {isConnected && isLive && <span className="badge rounded-pill bg-success" style={{ fontSize: "0.7rem" }}>LIVE</span>}
-              {isConnected && isWeak && <span className="badge rounded-pill bg-warning text-dark" style={{ fontSize: "0.7rem" }}>WEAK SIGNAL</span>}
-              {isConnected && isNoFinger && <span className="badge rounded-pill bg-secondary" style={{ fontSize: "0.58rem" }}>NO FINGER</span>}
-              {signal === "initialising" && <span className="badge rounded-pill bg-info" style={{ fontSize: "0.7rem" }}>INITIALISING</span>}
+              {isConnected && (isWeak || isGracePeriodActive) && <span className="badge rounded-pill bg-warning text-dark" style={{ fontSize: "0.7rem" }}>WEAK SIGNAL</span>}
+              {isConnected && isNoFinger && !isGracePeriodActive && <span className="badge rounded-pill bg-secondary" style={{ fontSize: "0.58rem" }}>NO FINGER</span>}
+              {signal === "initialising" && !isGracePeriodActive && <span className="badge rounded-pill bg-info" style={{ fontSize: "0.7rem" }}>INITIALISING</span>}
             </>
           )}
         </div>
@@ -344,7 +390,7 @@ function VitalsSection({ initialData = null }) {
         </div>
       )}
 
-      {deviceAssigned && isConnected && isNoFinger && (
+      {deviceAssigned && isConnected && isNoFinger && !isGracePeriodActive && (
         <div className="alert d-flex align-items-center gap-2 rounded-4 mb-3 py-2 px-3 border-0" style={{ background: "#f8fafc", color: "#475569" }}>
           <Info size={16} />
           <span className="fw-bold small">No finger detected. Place your finger on the sensor to resume live readings.</span>
@@ -388,7 +434,7 @@ function VitalsSection({ initialData = null }) {
                     <div className="d-flex justify-content-between align-items-center">
                       <span className="text-secondary" style={{ fontSize: "0.62rem", letterSpacing: "0.5px" }}>NORMAL: {vital.normal}</span>
                       <span className={`badge rounded-pill bg-${vital.bsColor} bg-opacity-10 text-${vital.bsColor}`} style={{ fontSize: "0.6rem" }}>
-                        {vital.wave === "temp" ? (canShowTempVitals ? "LIVE" : "-") : (canShowHeartVitals ? (isLive ? "LIVE" : "WEAK") : "-")}
+                        {vital.wave === "temp" ? (canShowTempVitals ? "LIVE" : "-") : (canShowHeartVitals ? (isGracePeriodActive || isWeak ? "WEAK" : "LIVE") : "-")}
                       </span>
                     </div>
                   </div>
