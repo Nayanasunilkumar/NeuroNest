@@ -21,7 +21,7 @@ _latest_by_patient = {}
 _history_by_patient = defaultdict(lambda: deque(maxlen=60))
 _last_alert_time = {}
 ALERT_COOLDOWN_MINUTES = 5
-STALE_READING_SECONDS = 30
+STALE_READING_SECONDS = 10
 MONITORED_PATIENT_EMAILS = (
     "nezrin@gmail.com",
     "nezrinnoushad20@gmail.com",
@@ -268,10 +268,66 @@ def _latest_snapshot(patient_id: int):
         return None
 
     parsed_ts = _parse_timestamp(latest.get("ts"))
+    latest["last_seen_at"] = latest.get("last_seen_at") or latest.get("ts")
     if not parsed_ts or (_utc_now() - parsed_ts) > timedelta(seconds=STALE_READING_SECONDS):
-        latest["signal"] = "disconnected"
+        latest.update({
+            "connected": False,
+            "signal": "disconnected",
+            "hr": None,
+            "spo2": None,
+            "temp": None,
+            "hr_alert": 0,
+            "spo2_alert": 0,
+            "temp_alert": 0,
+        })
+    else:
+        latest["connected"] = True
 
     return latest
+
+
+def _device_assigned_for_patient(patient_id: int) -> bool:
+    if not patient_id:
+        return False
+    if int(patient_id) in _known_device_patient_ids():
+        return True
+    return MedicalDevice.query.filter_by(patient_id=int(patient_id)).first() is not None
+
+
+def _clean_payload_for_signal(payload):
+    signal = str(payload.get("signal") or "na")
+    if signal == "no_finger" or signal not in ("ok", "weak"):
+        payload.update({
+            "hr": None,
+            "spo2": None,
+            "temp": None,
+            "hr_alert": 0,
+            "spo2_alert": 0,
+            "temp_alert": 0,
+        })
+        return payload
+
+    validators = {
+        "hr": lambda value: value > 0,
+        "spo2": lambda value: value > 0,
+        "temp": lambda value: value >= 32,
+    }
+    alert_keys = {"hr": "hr_alert", "spo2": "spo2_alert", "temp": "temp_alert"}
+
+    for key, is_valid in validators.items():
+        try:
+            value = float(payload[key])
+        except (TypeError, ValueError):
+            payload[key] = None
+            payload[alert_keys[key]] = 0
+            continue
+        if not is_valid(value):
+            payload[key] = None
+            payload[alert_keys[key]] = 0
+        else:
+            payload[key] = value
+
+    return payload
 
 
 def _most_recent_accessible_patient_id(user: User):
@@ -330,6 +386,9 @@ def _resolve_target_patient_id(user: User, requested_patient_id):
 
 
 def check_and_trigger_alerts(patient_id, data):
+    if str(data.get("signal") or "na") not in ("ok", "weak"):
+        return
+
     thresholds = [
         {"type": "SPO2", "val": data.get("spo2"), "is_crit": lambda v: v < 90, "msg": "Oxygen level below safe threshold ({}%)"},
         {"type": "Heart Rate", "val": data.get("hr"), "is_crit": lambda v: v > 120 or v < 40, "msg": "Heart rate critical ({} BPM)"},
@@ -405,6 +464,7 @@ def receive_vitals():
         return jsonify({"error": "Target patient not found"}), 404
 
     now = _utc_now()
+    presented_device_id = _resolve_presented_device_id(data)
     payload = {
         "patient_id": patient_id,
         "hr": data.get("hr", data.get("heart_rate")),
@@ -415,17 +475,31 @@ def receive_vitals():
         "spo2_alert": int(data.get("spo2_alert", 0)),
         "temp_alert": int(data.get("temp_alert", 0)),
         "ts": _serialize_timestamp(now),
+        "last_seen_at": _serialize_timestamp(now),
+        "connected": True,
     }
+    payload = _clean_payload_for_signal(payload)
 
     with _vitals_lock:
         _latest_by_patient[patient_id] = payload
         if payload["signal"] in ("ok", "weak"):
             _history_by_patient[patient_id].append(dict(payload))
 
+    if presented_device_id:
+        device = _find_registered_device(presented_device_id)
+        if device:
+            try:
+                device.last_seen_timestamp = now
+                device.device_status = "online"
+                db.session.commit()
+            except Exception:
+                db.session.rollback()
+                current_app.logger.exception("Failed to update vitals device last_seen_timestamp for %s", presented_device_id)
+
     socketio.emit("vitals_update", payload, room=f"patient_vitals_{patient_id}")
 
     if patient_id > 0:
-        check_and_trigger_alerts(patient_id, data)
+        check_and_trigger_alerts(patient_id, payload)
 
     return jsonify({"status": "ok"}), 200
 
@@ -443,17 +517,29 @@ def get_latest():
         return error_response
 
     if target_patient_id is None:
-        return jsonify({"signal": "no_device"}), 200
+        return jsonify({"connected": False, "signal": "no_device", "deviceAssigned": False}), 200
 
     latest = _latest_snapshot(target_patient_id)
     
     if latest:
+        latest["deviceAssigned"] = True
         return jsonify(latest), 200
 
-    if target_patient_id in _known_device_patient_ids():
-        return jsonify({"patient_id": target_patient_id, "signal": "disconnected"}), 200
+    if _device_assigned_for_patient(target_patient_id):
+        return jsonify({
+            "patient_id": target_patient_id,
+            "connected": False,
+            "deviceAssigned": True,
+            "signal": "disconnected",
+            "hr": None,
+            "spo2": None,
+            "temp": None,
+            "hr_alert": 0,
+            "spo2_alert": 0,
+            "temp_alert": 0,
+        }), 200
 
-    return jsonify({"patient_id": target_patient_id, "signal": "no_device"}), 200
+    return jsonify({"patient_id": target_patient_id, "connected": False, "deviceAssigned": False, "signal": "no_device"}), 200
 
 
 @vitals_bp.route("/api/vitals/history", methods=["GET"])
@@ -469,6 +555,10 @@ def get_history():
         return error_response
 
     if target_patient_id is None:
+        return jsonify([]), 200
+
+    latest = _latest_snapshot(target_patient_id)
+    if _device_assigned_for_patient(target_patient_id) and not (latest and latest.get("connected")):
         return jsonify([]), 200
 
     history = _history_snapshot(target_patient_id)
@@ -602,3 +692,25 @@ def get_vitals_for_report(patient_id):
             "is_active": bool(latest),
         }
     return {"is_active": False}
+
+
+def get_vitals_snapshot_for_patient(patient_id):
+    latest = _latest_snapshot(patient_id)
+    device_assigned = _device_assigned_for_patient(patient_id)
+    connected = bool(latest and latest.get("connected"))
+    return {
+        "latest": latest or ({
+            "patient_id": patient_id,
+            "connected": False,
+            "signal": "disconnected",
+            "hr": None,
+            "spo2": None,
+            "temp": None,
+            "hr_alert": 0,
+            "spo2_alert": 0,
+            "temp_alert": 0,
+        } if device_assigned else None),
+        "history": _history_snapshot(patient_id) if connected else [],
+        "deviceAssigned": device_assigned,
+        "connected": connected,
+    }

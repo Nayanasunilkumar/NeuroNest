@@ -73,26 +73,28 @@ const LiveVitalsPanel = ({ title, subtitle, latest, history, loading, error, isO
   const isOnline = !isOffline;
   const isLive = signal === "ok";
   const isWeak = signal === "weak";
-  const tempHistory = (history || []).map(h => h.temp).filter(Boolean);
-  const anyAlert = latest && !!(latest.hr_alert || latest.spo2_alert || latest.temp_alert);
+  const isNoFinger = signal === "no_finger";
+  const canShowClinicalVitals = isOnline && (isLive || isWeak);
+  const tempHistory = canShowClinicalVitals ? (history || []).map(h => h.temp).filter(Boolean) : [];
+  const anyAlert = canShowClinicalVitals && latest && !!(latest.hr_alert || latest.spo2_alert || latest.temp_alert);
 
   const vitals = [
     {
       label: "Heart Rate", sub: "ELECTROCARDIOGRAM",
-      value: latest?.hr ?? null, unit: "BPM", normal: "60–100 BPM",
-      alert: !!latest?.hr_alert, color: "#dc3545", bsColor: "danger",
+      value: canShowClinicalVitals ? latest?.hr ?? null : null, unit: "BPM", normal: "60–100 BPM",
+      alert: canShowClinicalVitals && !!latest?.hr_alert, color: "#dc3545", bsColor: "danger",
       icon: <Heart size={16}/>, wave: "ecg", decimals: 0,
     },
     {
       label: "SpO2", sub: "PHOTOPLETHYSMOGRAPHY",
-      value: latest?.spo2 ?? null, unit: "%", normal: "95–100%",
-      alert: !!latest?.spo2_alert, color: "#0d6efd", bsColor: "primary",
+      value: canShowClinicalVitals ? latest?.spo2 ?? null : null, unit: "%", normal: "95–100%",
+      alert: canShowClinicalVitals && !!latest?.spo2_alert, color: "#0d6efd", bsColor: "primary",
       icon: <Droplets size={16}/>, wave: "pleth", decimals: 0,
     },
     {
       label: "Temperature", sub: "DS18B20 PROBE",
-      value: latest?.temp ?? null, unit: "°C", normal: "36.1–37.2°C",
-      alert: !!latest?.temp_alert, color: "#198754", bsColor: "success",
+      value: canShowClinicalVitals ? latest?.temp ?? null : null, unit: "°C", normal: "36.1–37.2°C",
+      alert: canShowClinicalVitals && !!latest?.temp_alert, color: "#198754", bsColor: "success",
       icon: <Thermometer size={16}/>, wave: "temp", decimals: 2,
     },
   ];
@@ -124,9 +126,9 @@ const LiveVitalsPanel = ({ title, subtitle, latest, history, loading, error, isO
                   <WifiOff size={10}/> DISCONNECTED
                 </span>
               )}
-              {isLive && <span className="badge rounded-pill bg-success" style={{fontSize:"0.7rem"}}>● LIVE</span>}
-              {isWeak && <span className="badge rounded-pill bg-warning text-dark" style={{fontSize:"0.7rem"}}>◐ WEAK</span>}
-              {signal === "no_finger" && <span className="badge rounded-pill bg-danger" style={{fontSize:"0.7rem"}}>○ NO FINGER</span>}
+              {isOnline && isLive && <span className="badge rounded-pill bg-success" style={{fontSize:"0.7rem"}}>● LIVE</span>}
+              {isOnline && isWeak && <span className="badge rounded-pill bg-warning text-dark" style={{fontSize:"0.7rem"}}>◐ WEAK</span>}
+              {isOnline && isNoFinger && <span className="badge rounded-pill bg-secondary" style={{fontSize:"0.7rem"}}>○ NO FINGER</span>}
               {signal === "initialising" && <span className="badge rounded-pill bg-info" style={{fontSize:"0.7rem"}}>◌ INITIALISING</span>}
             </>
           )}
@@ -155,6 +157,13 @@ const LiveVitalsPanel = ({ title, subtitle, latest, history, loading, error, isO
           style={{ background:"#fff1f2", color:"#be123c" }}>
           <span>🚨</span>
           <span className="fw-bold small">Abnormal vitals detected — patient requires immediate attention.</span>
+        </div>
+      )}
+
+      {isOnline && isNoFinger && (
+        <div className="alert d-flex align-items-center gap-2 rounded-4 mb-3 py-2 px-3 border-0"
+          style={{ background:"#f8fafc", color:"#475569" }}>
+          <span className="fw-bold small">No finger detected. Place your finger on the sensor to resume live readings.</span>
         </div>
       )}
 
@@ -188,15 +197,18 @@ const LiveVitalsPanel = ({ title, subtitle, latest, history, loading, error, isO
                   </div>
                   <div style={{ borderRadius:8, overflow:"hidden", padding:"2px", marginBottom:6,
                     background:`rgba(${v.bsColor==="danger"?"220,53,69":v.bsColor==="primary"?"13,110,253":"25,135,84"},0.04)` }}>
-                    {v.wave === "ecg" && <ECGWave bpm={latest?.hr||72} color={v.alert?"#dc3545":v.color}/>}
-                    {v.wave === "pleth" && <PlethWave color={v.alert?"#dc3545":v.color}/>}
-                    {v.wave === "temp" && <TempSparkline history={tempHistory} color={v.alert?"#dc3545":v.color}/>}
+                    {canShowClinicalVitals && v.wave === "ecg" && <ECGWave bpm={latest?.hr||72} color={v.alert?"#dc3545":v.color}/>}
+                    {canShowClinicalVitals && v.wave === "pleth" && <PlethWave color={v.alert?"#dc3545":v.color}/>}
+                    {canShowClinicalVitals && v.wave === "temp" && <TempSparkline history={tempHistory} color={v.alert?"#dc3545":v.color}/>}
+                    {!canShowClinicalVitals && (
+                      <div style={{ height: 56, display: "flex", alignItems: "center", justifyContent: "center", color: "#94a3b8", fontSize: "0.75rem", fontWeight: 700 }}>No Data</div>
+                    )}
                   </div>
                   <div className="d-flex justify-content-between align-items-center">
                     <span className="text-secondary" style={{fontSize:"0.6rem"}}>NORMAL: {v.normal}</span>
                     <span className={`badge rounded-pill bg-${v.bsColor} bg-opacity-10 text-${v.bsColor}`}
                       style={{fontSize:"0.6rem"}}>
-                      {isLive ? "● LIVE" : isWeak ? "◐ LKG" : "—"}
+                      {canShowClinicalVitals ? (isLive ? "● LIVE" : "◐ WEAK") : "—"}
                     </span>
                   </div>
                 </div>
