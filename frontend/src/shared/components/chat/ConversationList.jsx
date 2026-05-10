@@ -6,9 +6,10 @@ import { formatTimeIST, parseServerDate } from '../../utils/time';
 const ConversationList = ({ conversations, selectedId, onSelect, currentUserId }) => {
     const [searchTerm, setSearchTerm] = useState('');
 
-    const filtered = conversations.filter(c => 
-        c.other_user?.name?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const filtered = conversations.filter(c => {
+        const name = c.other_user?.full_name || c.other_user?.name || '';
+        return name.toLowerCase().includes(searchTerm.toLowerCase());
+    });
 
     // Grouping Logic
     const recentConvs = [];
@@ -29,6 +30,7 @@ const ConversationList = ({ conversations, selectedId, onSelect, currentUserId }
     const renderConversation = (conv) => {
         const isActive = selectedId === conv.id;
         const otherUser = conv.other_user;
+        const displayName = otherUser?.full_name || otherUser?.name || 'Care contact';
         const lastMessage = conv.last_message;
         const isUnread = conv.unread_count > 0;
         
@@ -45,7 +47,7 @@ const ConversationList = ({ conversations, selectedId, onSelect, currentUserId }
                 <div className="position-relative flex-shrink-0">
                     <Avatar 
                         src={otherUser?.profile_image} 
-                        alt={otherUser?.name} 
+                        alt={displayName} 
                         style={{ width: '48px', height: '48px', borderRadius: '50%' }}
                     />
                     {otherUser?.is_online && (
@@ -56,7 +58,7 @@ const ConversationList = ({ conversations, selectedId, onSelect, currentUserId }
                 <div className="flex-grow-1 min-w-0">
                     <div className="d-flex justify-content-between align-items-center mb-1">
                         <h3 className="mb-0 text-truncate" style={{ fontSize: '0.95rem', fontWeight: 700, color: '#1e293b', maxWidth: '140px' }}>
-                            {otherUser?.name}
+                            {displayName}
                         </h3>
                         <span className="text-nowrap" style={{ fontSize: '0.7rem', fontWeight: 600, color: isActive ? '#3b82f6' : '#94a3b8' }}>
                             {lastMessage ? formatTimeIST(lastMessage.created_at) : ''}

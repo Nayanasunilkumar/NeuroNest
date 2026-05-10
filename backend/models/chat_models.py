@@ -9,6 +9,18 @@ def to_utc_iso(value):
         return value.replace(tzinfo=timezone.utc).isoformat().replace("+00:00", "Z")
     return value.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
 
+
+def user_profile_image(user):
+    if not user:
+        return None
+    if getattr(user, "role", None) == "doctor" and getattr(user, "doctor_profile", None):
+        return user.doctor_profile.profile_image
+    if getattr(user, "patient_profile", None):
+        return user.patient_profile.profile_image
+    if getattr(user, "doctor_profile", None):
+        return user.doctor_profile.profile_image
+    return None
+
 # =========================================
 # CONVERSATION MODEL
 # =========================================
@@ -66,6 +78,8 @@ class Participant(db.Model):
             "conversation_id": self.conversation_id,
             "user_id": self.user_id,
             "user_name": self.user.full_name if self.user else "Unknown",
+            "user_role": self.user.role if self.user else None,
+            "profile_image": user_profile_image(self.user),
             "joined_at": to_utc_iso(self.joined_at)
         }
 
@@ -98,6 +112,8 @@ class Message(db.Model):
             "conversation_id": self.conversation_id,
             "sender_id": self.sender_id,
             "sender_name": self.sender.full_name if self.sender else "Unknown",
+            "sender_role": self.sender.role if self.sender else None,
+            "sender_profile_image": user_profile_image(self.sender),
             "content": self.content if not self.is_deleted else "This message was deleted",
             "type": self.type,
             "is_read": self.is_read,

@@ -141,44 +141,75 @@ const filenameFromDisposition = (disposition) => {
   return match ? decodeURIComponent(match[1].replace(/"/g, "").trim()) : "";
 };
 
+const safeFilename = (title, fileType, contentType = "") => {
+  const ext = extensionFromType(fileType) || extensionFromType(contentType) || "pdf";
+  const safeTitle = (title || "Medical_Record").replace(/\s+/g, "_").replace(/[^a-z0-9_.-]/gi, "");
+  return safeTitle.toLowerCase().endsWith(`.${ext}`) ? safeTitle : `${safeTitle}.${ext}`;
+};
+
+const triggerAnchorDownload = (href, filename, { newTab = false } = {}) => {
+  const link = document.createElement("a");
+  link.href = href;
+  if (filename) link.setAttribute("download", filename);
+  if (newTab) {
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+  }
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+};
+
+const toCloudinaryAttachmentUrl = (url) => {
+  if (!url || !url.includes("cloudinary.com") || !url.includes("/upload/")) return url;
+  if (url.includes("/upload/fl_attachment/")) return url;
+  if (url.includes("/upload/fl_inline/")) return url.replace("/upload/fl_inline/", "/upload/fl_attachment/");
+  return url.replace("/upload/", "/upload/fl_attachment/", 1);
+};
+
+const isJsonBlob = (response) => String(response.headers?.["content-type"] || "").includes("application/json");
+
 
 // Download Record
-const downloadRecord = async (recordId, title, fileType, patientId = null) => {
+const downloadRecord = async (recordOrId, titleOrPatientId = null, fileType = null, patientId = null) => {
+  const record = typeof recordOrId === "object" && recordOrId !== null ? recordOrId : null;
+  const recordId = record?.id ?? recordOrId;
+  const title = record ? record.title : titleOrPatientId;
+  const resolvedFileType = record ? record.file_type : fileType;
+  const resolvedPatientId = record ? titleOrPatientId : patientId;
+  const endpoint = resolvedPatientId
+    ? `/api/patient/doctor/patients/${resolvedPatientId}/medical-records/${recordId}/download`
+    : `/api/patient/medical-records/${recordId}/download`;
+
   try {
-    const url = patientId ? `/api/patient/doctor/patients/${patientId}/medical-records/${recordId}/download` : `/api/patient/medical-records/${recordId}/download`;
-    
-    // Check if we already have a record with an external file_path in our cache or passed in
-    // But since we only have recordId, we might need to fetch metadata first or just try the API.
-    // For now, let's make the API call more resilient.
-    
-    const response = await api.get(url, {
+    const response = await api.get(endpoint, {
       responseType: 'blob',
     });
+
+    if (isJsonBlob(response)) {
+      const message = await response.data.text();
+      throw new Error(message || "Download returned an error response.");
+    }
     
     const file = new Blob([response.data], { type: response.headers['content-type'] });
     const fileURL = URL.createObjectURL(file);
-    const link = document.createElement('a');
-    link.href = fileURL;
-    
     const headerFilename = filenameFromDisposition(response.headers["content-disposition"]);
-    const ext = extensionFromType(fileType) || extensionFromType(response.headers["content-type"]) || "pdf";
-    const safeTitle = (title || "Medical_Record").replace(/\s+/g, "_").replace(/[^a-z0-9_.-]/gi, "");
-    const fallbackFilename = safeTitle.toLowerCase().endsWith(`.${ext}`) ? safeTitle : `${safeTitle}.${ext}`;
-    
-    link.setAttribute('download', headerFilename || fallbackFilename);
-    document.body.appendChild(link);
-    link.click();
-    link.parentNode.removeChild(link);
-    URL.revokeObjectURL(fileURL);
+    triggerAnchorDownload(fileURL, headerFilename || safeFilename(title, resolvedFileType, response.headers["content-type"]));
+    window.setTimeout(() => URL.revokeObjectURL(fileURL), 1000);
     return true;
   } catch (error) {
     console.error("Download failed", error);
-    // FALLBACK: If axios fails (likely CORS), try opening the download URL in a new tab
-    // The browser will handle the redirect and download directly without Authorization header issues
-    const baseURL = api.defaults.baseURL || "";
-    const endpoint = patientId ? `/api/patient/doctor/patients/${patientId}/medical-records/${recordId}/download` : `/api/patient/medical-records/${recordId}/download`;
-    window.open(`${baseURL}${endpoint}`, '_blank');
-    return true;
+
+    try {
+      const viewData = await getRecordViewUrl(recordId, resolvedPatientId);
+      const fileUrl = toCloudinaryAttachmentUrl(viewData.file_url || record?.file_path);
+      if (!fileUrl) throw new Error("No downloadable file URL found.");
+      triggerAnchorDownload(fileUrl, safeFilename(viewData.title || title, viewData.file_type || resolvedFileType), { newTab: true });
+      return true;
+    } catch (fallbackError) {
+      console.error("Direct file download fallback failed", fallbackError);
+      throw fallbackError;
+    }
   }
 };
 

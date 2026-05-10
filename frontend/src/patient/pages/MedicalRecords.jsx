@@ -240,13 +240,9 @@ const MedicalRecords = ({ patientId: propPatientId = null }) => {
 
   const downloadRecord = async (record) => {
     try {
-      await medicalRecordService.downloadRecord(
-        record.id,
-        record.title,
-        record.file_type,
-        patientId
-      );
-    } catch {
+      await medicalRecordService.downloadRecord(record, patientId);
+    } catch (err) {
+      console.error("Download failed:", err);
       alert("Download failed.");
     }
   };

@@ -4,7 +4,7 @@ import MessageBubble from './MessageBubble';
 import chatAPI from '../../services/chatAPI';
 import { getISTDayKey, getRelativeDayLabelIST } from '../../utils/time';
 
-const ChatWindow = ({ messages, currentUserId, onSendMessage, onDeleteMessage, loadingMessages, messagesLoadError, isDoctor, templates = [], otherUser }) => {
+const ChatWindow = ({ messages, currentUserId, currentUser, onSendMessage, onDeleteMessage, loadingMessages, messagesLoadError, isDoctor, templates = [], otherUser }) => {
     const [newMessage, setNewMessage] = useState('');
     const [showTemplates, setShowTemplates] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
@@ -147,6 +147,8 @@ const ChatWindow = ({ messages, currentUserId, onSendMessage, onDeleteMessage, l
             const dayKey = getISTDayKey(msg.created_at);
             const key = msg.id != null ? String(msg.id) : `idx-${index}`;
             const isOwn = String(msg.sender_id) === String(currentUserId);
+            const senderAvatar = msg.sender_profile_image || (isOwn ? currentUser?.profile_image : otherUser?.profile_image);
+            const senderName = msg.sender_name || (isOwn ? (currentUser?.full_name || currentUser?.name || 'You') : (otherUser?.full_name || otherUser?.name || 'Care contact'));
             if (dayKey && dayKey !== lastDayKey) {
                 blocks.push(
                     <div className="d-flex justify-content-center my-4" key={`day-${dayKey}-${index}`}>
@@ -163,7 +165,8 @@ const ChatWindow = ({ messages, currentUserId, onSendMessage, onDeleteMessage, l
                     key={key} 
                     message={msg} 
                     isMe={isOwn}
-                    otherUserAvatar={otherUser?.profile_image}
+                    avatarSrc={senderAvatar}
+                    avatarAlt={senderName}
                     onDeleteMessage={onDeleteMessage}
                     isActiveCallRequest={
                         (msg?.type === 'call_request' || msg?.type === 'consultation_started') &&

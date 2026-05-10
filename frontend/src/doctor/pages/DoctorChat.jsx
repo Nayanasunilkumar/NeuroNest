@@ -453,6 +453,7 @@ const DoctorChat = ({ isEmbedded = false }) => {
                         <ChatWindow 
                             messages={messages}
                             currentUserId={currentUser?.id}
+                            currentUser={currentUser}
                             onSendMessage={handleSendMessage}
                             onDeleteMessage={handleDeleteMessage}
                             loadingMessages={loadingMessages}

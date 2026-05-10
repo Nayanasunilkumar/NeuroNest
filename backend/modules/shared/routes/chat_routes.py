@@ -3,7 +3,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from werkzeug.utils import secure_filename
 import os
 from database.models import db, User, Appointment, PatientProfile
-from models.chat_models import Conversation, Participant, Message, to_utc_iso
+from models.chat_models import Conversation, Participant, Message, user_profile_image
 from sqlalchemy import and_, or_, desc
 from flask_jwt_extended import get_jwt
 from modules.shared.services.notification_service import NotificationService
@@ -17,6 +17,26 @@ from modules.doctor.services.doctor_patient_service import (
 # ... (rest of imports)
 
 chat_bp = Blueprint("chat", __name__)
+
+
+def serialize_chat_user(user):
+    if not user:
+        return {
+            "id": None,
+            "name": "Unknown",
+            "full_name": "Unknown",
+            "email": "",
+            "role": "patient",
+            "profile_image": None,
+        }
+    return {
+        "id": user.id,
+        "name": user.full_name,
+        "full_name": user.full_name,
+        "email": user.email or "",
+        "role": user.role,
+        "profile_image": user_profile_image(user),
+    }
 
 # =======================================================
 # 0. UPLOAD FILE
@@ -113,18 +133,14 @@ def get_conversations():
 
         results.append({
             "id": conv.id,
-            "other_user": {
-                "id": other_participant.user.id if other_participant else None,
-                "name": other_participant.user.full_name if other_participant and other_participant.user else "Unknown",
-                "email": other_participant.user.email if other_participant and other_participant.user else "",
-                "role": other_participant.user.role if other_participant and other_participant.user else "patient",
-                "profile_image": other_participant.user.patient_profile.profile_image if other_participant and other_participant.user and other_participant.user.patient_profile else None
-            },
+            "other_user": serialize_chat_user(other_participant.user if other_participant else None),
             "last_message": {
                 "content": last_payload["content"],
                 "created_at": last_payload["created_at"],
                 "is_read": last_payload["is_read"],
                 "sender_id": last_payload["sender_id"],
+                "sender_name": last_payload["sender_name"],
+                "sender_profile_image": last_payload["sender_profile_image"],
                 "type": last_payload["type"],
                 "is_deleted": last_payload["is_deleted"],
             } if last_payload else None,

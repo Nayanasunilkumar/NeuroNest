@@ -142,6 +142,7 @@ const MedicalRecordTable = ({ records, onDelete, onDownload, loading, isDoctorVi
                             <td>
                                 <div className="action-buttons">
                                     <button 
+                                        type="button"
                                         className="action-btn download" 
                                         onClick={() => onDownload(record)} 
                                         title="Download"
@@ -149,6 +150,7 @@ const MedicalRecordTable = ({ records, onDelete, onDownload, loading, isDoctorVi
                                         <Download size={18} />
                                     </button>
                                     <button 
+                                        type="button"
                                         className="action-btn delete" 
                                         onClick={() => onDelete(record)} 
                                         title="Delete"

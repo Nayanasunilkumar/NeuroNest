@@ -435,6 +435,7 @@ const Chat = () => {
                         <ChatWindow 
                             messages={messages}
                             currentUserId={currentUser?.id}
+                            currentUser={currentUser}
                             onSendMessage={handleSendMessage}
                             onDeleteMessage={handleDeleteMessage}
                             loadingMessages={loadingMessages}

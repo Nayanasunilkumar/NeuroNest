@@ -3,7 +3,7 @@ import { NavLink, useLocation } from "react-router-dom";
 import { useModuleConfig } from "../hooks/useModuleConfig";
 import { getModulePathForRole, getModulesForRole } from "../../modules/moduleRegistry";
 import { useTheme } from "../context/ThemeContext";
-import { ChevronRight, ChevronLeft, MoreHorizontal } from "lucide-react";
+import { ChevronRight, ChevronLeft } from "lucide-react";
 
 import { getUser } from "../utils/auth";
 
@@ -20,7 +20,14 @@ const DynamicIslandNav = ({ role = "patient" }) => {
     const [canScrollRight, setCanScrollRight] = useState(false);
 
     const user = getUser();
-    const menuItems = getModulesForRole(role, { enabledMap, sidebarOnly: true, user });
+    const patientTopNavKeys = ["dashboard", "profile", "myAppointments", "medicalRecords", "prescriptions", "assessment"];
+    const patientLabelMap = {
+        myAppointments: "Appointments",
+        medicalRecords: "Records",
+        assessment: "Analytics",
+    };
+    const menuItems = getModulesForRole(role, { enabledMap, sidebarOnly: true, user })
+        .filter((item) => role !== "patient" || patientTopNavKeys.includes(item.key));
 
     const checkScroll = () => {
         if (scrollRef.current) {
@@ -72,7 +79,7 @@ const DynamicIslandNav = ({ role = "patient" }) => {
                                 <div className="island-icon">
                                     <Icon size={18} strokeWidth={2.5} />
                                 </div>
-                                <span className="island-label">{item.label}</span>
+                                <span className="island-label">{patientLabelMap[item.key] || item.label}</span>
                             </NavLink>
                         );
                     })}
@@ -112,11 +119,11 @@ const DynamicIslandNav = ({ role = "patient" }) => {
                 .dynamic-island-wrapper {
                     display: flex;
                     align-items: center;
-                    background: rgba(15, 23, 42, 0.9);
+                    background: rgba(15, 23, 42, 0.86);
                     backdrop-filter: blur(24px);
                     border: 1px solid rgba(255, 255, 255, 0.1);
                     border-radius: 999px;
-                    padding: 4px;
+                    padding: 5px;
                     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4), 
                                 0 0 0 1px rgba(255, 255, 255, 0.05);
                     max-width: 100%;
@@ -129,9 +136,9 @@ const DynamicIslandNav = ({ role = "patient" }) => {
                 }
 
                 .dynamic-island-wrapper.light {
-                    background: rgba(255, 255, 255, 0.9);
+                    background: rgba(255, 255, 255, 0.84);
                     border: 1px solid rgba(0, 0, 0, 0.08);
-                    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+                    box-shadow: 0 12px 34px rgba(15, 23, 42, 0.08);
                 }
 
                 .dynamic-island-wrapper.admin.dark {
@@ -153,7 +160,7 @@ const DynamicIslandNav = ({ role = "patient" }) => {
                     overflow-x: auto;
                     scrollbar-width: none;
                     -ms-overflow-style: none;
-                    padding: 0 12px;
+                    padding: 0 8px;
                 }
 
                 .island-nav::-webkit-scrollbar {
@@ -164,13 +171,13 @@ const DynamicIslandNav = ({ role = "patient" }) => {
                     display: flex;
                     align-items: center;
                     gap: 10px;
-                    padding: 8px 18px;
+                    padding: 8px 16px;
                     border-radius: 999px;
                     text-decoration: none;
                     color: rgba(255, 255, 255, 0.6);
                     font-weight: 700;
-                    font-size: 0.85rem;
-                    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+                    font-size: 0.84rem;
+                    transition: all 0.24s cubic-bezier(0.16, 1, 0.3, 1);
                     white-space: nowrap;
                     position: relative;
                 }
@@ -191,14 +198,14 @@ const DynamicIslandNav = ({ role = "patient" }) => {
 
                 .island-item.active {
                     color: #60a5fa;
-                    background: rgba(96, 165, 250, 0.15);
-                    box-shadow: none;
+                    background: rgba(96, 165, 250, 0.16);
+                    box-shadow: inset 0 0 0 1px rgba(96, 165, 250, 0.14), 0 8px 22px rgba(37, 99, 235, 0.14);
                 }
 
                 .light .island-item.active {
                     color: #2563eb;
                     background: #EEF4FF;
-                    box-shadow: none;
+                    box-shadow: inset 0 0 0 1px rgba(37,99,235,0.08), 0 8px 18px rgba(37,99,235,0.11);
                 }
 
                 .admin.dark .island-item.active {

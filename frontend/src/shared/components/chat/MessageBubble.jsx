@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Check, CheckCheck, Download, Paperclip, Video, PhoneOff, Clock, Trash2 } from 'lucide-react';
 import { resolveApiUrl } from '../../../config/env';
 import { formatTimeIST } from '../../utils/time';
+import Avatar from '../Avatar';
 
 const URL_PATTERN = /(https?:\/\/[^\s]+|\/api\/chat\/uploads\/[^\s]+|\/uploads\/[^\s]+)/i;
 
@@ -24,7 +25,7 @@ const getMessageFileUrl = (content = '') => {
     return resolveApiUrl(content.trim());
 };
 
-const MessageBubble = ({ message, isMe, otherUserAvatar, isActiveCallRequest = false, onDeleteMessage }) => {
+const MessageBubble = ({ message, isMe, avatarSrc, avatarAlt, isActiveCallRequest = false, onDeleteMessage }) => {
     const navigate = useNavigate();
     const content = message?.content || '';
     const isSystem = message?.type === 'system';
@@ -58,7 +59,12 @@ const MessageBubble = ({ message, isMe, otherUserAvatar, isActiveCallRequest = f
         <div className={`d-flex mb-3 ${isMe ? 'justify-content-end' : 'justify-content-start'}`} style={{ gap: '12px' }}>
             {!isMe && (
                 <div className="flex-shrink-0 mt-auto mb-1">
-                    <img src={otherUserAvatar || '/default-avatar.png'} alt="user" className="rounded-circle object-fit-cover shadow-sm bg-light" style={{ width: '36px', height: '36px', border: '2px solid white' }} />
+                    <Avatar
+                        src={avatarSrc}
+                        alt={avatarAlt || message?.sender_name || 'Care contact'}
+                        className="rounded-circle shadow-sm bg-light"
+                        style={{ width: '36px', height: '36px', border: '2px solid white' }}
+                    />
                 </div>
             )}
             <div className={`d-flex flex-column ${isMe ? 'align-items-end' : 'align-items-start'}`} style={{ maxWidth: '75%' }}>
@@ -166,6 +172,16 @@ const MessageBubble = ({ message, isMe, otherUserAvatar, isActiveCallRequest = f
                     )}
                 </div>
             </div>
+            {isMe && (
+                <div className="flex-shrink-0 mt-auto mb-1">
+                    <Avatar
+                        src={avatarSrc}
+                        alt={avatarAlt || message?.sender_name || 'You'}
+                        className="rounded-circle shadow-sm bg-light"
+                        style={{ width: '32px', height: '32px', border: '2px solid white' }}
+                    />
+                </div>
+            )}
 
             <style>{`
                 .hover-scale:hover { transform: scale(1.02); }

@@ -3,6 +3,7 @@ import { Calendar, Phone, Video, Info, Clock, AlertCircle } from 'lucide-react';
 import { formatDateIST, formatClockTimeIST, parseISTDateTime } from '../../utils/time';
 import { useNavigate } from 'react-router-dom';
 import api from '../../services/api/axios'; // Generic axios for joining
+import Avatar from '../Avatar';
 
 const ChatHeader = ({ otherUser, context, isDoctor, onToggleSidebar, showSidebar, onVideoCall }) => {
     const navigate = useNavigate();
@@ -91,16 +92,12 @@ const ChatHeader = ({ otherUser, context, isDoctor, onToggleSidebar, showSidebar
         <div className="doctor-chat-header d-flex align-items-center justify-content-between px-4 py-3 border-bottom bg-white bg-opacity-75" style={{ backdropFilter: 'blur(12px)', position: 'sticky', top: 0, zIndex: 10 }}>
             {/* Identity Area */}
             <div className="d-flex align-items-center gap-3">
-                <div 
-                    className="rounded-circle overflow-hidden shadow-sm d-flex align-items-center justify-content-center bg-light" 
+                <Avatar
+                    src={otherUser?.profile_image}
+                    alt={otherUser?.full_name || otherUser?.name || 'Care provider'}
+                    className="rounded-circle shadow-sm bg-light"
                     style={{ width: '42px', height: '42px', border: '2px solid white' }}
-                >
-                    {otherUser?.profile_image ? (
-                        <img src={otherUser.profile_image} alt="" className="w-100 h-100 object-fit-cover" />
-                    ) : (
-                        <span className="fw-bold text-primary">{otherUser?.name?.[0] || '?'}</span>
-                    )}
-                </div>
+                />
                 <div>
                     <h3 className="mb-0 fw-bold text-dark" style={{ fontSize: '1.05rem', lineHeight: 1.2 }}>{otherUser?.name || 'Care Session'}</h3>
                     <div className="d-flex align-items-center gap-2 mt-1">

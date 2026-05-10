@@ -4,7 +4,7 @@ import DynamicIslandNav from "../shared/components/DynamicIslandNav";
 import { logout } from "../shared/utils/auth";
 import { useTheme } from "../shared/context/ThemeContext";
 import { useSystemConfig } from "../shared/context/SystemConfigContext";
-import { Sun, Moon, LogOut, Bell } from "lucide-react";
+import { Sun, Moon, LogOut, Bell, UserCircle, ChevronDown } from "lucide-react";
 import { getAlerts, acknowledgeAlert } from "../shared/services/api/alerts";
 import { getMyNotifications, markNotificationRead, markAllNotificationsRead, deleteNotification } from "../shared/services/api/profileApi";
 import { initSocket } from "../shared/services/socket";
@@ -20,7 +20,9 @@ const PatientLayout = () => {
     const [alertCount, setAlertCount] = React.useState(0);
     const [alerts, setAlerts] = React.useState([]);
     const [showNotifications, setShowNotifications] = React.useState(false);
+    const [showUserMenu, setShowUserMenu] = React.useState(false);
     const notificationRef = React.useRef(null);
+    const userMenuRef = React.useRef(null);
 
     const isMessagePath = location.pathname.includes('/messages');
     const READ_ALERTS_KEY = 'neuronest_read_alerts';
@@ -96,6 +98,9 @@ const PatientLayout = () => {
                 if (event.target.closest('.notification-panel-wrapper')) return;
                 setShowNotifications(false);
             }
+            if (userMenuRef.current && !userMenuRef.current.contains(event.target)) {
+                setShowUserMenu(false);
+            }
         };
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
@@ -149,10 +154,10 @@ const PatientLayout = () => {
     return (
         <div className="vh-100 d-flex flex-column overflow-hidden patient-layout-root" style={{ transition: 'all 0.3s' }}>
             {/* Navbar */}
-            <header className="navbar navbar-expand-lg sticky-top border-bottom shadow-sm px-3" style={{ height: '80px', zIndex: 1050, background: 'var(--nn-nav-bg)', backdropFilter: 'blur(10px)', borderColor: 'var(--nn-border)' }}>
+            <header className="navbar navbar-expand-lg sticky-top border-bottom shadow-sm px-3" style={{ height: '68px', zIndex: 1050, background: 'var(--nn-nav-bg)', backdropFilter: 'blur(18px)', borderColor: 'var(--nn-border)' }}>
                 <div className="container-fluid align-items-center flex-nowrap">
                     {/* Left: Branding */}
-                    <div className="d-flex align-items-center flex-shrink-0 me-3 me-xl-5">
+                    <div className="d-flex align-items-center flex-shrink-0 me-3 me-xl-4">
                         <span className="h4 fw-black mb-0 text-primary" style={{ letterSpacing: '-0.05em' }}>{(platformName || 'NeuroNest').toUpperCase()}</span>
                     </div>
 
@@ -208,14 +213,28 @@ const PatientLayout = () => {
                             )}
                         </div>
 
-                        <button 
-                            className="btn btn-danger-soft rounded-circle p-2 border-0 shadow-sm transition-all d-flex align-items-center justify-content-center"
-                            onClick={logout}
-                            title="Logout"
-                            style={{ width: '40px', height: '40px' }}
-                        >
-                            <LogOut size={20} />
-                        </button>
+                        <div className="position-relative" ref={userMenuRef}>
+                            <button
+                                className="patient-user-menu-btn"
+                                type="button"
+                                onClick={() => setShowUserMenu((open) => !open)}
+                                aria-label="Open user menu"
+                                aria-expanded={showUserMenu}
+                            >
+                                <span className="patient-user-avatar"><UserCircle size={21} /></span>
+                                <ChevronDown size={14} />
+                            </button>
+                            {showUserMenu && (
+                                <div className="patient-user-dropdown">
+                                    <button type="button" onClick={() => { setShowUserMenu(false); navigate('/patient/profile'); }}>
+                                        <UserCircle size={16} /> Profile
+                                    </button>
+                                    <button type="button" className="danger" onClick={logout}>
+                                        <LogOut size={16} /> Logout
+                                    </button>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
             </header>
@@ -245,7 +264,7 @@ const PatientLayout = () => {
                 .max-w-400 { max-width: 400px; }
                 .max-w-1600 { max-width: 1600px; }
                 .patient-layout-root {
-                    background: var(--nn-bg);
+                    background: #f4f7fb;
                 }
                 .dark .patient-layout-root {
                     background:
@@ -263,6 +282,68 @@ const PatientLayout = () => {
                     background: var(--nn-surface-secondary);
                     border-color: var(--nn-border-strong) !important;
                     transform: translateY(-1px);
+                }
+                .patient-user-menu-btn {
+                    min-width: 52px;
+                    height: 40px;
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 6px;
+                    border: 1px solid var(--nn-border);
+                    border-radius: 999px;
+                    background: var(--nn-surface);
+                    color: var(--nn-text-secondary);
+                    transition: all 0.2s ease;
+                }
+                .patient-user-menu-btn:hover {
+                    color: var(--nn-text-main);
+                    background: var(--nn-surface-secondary);
+                    transform: translateY(-1px);
+                }
+                .patient-user-avatar {
+                    width: 28px;
+                    height: 28px;
+                    border-radius: 50%;
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    background: #eef4ff;
+                    color: #2563eb;
+                }
+                .patient-user-dropdown {
+                    position: absolute;
+                    top: calc(100% + 10px);
+                    right: 0;
+                    min-width: 170px;
+                    padding: 8px;
+                    border: 1px solid var(--nn-border);
+                    border-radius: 16px;
+                    background: color-mix(in srgb, var(--nn-surface) 96%, transparent);
+                    box-shadow: 0 18px 38px rgba(15, 23, 42, 0.14);
+                    backdrop-filter: blur(18px);
+                    animation: fadeInSlide 0.18s ease both;
+                }
+                .patient-user-dropdown button {
+                    width: 100%;
+                    min-height: 38px;
+                    display: flex;
+                    align-items: center;
+                    gap: 9px;
+                    border: 0;
+                    border-radius: 11px;
+                    background: transparent;
+                    color: var(--nn-text-main);
+                    font-size: 0.88rem;
+                    font-weight: 800;
+                    padding: 0 10px;
+                    text-align: left;
+                }
+                .patient-user-dropdown button:hover {
+                    background: var(--nn-surface-secondary);
+                }
+                .patient-user-dropdown button.danger {
+                    color: #dc3545;
                 }
                 .dark .patient-action-btn {
                     background: color-mix(in srgb, var(--nn-surface) 85%, transparent);
@@ -293,7 +374,7 @@ const PatientLayout = () => {
                     border: 1px solid var(--nn-border);
                     border-radius: 36px;
                     box-shadow: 0 12px 30px rgba(15, 23, 42, 0.05);
-                    min-height: calc(100vh - 180px);
+                    min-height: calc(100vh - 156px);
                     padding: clamp(16px, 1.8vw, 28px);
                 }
                 .patient-page-shell-chat {
