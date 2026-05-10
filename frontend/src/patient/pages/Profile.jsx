@@ -323,9 +323,13 @@ const Profile = () => {
 
   return (
     <div className="patient-profile-page-wrapper">
-      <div className="profile-container py-4 px-3 px-md-5">
+      <div className="profile-dashboard-container">
+        {/* HEADER ACTIONS */}
         <div className="d-flex align-items-center justify-content-between mb-4">
-          <h1 className="h3 fw-black text-dark mb-0">My Health Profile</h1>
+          <div>
+            <h1 className="h4 fw-800 text-dark mb-1">Patient Health Dashboard</h1>
+            <p className="text-muted small mb-0">Manage your clinical records and personal health telemetry</p>
+          </div>
           {editing && (
             <div className="d-flex gap-2">
               <button onClick={cancelEdit} className="btn btn-light rounded-pill px-4 fw-bold shadow-sm">Cancel</button>
@@ -337,297 +341,366 @@ const Profile = () => {
         </div>
 
         {!editing ? (
-          <div className="mx-auto" style={{ maxWidth: "1600px" }}>
-            <div className="profile-hero-card mb-4">
-              <div className="profile-header-strip">
-                <div className="profile-avatar-wrapper">
-                  <div className="profile-avatar-frame">
-                    {profile.profile_image ? (
-                      <img src={toAssetUrl(profile.profile_image)} alt={profile.full_name} />
-                    ) : (
-                      <div className="avatar-placeholder"><User size={48} /></div>
-                    )}
-                  </div>
+          <>
+            {/* HERO PROFILE SECTION */}
+            <div className="hero-profile-section">
+              <div className="hero-avatar-area">
+                <div className="hero-avatar-frame">
+                  {profile.profile_image ? (
+                    <img src={toAssetUrl(profile.profile_image)} alt={profile.full_name} />
+                  ) : (
+                    <div className="avatar-placeholder-icon"><User size={64} /></div>
+                  )}
+                </div>
+                <div className="edit-photo-overlay" onClick={startEditing}>
+                  <Edit2 size={18} />
+                </div>
+              </div>
+
+              <div className="hero-info-area">
+                <div className="hero-name-row">
+                  <h2 className="hero-name">{profile.full_name}</h2>
+                </div>
+                <div className="hero-demographics">
+                  <span className="demo-item"><User size={14} /> {profile.gender || "Not Specified"}</span>
+                  <span className="demo-item"><Calendar size={14} /> {profile.date_of_birth} ({age} yrs)</span>
+                  <span className="demo-item"><MapPin size={14} /> {profile.city || "Kollam"}, {profile.state || "Kerala"}</span>
+                  <span className="demo-item"><Phone size={14} /> {profile.phone}</span>
                 </div>
 
-                <div className="profile-identity-center">
-                  <div className="d-flex align-items-center gap-3 mb-2">
-                    <h2 className="profile-name-title">{profile.full_name}</h2>
-                    <button className="icon-action-btn"><Phone size={14} /></button>
-                    <button className="icon-action-btn"><Mail size={14} /></button>
+                <div className="mini-vitals-row">
+                  <div className="vital-stat-chip">
+                    <span className="vital-stat-label">BMI</span>
+                    <span className="vital-stat-value">{hasValidBmi ? bmi : "—"} <span className={`text-${bmiMeta.tone}`}>{bmiMeta.label}</span></span>
                   </div>
-                  <div className="demographic-pills">
-                    <span className="demo-pill"><User size={12} /> {profile.gender || "Not Specified"}</span>
-                    <span className="demo-pill"><MapPin size={12} /> {profile.city || "Kollam"}</span>
-                    <span className="demo-pill"><Calendar size={12} /> {profile.date_of_birth} ({age} years)</span>
-                    <span className="demo-pill"><Phone size={12} /> {profile.phone}</span>
-                    <span className="demo-pill"><Mail size={12} /> {profile.email}</span>
+                  <div className="vital-stat-chip">
+                    <span className="vital-stat-label">Weight</span>
+                    <span className="vital-stat-value">{profile.weight_kg || "—"} <span>kg</span></span>
                   </div>
-
-                  <div className="header-stats-row">
-                    <div className="header-stat">
-                      <div className="stat-label-wrap"><Scale size={14} /> BMI</div>
-                      <div className="stat-value">{hasValidBmi ? bmi : "N/A"}</div>
-                      <div className={`stat-sublabel bmi-${bmiMeta.tone}`}>{bmiMeta.label}</div>
-                      <div className="bmi-gradient-bar">
-                        <div className="bmi-progress-marker" style={{ left: `${bmiMeta.score}%` }} />
-                      </div>
-                    </div>
-                    <div className="stat-divider" />
-                    <div className="header-stat">
-                      <div className="stat-label-wrap"><Weight size={14} /> Weight</div>
-                      <div className="stat-value">{profile.weight_kg || "N/A"} <span className="stat-unit">kg</span></div>
-                    </div>
-                    <div className="stat-divider" />
-                    <div className="header-stat">
-                      <div className="stat-label-wrap"><Activity size={14} /> Height</div>
-                      <div className="stat-value">{profile.height_cm || "N/A"} <span className="stat-unit">Cm</span></div>
-                    </div>
-                    <div className="stat-divider" />
-                    <div className="header-stat">
-                      <div className="stat-label-wrap"><Droplet size={14} /> Blood Type</div>
-                      <div className="stat-value">{profile.blood_group || "N/A"}</div>
-                    </div>
+                  <div className="vital-stat-chip">
+                    <span className="vital-stat-label">Height</span>
+                    <span className="vital-stat-value">{profile.height_cm || "—"} <span>cm</span></span>
+                  </div>
+                  <div className="vital-stat-chip">
+                    <span className="vital-stat-label">Blood</span>
+                    <span className="vital-stat-value">{profile.blood_group || "—"}</span>
                   </div>
                 </div>
+              </div>
 
-                <div className="profile-header-right">
-                  <div className="tags-stack">
-                    <div className="tag-group">
-                      <span className="tag-header">Own diagnosis</span>
-                      <div className="tag-pills">
-                        {(clinicalData?.conditions || []).filter((c) => c.status === "active").slice(0, 2).map((c, i) => (
-                          <span key={i} className="badge diagnosis-pill">{c.condition_name}</span>
-                        ))}
-                      </div>
-                    </div>
-                    <div className="tag-group">
-                      <span className="tag-header">Known Allergies</span>
-                      <div className="tag-pills">
-                        {(clinicalData?.allergies || []).slice(0, 2).map((a, i) => (
-                          <span key={i} className="badge allergy-pill">{a.allergy_name}</span>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                  <button onClick={startEditing} className="btn-edit-header">
-                    <Edit2 size={14} /> Edit Profile
+              <div className="hero-actions-area">
+                <div className="action-buttons-stack">
+                  <button onClick={startEditing} className="btn-premium-action btn-primary-blue">
+                    <Edit2 size={16} /> Edit Profile
                   </button>
+                  <button className="btn-premium-action btn-outline-soft">
+                    <FileText size={16} /> Records
+                  </button>
+                </div>
+
+                <div className="medical-badges-area">
+                  <div className="tag-group">
+                    <span className="badge-group-label">Known Allergies</span>
+                    <div className="badge-pill-stack">
+                      {(clinicalData?.allergies || []).slice(0, 3).map((a, i) => (
+                        <span key={i} className="premium-pill pill-allergy">{a.allergy_name}</span>
+                      ))}
+                      {(clinicalData?.allergies || []).length === 0 && <span className="text-muted small">None reported</span>}
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
 
-            <div className="profile-body-grid mb-4">
-              <div className="profile-body-row">
-                <div className="profile-section-card">
-                  <div className="section-header">
-                    <h3 className="section-title"><MapPin size={18} /> Contact Details</h3>
-                  </div>
-                  <div className="contact-details-grid">
-                    <div className="contact-detail-item">
-                      <span className="contact-detail-label">Email</span>
-                      <p className="contact-detail-value">{profile.email || "Not provided"}</p>
+            {/* DASHBOARD GRID */}
+            <div className="profile-main-grid">
+              {/* MAIN CONTENT (LEFT) */}
+              <div className="profile-main-content">
+                
+                {/* CONDITIONS LOG */}
+                <div className="modern-card">
+                  <div className="card-header-row">
+                    <div className="card-title-wrap">
+                      <div className="card-icon-box"><Activity size={20} /></div>
+                      <div>
+                        <h3 className="card-title">Conditions Log</h3>
+                        <p className="card-subtitle">Active and monitored medical conditions</p>
+                      </div>
                     </div>
-                    <div className="contact-detail-item">
-                      <span className="contact-detail-label">Phone</span>
-                      <p className="contact-detail-value">{profile.phone || "Not provided"}</p>
-                    </div>
-                    <div className="contact-detail-item contact-detail-item-wide">
-                      <span className="contact-detail-label">Address</span>
-                      <p className="contact-detail-value">{profile.address || "Not provided"}</p>
-                    </div>
-                    <div className="contact-detail-item">
-                      <span className="contact-detail-label">Location</span>
-                      <p className="contact-detail-value">
-                        {[profile.city, profile.state, profile.country].filter(Boolean).join(", ") || "Not provided"}
-                      </p>
-                    </div>
-                    <div className="contact-detail-item">
-                      <span className="contact-detail-label">Pincode</span>
-                      <p className="contact-detail-value">{profile.pincode || "Not provided"}</p>
+                    <div className="d-flex gap-2">
+                      <span className="badge bg-primary bg-opacity-10 text-primary rounded-pill px-3 py-2 small fw-bold">{activeCount} Active</span>
+                      <span className="badge bg-warning bg-opacity-10 text-warning rounded-pill px-3 py-2 small fw-bold">{severeCount} Severe</span>
                     </div>
                   </div>
-                </div>
-                <div className="profile-section-card">
-                  <div className="section-header">
-                    <h3 className="section-title"><ShieldAlert size={18} /> Emergency Support</h3>
-                  </div>
-                  <div className="emergency-list">
-                    {emergencyContacts.map((c, i) => (
-                      <div key={i} className={`emergency-row ${c.is_primary ? "primary" : ""}`}>
-                        <div className="emergency-info">
-                          <span className="emergency-relation">{c.relationship || "Emergency Contact"} {c.is_primary && "(Primary)"}</span>
-                          <h4 className="emergency-name">{c.contact_name}</h4>
-                          <p className="emergency-meta">{c.phone} · {c.email}</p>
+
+                  <div className="conditions-interactive-grid">
+                    {conditionItems.map((item, i) => (
+                      <div key={i} className={`condition-card-premium ${item.severity}`}>
+                        <div className="cond-top-line">
+                          <h4 className="cond-name">{item.name}</h4>
+                          <span className={`cond-status-badge badge-${item.severity === "active" ? "active" : "severe"}`}>{item.severity}</span>
                         </div>
-                        <div className="emergency-actions">
-                          <button className="action-circle-btn"><Phone size={14} /></button>
-                          <button className="action-circle-btn"><MessageCircle size={14} /></button>
+                        <div className="cond-meta-grid">
+                          <div className="meta-item">
+                            <span className="meta-label">Status</span>
+                            <span className="meta-val">{item.status}</span>
+                          </div>
+                          <div className="meta-item">
+                            <span className="meta-label">Updated</span>
+                            <span className="meta-val">{formatDate(item.updatedAt)}</span>
+                          </div>
                         </div>
                       </div>
                     ))}
+                    {conditionItems.length === 0 && <p className="text-muted py-4 text-center grid-column-span-2">No active conditions found.</p>}
                   </div>
                 </div>
-              </div>
 
-              <div className="profile-body-row profile-body-row-bottom">
-                <div className="profile-section-card profile-scroll-card">
-                  <div className="section-header">
-                    <h3 className="section-title"><Calendar size={18} /> Timeline</h3>
+                {/* TIMELINE SECTION */}
+                <div className="modern-card">
+                  <div className="card-header-row">
+                    <div className="card-title-wrap">
+                      <div className="card-icon-box"><Calendar size={20} /></div>
+                      <div>
+                        <h3 className="card-title">Medical Timeline</h3>
+                        <p className="card-subtitle">Recent visits and activity history</p>
+                      </div>
+                    </div>
                   </div>
-                  <div className="timeline-container profile-scroll-area">
+
+                  <div className="compact-timeline-feed">
                     {timelineEntries.map((appt, i) => {
-                      const dateObj = new Date(appt.appointment_date);
-                      const month = dateObj.toLocaleString("default", { month: "short" });
-                      const year = dateObj.getFullYear();
                       const status = timelineStatus(appt.status);
                       return (
-                        <div key={i} className="timeline-entry">
-                          <div className="timeline-date-stack">
-                            <span className="month">{month}</span>
-                            <span className="year">{year}</span>
-                          </div>
-                          <div className="timeline-connector">
-                            <div className={`timeline-dot ${status}`} />
-                            {i < timelineEntries.length - 1 && <div className="timeline-line" />}
-                          </div>
-                          <div className="timeline-content-card">
-                            <div className="timeline-header">
-                              <span className="appt-kind">{getTimelineIcon(appt.reason)} Appointment</span>
-                              <span className={`status-pill ${status}`}>{status}</span>
+                        <div key={i} className={`timeline-item-minimal ${status}`}>
+                          <div className="timeline-marker-dot" />
+                          <div className="timeline-card-soft">
+                            <div className="tl-info">
+                              <span className="tl-type">Appointment</span>
+                              <h4 className="tl-reason">{appt.reason || "General Consultation"}</h4>
+                              <span className="tl-doctor">Dr. {appt.doctor_name || "Specialist"}</span>
                             </div>
-                            <h4 className="appt-title">{appt.reason || "General Checkup"}</h4>
-                            <p className="appt-doctor">Dr. {appt.doctor_name || "Specialist"}</p>
+                            <div className="tl-date-wrap">
+                              <div className="tl-date">{formatDate(appt.appointment_date)}</div>
+                              <span className={`tl-status ${status}`}>{status}</span>
+                            </div>
                           </div>
                         </div>
                       );
                     })}
+                    {timelineEntries.length === 0 && <p className="text-muted py-3">No recent activity recorded.</p>}
                   </div>
                 </div>
 
-                <div className="profile-section-card profile-scroll-card">
-                  <div className="section-header">
-                    <div className="d-flex align-items-center gap-3">
-                      <h3 className="section-title"><Activity size={18} /> Conditions Log</h3>
-                      <div className="condition-counters">
-                        <span className="counter-pill active">{activeCount} Active</span>
-                        <span className="counter-pill severe">{severeCount} Severe</span>
+                {/* CONTACT DETAILS CARD */}
+                <div className="modern-card">
+                  <div className="card-header-row">
+                    <div className="card-title-wrap">
+                      <div className="card-icon-box"><MapPin size={20} /></div>
+                      <div>
+                        <h3 className="card-title">Contact Information</h3>
+                        <p className="card-subtitle">Personal communication details</p>
                       </div>
                     </div>
                   </div>
-                  <div className="conditions-list-stack profile-scroll-area">
-                    {visibleConditions.map((item, i) => (
-                      <div key={i} className="condition-item-row">
-                        <div className="condition-icon-wrap">
-                          <Heart size={16} className={`icon-${item.severity}`} />
-                        </div>
-                        <div className="condition-details">
-                          <h4 className="condition-name">{item.name}</h4>
-                          <p className="condition-meta">{item.status} · Updated {formatDate(item.updatedAt)}</p>
-                        </div>
-                        <div className="condition-severity-wrap">
-                          <span className={`severity-badge ${item.severity === "active" ? "blue" : "amber"}`}>
-                            {item.severity === "active" ? "ACTIVE" : "SEVERE"}
-                          </span>
-                        </div>
+                  <div className="row g-4">
+                    <div className="col-md-6">
+                      <div className="p-3 rounded-4 bg-light bg-opacity-50">
+                        <label className="text-muted small fw-bold text-uppercase mb-1 d-block">Primary Email</label>
+                        <span className="fw-bold d-block">{profile.email || "Not provided"}</span>
                       </div>
-                    ))}
-                    {conditionItems.length > 5 && (
-                      <button className="show-all-link" onClick={() => setShowAllConditions(!showAllConditions)}>
-                        {showAllConditions ? "Show less" : "Show all"}
-                      </button>
-                    )}
+                    </div>
+                    <div className="col-md-6">
+                      <div className="p-3 rounded-4 bg-light bg-opacity-50">
+                        <label className="text-muted small fw-bold text-uppercase mb-1 d-block">Phone Number</label>
+                        <span className="fw-bold d-block">{profile.phone || "Not provided"}</span>
+                      </div>
+                    </div>
+                    <div className="col-12">
+                      <div className="p-3 rounded-4 bg-light bg-opacity-50">
+                        <label className="text-muted small fw-bold text-uppercase mb-1 d-block">Permanent Address</label>
+                        <span className="fw-bold d-block">{profile.address || "Not provided"}</span>
+                        <span className="text-muted small mt-1 d-block">
+                          {[profile.city, profile.state, profile.country].filter(Boolean).join(", ")} {profile.pincode ? ` - ${profile.pincode}` : ""}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* SIDEBAR (RIGHT) */}
+              <div className="profile-sidebar-area">
+                {/* HEALTH SCORE WIDGET */}
+                <div className="health-score-widget">
+                  <span className="score-label">Overall Health Score</span>
+                  <div className="score-circle-wrap">
+                    <span className="score-val">84</span>
+                  </div>
+                  <p className="small text-white opacity-75 mb-0">Based on recent vitals and compliance</p>
+                </div>
+
+                {/* QUICK SUMMARY LIST */}
+                <div className="modern-card">
+                  <h4 className="fw-800 small text-uppercase mb-4">Quick Summary</h4>
+                  <div className="quick-summary-list">
+                    <div className="summary-item">
+                      <div className="summary-icon"><Activity size={18} /></div>
+                      <div className="summary-details">
+                        <span className="summary-label">Active Conditions</span>
+                        <span className="summary-val">{activeCount} Conditions</span>
+                      </div>
+                    </div>
+                    <div className="summary-item">
+                      <div className="summary-icon"><Heart size={18} /></div>
+                      <div className="summary-details">
+                        <span className="summary-label">Allergies Reported</span>
+                        <span className="summary-val">{(clinicalData?.allergies || []).length} Reported</span>
+                      </div>
+                    </div>
+                    <div className="summary-item">
+                      <div className="summary-icon"><Calendar size={18} /></div>
+                      <div className="summary-details">
+                        <span className="summary-label">Next Visit</span>
+                        <span className="summary-val">May 15, 2026</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* EMERGENCY CONTACT PREMIUM */}
+                <div className="emergency-contact-premium">
+                  <div className="em-header">
+                    <div className="em-identity">
+                      <div className="em-avatar"><User size={24} /></div>
+                      <div className="em-name-wrap">
+                        <span className="em-relation">Primary Contact</span>
+                        <span className="em-name">{emergencyContacts.find(c => c.is_primary)?.contact_name || "None Set"}</span>
+                      </div>
+                    </div>
+                    <div className="em-actions">
+                      <button className="btn-em-action"><Phone size={16} /></button>
+                      <button className="btn-em-action"><MessageCircle size={16} /></button>
+                    </div>
+                  </div>
+                  <div className="mt-3 pt-3 border-top border-danger border-opacity-10">
+                    <p className="small text-danger fw-600 mb-0 d-flex align-items-center gap-2">
+                      <ShieldAlert size={14} /> Quick-access emergency protocol
+                    </p>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
+          </>
         ) : (
-          <div className="edit-form-grid">
-            <div className="form-section-title"><User size={20} className="text-primary" /> Basic Information</div>
-            <div className="form-group">
-              <label>Full Name</label>
-              <input name="full_name" value={profile.full_name} onChange={handleChange} />
+          <div className="modern-card border-0 shadow-lg">
+            <div className="p-4 border-bottom d-flex align-items-center gap-3">
+              <div className="card-icon-box bg-primary bg-opacity-10 text-primary"><Edit2 size={20} /></div>
+              <h2 className="h4 fw-800 mb-0">Update Medical Profile</h2>
             </div>
-            <div className="form-group">
-              <label>Profile Picture</label>
-              <input type="file" accept="image/*" onChange={handleImageChange} className="form-control" />
-            </div>
-            <div className="form-group">
-              <label>Date of Birth</label>
-              <input type="date" name="date_of_birth" value={profile.date_of_birth} onChange={handleChange} />
-            </div>
-            <div className="form-group">
-              <label>Gender</label>
-              <select name="gender" value={profile.gender} onChange={handleChange}>
-                <option>Male</option><option>Female</option><option>Other</option>
-              </select>
-            </div>
-            <div className="form-group">
-              <label>Blood Group</label>
-              <select name="blood_group" value={profile.blood_group} onChange={handleChange}>
-                {["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"].map((bg) => <option key={bg} value={bg}>{bg}</option>)}
-              </select>
-            </div>
-            <div className="form-group">
-              <label>Height (cm)</label>
-              <input type="number" name="height_cm" value={profile.height_cm} onChange={handleChange} />
-            </div>
-            <div className="form-group">
-              <label>Weight (kg)</label>
-              <input type="number" name="weight_kg" value={profile.weight_kg} onChange={handleChange} />
-            </div>
-
-            <div className="form-section-title mt-4"><MapPin size={20} className="text-primary" /> Contact Details</div>
-            <div className="form-group full-width"><label>Full Address</label><input name="address" value={profile.address} onChange={handleChange} /></div>
-            <div className="form-group">
-              <label>Country</label>
-              <select name="country" value={profile.country} onChange={handleChange}>
-                {countries.map((c) => <option key={c} value={c}>{c}</option>)}
-              </select>
-            </div>
-            <div className="form-group">
-              <label>State</label>
-              <select name="state" value={profile.state} onChange={handleChange}>
-                {states.map((s) => <option key={s} value={s}>{s}</option>)}
-              </select>
-            </div>
-            <div className="form-group">
-              <label>City</label>
-              <input name="city" value={profile.city} onChange={handleChange} />
-            </div>
-            <div className="form-group">
-              <label>Pincode</label>
-              <input name="pincode" value={profile.pincode} onChange={handleChange} />
-            </div>
-
-            <div className="form-section-title mt-4"><ShieldAlert size={20} className="text-danger" /> Emergency Contacts</div>
-            <div className="full-width">
-              {emergencyContacts.map((contact, index) => (
-                <div key={index} className="emergency-edit-card mb-3 p-3 border rounded-3 bg-light">
-                  <div className="d-flex justify-content-between align-items-center mb-3">
-                    <span className="fw-bold">Contact #{index + 1}</span>
-                    <button className="btn btn-outline-danger btn-sm" onClick={() => removeContact(index)}><Trash2 size={16} /></button>
-                  </div>
-                  <div className="row g-3">
-                    <div className="col-md-6"><label className="small fw-bold">Name</label><input name="contact_name" value={contact.contact_name} onChange={(e) => handleEmergencyChange(index, e)} className="form-control" /></div>
-                    <div className="col-md-6"><label className="small fw-bold">Relationship</label><input name="relationship" value={contact.relationship} onChange={(e) => handleEmergencyChange(index, e)} className="form-control" /></div>
-                    <div className="col-md-6"><label className="small fw-bold">Phone</label><input name="phone" value={contact.phone} onChange={(e) => handleEmergencyChange(index, e)} className="form-control" /></div>
-                    <div className="col-md-6"><label className="small fw-bold">Email</label><input name="email" value={contact.email} onChange={(e) => handleEmergencyChange(index, e)} className="form-control" /></div>
-                  </div>
+            <div className="p-4">
+              <div className="row g-4">
+                <div className="col-12"><div className="form-section-title"><User size={20} className="text-primary me-2" /> Basic Information</div></div>
+                <div className="col-md-6">
+                  <label className="form-label fw-700 small">Full Name</label>
+                  <input className="form-control rounded-3" name="full_name" value={profile.full_name} onChange={handleChange} />
                 </div>
-              ))}
-              <button className="btn btn-outline-primary w-100 mt-2" onClick={addNewContact}><Plus size={16} /> Add New Contact</button>
-            </div>
-            <div className="form-actions mt-4">
-              <button className="btn-save" onClick={handleSave}>Save Changes</button>
-              <button className="btn-cancel" onClick={() => setEditing(false)}>Cancel</button>
+                <div className="col-md-6">
+                  <label className="form-label fw-700 small">Profile Picture</label>
+                  <input type="file" accept="image/*" onChange={handleImageChange} className="form-control rounded-3" />
+                </div>
+                <div className="col-md-4">
+                  <label className="form-label fw-700 small">Date of Birth</label>
+                  <input type="date" className="form-control rounded-3" name="date_of_birth" value={profile.date_of_birth} onChange={handleChange} />
+                </div>
+                <div className="col-md-4">
+                  <label className="form-label fw-700 small">Gender</label>
+                  <select className="form-select rounded-3" name="gender" value={profile.gender} onChange={handleChange}>
+                    <option>Male</option><option>Female</option><option>Other</option>
+                  </select>
+                </div>
+                <div className="col-md-4">
+                  <label className="form-label fw-700 small">Blood Group</label>
+                  <select className="form-select rounded-3" name="blood_group" value={profile.blood_group} onChange={handleChange}>
+                    {["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"].map((bg) => <option key={bg} value={bg}>{bg}</option>)}
+                  </select>
+                </div>
+                <div className="col-md-6">
+                  <label className="form-label fw-700 small">Height (cm)</label>
+                  <input type="number" className="form-control rounded-3" name="height_cm" value={profile.height_cm} onChange={handleChange} />
+                </div>
+                <div className="col-md-6">
+                  <label className="form-label fw-700 small">Weight (kg)</label>
+                  <input type="number" className="form-control rounded-3" name="weight_kg" value={profile.weight_kg} onChange={handleChange} />
+                </div>
+
+                <div className="col-12 mt-5"><div className="form-section-title"><MapPin size={20} className="text-primary me-2" /> Location Details</div></div>
+                <div className="col-12">
+                  <label className="form-label fw-700 small">Full Address</label>
+                  <input className="form-control rounded-3" name="address" value={profile.address} onChange={handleChange} />
+                </div>
+                <div className="col-md-4">
+                  <label className="form-label fw-700 small">Country</label>
+                  <select className="form-select rounded-3" name="country" value={profile.country} onChange={handleChange}>
+                    {countries.map((c) => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </div>
+                <div className="col-md-4">
+                  <label className="form-label fw-700 small">State</label>
+                  <select className="form-select rounded-3" name="state" value={profile.state} onChange={handleChange}>
+                    {states.map((s) => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                </div>
+                <div className="col-md-4">
+                  <label className="form-label fw-700 small">City</label>
+                  <input className="form-control rounded-3" name="city" value={profile.city} onChange={handleChange} />
+                </div>
+
+                <div className="col-12 mt-5 d-flex justify-content-between align-items-center">
+                  <div className="form-section-title"><ShieldAlert size={20} className="text-danger me-2" /> Emergency Contacts</div>
+                  <button className="btn btn-outline-primary btn-sm rounded-pill px-3" onClick={addNewContact}><Plus size={16} /> Add Contact</button>
+                </div>
+                {emergencyContacts.map((contact, index) => (
+                  <div key={index} className="col-12">
+                    <div className="p-3 border rounded-4 bg-light bg-opacity-50">
+                      <div className="d-flex justify-content-between align-items-center mb-3">
+                        <span className="fw-800 small text-uppercase">Contact #{index + 1}</span>
+                        <button className="btn btn-link text-danger p-0" onClick={() => removeContact(index)}><Trash2 size={18} /></button>
+                      </div>
+                      <div className="row g-3">
+                        <div className="col-md-6">
+                          <label className="form-label small fw-700">Name</label>
+                          <input className="form-control form-control-sm rounded-3" name="contact_name" value={contact.contact_name} onChange={(e) => handleEmergencyChange(index, e)} />
+                        </div>
+                        <div className="col-md-6">
+                          <label className="form-label small fw-700">Relationship</label>
+                          <input className="form-control form-control-sm rounded-3" name="relationship" value={contact.relationship} onChange={(e) => handleEmergencyChange(index, e)} />
+                        </div>
+                        <div className="col-md-6">
+                          <label className="form-label small fw-700">Phone</label>
+                          <input className="form-control form-control-sm rounded-3" name="phone" value={contact.phone} onChange={(e) => handleEmergencyChange(index, e)} />
+                        </div>
+                        <div className="col-md-6">
+                          <label className="form-label small fw-700">Email</label>
+                          <input className="form-control form-control-sm rounded-3" name="email" value={contact.email} onChange={(e) => handleEmergencyChange(index, e)} />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+
+                <div className="col-12 mt-5 border-top pt-4 d-flex gap-3">
+                  <button className="btn btn-primary rounded-pill px-5 fw-800" onClick={handleSave}>Save Changes</button>
+                  <button className="btn btn-light rounded-pill px-5 fw-800" onClick={() => setEditing(false)}>Discard Changes</button>
+                </div>
+              </div>
             </div>
           </div>
         )}
       </div>
     </div>
   );
+
 };
 
 export default Profile;
