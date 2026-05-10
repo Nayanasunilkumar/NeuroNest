@@ -304,6 +304,38 @@ function VitalsSection({ initialData = null }) {
           )}
         </div>
       </div>
+
+      {/* Sensor Diagnostics Panel */}
+      {deviceAssigned && signal !== "no_device" && (
+        <div className="card border-0 shadow-sm rounded-4 mb-4" style={{ background: "#f8fafc" }}>
+          <div className="card-body p-3 d-flex flex-wrap gap-4 align-items-center justify-content-center">
+            <div className="d-flex align-items-center gap-2">
+              <span className="text-secondary small fw-bold">ESP32:</span>
+              <span className={`badge rounded-pill ${isConnected ? "bg-success" : "bg-danger"}`} style={{ fontSize: "0.6rem" }}>
+                {isConnected ? "CONNECTED" : "OFFLINE"}
+              </span>
+            </div>
+            <div className="d-flex align-items-center gap-2 border-start ps-4">
+              <span className="text-secondary small fw-bold">MAX30102:</span>
+              <span className={`badge rounded-pill ${isLive || isWeak ? "bg-success" : "bg-secondary"}`} style={{ fontSize: "0.6rem" }}>
+                {isLive || isWeak ? "ACTIVE" : isNoFinger ? "NO FINGER" : "IDLE"}
+              </span>
+            </div>
+            <div className="d-flex align-items-center gap-2 border-start ps-4">
+              <span className="text-secondary small fw-bold">DS18B20:</span>
+              <span className={`badge rounded-pill ${isConnected && data?.temp ? "bg-success" : "bg-secondary"}`} style={{ fontSize: "0.6rem" }}>
+                {isConnected && data?.temp ? "ACTIVE" : "IDLE"}
+              </span>
+            </div>
+            <div className="d-flex align-items-center gap-2 border-start ps-4">
+              <span className="text-secondary small fw-bold text-uppercase" style={{ fontSize: "0.6rem" }}>Last Sync:</span>
+              <span className="text-dark small fw-bold" style={{ fontSize: "0.7rem" }}>
+                {lastVitalsTimestamp > 0 ? new Date(lastVitalsTimestamp).toLocaleTimeString() : "--:--:--"}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
       {(!deviceAssigned || signal === "no_device") && (
         <div className="card border-0 shadow-sm rounded-4 p-5 text-center bg-light border border-dashed mb-4">
           <div className="bg-white p-3 rounded-circle shadow-sm d-inline-block mb-3"><WifiOff size={32} className="text-secondary opacity-50" /></div>
