@@ -52,11 +52,13 @@ const sanitizeVitalsPayload = (payload, connected = true) => {
     // HR and SpO2: pass through what the backend sends; no_finger retention handled in component
     hr: Number.isFinite(hr) && hr > 0 ? hr : null,
     spo2: Number.isFinite(spo2) && spo2 > 0 ? spo2 : null,
-    // FIX 1: temp validated by range only — never cleared by signal state
-    temp: Number.isFinite(temp) && temp >= 32 ? temp : null,
+    // Temp validated by plausible ambient/body range only (>= 10°C).
+    // 30.37°C is a valid DS18B20 reading and must never be rejected.
+    // Temp is NEVER cleared by signal state — only by disconnection/no_device.
+    temp: Number.isFinite(temp) && temp >= 10 ? temp : null,
     hr_alert: Number.isFinite(hr) && hr > 0 ? (payload.hr_alert ?? 0) : 0,
     spo2_alert: Number.isFinite(spo2) && spo2 > 0 ? (payload.spo2_alert ?? 0) : 0,
-    temp_alert: Number.isFinite(temp) && temp >= 32 ? (payload.temp_alert ?? 0) : 0,
+    temp_alert: Number.isFinite(temp) && temp >= 10 ? (payload.temp_alert ?? 0) : 0,
   };
 };
 
@@ -217,8 +219,19 @@ function VitalsSection({ initialData = null }) {
     setInGracePeriod(false);
   }, []);
 
-  // ── FIX 2: Apply last-known-good HR/SpO2 retention logic ─────────────────
+  // ── Apply last-known-good HR/SpO2 retention logic ────────────────────────
   // Called whenever new vitals arrive (socket or poll).
+  //
+  // Signal taxonomy after backend processing:
+  //   "ok"          — finger present, fresh reading
+  //   "weak"        — either Arduino's own 15s grace (has valid hr/spo2) OR
+  //                   backend grace period (may have valid hr/spo2 from last_good)
+  //   "no_finger"   — no finger, grace expired on both Arduino + backend
+  //   "initialising"— sensor warming up, no hr/spo2
+  //
+  // Rule: if signal is "weak" AND hr/spo2 are valid numbers, trust them directly
+  // (Arduino's grace — do NOT double-wrap in our own grace). Only activate our
+  // frontend grace for "no_finger"/"initialising" where hr/spo2 are truly absent.
   const applyVitalsUpdate = React.useCallback((rawPayload, connected = true) => {
     const next = sanitizeVitalsPayload(rawPayload, connected);
     if (!next) return;
@@ -226,43 +239,56 @@ function VitalsSection({ initialData = null }) {
     const signal = next.signal || "na";
     const now = Date.now();
 
-    if (signal === "ok" || signal === "weak") {
-      // Valid finger signal — record last known good HR/SpO2 if present
-      if (next.hr != null && next.spo2 != null) {
-        lastGoodHrSpo2Ref.current = { hr: next.hr, spo2: next.spo2, ts: now };
-      }
+    if (signal === "ok" || (signal === "weak" && next.hr != null && next.spo2 != null)) {
+      // Live or Arduino-grace reading with real values — store as last-good, display directly.
+      // temp is always included in last-good so it survives no_finger transitions.
+      lastGoodHrSpo2Ref.current = {
+        hr: next.hr,
+        spo2: next.spo2,
+        temp: next.temp ?? lastGoodHrSpo2Ref.current.temp,
+        ts: now,
+      };
       setInGracePeriod(false);
       setData(next);
-    } else if (signal === "no_finger" || signal === "initialising") {
-      // FIX 2: Finger removed — check if we're still within the grace window
-      const { hr: lastHr, spo2: lastSpo2, ts: lastTs } = lastGoodHrSpo2Ref.current;
+    } else if (
+      signal === "no_finger" ||
+      signal === "initialising" ||
+      (signal === "weak" && (next.hr == null || next.spo2 == null))
+    ) {
+      // Finger absent (or backend-weak with no values) — activate frontend grace period.
+      const { hr: lastHr, spo2: lastSpo2, temp: lastTemp, ts: lastTs } = lastGoodHrSpo2Ref.current;
       const graceMsElapsed = now - lastTs;
 
+      // Preserve last known temp even if the incoming payload has null temp
+      const displayTemp = next.temp ?? lastTemp ?? null;
+
       if (lastHr != null && lastSpo2 != null && graceMsElapsed < WEAK_SIGNAL_GRACE_MS) {
-        // Still within grace period — keep last HR/SpO2 visible, show "Weak Signal"
+        // Within frontend grace — keep last HR/SpO2 + temp visible, show "Weak Signal"
         setData({
           ...next,
           hr: lastHr,
           spo2: lastSpo2,
+          temp: displayTemp,
           hr_alert: 0,
           spo2_alert: 0,
-          signal: "weak", // render as "weak" so HR/SpO2 cards stay active
+          signal: "weak",
         });
         setInGracePeriod(true);
       } else {
-        // Grace expired — clear HR/SpO2, keep temp
+        // Grace expired — clear HR/SpO2 but always keep temp
         setData({
           ...next,
           hr: null,
           spo2: null,
+          temp: displayTemp,
           hr_alert: 0,
           spo2_alert: 0,
         });
         setInGracePeriod(false);
-        lastGoodHrSpo2Ref.current = { hr: null, spo2: null, ts: 0 };
+        lastGoodHrSpo2Ref.current = { hr: null, spo2: null, temp: displayTemp, ts: 0 };
       }
     } else {
-      // Any other state (disconnected, no_device, etc.)
+      // Any other state (disconnected, no_device, etc.) — pass through
       setData(next);
       setInGracePeriod(false);
     }

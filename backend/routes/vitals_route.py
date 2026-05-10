@@ -296,9 +296,21 @@ def _device_assigned_for_patient(patient_id: int) -> bool:
 
 
 def _clean_payload_for_signal(payload):
+    """
+    Sanitise a vitals payload based on signal state.
+
+    Rules:
+    - "no_finger" / any signal that is not "ok" or "weak":
+        Clear HR and SpO2 only. Temperature and temp_alert are NEVER
+        cleared by signal state — the DS18B20 reads continuously
+        regardless of finger placement.
+    - All signals: validate each vital independently. Temp threshold
+        is >= 10°C (plausible ambient minimum for a DS18B20 probe);
+        a reading of 30.37°C is valid and must not be rejected.
+    """
     signal = str(payload.get("signal") or "na")
-    
-    # If no finger or invalid signal, only discard HR and SpO2. Keep Temp.
+
+    # BUG FIX 1a: Only clear HR/SpO2 on no_finger — never touch temp.
     if signal == "no_finger" or signal not in ("ok", "weak"):
         payload.update({
             "hr": None,
@@ -306,11 +318,15 @@ def _clean_payload_for_signal(payload):
             "hr_alert": 0,
             "spo2_alert": 0,
         })
+        # Explicitly do NOT clear temp or temp_alert here.
 
     validators = {
         "hr": lambda value: value > 0,
         "spo2": lambda value: value > 0,
-        "temp": lambda value: value >= 32,
+        # BUG FIX 1b: threshold changed from >= 32 to >= 10.
+        # 30.37°C is a valid near-body ambient reading from DS18B20
+        # and must never be rejected by this validator.
+        "temp": lambda value: value >= 10,
     }
     alert_keys = {"hr": "hr_alert", "spo2": "spo2_alert", "temp": "temp_alert"}
 
@@ -319,14 +335,14 @@ def _clean_payload_for_signal(payload):
             payload[key] = None
             payload[alert_keys[key]] = 0
             continue
-            
+
         try:
             value = float(payload[key])
         except (TypeError, ValueError):
             payload[key] = None
             payload[alert_keys[key]] = 0
             continue
-            
+
         if not is_valid(value):
             payload[key] = None
             payload[alert_keys[key]] = 0
@@ -392,8 +408,8 @@ def _resolve_target_patient_id(user: User, requested_patient_id):
 
 
 def check_and_trigger_alerts(patient_id, data):
-    # Allow alerts for temperature even if finger is not present.
-    # HR/SpO2 alerts will naturally skip if their values are None.
+    # Temperature alerts fire even when finger is absent (DS18B20 is independent).
+    # HR/SpO2 alerts naturally skip when their values are None.
     signal = str(data.get("signal") or "na")
     if signal not in ("ok", "weak", "no_finger"):
         return
@@ -487,28 +503,51 @@ def receive_vitals():
         "last_seen_at": _serialize_timestamp(now),
         "connected": True,
     }
-    
+
     signal_str = str(payload.get("signal") or "na")
-    current_app.logger.warning(f"[VITALS_INGEST] Incoming raw patient_id={patient_id} signal={signal_str} hr={data.get('hr')} spo2={data.get('spo2')} temp={data.get('temp')}")
-    
+    current_app.logger.warning(
+        f"[VITALS_INGEST] Incoming raw patient_id={patient_id} signal={signal_str} "
+        f"hr={data.get('hr')} spo2={data.get('spo2')} temp={data.get('temp')}"
+    )
+
     with _vitals_lock:
+        # BUG FIX 2a: Only enter the last-good / grace-period block for "no_finger".
+        # When signal is "weak" AND hr is already a valid nonzero number, the Arduino
+        # is already doing its own 15s grace — trust those values and skip this block
+        # entirely to avoid double-wrapping the grace period logic.
+        hr_value = payload.get("hr")
+        try:
+            hr_numeric = float(hr_value) if hr_value is not None else 0
+        except (TypeError, ValueError):
+            hr_numeric = 0
+
+        is_arduino_grace_weak = signal_str == "weak" and hr_numeric > 0
+
         if signal_str == "ok":
+            # BUG FIX 1c: Save temp in last-good vitals so it can be restored on no_finger.
             if payload.get("hr") and payload.get("spo2"):
                 _last_good_vitals_by_patient[patient_id] = {
                     "hr": payload.get("hr"),
                     "spo2": payload.get("spo2"),
-                    "ts": now
+                    "temp": payload.get("temp"),  # FIX: was missing — temp never restored
+                    "ts": now,
                 }
-        elif signal_str in ("no_finger", "weak") or not payload.get("hr"):
+        elif not is_arduino_grace_weak and (
+            signal_str == "no_finger" or not payload.get("hr")
+        ):
+            # Backend grace period — only for genuine no_finger / missing HR.
             last_good = _last_good_vitals_by_patient.get(patient_id)
             if last_good and (now - last_good["ts"]) < timedelta(seconds=15):
                 payload["hr"] = last_good["hr"]
                 payload["spo2"] = last_good["spo2"]
+                # BUG FIX 1d: Restore temp from last_good (was never done before).
+                if last_good.get("temp") is not None:
+                    payload["temp"] = last_good["temp"]
                 payload["signal"] = "weak"
             else:
                 payload["signal"] = "no_finger"
 
-    # Process decoupling and cleanup
+    # Sanitise and validate each vital for the resolved signal
     payload = _clean_payload_for_signal(payload)
 
     with _vitals_lock:
@@ -516,8 +555,11 @@ def receive_vitals():
         if payload["signal"] in ("ok", "weak", "no_finger"):
             _history_by_patient[patient_id].append(dict(payload))
 
-    current_app.logger.warning(f"[VITALS_INGEST] Cleaned payload for patient_id={patient_id}: signal={payload['signal']} hr={payload['hr']} temp={payload['temp']}")
-    
+    current_app.logger.warning(
+        f"[VITALS_INGEST] Cleaned payload for patient_id={patient_id}: "
+        f"signal={payload['signal']} hr={payload['hr']} temp={payload['temp']}"
+    )
+
     if presented_device_id:
         device = _find_registered_device(presented_device_id)
         if device:
@@ -554,7 +596,7 @@ def get_latest():
         return jsonify({"connected": False, "signal": "no_device", "deviceAssigned": False}), 200
 
     latest = _latest_snapshot(target_patient_id)
-    
+
     if latest:
         latest["deviceAssigned"] = True
         return jsonify(latest), 200
