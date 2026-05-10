@@ -296,16 +296,15 @@ def _device_assigned_for_patient(patient_id: int) -> bool:
 
 def _clean_payload_for_signal(payload):
     signal = str(payload.get("signal") or "na")
+    
+    # If no finger or invalid signal, only discard HR and SpO2. Keep Temp.
     if signal == "no_finger" or signal not in ("ok", "weak"):
         payload.update({
             "hr": None,
             "spo2": None,
-            "temp": None,
             "hr_alert": 0,
             "spo2_alert": 0,
-            "temp_alert": 0,
         })
-        return payload
 
     validators = {
         "hr": lambda value: value > 0,
@@ -315,12 +314,18 @@ def _clean_payload_for_signal(payload):
     alert_keys = {"hr": "hr_alert", "spo2": "spo2_alert", "temp": "temp_alert"}
 
     for key, is_valid in validators.items():
+        if payload.get(key) is None:
+            payload[key] = None
+            payload[alert_keys[key]] = 0
+            continue
+            
         try:
             value = float(payload[key])
         except (TypeError, ValueError):
             payload[key] = None
             payload[alert_keys[key]] = 0
             continue
+            
         if not is_valid(value):
             payload[key] = None
             payload[alert_keys[key]] = 0
@@ -482,7 +487,7 @@ def receive_vitals():
 
     with _vitals_lock:
         _latest_by_patient[patient_id] = payload
-        if payload["signal"] in ("ok", "weak"):
+        if payload["signal"] in ("ok", "weak", "no_finger"):
             _history_by_patient[patient_id].append(dict(payload))
 
     if presented_device_id:
