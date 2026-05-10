@@ -1,5 +1,5 @@
 import React from 'react';
-import { FileText, Eye, Trash2, Download, User, ShieldCheck } from 'lucide-react';
+import { FileText, Trash2, Download, User, ShieldCheck } from 'lucide-react';
 
 const getBadgeClass = (category) => {
     if (!category) return 'badge-other';
@@ -142,13 +142,6 @@ const MedicalRecordTable = ({ records, onView, onDelete, onDownload, loading, is
                             </td>
                             <td>
                                 <div className="action-buttons">
-                                    <button 
-                                        className="action-btn view" 
-                                        onClick={() => onView(record)} 
-                                        title="View"
-                                    >
-                                        <Eye size={18} />
-                                    </button>
                                     <button 
                                         className="action-btn download" 
                                         onClick={() => onDownload(record)} 

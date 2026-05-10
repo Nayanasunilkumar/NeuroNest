@@ -191,6 +191,25 @@ const Profile = () => {
     return (weight / (h * h)).toFixed(1);
   };
 
+  const handleDownloadReport = async () => {
+    try {
+      const response = await api.post(`/api/patient/settings/export-report`, {}, {
+        responseType: 'blob'
+      });
+      
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `NeuroNest_Medical_Report_${profile.full_name.replace(/\s+/g, '_')}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (error) {
+      console.error("Report download failed:", error);
+      alert("Failed to generate report. Please try again later.");
+    }
+  };
+
   if (loading || !profile) {
     return <div className="patient-profile-page-wrapper">Loading dashboard...</div>;
   }
@@ -274,7 +293,7 @@ const Profile = () => {
                 <button onClick={startEditing} className="btn-premium-action btn-premium-primary">
                   <Edit2 size={18} /> Edit Profile
                 </button>
-                <button className="btn-premium-action">
+                <button onClick={handleDownloadReport} className="btn-premium-action">
                   <Download size={18} /> Download Records
                 </button>
               </div>

@@ -1222,9 +1222,15 @@
   color: var(--text-primary, #1e293b);
 }
 
-.action-btn.download:hover {
+.action-btn.download {
   color: #3b82f6;
-  background: rgba(59, 130, 246, 0.1);
+  background: rgba(59, 130, 246, 0.08);
+}
+
+.action-btn.download:hover {
+  color: #2563eb;
+  background: rgba(59, 130, 246, 0.15);
+  transform: scale(1.1);
 }
 .action-btn.delete:hover {
   color: #ef4444;
