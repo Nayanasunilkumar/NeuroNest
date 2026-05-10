@@ -1,7 +1,8 @@
 import json
+import mimetypes
 from datetime import datetime
 
-from flask import Blueprint, jsonify, request, redirect
+from flask import Blueprint, Response, jsonify, request, stream_with_context
 from flask_jwt_extended import get_jwt, get_jwt_identity, jwt_required
 from sqlalchemy import func
 from sqlalchemy.orm import joinedload
@@ -48,6 +49,26 @@ def _require_patient():
     if (claims.get("role") or "").lower() != "patient":
         return jsonify({"message": "Access denied"}), 403
     return None
+
+
+def _record_extension(value):
+    file_type = (value or "").strip().lower()
+    if not file_type:
+        return ""
+    if "pdf" in file_type:
+        return "pdf"
+    if "png" in file_type:
+        return "png"
+    if "jpeg" in file_type or "jpg" in file_type:
+        return "jpg"
+    if "wordprocessingml" in file_type or "docx" in file_type:
+        return "docx"
+    if "msword" in file_type or file_type == "doc":
+        return "doc"
+    if "/" not in file_type and file_type.isalnum():
+        return file_type
+    return ""
+
 
 def _verify_patient_access(patient_id):
     actor_id, actor_role = _actor_info()
@@ -402,9 +423,35 @@ def download_medical_record(record_id, patient_id=None):
     if not record:
         return jsonify({"message": "Record not found"}), 404
 
-    # Cloudinary URLs are direct — redirect the client
     if record.file_path and record.file_path.startswith('http'):
-        return redirect(record.file_path)
+        import requests as http_requests
+
+        try:
+            resp = http_requests.get(record.file_path, stream=True, timeout=30)
+            if resp.status_code >= 400:
+                return jsonify({"message": "File download failed"}), resp.status_code
+
+            content_type = resp.headers.get("content-type") or mimetypes.guess_type(record.file_path)[0] or "application/octet-stream"
+            ext = _record_extension(record.file_type) or _record_extension(mimetypes.guess_extension(content_type))
+            filename_base = secure_filename(record.title or "Medical_Record") or "Medical_Record"
+            filename = filename_base if not ext or filename_base.lower().endswith(f".{ext}") else f"{filename_base}.{ext}"
+
+            def generate():
+                for chunk in resp.iter_content(chunk_size=8192):
+                    if chunk:
+                        yield chunk
+
+            return Response(
+                stream_with_context(generate()),
+                status=200,
+                content_type=content_type,
+                headers={
+                    "Content-Disposition": f'attachment; filename="{filename}"',
+                    "Cache-Control": "private, max-age=300",
+                },
+            )
+        except Exception as exc:
+            return jsonify({"message": f"File download failed: {str(exc)}"}), 500
 
     return jsonify({"message": "File not available"}), 404
 

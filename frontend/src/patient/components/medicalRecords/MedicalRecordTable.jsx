@@ -20,7 +20,7 @@ const formatCategory = (category) => {
     return category;
 };
 
-const MedicalRecordTable = ({ records, onView, onDelete, onDownload, loading, isDoctorView = false }) => {
+const MedicalRecordTable = ({ records, onDelete, onDownload, loading, isDoctorView = false }) => {
     if (loading) {
         return (
             <div className="records-table-container">
@@ -53,7 +53,6 @@ const MedicalRecordTable = ({ records, onView, onDelete, onDownload, loading, is
                                 <td><div className="h-6 bg-gray-100 rounded-full w-24"></div></td>
                                 <td>
                                     <div className="flex gap-2">
-                                        <div className="w-8 h-8 bg-gray-100 rounded"></div>
                                         <div className="w-8 h-8 bg-gray-100 rounded"></div>
                                         <div className="w-8 h-8 bg-gray-100 rounded"></div>
                                     </div>

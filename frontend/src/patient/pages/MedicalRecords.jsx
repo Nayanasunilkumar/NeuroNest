@@ -12,7 +12,6 @@ import { formatDate, calculateAgeIST as calculateAgeHelper } from "../../shared/
 import MedicalRecordTable from "../../patient/components/medicalRecords/MedicalRecordTable";
 import UploadMedicalRecordModal from "../../patient/components/medicalRecords/UploadMedicalRecordModal";
 import DeleteConfirmationModal from "../../patient/components/medicalRecords/DeleteConfirmationModal";
-import ViewMedicalRecordModal from "../../patient/components/medicalRecords/ViewMedicalRecordModal";
 import RecordFilters from "../../patient/components/medicalRecords/RecordFilters";
 
 // Services
@@ -131,8 +130,6 @@ const MedicalRecords = ({ patientId: propPatientId = null }) => {
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [recordToDelete, setRecordToDelete] = useState(null);
-  const [isViewOpen, setIsViewOpen] = useState(false);
-  const [recordToView, setRecordToView] = useState(null);
   const handleStartVideoCall = () => {
     if (!patientId) return;
     navigate(`/doctor/chat?patientId=${patientId}&startVideo=1`);
@@ -239,11 +236,6 @@ const MedicalRecords = ({ patientId: propPatientId = null }) => {
       console.error("Delete failed", err);
       alert("Failed to delete record.");
     }
-  };
-
-  const viewRecord = (record) => {
-    setRecordToView(record);
-    setIsViewOpen(true);
   };
 
   const downloadRecord = async (record) => {
@@ -615,7 +607,6 @@ const MedicalRecords = ({ patientId: propPatientId = null }) => {
               ) : (
                 <MedicalRecordTable
                   records={filteredRecords}
-                  onView={viewRecord}
                   onDelete={confirmDelete}
                   onDownload={downloadRecord}
                   loading={loading}
@@ -789,13 +780,6 @@ const MedicalRecords = ({ patientId: propPatientId = null }) => {
         onClose={() => setIsDeleteOpen(false)}
         onConfirm={handleDelete}
         record={recordToDelete}
-      />
-
-      <ViewMedicalRecordModal
-        isOpen={isViewOpen}
-        onClose={() => setIsViewOpen(false)}
-        record={recordToView}
-        patientId={patientId}
       />
 
       {canManageClinical && allergyFormOpen && (

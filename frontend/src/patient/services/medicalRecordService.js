@@ -124,6 +124,23 @@ const getRecordViewUrl = async (recordId, patientId = null) => {
     return response.data; // { file_url, file_type, title }
 };
 
+const extensionFromType = (value) => {
+  const type = String(value || "").toLowerCase();
+  if (!type) return "";
+  if (type.includes("pdf")) return "pdf";
+  if (type.includes("png")) return "png";
+  if (type.includes("jpeg") || type.includes("jpg")) return "jpg";
+  if (type.includes("wordprocessingml") || type.includes("docx")) return "docx";
+  if (type.includes("msword") || type === "doc") return "doc";
+  if (!type.includes("/") && /^[a-z0-9]+$/.test(type)) return type;
+  return "";
+};
+
+const filenameFromDisposition = (disposition) => {
+  const match = String(disposition || "").match(/filename\*?=(?:UTF-8''|")?([^";]+)/i);
+  return match ? decodeURIComponent(match[1].replace(/"/g, "").trim()) : "";
+};
+
 
 // Download Record
 const downloadRecord = async (recordId, title, fileType, patientId = null) => {
@@ -143,11 +160,12 @@ const downloadRecord = async (recordId, title, fileType, patientId = null) => {
     const link = document.createElement('a');
     link.href = fileURL;
     
-    let ext = fileType || response.headers["content-type"]?.split("/")[1] || "pdf";
-    ext = ext.replace(/[^a-z0-9]/gi, "").toLowerCase();
-    if (ext === 'jpeg') ext = 'jpg';
+    const headerFilename = filenameFromDisposition(response.headers["content-disposition"]);
+    const ext = extensionFromType(fileType) || extensionFromType(response.headers["content-type"]) || "pdf";
+    const safeTitle = (title || "Medical_Record").replace(/\s+/g, "_").replace(/[^a-z0-9_.-]/gi, "");
+    const fallbackFilename = safeTitle.toLowerCase().endsWith(`.${ext}`) ? safeTitle : `${safeTitle}.${ext}`;
     
-    link.setAttribute('download', `${(title || 'Medical_Record').replace(/\s+/g, '_')}.${ext}`);
+    link.setAttribute('download', headerFilename || fallbackFilename);
     document.body.appendChild(link);
     link.click();
     link.parentNode.removeChild(link);
