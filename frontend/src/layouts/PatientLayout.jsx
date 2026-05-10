@@ -154,47 +154,44 @@ const PatientLayout = () => {
     return (
         <div className="vh-100 d-flex flex-column overflow-hidden patient-layout-root" style={{ transition: 'all 0.3s' }}>
             {/* Navbar */}
-            <header className="navbar navbar-expand-lg sticky-top border-bottom shadow-sm px-3" style={{ height: '68px', zIndex: 1050, background: 'var(--nn-nav-bg)', backdropFilter: 'blur(18px)', borderColor: 'var(--nn-border)' }}>
-                <div className="container-fluid align-items-center flex-nowrap">
+            <header className="navbar-premium sticky-top" style={{ zIndex: 1050 }}>
+                <div className="container-fluid h-100 d-flex align-items-center justify-content-between px-4">
                     {/* Left: Branding */}
-                    <div className="d-flex align-items-center flex-shrink-0 me-3 me-xl-4">
-                        <span className="h4 fw-black mb-0 text-primary" style={{ letterSpacing: '-0.05em' }}>{(platformName || 'NeuroNest').toUpperCase()}</span>
+                    <div className="d-flex align-items-center flex-shrink-0">
+                        <Link to="/patient/dashboard" className="text-decoration-none d-flex align-items-center">
+                            <span className="logo-text">{(platformName || 'NeuroNest').toUpperCase()}</span>
+                        </Link>
                     </div>
 
                     {/* Center: Dynamic Island Navigation */}
-                    <div className="d-none d-lg-flex overflow-hidden" style={{ minWidth: 0, flexShrink: 1 }}>
+                    <div className="nav-island-center d-none d-lg-flex">
                         <DynamicIslandNav role="patient" />
                     </div>
 
-                    {/* Spacer */}
-                    <div className="flex-grow-1 d-none d-lg-block"></div>
-
                     {/* Right Actions */}
-                    <div className="d-flex align-items-center justify-content-end gap-2 gap-md-3 flex-shrink-0 ms-3">
+                    <div className="d-flex align-items-center gap-3 flex-shrink-0">
                         <button 
-                            className="btn p-2 rounded-circle border-0 d-flex align-items-center justify-content-center transition-all patient-action-btn"
+                            className="premium-action-btn"
                             onClick={toggleTheme}
                             title="Toggle Theme"
-                            style={{ width: '40px', height: '40px' }}
                         >
                             {darkMode ? <Sun size={20} /> : <Moon size={20} />}
                         </button>
 
                         <div className="position-relative" ref={notificationRef}>
                             <button 
-                                className={`btn p-2 rounded-circle border-0 d-none d-sm-flex align-items-center justify-content-center position-relative transition-all patient-action-btn ${showNotifications ? 'bg-primary bg-opacity-10' : ''}`} 
-                                style={{ width: '40px', height: '40px' }}
+                                className={`premium-action-btn ${showNotifications ? 'active' : ''}`}
                                 onClick={() => setShowNotifications(!showNotifications)}
+                                title="Notifications"
                             >
                                 <Bell size={20} />
                                 {alertCount > 0 && (
-                                    <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger border border-2 border-white" style={{ fontSize: '0.62rem', padding: '0.25em 0.5em', minWidth: '1.6em' }}>
+                                    <span className="notification-badge">
                                         {alertCount > 99 ? '99+' : alertCount}
                                     </span>
                                 )}
                             </button>
 
-                            {/* Notifications Dropdown */}
                             {showNotifications && (
                                 <NotificationPanel 
                                     notifications={alerts}
@@ -213,28 +210,14 @@ const PatientLayout = () => {
                             )}
                         </div>
 
-                        <div className="position-relative" ref={userMenuRef}>
-                            <button
-                                className="patient-user-menu-btn"
-                                type="button"
-                                onClick={() => setShowUserMenu((open) => !open)}
-                                aria-label="Open user menu"
-                                aria-expanded={showUserMenu}
-                            >
-                                <span className="patient-user-avatar"><UserCircle size={21} /></span>
-                                <ChevronDown size={14} />
-                            </button>
-                            {showUserMenu && (
-                                <div className="patient-user-dropdown">
-                                    <button type="button" onClick={() => { setShowUserMenu(false); navigate('/patient/profile'); }}>
-                                        <UserCircle size={16} /> Profile
-                                    </button>
-                                    <button type="button" className="danger" onClick={logout}>
-                                        <LogOut size={16} /> Logout
-                                    </button>
-                                </div>
-                            )}
-                        </div>
+                        {/* Dedicated Logout Button */}
+                        <button 
+                            className="premium-action-btn logout"
+                            onClick={logout}
+                            title="Logout"
+                        >
+                            <LogOut size={20} />
+                        </button>
                     </div>
                 </div>
             </header>
@@ -259,9 +242,86 @@ const PatientLayout = () => {
             </div>
 
             <style>{`
+                .navbar-premium {
+                    height: 80px;
+                    background: rgba(255, 255, 255, 0.75);
+                    backdrop-filter: blur(20px);
+                    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+                    transition: all 0.3s ease;
+                }
+                .dark .navbar-premium {
+                    background: rgba(15, 23, 42, 0.75);
+                    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+                }
+                .logo-text {
+                    font-size: 1.5rem;
+                    font-weight: 950;
+                    color: #2563eb;
+                    letter-spacing: -0.05em;
+                }
+                .nav-island-center {
+                    position: absolute;
+                    left: 50%;
+                    transform: translateX(-50%);
+                }
+                .premium-action-btn {
+                    width: 44px;
+                    height: 44px;
+                    border-radius: 50%;
+                    border: 1px solid rgba(0, 0, 0, 0.05);
+                    background: rgba(255, 255, 255, 0.8);
+                    color: #64748b;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+                    position: relative;
+                }
+                .dark .premium-action-btn {
+                    background: rgba(30, 41, 59, 0.8);
+                    border-color: rgba(255, 255, 255, 0.05);
+                    color: #94a3b8;
+                }
+                .premium-action-btn:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+                    color: #2563eb;
+                    background: #fff;
+                    border-color: rgba(37, 99, 235, 0.1);
+                }
+                .dark .premium-action-btn:hover {
+                    background: #1e293b;
+                    color: #60a5fa;
+                    border-color: rgba(96, 165, 250, 0.1);
+                }
+                .premium-action-btn.active {
+                    background: rgba(37, 99, 235, 0.05);
+                    color: #2563eb;
+                    border-color: rgba(37, 99, 235, 0.2);
+                }
+                .premium-action-btn.logout:hover {
+                    background: rgba(239, 68, 68, 0.05);
+                    color: #ef4444;
+                    border-color: rgba(239, 68, 68, 0.1);
+                }
+                .notification-badge {
+                    position: absolute;
+                    top: 0;
+                    right: 0;
+                    transform: translate(25%, -25%);
+                    background: #ef4444;
+                    color: white;
+                    font-size: 0.65rem;
+                    font-weight: 700;
+                    padding: 2px 5px;
+                    border-radius: 999px;
+                    border: 2px solid #fff;
+                    min-width: 18px;
+                }
+                .dark .notification-badge {
+                    border-color: #0f172a;
+                }
                 .fw-black { font-weight: 950; }
-                .shadow-xs { box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-                .max-w-400 { max-width: 400px; }
                 .max-w-1600 { max-width: 1600px; }
                 .patient-layout-root {
                     background: #f4f7fb;
@@ -271,103 +331,6 @@ const PatientLayout = () => {
                         radial-gradient(1200px 420px at 80% -10%, rgba(59, 130, 246, 0.14), transparent 55%),
                         radial-gradient(900px 360px at 10% 0%, rgba(99, 102, 241, 0.12), transparent 58%),
                         var(--nn-bg);
-                }
-                .patient-action-btn {
-                    border: 1px solid var(--nn-border) !important;
-                    color: var(--nn-text-secondary);
-                    background: var(--nn-surface);
-                }
-                .patient-action-btn:hover {
-                    color: var(--nn-text-main);
-                    background: var(--nn-surface-secondary);
-                    border-color: var(--nn-border-strong) !important;
-                    transform: translateY(-1px);
-                }
-                .patient-user-menu-btn {
-                    min-width: 52px;
-                    height: 40px;
-                    display: inline-flex;
-                    align-items: center;
-                    justify-content: center;
-                    gap: 6px;
-                    border: 1px solid var(--nn-border);
-                    border-radius: 999px;
-                    background: var(--nn-surface);
-                    color: var(--nn-text-secondary);
-                    transition: all 0.2s ease;
-                }
-                .patient-user-menu-btn:hover {
-                    color: var(--nn-text-main);
-                    background: var(--nn-surface-secondary);
-                    transform: translateY(-1px);
-                }
-                .patient-user-avatar {
-                    width: 28px;
-                    height: 28px;
-                    border-radius: 50%;
-                    display: inline-flex;
-                    align-items: center;
-                    justify-content: center;
-                    background: #eef4ff;
-                    color: #2563eb;
-                }
-                .patient-user-dropdown {
-                    position: absolute;
-                    top: calc(100% + 10px);
-                    right: 0;
-                    min-width: 170px;
-                    padding: 8px;
-                    border: 1px solid var(--nn-border);
-                    border-radius: 16px;
-                    background: color-mix(in srgb, var(--nn-surface) 96%, transparent);
-                    box-shadow: 0 18px 38px rgba(15, 23, 42, 0.14);
-                    backdrop-filter: blur(18px);
-                    animation: fadeInSlide 0.18s ease both;
-                }
-                .patient-user-dropdown button {
-                    width: 100%;
-                    min-height: 38px;
-                    display: flex;
-                    align-items: center;
-                    gap: 9px;
-                    border: 0;
-                    border-radius: 11px;
-                    background: transparent;
-                    color: var(--nn-text-main);
-                    font-size: 0.88rem;
-                    font-weight: 800;
-                    padding: 0 10px;
-                    text-align: left;
-                }
-                .patient-user-dropdown button:hover {
-                    background: var(--nn-surface-secondary);
-                }
-                .patient-user-dropdown button.danger {
-                    color: #dc3545;
-                }
-                .dark .patient-action-btn {
-                    background: color-mix(in srgb, var(--nn-surface) 85%, transparent);
-                    color: #cbd5e1;
-                    border-color: #334155 !important;
-                    box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
-                }
-                .dark .patient-action-btn:hover {
-                    background: color-mix(in srgb, var(--nn-surface-secondary) 88%, #0b1220);
-                    color: #f8fafc;
-                    border-color: #475569 !important;
-                }
-                .btn-danger-soft { 
-                    background-color: rgba(220, 53, 69, 0.1); 
-                    color: #dc3545; 
-                    transition: all 0.2s;
-                }
-                .btn-danger-soft:hover { 
-                    background-color: #dc3545; 
-                    color: white; 
-                    transform: scale(1.05);
-                }
-                .hover-bg:hover {
-                    background: ${darkMode ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)'} !important;
                 }
                 .patient-page-shell {
                     background: var(--nn-surface);

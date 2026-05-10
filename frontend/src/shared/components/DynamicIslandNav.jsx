@@ -112,34 +112,33 @@ const DynamicIslandNav = ({ role = "patient" }) => {
                     display: flex;
                     justify-content: center;
                     align-items: center;
-                    width: 100%;
-                    padding: 0 1rem;
-                    pointer-events: none; /* Let clicks pass through to background if needed */
+                    width: auto;
+                    padding: 0;
+                    pointer-events: none;
                 }
 
                 .dynamic-island-wrapper {
                     display: flex;
                     align-items: center;
-                    background: rgba(15, 23, 42, 0.86);
-                    backdrop-filter: blur(24px);
-                    border: 1px solid rgba(255, 255, 255, 0.1);
+                    background: rgba(15, 23, 42, 0.9);
+                    backdrop-filter: blur(20px);
+                    border: 1px solid rgba(255, 255, 255, 0.08);
                     border-radius: 999px;
-                    padding: 5px;
-                    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4), 
-                                0 0 0 1px rgba(255, 255, 255, 0.05);
+                    padding: 4px;
+                    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
                     max-width: 100%;
                     width: fit-content;
                     pointer-events: auto;
                     position: relative;
-                    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+                    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
                     overflow: hidden;
                     box-sizing: border-box;
                 }
 
                 .dynamic-island-wrapper.light {
-                    background: rgba(255, 255, 255, 0.84);
-                    border: 1px solid rgba(0, 0, 0, 0.08);
-                    box-shadow: 0 12px 34px rgba(15, 23, 42, 0.08);
+                    background: rgba(255, 255, 255, 0.8);
+                    border: 1px solid rgba(0, 0, 0, 0.05);
+                    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
                 }
 
                 .dynamic-island-wrapper.admin.dark {
@@ -157,11 +156,11 @@ const DynamicIslandNav = ({ role = "patient" }) => {
                 .island-nav {
                     display: flex;
                     align-items: center;
-                    gap: 6px;
+                    gap: 4px;
                     overflow-x: auto;
                     scrollbar-width: none;
                     -ms-overflow-style: none;
-                    padding: 0 8px;
+                    padding: 0 4px;
                 }
 
                 .island-nav::-webkit-scrollbar {
@@ -171,14 +170,14 @@ const DynamicIslandNav = ({ role = "patient" }) => {
                 .island-item {
                     display: flex;
                     align-items: center;
-                    gap: 10px;
-                    padding: 8px 16px;
+                    gap: 8px;
+                    padding: 7px 14px;
                     border-radius: 999px;
                     text-decoration: none;
-                    color: rgba(255, 255, 255, 0.6);
-                    font-weight: 700;
-                    font-size: 0.84rem;
-                    transition: all 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+                    color: rgba(255, 255, 255, 0.5);
+                    font-weight: 500;
+                    font-size: 0.9rem;
+                    transition: all 0.2s ease;
                     white-space: nowrap;
                     position: relative;
                 }
@@ -198,15 +197,15 @@ const DynamicIslandNav = ({ role = "patient" }) => {
                 }
 
                 .island-item.active {
-                    color: #60a5fa;
-                    background: rgba(96, 165, 250, 0.16);
-                    box-shadow: inset 0 0 0 1px rgba(96, 165, 250, 0.14), 0 8px 22px rgba(37, 99, 235, 0.14);
+                    color: #2563eb;
+                    background: rgba(37, 99, 235, 0.08);
+                    box-shadow: inset 0 0 0 1px rgba(37, 99, 235, 0.1);
                 }
 
                 .light .island-item.active {
                     color: #2563eb;
-                    background: #EEF4FF;
-                    box-shadow: inset 0 0 0 1px rgba(37,99,235,0.08), 0 8px 18px rgba(37,99,235,0.11);
+                    background: rgba(37, 99, 235, 0.06);
+                    box-shadow: inset 0 0 0 1px rgba(37, 99, 235, 0.1);
                 }
 
                 .admin.dark .island-item.active {
