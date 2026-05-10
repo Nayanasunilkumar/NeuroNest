@@ -222,7 +222,7 @@ const Profile = () => {
                 {profile.profile_image ? (
                   <img src={toAssetUrl(profile.profile_image)} alt={profile.full_name} />
                 ) : (
-                  <div className="hero-avatar-placeholder"><User size={60} /></div>
+                  <div className="hero-avatar-placeholder"><User size={64} /></div>
                 )}
               </div>
               <label className="camera-overlay">
@@ -234,14 +234,23 @@ const Profile = () => {
             <div className="hero-identity-block">
               <h1 className="hero-name">{profile.full_name}</h1>
               <div className="hero-meta-row">
-                <span className="hero-meta-item"><User size={16} /> {profile.gender}</span>
-                <span className="hero-meta-item"><Calendar size={16} /> {age} Years</span>
-                <span className="hero-meta-item"><MapPin size={16} /> {profile.city}</span>
+                <span className="hero-meta-item"><User size={18} /> {profile.gender}</span>
+                <span className="hero-meta-item"><Calendar size={18} /> {age} Years</span>
+                <span className="hero-meta-item"><MapPin size={18} /> {profile.city || 'Location not set'}</span>
+                <span className="hero-meta-item"><Phone size={18} /> {profile.phone}</span>
+                <span className="hero-meta-item"><Mail size={18} /> {profile.email}</span>
               </div>
+              
               <div className="hero-stats-chips">
                 <div className="stat-chip">
-                  <span className="stat-chip-label">BMI</span>
+                  <span className="stat-chip-label">BMI Index</span>
                   <span className="stat-chip-value">{bmi}</span>
+                  <div className="bmi-progress-container">
+                    <div className="bmi-bar-bg">
+                      <div className="bmi-bar-fill"></div>
+                      <div className="bmi-pointer" style={{ left: `${Math.min(Math.max((bmi - 15) / 20 * 100, 0), 100)}%` }}></div>
+                    </div>
+                  </div>
                 </div>
                 <div className="stat-chip">
                   <span className="stat-chip-label">Weight</span>
@@ -252,7 +261,7 @@ const Profile = () => {
                   <span className="stat-chip-value">{profile.height_cm}<span className="stat-chip-unit">cm</span></span>
                 </div>
                 <div className="stat-chip">
-                  <span className="stat-chip-label">Blood</span>
+                  <span className="stat-chip-label">Blood Group</span>
                   <span className="stat-chip-value">{profile.blood_group}</span>
                 </div>
               </div>
@@ -266,13 +275,13 @@ const Profile = () => {
                   <Edit2 size={18} /> Edit Profile
                 </button>
                 <button className="btn-premium-action">
-                  <Download size={18} /> Records
+                  <Download size={18} /> Download Records
                 </button>
               </div>
             ) : (
               <div className="hero-action-buttons">
                 <button onClick={handleSave} className="btn-premium-action btn-premium-primary">
-                  <Save size={18} /> Save
+                  <Save size={18} /> Save Changes
                 </button>
                 <button onClick={cancelEdit} className="btn-premium-action">
                   <X size={18} /> Cancel
@@ -281,18 +290,19 @@ const Profile = () => {
             )}
             <div className="medical-tags-row">
               {(clinicalData?.allergies || []).map((a, i) => (
-                <span key={i} className="medical-tag tag-allergy"><AlertCircle size={12} /> {a.allergy_name}</span>
+                <span key={i} className="medical-tag tag-allergy"><AlertCircle size={14} /> {a.allergy_name}</span>
               ))}
               {(clinicalData?.conditions || []).filter(c => c.status === 'active').map((c, i) => (
-                <span key={i} className="medical-tag tag-condition"><Heart size={12} /> {c.condition_name}</span>
+                <span key={i} className="medical-tag tag-condition"><Heart size={14} /> {c.condition_name}</span>
               ))}
+              <span className="medical-tag" style={{background: '#f1f5f9', color: '#475569'}}><ShieldAlert size={14} /> No Risks</span>
             </div>
           </div>
         </header>
 
         {editing ? (
           <div className="edit-dashboard-grid">
-            <h2 className="hero-name mb-4" style={{fontSize: '1.5rem'}}>Update Personal Information</h2>
+            <h2 className="hero-name" style={{fontSize: '1.75rem', marginBottom: '32px'}}>Update Clinical Identity</h2>
             <div className="form-grid-layout">
               <div className="form-group-custom"><label>Full Name</label><input name="full_name" value={profile.full_name} onChange={handleChange} /></div>
               <div className="form-group-custom"><label>Gender</label>
@@ -309,7 +319,7 @@ const Profile = () => {
               <div className="form-group-custom"><label>Height (cm)</label><input type="number" name="height_cm" value={profile.height_cm} onChange={handleChange} /></div>
               <div className="form-group-custom"><label>Weight (kg)</label><input type="number" name="weight_kg" value={profile.weight_kg} onChange={handleChange} /></div>
               
-              <div className="form-group-full form-group-custom mt-3"><label>Full Address</label><input name="address" value={profile.address} onChange={handleChange} /></div>
+              <div className="form-group-full form-group-custom"><label>Permanent Address</label><input name="address" value={profile.address} onChange={handleChange} /></div>
               <div className="form-group-custom"><label>Country</label>
                 <select name="country" value={profile.country} onChange={handleChange}>
                   {countries.map(c => <option key={c} value={c}>{c}</option>)}
@@ -320,186 +330,214 @@ const Profile = () => {
               <div className="form-group-custom"><label>Pincode</label><input name="pincode" value={profile.pincode} onChange={handleChange} /></div>
             </div>
             
-            <h2 className="hero-name mt-5 mb-4" style={{fontSize: '1.5rem'}}>Emergency Contacts</h2>
+            <h2 className="hero-name" style={{fontSize: '1.75rem', marginTop: '48px', marginBottom: '32px'}}>Emergency Contact Management</h2>
             {emergencyContacts.map((contact, index) => (
-              <div key={index} className="emergency-contact-display mb-3" style={{border: '1px solid var(--border-soft)'}}>
-                 <div className="form-grid-layout w-100 p-2">
+              <div key={index} className="dashboard-section-card" style={{padding: '24px', marginBottom: '20px'}}>
+                 <div className="form-grid-layout">
                     <div className="form-group-custom"><label>Contact Name</label><input name="contact_name" value={contact.contact_name} onChange={(e) => handleEmergencyChange(index, e)} /></div>
                     <div className="form-group-custom"><label>Relationship</label><input name="relationship" value={contact.relationship} onChange={(e) => handleEmergencyChange(index, e)} /></div>
                     <div className="form-group-custom"><label>Phone</label><input name="phone" value={contact.phone} onChange={(e) => handleEmergencyChange(index, e)} /></div>
-                    <button className="btn-premium-action text-danger" style={{marginTop: '28px', border: 'none'}} onClick={() => removeContact(index)}><Trash2 size={18} /> Remove</button>
+                    <div className="form-group-custom" style={{justifyContent: 'center'}}>
+                      <button className="btn-premium-action" style={{color: '#ef4444', borderColor: '#fee2e2'}} onClick={() => removeContact(index)}><Trash2 size={18} /> Remove Contact</button>
+                    </div>
                  </div>
               </div>
             ))}
-            <button className="btn-premium-action w-100 mt-3" onClick={addNewContact}><Plus size={18} /> Add New Emergency Contact</button>
+            <button className="btn-premium-action w-100" style={{borderStyle: 'dashed', height: '60px'}} onClick={addNewContact}>
+              <Plus size={20} /> Add Another Emergency Contact
+            </button>
 
             <div className="form-actions-dashboard">
-               <button onClick={cancelEdit} className="btn-premium-action">Cancel Discard</button>
-               <button onClick={handleSave} className="btn-premium-action btn-premium-primary">Save Profile Changes</button>
+               <button onClick={cancelEdit} className="btn-premium-action">Discard Changes</button>
+               <button onClick={handleSave} className="btn-premium-action btn-premium-primary">Save Clinical Profile</button>
             </div>
           </div>
         ) : (
           <>
-            {/* MAIN CONTENT AREA */}
-            <main className="dashboard-main-content">
-              
-              {/* MEDICAL CONDITIONS */}
-              <section className="dashboard-section-card">
-                <div className="card-header-flex">
-                  <div className="card-title-group">
-                    <div className="card-icon-box"><Activity size={20} /></div>
-                    <h2 className="card-title">Medical Conditions</h2>
-                  </div>
-                  <button className="btn-premium-action" onClick={() => setShowAllConditions(!showAllConditions)}>
-                    {showAllConditions ? "Show Less" : "View All"}
-                  </button>
+            {/* HEALTH OVERVIEW DASHBOARD */}
+            <section className="dashboard-overview-grid">
+              <div className="overview-card">
+                <div className="overview-card-header">
+                  <div className="overview-icon-box" style={{background: '#eff6ff', color: '#2563eb'}}><Activity size={24} /></div>
+                  <span className="overview-card-title">Conditions</span>
                 </div>
+                <div className="overview-card-value">{(clinicalData?.conditions || []).length} Active</div>
+              </div>
+              <div className="overview-card">
+                <div className="overview-card-header">
+                  <div className="overview-icon-box" style={{background: '#fef2f2', color: '#ef4444'}}><AlertCircle size={24} /></div>
+                  <span className="overview-card-title">Allergies</span>
+                </div>
+                <div className="overview-card-value">{(clinicalData?.allergies || []).length} Detected</div>
+              </div>
+              <div className="overview-card">
+                <div className="overview-card-header">
+                  <div className="overview-icon-box" style={{background: '#f0fdf4', color: '#10b981'}}><Calendar size={24} /></div>
+                  <span className="overview-card-title">Appointments</span>
+                </div>
+                <div className="overview-card-value">{(clinicalData?.timeline || []).length} Total</div>
+              </div>
+              <div className="overview-card">
+                <div className="overview-card-header">
+                  <div className="overview-icon-box" style={{background: '#fdf4ff', color: '#a855f7'}}><Heart size={24} /></div>
+                  <span className="overview-card-title">Medications</span>
+                </div>
+                <div className="overview-card-value">{(clinicalData?.medications || []).length} Prescribed</div>
+              </div>
+              <div className="overview-card">
+                <div className="overview-card-header">
+                  <div className="overview-icon-box" style={{background: '#fff7ed', color: '#f59e0b'}}><ShieldAlert size={24} /></div>
+                  <span className="overview-card-title">Emergency</span>
+                </div>
+                <div className="overview-card-value">{emergencyContacts.length} Contacts</div>
+              </div>
+              <div className="overview-card">
+                <div className="overview-card-header">
+                  <div className="overview-icon-box" style={{background: '#f0f9ff', color: '#0ea5e9'}}><FileText size={24} /></div>
+                  <span className="overview-card-title">Insurance</span>
+                </div>
+                <div className="overview-card-value">HDFC Ergo</div>
+              </div>
+            </section>
 
-                <div className="conditions-interactive-grid">
-                  {(showAllConditions ? conditionItems : conditionItems.slice(0, 4)).map((item, i) => (
-                    <div key={i} className={`medical-condition-card card-${item.severity?.toLowerCase() || 'active'}`}>
-                      <div className="condition-card-header">
-                        <h3 className="condition-name-bold">{item.condition_name || item.allergy_name}</h3>
-                        <span className={`severity-pill pill-${item.severity?.toLowerCase() || 'active'}`}>
+            <div className="profile-main-grid">
+              {/* LEFT COLUMN: CONDITIONS & TIMELINE */}
+              <div className="profile-left-col">
+                {/* MEDICAL CONDITIONS */}
+                <section className="dashboard-section-card">
+                  <div className="card-header-flex">
+                    <div className="card-title-group">
+                      <div className="card-icon-box"><Activity size={24} /></div>
+                      <h2 className="card-title">Clinical Conditions Log</h2>
+                    </div>
+                    <button className="btn-premium-action" onClick={() => setShowAllConditions(!showAllConditions)}>
+                      {showAllConditions ? "Show Less" : "View Full Log"}
+                    </button>
+                  </div>
+
+                  <div className="conditions-interactive-grid">
+                    {(showAllConditions ? conditionItems : conditionItems.slice(0, 4)).map((item, i) => (
+                      <div key={i} className={`medical-condition-card card-${item.severity?.toLowerCase() || 'active'}`}>
+                        <span className={`severity-badge badge-${item.severity?.toLowerCase() || 'active'}`}>
                           {item.severity || 'Active'}
                         </span>
-                      </div>
-                      <div className="condition-meta-info">
-                        <div className="meta-item-small"><Clock size={14} /> <strong>Diagnosed:</strong> {formatDate(item.created_at)}</div>
-                        <div className="meta-item-small"><Stethoscope size={14} /> <strong>Specialist:</strong> Dr. Specialist</div>
-                        <div className="meta-item-small"><TrendingUp size={14} /> <strong>Status:</strong> {item.status || 'Ongoing'}</div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </section>
-
-              {/* MEDICAL ACTIVITY FEED */}
-              <section className="dashboard-section-card">
-                <div className="card-header-flex">
-                  <div className="card-title-group">
-                    <div className="card-icon-box"><Clock size={20} /></div>
-                    <h2 className="card-title">Health Activity Timeline</h2>
-                  </div>
-                </div>
-
-                <div className="medical-activity-timeline">
-                  {Object.entries(groupedTimeline).map(([month, activities]) => (
-                    <div key={month} className="timeline-month-group">
-                      <div className="timeline-month-label">{month}</div>
-                      {activities.map((appt, idx) => (
-                        <div key={idx} className="timeline-activity-card">
-                          <div className="activity-icon-circle">
-                            {appt.reason?.toLowerCase().includes('video') ? <Video size={18} /> : <Stethoscope size={18} />}
-                          </div>
-                          <div className="activity-main-info">
-                            <div className="activity-title-row">
-                              <h4 className="activity-title">{appt.reason || 'General Consultation'}</h4>
-                              <span className="activity-date">{formatDate(appt.appointment_date)}</span>
-                            </div>
-                            <div className="activity-sub">Consulted with <strong>Dr. {appt.doctor_name}</strong> · {appt.status}</div>
-                          </div>
-                          <ChevronRight size={18} className="text-muted" />
+                        <h3 className="condition-name-bold" style={{marginBottom: '16px', fontSize: '1.15rem'}}>{item.condition_name || item.allergy_name}</h3>
+                        <div className="condition-meta-info" style={{gap: '12px'}}>
+                          <div className="meta-item-small"><Clock size={16} /> <span><strong>Diagnosed:</strong> {formatDate(item.created_at)}</span></div>
+                          <div className="meta-item-small"><Stethoscope size={16} /> <span><strong>Treating:</strong> Dr. Specialist</span></div>
+                          <div className="meta-item-small"><Activity size={16} /> <span><strong>Status:</strong> {item.status || 'Monitoring'}</span></div>
                         </div>
-                      ))}
-                    </div>
-                  ))}
-                </div>
-              </section>
-            </main>
-
-            {/* SIDEBAR AREA */}
-            <aside className="dashboard-sidebar">
-              
-              <div className="sidebar-summary-panel">
-                {/* HEALTH SCORE */}
-                <div className="health-score-card">
-                  <div className="score-circle-wrap">
-                    <div className="score-number">84</div>
+                      </div>
+                    ))}
+                    {conditionItems.length === 0 && (
+                      <div className="p-4 text-center text-muted w-100">No medical conditions recorded.</div>
+                    )}
                   </div>
-                  <h3 className="score-label">Health Score Index</h3>
-                  <p className="small mt-2 opacity-75">Your overall clinical health stability is Excellent.</p>
-                </div>
+                </section>
 
-                {/* QUICK SUMMARY LIST */}
-                <div className="dashboard-section-card">
-                  <h3 className="card-title mb-4" style={{fontSize: '1rem'}}>Profile Summary</h3>
-                  <div className="summary-stats-list">
-                    <div className="summary-stat-row">
-                      <div className="stat-row-left">
-                        <Heart size={16} className="stat-row-icon" />
-                        <span className="stat-row-label">Active Conditions</span>
-                      </div>
-                      <span className="stat-row-value">{clinicalData?.conditions?.length || 0}</span>
-                    </div>
-                    <div className="summary-stat-row">
-                      <div className="stat-row-left">
-                        <AlertCircle size={16} className="stat-row-icon" />
-                        <span className="stat-row-label">Allergies Detected</span>
-                      </div>
-                      <span className="stat-row-value">{clinicalData?.allergies?.length || 0}</span>
-                    </div>
-                    <div className="summary-stat-row">
-                      <div className="stat-row-left">
-                        <Clock size={16} className="stat-row-icon" />
-                        <span className="stat-row-label">Last Checkup</span>
-                      </div>
-                      <span className="stat-row-value">{formatDate(clinicalData?.timeline?.[0]?.appointment_date) || 'None'}</span>
-                    </div>
-                    <div className="summary-stat-row">
-                      <div className="stat-row-left">
-                        <ShieldAlert size={16} className="stat-row-icon" />
-                        <span className="stat-row-label">Emergency Contacts</span>
-                      </div>
-                      <span className="stat-row-value">{emergencyContacts.length}</span>
+                {/* COMPACT ACTIVITY FEED */}
+                <section className="dashboard-section-card">
+                  <div className="card-header-flex">
+                    <div className="card-title-group">
+                      <div className="card-icon-box"><TrendingUp size={24} /></div>
+                      <h2 className="card-title">Medical Activity Feed</h2>
                     </div>
                   </div>
-                </div>
 
-                {/* EMERGENCY CONTACT MINI */}
-                <div className="emergency-premium-card">
-                  <div className="emergency-header">
-                    <ShieldAlert size={20} />
-                    <span className="fw-bold">Primary Emergency Contact</span>
+                  <div className="compact-activity-feed">
+                    {Object.entries(groupedTimeline).length > 0 ? Object.entries(groupedTimeline).map(([month, activities]) => (
+                      <div key={month}>
+                        <div className="timeline-month-divider">{month}</div>
+                        {activities.map((appt, idx) => (
+                          <div key={idx} className="timeline-item">
+                            <div className="timeline-point"></div>
+                            <div className="timeline-content">
+                              <div className="timeline-header">
+                                <span className="timeline-title">{appt.reason || 'Clinical Consultation'}</span>
+                                <span className="timeline-time">{formatDate(appt.appointment_date)}</span>
+                              </div>
+                              <div className="timeline-doctor">Consulted with Dr. {appt.doctor_name} · <span style={{color: appt.status === 'completed' ? '#10b981' : '#f59e0b'}}>{appt.status}</span></div>
+                            </div>
+                            <ChevronRight size={18} style={{opacity: 0.3}} />
+                          </div>
+                        ))}
+                      </div>
+                    )) : (
+                      <div className="p-4 text-center text-muted">No recent medical activity.</div>
+                    )}
                   </div>
-                  {emergencyContacts.length > 0 ? (
-                    <div className="emergency-contact-display">
-                      <div className="emergency-avatar-mini"><User size={20} /></div>
-                      <div className="emergency-details-mini">
-                        <h4 className="emergency-name-mini">{emergencyContacts[0].contact_name}</h4>
-                        <span className="emergency-relation-pill">{emergencyContacts[0].relationship}</span>
-                      </div>
-                      <div className="emergency-actions-mini">
-                        <button className="btn-circle-action"><Phone size={14} /></button>
-                        <button className="btn-circle-action"><MessageCircle size={14} /></button>
-                      </div>
-                    </div>
-                  ) : (
-                    <p className="small text-muted mb-0">No emergency contact set.</p>
-                  )}
-                </div>
-
-                {/* CONTACT DETAILS CARD */}
-                <div className="dashboard-section-card">
-                   <h3 className="card-title mb-4" style={{fontSize: '1rem'}}>Contact Information</h3>
-                   <div className="summary-stats-list">
-                      <div className="summary-stat-row" style={{flexDirection: 'column', alignItems: 'flex-start', gap: '4px'}}>
-                         <span className="stat-row-label">Email Address</span>
-                         <span className="stat-row-value">{profile.email}</span>
-                      </div>
-                      <div className="summary-stat-row" style={{flexDirection: 'column', alignItems: 'flex-start', gap: '4px'}}>
-                         <span className="stat-row-label">Phone Number</span>
-                         <span className="stat-row-value">{profile.phone}</span>
-                      </div>
-                      <div className="summary-stat-row" style={{flexDirection: 'column', alignItems: 'flex-start', gap: '4px'}}>
-                         <span className="stat-row-label">Permanent Address</span>
-                         <span className="stat-row-value text-muted" style={{fontSize: '0.85rem'}}>{profile.address}, {profile.city}, {profile.country}</span>
-                      </div>
-                   </div>
-                </div>
-
+                </section>
               </div>
-            </aside>
+
+              {/* RIGHT COLUMN: STICKY SUMMARY */}
+              <div className="profile-right-col">
+                <div className="sidebar-sticky">
+                  {/* HEALTH SCORE */}
+                  <div className="summary-panel-card">
+                    <div className="health-score-ring">
+                      <span className="health-score-value">88</span>
+                    </div>
+                    <div style={{textAlign: 'center', marginBottom: '24px'}}>
+                      <h3 style={{fontSize: '1.25rem', fontWeight: 700, marginBottom: '8px'}}>Health Vitality Index</h3>
+                      <p style={{fontSize: '0.9rem', opacity: 0.8}}>Your clinical stability is currently within the optimal range.</p>
+                    </div>
+                    <div className="summary-list">
+                      <div className="summary-item">
+                        <span className="summary-label">Active Conditions</span>
+                        <span className="summary-value">{(clinicalData?.conditions || []).length}</span>
+                      </div>
+                      <div className="summary-item">
+                        <span className="summary-label">Next Appointment</span>
+                        <span className="summary-value">15 May 2026</span>
+                      </div>
+                      <div className="summary-item">
+                        <span className="summary-label">Blood Type</span>
+                        <span className="summary-value">{profile.blood_group}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* EMERGENCY CONTACT */}
+                  <div className="emergency-card-new">
+                    <div className="emergency-header-new">
+                      <ShieldAlert size={18} /> Primary Emergency Support
+                    </div>
+                    {emergencyContacts.length > 0 ? (
+                      <>
+                        <div className="emergency-contact-box">
+                          <div className="emergency-avatar"><User size={24} /></div>
+                          <div className="emergency-info">
+                            <h4>{emergencyContacts[0].contact_name}</h4>
+                            <span>{emergencyContacts[0].relationship}</span>
+                          </div>
+                        </div>
+                        <div className="emergency-actions">
+                          <button className="btn-emergency"><Phone size={16} /> Call</button>
+                          <button className="btn-emergency"><MessageCircle size={16} /> Message</button>
+                        </div>
+                      </>
+                    ) : (
+                      <p style={{fontSize: '0.9rem', color: '#64748b', textAlign: 'center'}}>No emergency contact configured.</p>
+                    )}
+                  </div>
+
+                  {/* QUICK INFO */}
+                  <div className="dashboard-section-card" style={{marginTop: '24px', padding: '24px'}}>
+                    <h4 style={{fontSize: '1rem', fontWeight: 700, marginBottom: '20px'}}>Contact Summary</h4>
+                    <div className="summary-list">
+                      <div className="summary-item" style={{flexDirection: 'column', alignItems: 'flex-start', gap: '4px'}}>
+                        <span className="summary-label">Email Address</span>
+                        <span className="summary-value" style={{color: 'var(--clinical-blue)'}}>{profile.email}</span>
+                      </div>
+                      <div className="summary-item" style={{flexDirection: 'column', alignItems: 'flex-start', gap: '4px'}}>
+                        <span className="summary-label">Phone Line</span>
+                        <span className="summary-value">{profile.phone}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </>
         )}
       </div>
