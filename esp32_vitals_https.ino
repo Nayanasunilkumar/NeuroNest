@@ -92,6 +92,33 @@ void ensureWiFi() {
   }
 }
 
+void pingBackend() {
+  if (WiFi.status() != WL_CONNECTED) return;
+  
+  WiFiClientSecure client;
+  client.setInsecure();
+  client.setHandshakeTimeout(30);
+  
+  HTTPClient http;
+  String pingUrl = "https://neuronest-backend-2rn0.onrender.com/api/health";
+  if (!http.begin(client, pingUrl)) {
+    Serial.println("Ping HTTP begin failed");
+    return;
+  }
+  
+  http.setTimeout(70000); // 70s timeout to allow cold start
+  Serial.println(F("Waking up server (this may take up to 60s)..."));
+  int code = http.GET();
+  if (code > 0) {
+    Serial.print(F("Ping success: "));
+    Serial.println(code);
+  } else {
+    Serial.print(F("Ping failed: "));
+    Serial.println(http.errorToString(code));
+  }
+  http.end();
+}
+
 // Read temperature (non-blocking by interval)
 void updateTemperature() {
   if (millis() - lastTempRead < tempInterval) return;
@@ -138,45 +165,59 @@ void postVitals(int hr, int s, float temp,
   }
   body += "}";
 
-  WiFiClientSecure client;
-  client.setInsecure();
-  client.setHandshakeTimeout(30);
-
-  HTTPClient http;
-  if (!http.begin(client, serverHost, 443, serverPath, true)) {
-    Serial.println("HTTP begin failed");
-    return;
-  }
-
-  http.setTimeout(15000);
-  http.addHeader("Content-Type", "application/json");
-  if (strlen(deviceToken) > 0) {
-    http.addHeader("X-Device-Token", deviceToken);
-    Serial.println(F("[VITALS] X-Device-Token header attached"));
-  }
-  if (strlen(deviceId) > 0) {
-    http.addHeader("X-Device-Id", deviceId);
-    Serial.println(F("[VITALS] X-Device-Id header attached"));
-  }
-
   Serial.print("POST URL: ");
   Serial.println(serverUrl);
   Serial.print("POST BODY: ");
   Serial.println(body);
 
-  int code = http.POST(body);
-  Serial.print("POST code: ");
-  Serial.println(code);
-  if (code < 0) {
-    Serial.print(F("HTTP error string: "));
-    Serial.println(http.errorToString(code));
+  int code = -1;
+  int attempts = 0;
+  const int MAX_ATTEMPTS = 3;
+
+  while (attempts < MAX_ATTEMPTS) {
+    attempts++;
+    
+    WiFiClientSecure client;
+    client.setInsecure();
+    client.setHandshakeTimeout(30);
+
+    HTTPClient http;
+    if (!http.begin(client, serverHost, 443, serverPath, true)) {
+      Serial.println("HTTP begin failed");
+      return;
+    }
+
+    http.setTimeout(70000); // 70 seconds timeout for Render cold start
+    http.addHeader("Content-Type", "application/json");
+    if (strlen(deviceToken) > 0) {
+      http.addHeader("X-Device-Token", deviceToken);
+    }
+    if (strlen(deviceId) > 0) {
+      http.addHeader("X-Device-Id", deviceId);
+    }
+
+    code = http.POST(body);
+    Serial.print("POST attempt ");
+    Serial.print(attempts);
+    Serial.print(" code: ");
+    Serial.println(code);
+    
+    if (code > 0) {
+      String response = http.getString();
+      Serial.print("Response: ");
+      Serial.println(response);
+      http.end();
+      break;
+    } else {
+      Serial.print(F("HTTP error string: "));
+      Serial.println(http.errorToString(code));
+      http.end();
+      if (attempts < MAX_ATTEMPTS) {
+        Serial.println("Retrying in 5 seconds...");
+        delay(5000);
+      }
+    }
   }
-
-  String response = http.getString();
-  Serial.print("Response: ");
-  Serial.println(response);
-
-  http.end();
 }
 
 void resetAlertState() {
@@ -238,6 +279,9 @@ void setup() {
     Serial.println("WiFi connected!");
     Serial.print("ESP32 IP: ");
     Serial.println(WiFi.localIP());
+    
+    // Ping backend to wake it up
+    pingBackend();
   } else {
     Serial.println("WiFi FAILED.");
   }

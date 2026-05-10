@@ -166,6 +166,7 @@ function VitalsSection({ initialData = null }) {
   const [deviceAssigned, setDeviceAssigned] = React.useState(Boolean(initialData?.deviceAssigned || initialData?.latest?.deviceAssigned));
   const [online, setOnline] = React.useState(initialFresh);
   const [lastVitalsTimestamp, setLastVitalsTimestamp] = React.useState(() => (initialFresh ? Date.now() : 0));
+  const [reconnecting, setReconnecting] = React.useState(false);
   
   const [graceVitals, setGraceVitals] = React.useState(null);
   const [graceVitalsTime, setGraceVitalsTime] = React.useState(0);
@@ -224,16 +225,24 @@ function VitalsSection({ initialData = null }) {
           lastUpdateRef.current = Date.now();
           setLastVitalsTimestamp(Date.now());
           setOnline(true);
+          setReconnecting(false);
         } else if (latestJson.signal === "no_device") {
           setOnline(false);
+          setReconnecting(false);
         } else {
           setOnline(false);
+          setReconnecting(false);
         }
       } catch {
         console.error("[VITALS_FRONTEND] failed to fetch latest/history");
-        setData((prev) => clearClinicalVitals({ ...(prev || EMPTY_VITALS), signal: "disconnected", connected: false }));
-        setHistory([]);
-        setOnline(false);
+        if (lastUpdateRef.current > 0 && Date.now() - lastUpdateRef.current < 90000) {
+          setReconnecting(true);
+        } else {
+          setData((prev) => clearClinicalVitals({ ...(prev || EMPTY_VITALS), signal: "disconnected", connected: false }));
+          setHistory([]);
+          setOnline(false);
+          setReconnecting(false);
+        }
       }
     };
     fetchVitals();
@@ -241,15 +250,21 @@ function VitalsSection({ initialData = null }) {
 
     const markDisconnected = () => {
       setOnline(false);
+      setReconnecting(false);
       setLastVitalsTimestamp(0);
       setData((prev) => clearClinicalVitals({ ...(prev || EMPTY_VITALS), signal: "disconnected", connected: false }));
       setHistory([]);
     };
 
     const staleTimer = setInterval(() => {
-      if (lastUpdateRef.current > 0 && Date.now() - lastUpdateRef.current > VITALS_TIMEOUT_MS) {
-        lastUpdateRef.current = 0;
-        markDisconnected();
+      if (lastUpdateRef.current > 0) {
+        const diff = Date.now() - lastUpdateRef.current;
+        if (diff > 90000) {
+          lastUpdateRef.current = 0;
+          markDisconnected();
+        } else if (diff > VITALS_TIMEOUT_MS) {
+          setReconnecting(true);
+        }
       }
     }, 1000);
 
@@ -296,9 +311,14 @@ function VitalsSection({ initialData = null }) {
         setHistory([]);
       }
       setOnline(true);
+      setReconnecting(false);
     });
     socketRef.current.on("disconnect", () => {
-      markDisconnected();
+      if (lastUpdateRef.current > 0 && Date.now() - lastUpdateRef.current < 90000) {
+        setReconnecting(true);
+      } else {
+        markDisconnected();
+      }
     });
 
     return () => {
@@ -342,10 +362,11 @@ function VitalsSection({ initialData = null }) {
           ) : (
             <>
               {isConnected ? <span className="badge rounded-pill d-flex align-items-center gap-1" style={{ background: "#d1fae5", color: "#065f46", fontSize: "0.7rem" }}><Wifi size={10} /> CONNECTED</span> : <span className="badge rounded-pill d-flex align-items-center gap-1" style={{ background: "#fee2e2", color: "#991b1b", fontSize: "0.7rem" }}><WifiOff size={10} /> DISCONNECTED</span>}
-              {isConnected && isLive && <span className="badge rounded-pill bg-success" style={{ fontSize: "0.7rem" }}>LIVE</span>}
-              {isConnected && (isWeak || isGracePeriodActive) && <span className="badge rounded-pill bg-warning text-dark" style={{ fontSize: "0.7rem" }}>WEAK SIGNAL</span>}
-              {isConnected && isNoFinger && !isGracePeriodActive && <span className="badge rounded-pill bg-secondary" style={{ fontSize: "0.58rem" }}>NO FINGER</span>}
-              {signal === "initialising" && !isGracePeriodActive && <span className="badge rounded-pill bg-info" style={{ fontSize: "0.7rem" }}>INITIALISING</span>}
+              {isConnected && !reconnecting && isLive && <span className="badge rounded-pill bg-success" style={{ fontSize: "0.7rem" }}>LIVE</span>}
+              {isConnected && !reconnecting && (isWeak || isGracePeriodActive) && <span className="badge rounded-pill bg-warning text-dark" style={{ fontSize: "0.7rem" }}>WEAK SIGNAL</span>}
+              {isConnected && !reconnecting && isNoFinger && !isGracePeriodActive && <span className="badge rounded-pill bg-secondary" style={{ fontSize: "0.58rem" }}>NO FINGER</span>}
+              {signal === "initialising" && !reconnecting && !isGracePeriodActive && <span className="badge rounded-pill bg-info" style={{ fontSize: "0.7rem" }}>INITIALISING</span>}
+              {reconnecting && <span className="badge rounded-pill bg-warning text-dark d-flex align-items-center gap-1" style={{ fontSize: "0.7rem" }}><span className="spinner-border spinner-border-sm" role="status" aria-hidden="true" style={{ width: "10px", height: "10px" }}></span>SERVER WAKING UP...</span>}
             </>
           )}
         </div>
