@@ -20,11 +20,12 @@ const DynamicIslandNav = ({ role = "patient" }) => {
     const [canScrollRight, setCanScrollRight] = useState(false);
 
     const user = getUser();
-    const patientTopNavKeys = ["dashboard", "profile", "myAppointments", "medicalRecords", "prescriptions", "assessment"];
+    const patientTopNavKeys = ["dashboard", "profile", "myAppointments", "medicalRecords", "prescriptions", "assessment", "patientChat"];
     const patientLabelMap = {
         myAppointments: "Appointments",
         medicalRecords: "Records",
         assessment: "Analytics",
+        patientChat: "Chat",
     };
     const menuItems = getModulesForRole(role, { enabledMap, sidebarOnly: true, user })
         .filter((item) => role !== "patient" || patientTopNavKeys.includes(item.key));
