@@ -22,10 +22,8 @@ const clearClinicalVitals = (payload = {}) => ({
   ...payload,
   hr: null,
   spo2: null,
-  temp: null,
   hr_alert: 0,
   spo2_alert: 0,
-  temp_alert: 0,
 });
 
 const sanitizeVitalsPayload = (payload, connected = true) => {
@@ -235,7 +233,7 @@ function VitalsSection({ initialData = null }) {
     socketRef.current.on("connect", () => {
       const room = `patient_vitals_${patientId}`;
       console.info("[VITALS_FRONTEND] socket connected, joining vitals room", { patientId, room, socketId: socketRef.current.id });
-      socketRef.current.emit("join_vitals_room", { patient_id: patientId });
+      socketRef.current.emit("join_vitals_room", { patient_id: Number(patientId) });
     });
     socketRef.current.on("vitals_room_joined", (payload) => {
       console.info("[VITALS_FRONTEND] vitals room joined", payload);
@@ -256,7 +254,7 @@ function VitalsSection({ initialData = null }) {
       setDeviceAssigned(Boolean(update.deviceAssigned || update.patient_id));
       lastUpdateRef.current = Date.now();
       setLastVitalsTimestamp(Date.now());
-      if ((update.signal === "ok" || update.signal === "weak") && nextUpdate.hr != null && nextUpdate.spo2 != null && nextUpdate.temp != null) {
+      if ((update.signal === "ok" || update.signal === "weak" || update.signal === "no_finger")) {
         setHistory((prev) => [...prev, nextUpdate].slice(-60));
       } else {
         setHistory([]);
@@ -279,13 +277,14 @@ function VitalsSection({ initialData = null }) {
   const isWeak = signal === "weak";
   const isNoFinger = signal === "no_finger";
   const isConnected = online && lastVitalsTimestamp > 0 && signal !== "disconnected" && signal !== "na";
-  const canShowClinicalVitals = isConnected && (isLive || isWeak);
-  const anyAlert = canShowClinicalVitals && data && !!(data.hr_alert || data.spo2_alert || data.temp_alert);
+  const canShowHeartVitals = isConnected && (isLive || isWeak);
+  const canShowTempVitals = isConnected && (isLive || isWeak || isNoFinger);
+  const anyAlert = (canShowHeartVitals && !!(data?.hr_alert || data?.spo2_alert)) || (canShowTempVitals && !!data?.temp_alert);
   const vitals = useMemo(() => [
-    { label: "Heart Rate", sub: "ELECTROCARDIOGRAM", value: canShowClinicalVitals ? data?.hr ?? null : null, unit: "BPM", normal: "60-100 BPM", alert: canShowClinicalVitals && !!data?.hr_alert, color: "#dc3545", bsColor: "danger", icon: <Heart size={18} />, wave: "ecg", decimals: 0 },
-    { label: "Oxygen Saturation", sub: "PHOTOPLETHYSMOGRAPHY", value: canShowClinicalVitals ? data?.spo2 ?? null : null, unit: "%", normal: "95-100%", alert: canShowClinicalVitals && !!data?.spo2_alert, color: "#0d6efd", bsColor: "primary", icon: <Droplets size={18} />, wave: "pleth", decimals: 0 },
-    { label: "Body Temperature", sub: "DS18B20 PROBE", value: canShowClinicalVitals ? data?.temp ?? null : null, unit: "C", normal: "36.1-37.2 C", alert: canShowClinicalVitals && !!data?.temp_alert, color: "#198754", bsColor: "success", icon: <Thermometer size={18} />, wave: "temp", decimals: 2 },
-  ], [canShowClinicalVitals, data]);
+    { label: "Heart Rate", sub: "ELECTROCARDIOGRAM", value: canShowHeartVitals ? data?.hr ?? null : null, unit: "BPM", normal: "60-100 BPM", alert: canShowHeartVitals && !!data?.hr_alert, color: "#dc3545", bsColor: "danger", icon: <Heart size={18} />, wave: "ecg", decimals: 0 },
+    { label: "Oxygen Saturation", sub: "PHOTOPLETHYSMOGRAPHY", value: canShowHeartVitals ? data?.spo2 ?? null : null, unit: "%", normal: "95-100%", alert: canShowHeartVitals && !!data?.spo2_alert, color: "#0d6efd", bsColor: "primary", icon: <Droplets size={18} />, wave: "pleth", decimals: 0 },
+    { label: "Body Temperature", sub: "DS18B20 PROBE", value: canShowTempVitals ? data?.temp ?? null : null, unit: "C", normal: "36.1-37.2 C", alert: canShowTempVitals && !!data?.temp_alert, color: "#198754", bsColor: "success", icon: <Thermometer size={18} />, wave: "temp", decimals: 2 },
+  ], [canShowHeartVitals, canShowTempVitals, data]);
 
   return (
     <div className="mb-5">
@@ -348,14 +347,17 @@ function VitalsSection({ initialData = null }) {
                       <span className="text-secondary fw-bold" style={{ fontSize: "0.85rem" }}>{vital.unit}</span>
                     </div>
                     <div style={{ background: `rgba(${vital.bsColor === "danger" ? "220,53,69" : vital.bsColor === "primary" ? "13,110,253" : "25,135,84"},0.04)`, borderRadius: 16, overflow: "hidden", padding: "4px 2px", marginBottom: 8 }}>
-                      {canShowClinicalVitals && vital.wave === "ecg" && <ECGWave bpm={data?.hr || 72} color={vital.alert ? "#dc3545" : vital.color} />}
-                      {canShowClinicalVitals && vital.wave === "pleth" && <PlethWave color={vital.alert ? "#dc3545" : vital.color} />}
-                      {canShowClinicalVitals && vital.wave === "temp" && <TempSparkline history={tempHistory} color={vital.alert ? "#dc3545" : vital.color} />}
-                      {!canShowClinicalVitals && <div style={{ height: 56, display: "flex", alignItems: "center", justifyContent: "center", color: "#94a3b8", fontSize: "0.75rem", fontWeight: 700 }}>No Data</div>}
+                      {canShowHeartVitals && vital.wave === "ecg" && <ECGWave bpm={data?.hr || 72} color={vital.alert ? "#dc3545" : vital.color} />}
+                      {canShowHeartVitals && vital.wave === "pleth" && <PlethWave color={vital.alert ? "#dc3545" : vital.color} />}
+                      {canShowTempVitals && vital.wave === "temp" && <TempSparkline history={tempHistory} color={vital.alert ? "#dc3545" : vital.color} />}
+                      {((vital.wave === "ecg" || vital.wave === "pleth") && !canShowHeartVitals) && <div style={{ height: 56, display: "flex", alignItems: "center", justifyContent: "center", color: "#94a3b8", fontSize: "0.75rem", fontWeight: 700 }}>No Data</div>}
+                      {(vital.wave === "temp" && !canShowTempVitals) && <div style={{ height: 56, display: "flex", alignItems: "center", justifyContent: "center", color: "#94a3b8", fontSize: "0.75rem", fontWeight: 700 }}>No Data</div>}
                     </div>
                     <div className="d-flex justify-content-between align-items-center">
                       <span className="text-secondary" style={{ fontSize: "0.62rem", letterSpacing: "0.5px" }}>NORMAL: {vital.normal}</span>
-                      <span className={`badge rounded-pill bg-${vital.bsColor} bg-opacity-10 text-${vital.bsColor}`} style={{ fontSize: "0.6rem" }}>{canShowClinicalVitals ? (isLive ? "LIVE" : "WEAK") : "-"}</span>
+                      <span className={`badge rounded-pill bg-${vital.bsColor} bg-opacity-10 text-${vital.bsColor}`} style={{ fontSize: "0.6rem" }}>
+                        {vital.wave === "temp" ? (canShowTempVitals ? "LIVE" : "-") : (canShowHeartVitals ? (isLive ? "LIVE" : "WEAK") : "-")}
+                      </span>
                     </div>
                   </div>
                 </div>

@@ -20,6 +20,7 @@ _vitals_lock = threading.Lock()
 _latest_by_patient = {}
 _history_by_patient = defaultdict(lambda: deque(maxlen=60))
 _last_alert_time = {}
+_last_good_vitals_by_patient = {}
 ALERT_COOLDOWN_MINUTES = 5
 STALE_READING_SECONDS = 10
 MONITORED_PATIENT_EMAILS = (
@@ -483,6 +484,25 @@ def receive_vitals():
         "last_seen_at": _serialize_timestamp(now),
         "connected": True,
     }
+    
+    signal_str = str(payload.get("signal") or "na")
+    with _vitals_lock:
+        if signal_str == "ok":
+            if payload.get("hr") and payload.get("spo2"):
+                _last_good_vitals_by_patient[patient_id] = {
+                    "hr": payload.get("hr"),
+                    "spo2": payload.get("spo2"),
+                    "ts": now
+                }
+        elif signal_str in ("no_finger", "weak") or not payload.get("hr"):
+            last_good = _last_good_vitals_by_patient.get(patient_id)
+            if last_good and (now - last_good["ts"]) < timedelta(seconds=15):
+                payload["hr"] = last_good["hr"]
+                payload["spo2"] = last_good["spo2"]
+                payload["signal"] = "weak"
+            else:
+                payload["signal"] = "no_finger"
+
     payload = _clean_payload_for_signal(payload)
 
     with _vitals_lock:
