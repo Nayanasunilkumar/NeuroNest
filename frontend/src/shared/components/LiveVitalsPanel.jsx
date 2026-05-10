@@ -74,27 +74,28 @@ const LiveVitalsPanel = ({ title, subtitle, latest, history, loading, error, isO
   const isLive = signal === "ok";
   const isWeak = signal === "weak";
   const isNoFinger = signal === "no_finger";
-  const canShowClinicalVitals = isOnline && (isLive || isWeak);
-  const tempHistory = canShowClinicalVitals ? (history || []).map(h => h.temp).filter(Boolean) : [];
-  const anyAlert = canShowClinicalVitals && latest && !!(latest.hr_alert || latest.spo2_alert || latest.temp_alert);
+  const canShowHeartVitals = isOnline && (isLive || isWeak);
+  const canShowTempVitals = isOnline && (isLive || isWeak || isNoFinger);
+  const tempHistory = canShowTempVitals ? (history || []).map(h => h.temp).filter(Boolean) : [];
+  const anyAlert = (canShowHeartVitals && !!(latest?.hr_alert || latest?.spo2_alert)) || (canShowTempVitals && !!latest?.temp_alert);
 
   const vitals = [
     {
       label: "Heart Rate", sub: "ELECTROCARDIOGRAM",
-      value: canShowClinicalVitals ? latest?.hr ?? null : null, unit: "BPM", normal: "60–100 BPM",
-      alert: canShowClinicalVitals && !!latest?.hr_alert, color: "#dc3545", bsColor: "danger",
+      value: canShowHeartVitals ? latest?.hr ?? null : null, unit: "BPM", normal: "60–100 BPM",
+      alert: canShowHeartVitals && !!latest?.hr_alert, color: "#dc3545", bsColor: "danger",
       icon: <Heart size={16}/>, wave: "ecg", decimals: 0,
     },
     {
       label: "SpO2", sub: "PHOTOPLETHYSMOGRAPHY",
-      value: canShowClinicalVitals ? latest?.spo2 ?? null : null, unit: "%", normal: "95–100%",
-      alert: canShowClinicalVitals && !!latest?.spo2_alert, color: "#0d6efd", bsColor: "primary",
+      value: canShowHeartVitals ? latest?.spo2 ?? null : null, unit: "%", normal: "95–100%",
+      alert: canShowHeartVitals && !!latest?.spo2_alert, color: "#0d6efd", bsColor: "primary",
       icon: <Droplets size={16}/>, wave: "pleth", decimals: 0,
     },
     {
       label: "Temperature", sub: "DS18B20 PROBE",
-      value: canShowClinicalVitals ? latest?.temp ?? null : null, unit: "°C", normal: "36.1–37.2°C",
-      alert: canShowClinicalVitals && !!latest?.temp_alert, color: "#198754", bsColor: "success",
+      value: canShowTempVitals ? latest?.temp ?? null : null, unit: "°C", normal: "36.1–37.2°C",
+      alert: canShowTempVitals && !!latest?.temp_alert, color: "#198754", bsColor: "success",
       icon: <Thermometer size={16}/>, wave: "temp", decimals: 2,
     },
   ];
@@ -197,10 +198,13 @@ const LiveVitalsPanel = ({ title, subtitle, latest, history, loading, error, isO
                   </div>
                   <div style={{ borderRadius:8, overflow:"hidden", padding:"2px", marginBottom:6,
                     background:`rgba(${v.bsColor==="danger"?"220,53,69":v.bsColor==="primary"?"13,110,253":"25,135,84"},0.04)` }}>
-                    {canShowClinicalVitals && v.wave === "ecg" && <ECGWave bpm={latest?.hr||72} color={v.alert?"#dc3545":v.color}/>}
-                    {canShowClinicalVitals && v.wave === "pleth" && <PlethWave color={v.alert?"#dc3545":v.color}/>}
-                    {canShowClinicalVitals && v.wave === "temp" && <TempSparkline history={tempHistory} color={v.alert?"#dc3545":v.color}/>}
-                    {!canShowClinicalVitals && (
+                    {canShowHeartVitals && v.wave === "ecg" && <ECGWave bpm={latest?.hr||72} color={v.alert?"#dc3545":v.color}/>}
+                    {canShowHeartVitals && v.wave === "pleth" && <PlethWave color={v.alert?"#dc3545":v.color}/>}
+                    {canShowTempVitals && v.wave === "temp" && <TempSparkline history={tempHistory} color={v.alert?"#dc3545":v.color}/>}
+                    {((v.wave === "ecg" || v.wave === "pleth") && !canShowHeartVitals) && (
+                      <div style={{ height: 56, display: "flex", alignItems: "center", justifyContent: "center", color: "#94a3b8", fontSize: "0.75rem", fontWeight: 700 }}>No Data</div>
+                    )}
+                    {(v.wave === "temp" && !canShowTempVitals) && (
                       <div style={{ height: 56, display: "flex", alignItems: "center", justifyContent: "center", color: "#94a3b8", fontSize: "0.75rem", fontWeight: 700 }}>No Data</div>
                     )}
                   </div>
@@ -208,7 +212,9 @@ const LiveVitalsPanel = ({ title, subtitle, latest, history, loading, error, isO
                     <span className="text-secondary" style={{fontSize:"0.6rem"}}>NORMAL: {v.normal}</span>
                     <span className={`badge rounded-pill bg-${v.bsColor} bg-opacity-10 text-${v.bsColor}`}
                       style={{fontSize:"0.6rem"}}>
-                      {canShowClinicalVitals ? (isLive ? "● LIVE" : "◐ WEAK") : "—"}
+                      {v.wave === "temp" 
+                        ? (canShowTempVitals ? "● LIVE" : "—") 
+                        : (canShowHeartVitals ? (isLive ? "● LIVE" : "◐ WEAK") : "—")}
                     </span>
                   </div>
                 </div>

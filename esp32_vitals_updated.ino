@@ -266,7 +266,13 @@ void loop() {
     updateTemperature(); // keep updating temp even without finger
 
     if (millis() - lastPost >= postInterval) {
-      postVitals(0, 0, currentTemp, "no_finger", false, false, tempAlert);
+      if (millis() - lastFingerTime < 10000 && lastGoodHR > 0 && lastGoodSpO2 > 0) {
+        postVitals(lastGoodHR, lastGoodSpO2, currentTemp, "weak", false, false, tempAlert);
+      } else {
+        lastGoodHR = 0;
+        lastGoodSpO2 = 0;
+        postVitals(0, 0, currentTemp, "no_finger", false, false, tempAlert);
+      }
       lastPost = millis();
     }
     ensureWiFi();
@@ -303,15 +309,11 @@ void loop() {
     }
 
     if (!fingerPresent) {
-      Serial.println(F("Finger removed. Resetting..."));
-      lastGoodHR   = 0;
-      lastGoodSpO2 = 0;
+      Serial.println(F("Finger removed. Entering grace period..."));
       resetAlertState();
 
-      if (millis() - lastPost >= postInterval) {
-        postVitals(0, 0, currentTemp, "no_finger", false, false, tempAlert);
-        lastPost = millis();
-      }
+      // We do not post here directly. We break to return to Phase 1 
+      // which handles the 10-second grace period logic smoothly.
       ensureWiFi();
       delay(500);
       break;
