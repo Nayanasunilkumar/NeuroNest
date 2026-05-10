@@ -38,7 +38,8 @@ const ViewMedicalRecordModal = ({ isOpen, onClose, record, patientId = null }) =
                 const data = await medicalRecordService.getRecordViewUrl(record.id, patientId);
                 if (cancelled) return;
 
-                const ext = (data.file_type || data.file_url?.split('.').pop() || '').toLowerCase();
+                const urlPart = data.file_url?.split('?')[0] || '';
+                const ext = (data.file_type || urlPart.split('.').pop() || '').toLowerCase();
                 setFileUrl(data.file_url);
                 setFileType(ext);
                 console.log('[Viewer] Got direct URL. ext:', ext, 'url:', data.file_url);
@@ -46,8 +47,8 @@ const ViewMedicalRecordModal = ({ isOpen, onClose, record, patientId = null }) =
                 if (cancelled) return;
                 console.error('[Viewer] Failed to get view URL:', err);
                 // Final fallback: use file_path from the record object if API is down
-                if (record.file_path) {
-                    const ext = (record.file_type || record.file_path.split('.').pop()).toLowerCase();
+                    const urlPart = record.file_path.split('?')[0];
+                    const ext = (record.file_type || urlPart.split('.').pop() || '').toLowerCase();
                     setFileUrl(record.file_path);
                     setFileType(ext);
                 } else {
@@ -76,9 +77,10 @@ const ViewMedicalRecordModal = ({ isOpen, onClose, record, patientId = null }) =
 
     if (!isOpen || !record) return null;
 
-    const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(fileType);
+    const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'].includes(fileType);
     const isPDF = fileType === 'pdf';
     const isDICOM = fileType === 'dcm';
+    const isWord = ['doc', 'docx'].includes(fileType);
 
     // Cloudinary URLs are public CDN links — load them directly in an iframe.
     // Google Docs Viewer fails because it cannot proxy Cloudinary CDN URLs.
@@ -286,6 +288,17 @@ const ViewMedicalRecordModal = ({ isOpen, onClose, record, patientId = null }) =
                                     </p>
                                     <button onClick={handleDownload} style={{ ...outlineBtn, background: '#3b82f6', border: 'none' }}>
                                         <Download size={16}/> Download DICOM File
+                                    </button>
+                                </div>
+                            ) : isWord ? (
+                                <div style={{ textAlign: 'center', color: 'white', maxWidth: '400px', padding: '40px' }}>
+                                    <FileText size={56} color="#60a5fa" style={{ marginBottom: '20px' }} />
+                                    <h3 style={{ fontWeight: 700, marginBottom: '12px' }}>Word Document</h3>
+                                    <p style={{ color: '#94a3b8', fontSize: '14px', lineHeight: 1.6, marginBottom: '24px' }}>
+                                        Microsoft Word documents (".{fileType}") cannot be previewed directly in the browser. Please download to view.
+                                    </p>
+                                    <button onClick={handleDownload} style={{ ...outlineBtn, background: '#3b82f6', border: 'none' }}>
+                                        <Download size={16}/> Download Document
                                     </button>
                                 </div>
                             ) : (

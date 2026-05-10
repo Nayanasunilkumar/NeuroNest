@@ -386,61 +386,46 @@ def delete_medical_record(record_id, patient_id=None):
 
 @patient_medical_bp.route("/medical-records/<int:record_id>/download", methods=["GET"])
 @patient_medical_bp.route("/doctor/patients/<int:patient_id>/medical-records/<int:record_id>/download", methods=["GET"])
-@jwt_required()
 def download_medical_record(record_id, patient_id=None):
-    if patient_id is None:
-        record_tmp = MedicalRecord.query.get(record_id)
-        if not record_tmp:
-            return jsonify({"message": "Record not found"}), 404
-        patient_id = record_tmp.patient_id
-
-    is_allowed, msg = _verify_patient_access(patient_id)
-    if not is_allowed:
-        return jsonify({"message": msg}), 403
-
-    record = MedicalRecord.query.filter_by(id=record_id, patient_id=patient_id).first()
-    if not record:
-        return jsonify({"message": "Record not found"}), 404
-
-    # Cloudinary URLs are direct — redirect the client
-    if record.file_path and record.file_path.startswith('http'):
-        return redirect(record.file_path)
-
-    return jsonify({"message": "File not available"}), 404
-
-
-@patient_medical_bp.route("/medical-records/<int:record_id>/preview", methods=["GET"])
-@patient_medical_bp.route("/doctor/patients/<int:patient_id>/medical-records/<int:record_id>/preview", methods=["GET"])
-def preview_medical_record(record_id, patient_id=None):
     """
-    Proxy the Cloudinary file through our backend, serving it with
-    Content-Disposition: inline so the browser renders it in an iframe.
-    Accepts JWT via `?token=` query param because iframes cannot send
-    custom Authorization headers.
+    Download a medical record. Proxies the file through the backend to handle
+    authentication (via JWT header or ?token=) and force download via
+    Content-Disposition: attachment.
     """
     import requests as http_requests
     from flask import Response, stream_with_context
-    from flask_jwt_extended import decode_token
+    from flask_jwt_extended import decode_token, get_jwt_identity, verify_jwt_in_request
 
-    # -- Auth via query param token (iframe-compatible) --
-    raw_token = request.args.get("token", "").strip()
-    if not raw_token:
-        return jsonify({"message": "Authentication required"}), 401
+    # 1. Authenticate (check Header first, then Query Param)
+    actor_id = None
+    actor_role = "patient"
+    
     try:
-        decoded = decode_token(raw_token)
-        actor_id = int(decoded["sub"])
-        actor_role = decoded.get("role", "patient")
+        # Try standard header-based auth first
+        verify_jwt_in_request()
+        actor_id = int(get_jwt_identity())
+        from flask_jwt_extended import get_jwt
+        actor_role = get_jwt().get("role", "patient")
     except Exception:
-        return jsonify({"message": "Invalid or expired token"}), 401
+        # Fallback to token in query param (for window.open)
+        raw_token = request.args.get("token", "").strip()
+        if not raw_token:
+            return jsonify({"message": "Authentication required"}), 401
+        try:
+            decoded = decode_token(raw_token)
+            actor_id = int(decoded["sub"])
+            actor_role = decoded.get("role", "patient")
+        except Exception:
+            return jsonify({"message": "Invalid or expired token"}), 401
 
-    # -- Resolve patient_id --
+    # 2. Resolve patient_id and verify access
     if patient_id is None:
         record_tmp = MedicalRecord.query.get(record_id)
         if not record_tmp:
             return jsonify({"message": "Record not found"}), 404
         patient_id = record_tmp.patient_id
 
-    # -- Access check --
+    # 3. Access check
     if actor_role == "patient" and actor_id != patient_id:
         return jsonify({"message": "Access denied"}), 403
 
@@ -451,10 +436,91 @@ def preview_medical_record(record_id, patient_id=None):
     if not record.file_path or not record.file_path.startswith("http"):
         return jsonify({"message": "File not stored externally"}), 404
 
-    # -- Proxy from Cloudinary with inline disposition --
+    # 4. Proxy from Cloudinary with attachment disposition
     try:
         resp = http_requests.get(record.file_path, stream=True, timeout=30)
-        content_type = resp.headers.get("content-type", "application/pdf")
+        content_type = resp.headers.get("content-type", "application/octet-stream")
+        
+        # Determine filename
+        ext = record.file_type or record.file_path.split(".")[-1].split("?")[0]
+        safe_title = "".join([c if c.isalnum() else "_" for c in record.title])
+        filename = f"{safe_title}.{ext}"
+
+        def generate():
+            for chunk in resp.iter_content(chunk_size=8192):
+                yield chunk
+
+        return Response(
+            stream_with_context(generate()),
+            status=resp.status_code,
+            content_type=content_type,
+            headers={
+                "Content-Disposition": f'attachment; filename="{filename}"',
+                "Cache-Control": "private, no-cache",
+            },
+        )
+    except Exception as e:
+        return jsonify({"message": f"Download proxy failed: {str(e)}"}), 500
+
+
+@patient_medical_bp.route("/medical-records/<int:record_id>/preview", methods=["GET"])
+@patient_medical_bp.route("/doctor/patients/<int:patient_id>/medical-records/<int:record_id>/preview", methods=["GET"])
+def preview_medical_record(record_id, patient_id=None):
+    """
+    Proxy the Cloudinary file through our backend, serving it with
+    Content-Disposition: inline so the browser renders it in an iframe.
+    Accepts JWT via Header or `?token=` query param.
+    """
+    import requests as http_requests
+    from flask import Response, stream_with_context
+    from flask_jwt_extended import decode_token, get_jwt_identity, verify_jwt_in_request
+
+    # 1. Authenticate
+    actor_id = None
+    actor_role = "patient"
+    
+    try:
+        verify_jwt_in_request()
+        actor_id = int(get_jwt_identity())
+        from flask_jwt_extended import get_jwt
+        actor_role = get_jwt().get("role", "patient")
+    except Exception:
+        raw_token = request.args.get("token", "").strip()
+        if not raw_token:
+            return jsonify({"message": "Authentication required"}), 401
+        try:
+            decoded = decode_token(raw_token)
+            actor_id = int(decoded["sub"])
+            actor_role = decoded.get("role", "patient")
+        except Exception:
+            return jsonify({"message": "Invalid or expired token"}), 401
+
+    # 2. Resolve patient_id
+    if patient_id is None:
+        record_tmp = MedicalRecord.query.get(record_id)
+        if not record_tmp:
+            return jsonify({"message": "Record not found"}), 404
+        patient_id = record_tmp.patient_id
+
+    # 3. Access check
+    if actor_role == "patient" and actor_id != patient_id:
+        return jsonify({"message": "Access denied"}), 403
+
+    record = MedicalRecord.query.filter_by(id=record_id, patient_id=patient_id).first()
+    if not record:
+        return jsonify({"message": "Record not found"}), 404
+
+    if not record.file_path or not record.file_path.startswith("http"):
+        return jsonify({"message": "File not stored externally"}), 404
+
+    # 4. Proxy from Cloudinary with inline disposition
+    try:
+        resp = http_requests.get(record.file_path, stream=True, timeout=30)
+        content_type = resp.headers.get("content-type")
+        if not content_type:
+            # Guess mime from extension
+            import mimetypes
+            content_type = mimetypes.guess_type(record.file_path)[0] or "application/pdf"
 
         def generate():
             for chunk in resp.iter_content(chunk_size=8192):
@@ -467,6 +533,7 @@ def preview_medical_record(record_id, patient_id=None):
             headers={
                 "Content-Disposition": "inline",
                 "Cache-Control": "private, max-age=300",
+                "X-Content-Type-Options": "nosniff",
             },
         )
     except Exception as e:

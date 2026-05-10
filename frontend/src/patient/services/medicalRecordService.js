@@ -128,39 +128,32 @@ const getRecordViewUrl = async (recordId, patientId = null) => {
 // Download Record
 const downloadRecord = async (recordId, title, fileType, patientId = null) => {
   try {
-    const url = patientId ? `/api/patient/doctor/patients/${patientId}/medical-records/${recordId}/download` : `/api/patient/medical-records/${recordId}/download`;
+    const token = localStorage.getItem("neuronest_token");
+    const baseURL = api.defaults.baseURL || API_BASE_URL;
+    const endpoint = patientId 
+      ? `/api/patient/doctor/patients/${patientId}/medical-records/${recordId}/download` 
+      : `/api/patient/medical-records/${recordId}/download`;
     
-    // Check if we already have a record with an external file_path in our cache or passed in
-    // But since we only have recordId, we might need to fetch metadata first or just try the API.
-    // For now, let's make the API call more resilient.
+    // Construct the authenticated download URL
+    const downloadUrl = `${baseURL}${endpoint}?token=${encodeURIComponent(token)}`;
     
-    const response = await api.get(url, {
-      responseType: 'blob',
-    });
-    
-    const file = new Blob([response.data], { type: response.headers['content-type'] });
-    const fileURL = URL.createObjectURL(file);
+    // Create a temporary link and trigger download
+    // This approach is more reliable for large files and avoids CORS/Blob issues
     const link = document.createElement('a');
-    link.href = fileURL;
+    link.href = downloadUrl;
+    link.target = '_blank'; // Open in new tab to handle download trigger
     
-    let ext = fileType || response.headers["content-type"]?.split("/")[1] || "pdf";
-    ext = ext.replace(/[^a-z0-9]/gi, "").toLowerCase();
-    if (ext === 'jpeg') ext = 'jpg';
-    
-    link.setAttribute('download', `${(title || 'Medical_Record').replace(/\s+/g, '_')}.${ext}`);
+    // Note: 'download' attribute might be ignored for cross-origin or proxied redirects,
+    // but our backend sets Content-Disposition: attachment which forces download.
     document.body.appendChild(link);
     link.click();
-    link.parentNode.removeChild(link);
-    URL.revokeObjectURL(fileURL);
+    document.body.removeChild(link);
+    
     return true;
   } catch (error) {
     console.error("Download failed", error);
-    // FALLBACK: If axios fails (likely CORS), try opening the download URL in a new tab
-    // The browser will handle the redirect and download directly without Authorization header issues
-    const baseURL = api.defaults.baseURL || "";
-    const endpoint = patientId ? `/api/patient/doctor/patients/${patientId}/medical-records/${recordId}/download` : `/api/patient/medical-records/${recordId}/download`;
-    window.open(`${baseURL}${endpoint}`, '_blank');
-    return true;
+    alert("Unable to download this record. Please try again later.");
+    return false;
   }
 };
 

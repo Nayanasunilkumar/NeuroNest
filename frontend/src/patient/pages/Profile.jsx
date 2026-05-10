@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { formatDate, calculateAgeIST } from "../../shared/utils/time";
 import api from "../../shared/services/api/axios";
 import axios from "axios";
@@ -50,6 +51,7 @@ const normalizeEmergencyContacts = (contacts = []) =>
   }));
 
 const Profile = () => {
+  const navigate = useNavigate();
   const [profile, setProfile] = useState(null);
   const [clinicalData, setClinicalData] = useState(null);
   const [profileImage, setProfileImage] = useState(null);
@@ -60,6 +62,7 @@ const Profile = () => {
 
   const [editing, setEditing] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [showAllConditions, setShowAllConditions] = useState(false);
   const [initialProfileSnapshot, setInitialProfileSnapshot] = useState(null);
   const [initialEmergencySnapshot, setInitialEmergencySnapshot] = useState(null);
@@ -120,6 +123,17 @@ const Profile = () => {
     };
     init();
   }, []);
+
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      if (editing && JSON.stringify(profile) !== JSON.stringify(initialProfileSnapshot)) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [editing, profile, initialProfileSnapshot]);
 
   const handleChange = async (e) => {
     const { name, value } = e.target;
@@ -189,13 +203,21 @@ const Profile = () => {
   };
 
   const cancelEdit = () => {
+    const hasChanges = JSON.stringify(profile) !== JSON.stringify(initialProfileSnapshot) || 
+                       JSON.stringify(emergencyContacts) !== JSON.stringify(initialEmergencySnapshot);
+    
+    if (hasChanges) {
+      if (!window.confirm("You have unsaved changes. Are you sure you want to discard them?")) {
+        return;
+      }
+    }
     setProfile(initialProfileSnapshot);
     setEmergencyContacts(initialEmergencySnapshot);
     setEditing(false);
   };
 
-  const handleSave = async () => {
     try {
+      setSaving(true);
       const formData = new FormData();
       Object.keys(profile).forEach((key) => { formData.append(key, profile[key] ?? ""); });
       if (profileImage) formData.append("profile_image", profileImage);
@@ -223,8 +245,9 @@ const Profile = () => {
     } catch (err) {
       console.error("Profile update failed:", err);
       alert(err.response?.data?.message || "Update failed. Check console for details.");
+    } finally {
+      setSaving(false);
     }
-  };
 
   if (loading || !profile) {
       return (
@@ -325,20 +348,10 @@ const Profile = () => {
     <div className="patient-profile-page-wrapper">
       <div className="profile-dashboard-container">
         {/* HEADER ACTIONS */}
-        <div className="d-flex align-items-center justify-content-between mb-4">
           <div>
             <h1 className="h4 fw-800 text-dark mb-1">Patient Health Dashboard</h1>
             <p className="text-muted small mb-0">Manage your clinical records and personal health telemetry</p>
           </div>
-          {editing && (
-            <div className="d-flex gap-2">
-              <button onClick={cancelEdit} className="btn btn-light rounded-pill px-4 fw-bold shadow-sm">Cancel</button>
-              <button onClick={handleSave} className="btn btn-primary rounded-pill px-4 fw-bold shadow-sm d-flex align-items-center gap-2">
-                <Save size={18} /> Save Changes
-              </button>
-            </div>
-          )}
-        </div>
 
         {!editing ? (
           <>
@@ -393,8 +406,8 @@ const Profile = () => {
                   <button onClick={startEditing} className="btn-premium-action btn-primary-blue">
                     <Edit2 size={16} /> Edit Profile
                   </button>
-                  <button className="btn-premium-action btn-outline-soft">
-                    <FileText size={16} /> Records
+                  <button onClick={() => navigate('/patient/medical-records')} className="btn-premium-action btn-outline-soft">
+                    <FileText size={16} /> View Medical Records
                   </button>
                 </div>
 
@@ -593,105 +606,199 @@ const Profile = () => {
             </div>
           </>
         ) : (
-          <div className="modern-card border-0 shadow-lg">
-            <div className="p-4 border-bottom d-flex align-items-center gap-3">
-              <div className="card-icon-box bg-primary bg-opacity-10 text-primary"><Edit2 size={20} /></div>
-              <h2 className="h4 fw-800 mb-0">Update Medical Profile</h2>
-            </div>
-            <div className="p-4">
-              <div className="row g-4">
-                <div className="col-12"><div className="form-section-title"><User size={20} className="text-primary me-2" /> Basic Information</div></div>
-                <div className="col-md-6">
-                  <label className="form-label fw-700 small">Full Name</label>
-                  <input className="form-control rounded-3" name="full_name" value={profile.full_name} onChange={handleChange} />
+          <div className="edit-profile-form-container">
+            <div className="modern-card edit-profile-card">
+              <div className="edit-card-header">
+                <div className="card-icon-box bg-primary bg-opacity-10 text-primary"><Edit2 size={20} /></div>
+                <div>
+                  <h2 className="edit-card-title">Update Medical Profile</h2>
+                  <p className="edit-card-subtitle">Keep your clinical and contact information accurate</p>
                 </div>
-                <div className="col-md-6">
-                  <label className="form-label fw-700 small">Profile Picture</label>
-                  <input type="file" accept="image/*" onChange={handleImageChange} className="form-control rounded-3" />
-                </div>
-                <div className="col-md-4">
-                  <label className="form-label fw-700 small">Date of Birth</label>
-                  <input type="date" className="form-control rounded-3" name="date_of_birth" value={profile.date_of_birth} onChange={handleChange} />
-                </div>
-                <div className="col-md-4">
-                  <label className="form-label fw-700 small">Gender</label>
-                  <select className="form-select rounded-3" name="gender" value={profile.gender} onChange={handleChange}>
-                    <option>Male</option><option>Female</option><option>Other</option>
-                  </select>
-                </div>
-                <div className="col-md-4">
-                  <label className="form-label fw-700 small">Blood Group</label>
-                  <select className="form-select rounded-3" name="blood_group" value={profile.blood_group} onChange={handleChange}>
-                    {["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"].map((bg) => <option key={bg} value={bg}>{bg}</option>)}
-                  </select>
-                </div>
-                <div className="col-md-6">
-                  <label className="form-label fw-700 small">Height (cm)</label>
-                  <input type="number" className="form-control rounded-3" name="height_cm" value={profile.height_cm} onChange={handleChange} />
-                </div>
-                <div className="col-md-6">
-                  <label className="form-label fw-700 small">Weight (kg)</label>
-                  <input type="number" className="form-control rounded-3" name="weight_kg" value={profile.weight_kg} onChange={handleChange} />
-                </div>
+              </div>
 
-                <div className="col-12 mt-5"><div className="form-section-title"><MapPin size={20} className="text-primary me-2" /> Location Details</div></div>
-                <div className="col-12">
-                  <label className="form-label fw-700 small">Full Address</label>
-                  <input className="form-control rounded-3" name="address" value={profile.address} onChange={handleChange} />
-                </div>
-                <div className="col-md-4">
-                  <label className="form-label fw-700 small">Country</label>
-                  <select className="form-select rounded-3" name="country" value={profile.country} onChange={handleChange}>
-                    {countries.map((c) => <option key={c} value={c}>{c}</option>)}
-                  </select>
-                </div>
-                <div className="col-md-4">
-                  <label className="form-label fw-700 small">State</label>
-                  <select className="form-select rounded-3" name="state" value={profile.state} onChange={handleChange}>
-                    {states.map((s) => <option key={s} value={s}>{s}</option>)}
-                  </select>
-                </div>
-                <div className="col-md-4">
-                  <label className="form-label fw-700 small">City</label>
-                  <input className="form-control rounded-3" name="city" value={profile.city} onChange={handleChange} />
-                </div>
-
-                <div className="col-12 mt-5 d-flex justify-content-between align-items-center">
-                  <div className="form-section-title"><ShieldAlert size={20} className="text-danger me-2" /> Emergency Contacts</div>
-                  <button className="btn btn-outline-primary btn-sm rounded-pill px-3" onClick={addNewContact}><Plus size={16} /> Add Contact</button>
-                </div>
-                {emergencyContacts.map((contact, index) => (
-                  <div key={index} className="col-12">
-                    <div className="p-3 border rounded-4 bg-light bg-opacity-50">
-                      <div className="d-flex justify-content-between align-items-center mb-3">
-                        <span className="fw-800 small text-uppercase">Contact #{index + 1}</span>
-                        <button className="btn btn-link text-danger p-0" onClick={() => removeContact(index)}><Trash2 size={18} /></button>
+              <div className="edit-card-body">
+                {/* PROFILE IMAGE SECTION */}
+                <div className="profile-image-edit-section">
+                  <div className="edit-avatar-container">
+                    <div className="edit-avatar-frame">
+                      {profileImage ? (
+                        <img src={URL.createObjectURL(profileImage)} alt="Preview" />
+                      ) : profile.profile_image ? (
+                        <img src={toAssetUrl(profile.profile_image)} alt="Profile" />
+                      ) : (
+                        <div className="avatar-placeholder-icon"><User size={48} /></div>
+                      )}
+                      <div className="avatar-upload-overlay" onClick={() => document.getElementById('profile-image-input').click()}>
+                        <Plus size={24} />
                       </div>
-                      <div className="row g-3">
-                        <div className="col-md-6">
-                          <label className="form-label small fw-700">Name</label>
-                          <input className="form-control form-control-sm rounded-3" name="contact_name" value={contact.contact_name} onChange={(e) => handleEmergencyChange(index, e)} />
+                    </div>
+                    <input
+                      id="profile-image-input"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageChange}
+                      style={{ display: 'none' }}
+                    />
+                    <div className="avatar-edit-label">
+                      <span className="fw-800 small text-uppercase">Profile Photo</span>
+                      <p className="text-muted extra-small mb-0">JPG or PNG, Max 2MB</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="row g-4">
+                  {/* BASIC INFORMATION */}
+                  <div className="col-12"><div className="form-section-divider"><span>Basic Information</span></div></div>
+                  
+                  <div className="col-md-6">
+                    <FG label="Full Name" required>
+                      <input className="nn-input" name="full_name" value={profile.full_name} onChange={handleChange} placeholder="John Doe" />
+                    </FG>
+                  </div>
+                  
+                  <div className="col-md-3">
+                    <FG label="Date of Birth" icon={<Calendar size={12} />} required>
+                      <input type="date" className="nn-input" name="date_of_birth" value={profile.date_of_birth} onChange={handleChange} />
+                    </FG>
+                  </div>
+
+                  <div className="col-md-3">
+                    <FG label="Gender" required>
+                      <select className="nn-select" name="gender" value={profile.gender} onChange={handleChange}>
+                        <option value="">Select Gender</option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                        <option value="Other">Other</option>
+                      </select>
+                    </FG>
+                  </div>
+
+                  <div className="col-md-3">
+                    <FG label="Blood Group">
+                      <select className="nn-select" name="blood_group" value={profile.blood_group} onChange={handleChange}>
+                        <option value="">Select</option>
+                        {["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"].map((bg) => <option key={bg} value={bg}>{bg}</option>)}
+                      </select>
+                    </FG>
+                  </div>
+
+                  <div className="col-md-3">
+                    <FG label="Height (cm)" icon={<Scale size={12} />}>
+                      <input type="number" className="nn-input" name="height_cm" value={profile.height_cm} onChange={handleChange} placeholder="175" />
+                    </FG>
+                  </div>
+
+                  <div className="col-md-3">
+                    <FG label="Weight (kg)" icon={<Weight size={12} />}>
+                      <input type="number" className="nn-input" name="weight_kg" value={profile.weight_kg} onChange={handleChange} placeholder="70" />
+                    </FG>
+                  </div>
+
+                  <div className="col-md-3">
+                    <FG label="Phone Number" icon={<Phone size={12} />} required>
+                      <input className="nn-input" name="phone" value={profile.phone} onChange={handleChange} placeholder="+91 0000000000" />
+                    </FG>
+                  </div>
+
+                  {/* LOCATION DETAILS */}
+                  <div className="col-12 mt-5"><div className="form-section-divider"><span>Location Details</span></div></div>
+                  
+                  <div className="col-12">
+                    <FG label="Full Address" icon={<MapPin size={12} />}>
+                      <input className="nn-input" name="address" value={profile.address} onChange={handleChange} placeholder="Street name, Building No." />
+                    </FG>
+                  </div>
+
+                  <div className="col-md-3">
+                    <FG label="Country">
+                      <select className="nn-select" name="country" value={profile.country} onChange={handleChange}>
+                        <option value="">Select Country</option>
+                        {countries.map((c) => <option key={c} value={c}>{c}</option>)}
+                      </select>
+                    </FG>
+                  </div>
+
+                  <div className="col-md-3">
+                    <FG label="State">
+                      <select className="nn-select" name="state" value={profile.state} onChange={handleChange}>
+                        <option value="">Select State</option>
+                        {states.map((s) => <option key={s} value={s}>{s}</option>)}
+                      </select>
+                    </FG>
+                  </div>
+
+                  <div className="col-md-3">
+                    <FG label="City">
+                      <input className="nn-input" name="city" value={profile.city} onChange={handleChange} placeholder="City" />
+                    </FG>
+                  </div>
+
+                  <div className="col-md-3">
+                    <FG label="Pincode">
+                      <input className="nn-input" name="pincode" value={profile.pincode} onChange={handleChange} placeholder="000000" />
+                    </FG>
+                  </div>
+
+                  {/* EMERGENCY CONTACTS */}
+                  <div className="col-12 mt-5">
+                    <div className="d-flex justify-content-between align-items-center mb-2">
+                      <div className="form-section-divider flex-grow-1"><span>Emergency Contacts</span></div>
+                      <button className="btn btn-outline-primary btn-sm rounded-pill px-3 ms-3" onClick={addNewContact}><Plus size={16} /> Add Contact</button>
+                    </div>
+                  </div>
+
+                  {emergencyContacts.map((contact, index) => (
+                    <div key={index} className="col-12">
+                      <div className="emergency-contact-edit-card">
+                        <div className="d-flex justify-content-between align-items-center mb-3">
+                          <div className="d-flex align-items-center gap-2">
+                            <div className="contact-number-badge">{index + 1}</div>
+                            <span className="fw-800 small text-uppercase text-muted">Emergency Contact</span>
+                          </div>
+                          <button className="btn btn-link text-danger p-0" onClick={() => removeContact(index)}><Trash2 size={18} /></button>
                         </div>
-                        <div className="col-md-6">
-                          <label className="form-label small fw-700">Relationship</label>
-                          <input className="form-control form-control-sm rounded-3" name="relationship" value={contact.relationship} onChange={(e) => handleEmergencyChange(index, e)} />
-                        </div>
-                        <div className="col-md-6">
-                          <label className="form-label small fw-700">Phone</label>
-                          <input className="form-control form-control-sm rounded-3" name="phone" value={contact.phone} onChange={(e) => handleEmergencyChange(index, e)} />
-                        </div>
-                        <div className="col-md-6">
-                          <label className="form-label small fw-700">Email</label>
-                          <input className="form-control form-control-sm rounded-3" name="email" value={contact.email} onChange={(e) => handleEmergencyChange(index, e)} />
+                        <div className="row g-3">
+                          <div className="col-md-6">
+                            <FG label="Full Name">
+                              <input className="nn-input-sm" name="contact_name" value={contact.contact_name} onChange={(e) => handleEmergencyChange(index, e)} />
+                            </FG>
+                          </div>
+                          <div className="col-md-6">
+                            <FG label="Relationship">
+                              <input className="nn-input-sm" name="relationship" value={contact.relationship} onChange={(e) => handleEmergencyChange(index, e)} />
+                            </FG>
+                          </div>
+                          <div className="col-md-6">
+                            <FG label="Phone">
+                              <input className="nn-input-sm" name="phone" value={contact.phone} onChange={(e) => handleEmergencyChange(index, e)} />
+                            </FG>
+                          </div>
+                          <div className="col-md-6">
+                            <FG label="Email">
+                              <input className="nn-input-sm" name="email" value={contact.email} onChange={(e) => handleEmergencyChange(index, e)} />
+                            </FG>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
 
-                <div className="col-12 mt-5 border-top pt-4 d-flex gap-3">
-                  <button className="btn btn-primary rounded-pill px-5 fw-800" onClick={handleSave}>Save Changes</button>
-                  <button className="btn btn-light rounded-pill px-5 fw-800" onClick={() => setEditing(false)}>Discard Changes</button>
+                  {/* FORM ACTIONS (BOTTOM ONLY) */}
+                  <div className="col-12 mt-5 pt-4 border-top">
+                    <div className="form-actions-row">
+                      <button className="btn-nn-primary d-flex align-items-center gap-2" onClick={handleSave} disabled={saving}>
+                        {saving ? (
+                          <>
+                            <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                            Saving...
+                          </>
+                        ) : (
+                          <>Save Changes</>
+                        )}
+                      </button>
+                      <button className="btn-nn-secondary" onClick={cancelEdit} disabled={saving}>Discard Changes</button>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
