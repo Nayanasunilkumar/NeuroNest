@@ -227,9 +227,25 @@ class NotificationService:
             email_event_type="critical"
         )
 
-        # 2. Notify Assigned Doctor
-        appointment = Appointment.query.filter_by(patient_id=patient_id).order_by(Appointment.created_at.desc()).first()
+        # 2. Notify Assigned Doctor — prefer active appointments
+        appointment = (
+            Appointment.query
+            .filter_by(patient_id=patient_id)
+            .filter(Appointment.status.in_(["approved", "pending", "confirmed"]))
+            .order_by(Appointment.appointment_date.desc())
+            .first()
+        )
+        # Fallback: most recent appointment of any status
+        if not appointment:
+            appointment = (
+                Appointment.query
+                .filter_by(patient_id=patient_id)
+                .order_by(Appointment.created_at.desc())
+                .first()
+            )
+
         if appointment and appointment.doctor:
+            print(f"[VITALS ALERT] Notifying doctor {appointment.doctor_id} ({appointment.doctor.email}) for patient {patient_id}")
             NotificationService.send_in_app(
                 user_id=appointment.doctor_id,
                 title=f"Patient Vital Critical: {patient.full_name}",
@@ -238,6 +254,8 @@ class NotificationService:
                 email_subject=subject,
                 email_event_type="critical"
             )
+        else:
+            print(f"[VITALS ALERT] No appointment found for patient {patient_id} — doctor not notified")
 
     @staticmethod
     def notify_prescription_event(prescription_id):
@@ -415,7 +433,7 @@ class NotificationService:
         actual_recipient = test_override or recipient
         if test_override:
             body = f"[DEV MODE] Intended for: {recipient}\n\n{body}"
-            print(f"[EMAIL] TEST OVERRIDE active — redirecting {recipient} → {test_override}")
+            print(f"[EMAIL] ⚠️ TEST_EMAIL_OVERRIDE is SET — all emails redirected to {test_override}. Doctor at {recipient} will NOT receive this.")
 
         # Build HTML version
         html_body = NotificationService._build_html_email(subject, body, event_type)
